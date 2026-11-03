@@ -63,6 +63,10 @@ class OpenAIChat:
         data = json.loads(_post("/chat/completions", self.key, payload))
         return {"message": data["choices"][0]["message"], "usage": data.get("usage", {}), "model": model}
 
+    def embed(self, model: str, texts: list[str]) -> list[list[float]]:
+        data = json.loads(_post("/embeddings", self.key, {"model": model, "input": texts}))
+        return [d["embedding"] for d in sorted(data["data"], key=lambda d: d["index"])]
+
     def speak(self, text: str, voice: str, instructions: str, model: str = "gpt-4o-mini-tts") -> bytes:
         return _post("/audio/speech", self.key, {"model": model, "voice": voice, "input": text,
                                                   "instructions": instructions, "response_format": "mp3"}, 90.0)
@@ -80,6 +84,11 @@ class FakeChat:
                  json_mode: bool = False, temperature: float = 0.4) -> dict[str, Any]:
         last = messages[-1]
         usage = {"prompt_tokens": 100, "completion_tokens": 20}
+        if json_mode and "fiche de référence" in str(messages[0].get("content", "")):
+            src = json.loads(last["content"])
+            out = {"title": src.get("title") or "Document", "summary": "Résumé de test.", "key_points": ["Point A"],
+                   "tags": ["test-source"]}
+            return {"message": {"role": "assistant", "content": json.dumps(out)}, "usage": usage, "model": model}
         if json_mode:  # classification: pick the space whose name appears in the note
             ctx = json.loads(last["content"])
             text = (ctx["note"]["title"] + " " + ctx["note"]["body"]).lower()
@@ -111,6 +120,17 @@ class FakeChat:
             return {"message": {"role": "assistant", "content": "Bon matin! Ceci est un briefing de test."},
                     "usage": usage, "model": model}
         return {"message": {"role": "assistant", "content": f"(test) Tu as dit: {text}"}, "usage": usage, "model": model}
+
+    def embed(self, model: str, texts: list[str]) -> list[list[float]]:
+        """Deterministic bag-of-words vectors: same words, same direction (tests only)."""
+        import hashlib
+        out = []
+        for t in texts:
+            v = [0.0] * 64
+            for w in t.lower().split():
+                v[int(hashlib.md5(w.strip(".,;:!?").encode()).hexdigest(), 16) % 64] += 1.0
+            out.append(v)
+        return out
 
     def speak(self, text: str, voice: str, instructions: str, model: str = "") -> bytes:
         here = os.path.dirname(os.path.abspath(__file__))

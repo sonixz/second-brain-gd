@@ -47,6 +47,8 @@ Règles:
   Une idée, une décision ou une info = create_note. Des articles d'épicerie ou de liste = add_to_checklist.
   Un nouveau projet = create_project sous le bon domaine. « C'est fait » = complete_task.
 - Pour « qu'est-ce que j'ai aujourd'hui / cette semaine », utilise get_today.
+- Pour une question de fond, cherche dans les notes (search_notes) ET dans les documents importés (search_sources).
+  Cite un document par le titre de sa fiche entre [[ ]].
 - Réponses courtes et parlées (2 à 5 phrases), sauf si on te demande du détail. Pas de listes à puces longues, pas d'emojis.
 - Ne refais jamais une action déjà indiquée comme effectuée dans l'historique.
 - Tout ce que tu modifies est visible et annulable: dis brièvement ce que tu as fait."""
@@ -222,6 +224,8 @@ TOOLS = [
                                                          "space_id": {"type": "string"},
                                                          "kind": {"type": "string", "enum": list(brain.KINDS)}},
                        "required": ["title"]}}},
+    {"type": "function", "function": {"name": "search_sources", "description": "Search inside imported documents and web pages (PDF, Word, links). Use it with search_notes for factual questions.",
+        "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}},
     {"type": "function", "function": {"name": "get_today", "description": "Today's view: overdue, due today and soon, next action per project, projects without next action, inbox count, checklists.",
         "parameters": {"type": "object", "properties": {}}}},
     {"type": "function", "function": {"name": "get_structure", "description": "Areas with their projects, resources.",
@@ -271,6 +275,13 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
             aid = _journal(conn, "create_note", n["id"], None, _snapshot(conn, n["id"]), "créée par l'assistante")
             actions.append({"action_id": aid, "kind": "create_note", "note_id": n["id"], "title": n["title"]})
             return {"created": {"id": n["id"], "title": n["title"], "space_id": n["space_id"]}}
+        if name == "search_sources":
+            from engine.sources.core import search_any
+
+            hits = search_any(conn, _CLIENT.get("c"), str(args.get("query", "")), 6)
+            note_titles = {r["id"]: r["title"] for r in conn.execute("SELECT id, title FROM notes")}
+            return {"results": [{"document": h["title"], "note_title": note_titles.get(h.get("note_id"), h["title"]),
+                                 "excerpt": h["snippet"], "match": h["match"]} for h in hits]}
         if name == "get_today":
             d = structure.today(conn)
             d["checklists"] = [{"name": c["name"], "open_items": [i["text"] for i in c["items"] if not i["done"]][:30]}
@@ -338,7 +349,11 @@ def _save(conn: sqlite3.Connection, conversation: str, role: str, content: str, 
                  (conversation, role, content, json.dumps(meta, ensure_ascii=False) if meta else None, utc_now()))
 
 
+_CLIENT: dict[str, Any] = {}  # the current request's client, for tools that call the API (semantic search)
+
+
 def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None = None) -> dict[str, Any]:
+    _CLIENT["c"] = client
     s = settings(conn)
     conversation = today_conversation()
     focus = ""
