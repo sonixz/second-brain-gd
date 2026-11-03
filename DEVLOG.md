@@ -1,5 +1,17 @@
 # Devlog
 
+## Loop 5 — Sources (2026-11-02)
+
+- Files and links become summarised reference notes, with indexed passages (migration 0005, `engine/sources/`).
+  The assistant searches them with `search_sources`. Godot accepts dropped files, a native file picker, and
+  links pasted in the capture bar. The engine room gained a Sources & memory card.
+- Safety: web fetching refuses local and private networks. A test proves `127.0.0.1` is refused.
+- Embeddings: the owner's OpenAI project refuses `text-embedding-3-small` (403). The pipeline records it and
+  falls back to word search. Vectors are filled automatically once the model is enabled.
+- Lesson: shared helpers belong in stdlib-only modules, because tests run without FastAPI. `search_any` moved
+  out of the routes for that reason.
+
+
 ## Loop 4 — Structure (2026-11-02)
 
 **Owner's critique:** "I see bubbles, but no structure, no project management." The answer is PARA plus

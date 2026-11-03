@@ -212,6 +212,18 @@ func _e2e() -> void:
 	var reviewed: bool = await ap.run_review()
 	check(reviewed and ap.last_reply.begins_with("Revue"), "the weekly review runs from the assistant")
 	await brain.call("set_view", "graph")
+	# Sources: a file becomes a reference note in the graph; local links are refused.
+	var doc := OS.get_environment("SBGD_HOME").path_join("atlas-plan.md")
+	var fh := FileAccess.open(doc, FileAccess.WRITE)
+	fh.store_string("Plan Atlas\n\nLa migration se fait en deux phases.\n\nPhase 1: inventaire. Phase 2: bascule un dimanche.")
+	fh.close()
+	var nodes_before_src := graph.node_count("note")
+	var added: bool = await brain.call("add_source_file", doc)
+	check(added and graph.node_count("note") == nodes_before_src + 1, "a dropped file becomes a note in the graph")
+	var dup: bool = await brain.call("add_source_file", doc)
+	check(dup and int(brain.get("sources_added")) == 1, "the same file is not added twice")
+	var refused: bool = await brain.call("add_source_url", "http://127.0.0.1:1/private")
+	check(not refused and str(brain.get("last_source_error")).contains("local"), "links to local networks are refused")
 	var before := graph.node_count("note")
 	var capture_edit: LineEdit = brain.get("capture_edit")
 	capture_edit.text = "Test thought linking [[Engine room]] #e2e"

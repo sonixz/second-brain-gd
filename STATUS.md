@@ -1,5 +1,16 @@
 # Status
 
+**Loop 5 — Sources: done; meaning search waiting for the embeddings model (2026-11-02).** Drop files (PDF,
+Word, Markdown, text, HTML) or paste a link. Each becomes a summarised reference note in the graph, with
+searchable passages, and the assistant answers from them with citations. A real Wikipedia page took 3.5 s.
+**Blocked on the owner:** enable `text-embedding-3-small` on the OpenAI project (`proj_k45r…`) for search by
+meaning. Until then, search uses words.
+
+| Suite | Platform | Result |
+|---|---|---|
+| Python (59) | Linux 3.12 / Windows Store 3.13 | OK |
+| Godot end-to-end (81 checks, including file drop, dedupe, refused local link) | Linux and Windows native | 81 passed |
+
 **Loop 4 — Structure: done (2026-11-02).** Areas (Famille, Santé, Maison, Vision au travail) own projects
 with goals, due dates and statuses. Next actions have dates. Checklists start with Épicerie. Today and
 Projects views live next to the graph, and the assistant runs a guided weekly review. The assistant creates

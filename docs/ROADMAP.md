@@ -41,7 +41,7 @@ And five work loops the app supports:
   sent through Chat Completions, or the Responses API for reasoning with tools. Their prices are not
   known yet, so cost estimates must say so.
 
-### Loop 5 — Sources & semantic memory
+### Loop 5 — Sources & semantic memory (sources ✅ 2026-11-02; meaning search waits for an embeddings model)
 - Drop files (PDF, Markdown, text, Word) and paste URLs. The engine extracts, summarises, chunks and embeds.
 - Vector index in SQLite (`sqlite-vec` or a plain cosine table first). "Related ideas" become automatic
   links. Ask across everything.

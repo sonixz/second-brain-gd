@@ -13,6 +13,7 @@ var py_card: InfoCard
 var storage_card: InfoCard
 var proc_card: InfoCard
 var voice_card: InfoCard
+var sources_card: InfoCard
 var last_voice: Dictionary = {}
 var events_view: RichTextLabel
 var header_dot: StatusDot
@@ -125,6 +126,8 @@ func _ready() -> void:
 	grid.add_child(about)
 	voice_card = InfoCard.new().setup("Voice capture")
 	grid.add_child(voice_card)
+	sources_card = InfoCard.new().setup("Sources & memory")
+	grid.add_child(sources_card)
 
 	var ev_card := PanelContainer.new()
 	ev_card.theme_type_variation = "Card"
@@ -166,6 +169,7 @@ func refresh_all() -> void:
 	await _poll_storage()
 	await _poll_events()
 	await _poll_voice()
+	await _poll_sources()
 	refresh_count += 1
 
 
@@ -233,6 +237,32 @@ func _poll_voice() -> void:
 		["List price", "$%s / min of audio" % str(v.get("price_per_minute_usd", "?"))],
 	])
 	voice_card.set_footer("The key never reaches Godot, logs or the database.")
+
+
+func _poll_sources() -> void:
+	var res := await app.backend.api.call_api("/sources")
+	if not is_inside_tree() or sources_card == null or not res["ok"]:
+		return
+	var d: Dictionary = res["data"]
+	var list: Array = d.get("sources", [])
+	var emb: Dictionary = d.get("embeddings", {})
+	var chunks := 0
+	for item in list:
+		chunks += int((item as Dictionary).get("chunks", 0))
+	var avail: Variant = emb.get("available")
+	if avail == true:
+		sources_card.set_state("ok", "Search by meaning")
+	elif avail == false:
+		sources_card.set_state("warning", "Words only")
+	else:
+		sources_card.set_state("pending", "No sources yet")
+	sources_card.set_rows([
+		["Sources", SbFormat.number(list.size())],
+		["Passages indexed", SbFormat.number(chunks)],
+		["Embeddings model", str(emb.get("model", "text-embedding-3-small"))],
+		["Embeddings", "available" if avail == true else ("unavailable: " + str(emb.get("error", "")).left(70) if avail == false else SbFormat.NA)],
+		["Formats", "PDF, Word, Markdown, text, HTML, web links"],
+	])
 
 
 func _poll_events() -> void:

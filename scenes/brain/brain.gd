@@ -59,6 +59,11 @@ var view := "graph"   # graph | today | projects
 var today_view: TodayView
 var projects_view: ProjectsView
 var view_buttons: Dictionary = {}
+# Sources
+var sources_box: VBoxContainer
+var sources_added := 0
+var last_source_error := ""
+var _file_dialog: FileDialog
 
 
 func bind(a: SbApp) -> void:
@@ -80,6 +85,7 @@ func _ready() -> void:
 	_build_inspector()
 	_build_capture_bar()
 	_build_toast()
+	get_window().files_dropped.connect(_on_files_dropped)
 	voice_capture = VoiceCapture.new()
 	add_child(voice_capture)
 	voice_capture.chunk.connect(func(pcm: PackedByteArray) -> void: voice_stream.send_audio(pcm))
@@ -101,6 +107,7 @@ func _ready() -> void:
 	await refresh_spaces()
 	await refresh_graph()
 	await load_briefing()
+	refresh_sources()
 	assistant_panel.start()
 	if str(app.state.get("view", "graph")) != "graph":
 		set_view(str(app.state["view"]))
@@ -310,6 +317,23 @@ func _build_left_panel() -> void:
 	stats_label.theme_type_variation = "Muted"
 	stats_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	col.add_child(stats_label)
+	col.add_child(HSeparator.new())
+	var srow := HBoxContainer.new()
+	col.add_child(srow)
+	var sl := Label.new()
+	sl.text = "SOURCES"
+	sl.theme_type_variation = "Overline"
+	sl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	srow.add_child(sl)
+	var addf := Button.new()
+	addf.text = "+ File"
+	addf.theme_type_variation = "GhostButton"
+	addf.tooltip_text = "Add a PDF, Word, Markdown or text file. You can also drop files on the window, or paste a link in the capture bar."
+	addf.pressed.connect(_pick_file)
+	srow.add_child(addf)
+	sources_box = VBoxContainer.new()
+	sources_box.add_theme_constant_override("separation", 0)
+	col.add_child(sources_box)
 
 
 func _build_toast() -> void:
@@ -359,6 +383,93 @@ func _undo_toast() -> void:
 		show_toast("Put back where it was.")
 		await refresh_graph()
 		await refresh_spaces()
+
+
+# ---------------------------------------------------------------- sources
+func _on_files_dropped(files: PackedStringArray) -> void:
+	for f in files:
+		await add_source_file(f)
+
+
+func _pick_file() -> void:
+	if _file_dialog == null:
+		_file_dialog = FileDialog.new()
+		_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILES
+		_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		_file_dialog.use_native_dialog = true
+		_file_dialog.filters = PackedStringArray(["*.pdf, *.docx, *.md, *.txt, *.html, *.htm, *.csv, *.json ; Documents"])
+		_file_dialog.files_selected.connect(func(paths: PackedStringArray) -> void: _on_files_dropped(paths))
+		add_child(_file_dialog)
+	_file_dialog.popup_centered_ratio(0.6)
+
+
+func add_source_file(path: String) -> bool:
+	show_toast("Reading %s…" % path.get_file())
+	var payload := {"path": path}
+	if current_space != "":
+		payload["space_id"] = current_space
+	return await _ingest("/sources/file", payload)
+
+
+func add_source_url(url: String) -> bool:
+	show_toast("Reading %s…" % url.left(60))
+	var payload := {"url": url}
+	if current_space != "":
+		payload["space_id"] = current_space
+	return await _ingest("/sources/url", payload)
+
+
+func _ingest(path: String, payload: Dictionary) -> bool:
+	var res := await app.backend.api.call_api(path, true, HTTPClient.METHOD_POST, JSON.stringify(payload))
+	if not is_inside_tree():
+		return false
+	if not res["ok"]:
+		var d: Dictionary = res["data"]
+		last_source_error = str(d.get("detail", res["error"]))
+		app.audio.play("error")
+		show_toast("Could not add it: %s" % last_source_error)
+		return false
+	var src: Dictionary = res["data"]
+	if bool(src.get("duplicate", false)):
+		show_toast("Already in your brain: « %s »" % src.get("title", ""))
+		return true
+	sources_added += 1
+	app.audio.play("note_create", 0.04)
+	show_toast("Added « %s » · %d passages indexed" % [src.get("title", ""), int(src.get("chunks", 0))])
+	var born := await refresh_graph()
+	if not born.is_empty():
+		graph.focus_on(born[0])
+	await refresh_spaces()
+	await refresh_sources()
+	if current_space == "" and src.get("note_id") != null:
+		_classify(str(src["note_id"]))
+	return true
+
+
+func refresh_sources() -> void:
+	var res := await app.backend.api.call_api("/sources")
+	if not res["ok"] or not is_inside_tree() or sources_box == null:
+		return
+	for c in sources_box.get_children():
+		c.queue_free()
+	var data: Dictionary = res["data"]
+	var list: Array = data.get("sources", [])
+	for item in list.slice(0, 8):
+		var s: Dictionary = item
+		var b := Button.new()
+		b.theme_type_variation = "GhostButton"
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.text = ("↗ " if str(s["kind"]) == "url" else "▤ ") + str(s["title"]).left(34)
+		b.tooltip_text = str(s["uri"])
+		var nid := str(s.get("note_id", ""))
+		b.pressed.connect(func() -> void: open_note(nid, true))
+		sources_box.add_child(b)
+	if list.is_empty():
+		var l := Label.new()
+		l.theme_type_variation = "Muted"
+		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		l.text = "Drop files on the window or paste a link in the capture bar."
+		sources_box.add_child(l)
 
 
 func _refresh_view() -> void:
@@ -636,6 +747,10 @@ func capture(text: String, source: String = "typed") -> void:
 	var t := text.strip_edges()
 	if t == "":
 		return
+	if (t.begins_with("http://") or t.begins_with("https://")) and not t.contains(" "):
+		capture_edit.text = ""
+		await add_source_url(t)
+		return
 	capture_edit.text = ""
 	var title := t
 	var body := ""
@@ -680,7 +795,7 @@ func _post(path: String, payload: Dictionary, method: int = HTTPClient.METHOD_PO
 func _update_capture_hint() -> void:
 	if capture_hint == null:
 		return
-	capture_hint.text = "Lands in %s · [[links]] and #tags work here too" % (
+	capture_hint.text = "Lands in %s · [[links]], #tags, and links to web pages work here · drop files on the window" % (
 		_space_name(current_space) if current_space != "" else "your Inbox")
 
 

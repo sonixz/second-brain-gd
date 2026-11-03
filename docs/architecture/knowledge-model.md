@@ -133,6 +133,24 @@ The assistant gained `get_today`, `get_structure`, `create_project`, `add_task`,
 `add_to_checklist`. All of them are journaled and undoable. The classifier sends list-like captures to a
 checklist, and it now sees each space's kind, goal and area.
 
+## Sources (Loop 5)
+
+Drop files on the window, use **+ File** in the Spaces tab, or paste a web link in the capture bar.
+
+1. **Extract.** Text, Markdown, CSV, JSON and HTML use the stdlib, DOCX is read through its zip XML, PDF uses
+   `pypdf`. Web pages are fetched over http(s) only. Local and private addresses are refused, so the engine
+   cannot be used to probe the LAN. The limit is 15 MB.
+2. **Dedupe.** A SHA-256 of the text means the same document is never added twice.
+3. **Chunk.** Paragraph-aware passages of about 1,200 characters with overlap go into `source_chunks`, plus the
+   FTS index `chunks_fts`.
+4. **Summarise.** gpt-4o writes a title, summary, key points and tags. This becomes a `reference` note
+   (`source = import`) in the graph, and is then auto-filed like any capture.
+5. **Embed (optional).** Passages get float32 vectors from `text-embedding-3-small` when the OpenAI project
+   allows it. Otherwise the refusal is recorded and retried at most every 6 hours.
+
+Search (`/sources/search`, assistant tool `search_sources`) uses meaning first when vectors exist, and words
+otherwise. The engine room shows sources, indexed passages and the embeddings status.
+
 ## Later: daily router agent (direction)
 
 A "daily" agent runs in the morning: it reads the Inbox, proposes a space for each thought, and suggests links.
