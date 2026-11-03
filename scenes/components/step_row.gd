@@ -44,6 +44,11 @@ func setup(id: String, label: String) -> StepRow:
 func set_state(value: String, message: String = "") -> void:
 	if value == "log":
 		return
+	# "unavailable" ends a step that is optional: shown as a finished warning, setup goes on.
+	var optional_failed := value == "unavailable"
+	if optional_failed:
+		value = "warning"
+		status = "done"
 	# A warning inside a running step keeps the step running.
 	if value == "warning" and status in ["started", "progress"]:
 		_message.text = message
@@ -58,6 +63,6 @@ func set_state(value: String, message: String = "") -> void:
 	if value == "error":
 		_message.add_theme_color_override("font_color", SbTheme.ERROR)
 	var tags := {"pending": "", "started": "Running", "progress": "Running", "ok": "Done",
-		"skipped": "Already done", "warning": "Warning", "error": "Failed", "checking": "Checking"}
+		"skipped": "Already done", "warning": "Not available" if optional_failed else "Warning", "error": "Failed", "checking": "Checking"}
 	_tag.text = str(tags.get(value, value))
 	_tag.add_theme_color_override("font_color", SbTheme.status_color(value))

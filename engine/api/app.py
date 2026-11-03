@@ -18,6 +18,8 @@ from engine.voice import secrets as key_store
 from engine.voice.routes import make_router as make_voice_router
 from engine.assistant.routes import make_router as make_assistant_router
 from engine.sources.routes import make_router as make_sources_router
+from engine.agents.routes import make_router as make_agents_router
+from engine.agents.session import AgentManager
 from engine.events import utc_now
 from engine.installer.state import load_state
 from engine.monitoring.metrics import ProcessSampler, StorageScanner, system_snapshot
@@ -47,6 +49,7 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
             yield
         finally:
             worker.stop()
+            agents.stop_all()
 
     def client_or_none():
         key, _ = key_store.get(layout, "openai")
@@ -137,6 +140,8 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
         request_shutdown()
         return {"status": "stopping"}
 
+    agents = AgentManager(layout.root / "agents" / "home")
+    app.include_router(make_agents_router(layout, require_token, agents))
     app.include_router(make_router(layout, require_token))
     app.include_router(make_voice_router(layout, require_token, token))
     app.include_router(make_assistant_router(layout, require_token))

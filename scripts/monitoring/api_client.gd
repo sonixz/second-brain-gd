@@ -16,7 +16,7 @@ func call_api(path: String, auth: bool = true, method: int = HTTPClient.METHOD_G
 	if port <= 0:
 		return {"ok": false, "code": 0, "error": "API port unknown", "data": {}, "ms": 0}
 	var req := HTTPRequest.new()
-	req.timeout = timeout_s if not path.begins_with("/assistant") else 90.0
+	req.timeout = 90.0 if path.begins_with("/assistant") or path.begins_with("/agents") else timeout_s
 	add_child(req)
 	var headers := PackedStringArray(["Accept: application/json"])
 	if auth:

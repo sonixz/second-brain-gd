@@ -122,7 +122,9 @@ class BootstrapIntegration(unittest.TestCase):
         state = json.loads((self.home / "install_state.json").read_text())
         self.assertTrue(state["installed"])
         self.assertEqual({k for k, v in state["steps"].items() if v["status"] == "ok"},
-                         {"python", "directories", "venv", "dependencies", "database", "service", "health"})
+                         {"python", "directories", "venv", "dependencies", "database", "agents", "service", "health"})
+        agents = json.loads((self.home / "agents" / "installed.json").read_text())
+        self.assertEqual(agents["version"], "test-1")  # the fixture manifest, never the 95 MB download
         self.assertNotIn(self.token(), (self.home / "logs" / "bootstrap.log").read_text())
         self.assertNotIn(self.token(), (self.home / "logs" / "server.log").read_text())
 
@@ -230,6 +232,25 @@ class BootstrapIntegration(unittest.TestCase):
         self.assertFalse(alive, "API must exit when its parent process exits")
         time.sleep(0.5)
         self.assertFalse((self.home / "runtime" / "server.json").exists())
+
+    def test_99_offline_agent_room_does_not_block_setup(self):
+        manifest = json.loads((ROOT / "tests" / "fixtures" / "agents" / "manifest.json").read_text())
+        manifest["version"] = "unreachable-1"
+        for spec in manifest["platforms"].values():
+            spec["url"] = "http://127.0.0.1:9/nothing.tar.gz"
+        path = self.home.parent / "offline-manifest.json"
+        path.write_text(json.dumps(manifest))
+        old = os.environ.get("SBGD_AGENTS_MANIFEST")
+        os.environ["SBGD_AGENTS_MANIFEST"] = str(path)
+        try:
+            code, events = run_setup(self.home, "--no-start")
+        finally:
+            os.environ["SBGD_AGENTS_MANIFEST"] = old or ""
+        self.assertEqual(code, 0, "setup succeeds without the agent room: %s" % [e["message"] for e in events if e["status"] in ("error", "unavailable")])
+        agent_events = [e for e in events if e["component"] == "agents"]
+        self.assertEqual(agent_events[-1]["status"], "unavailable")
+        self.assertIn("retry", agent_events[-1]["message"])
+        self.assertEqual(events[-1]["status"], "ok")
 
     def test_09_concurrent_setup_is_refused(self):
         sleeper = subprocess.Popen([sys.executable, "-c", "import time; time.sleep(60)"], **NO_WINDOW)

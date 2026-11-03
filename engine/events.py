@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any, Callable
 
 PROTOCOL_VERSION = 1
-STATUSES = ("started", "progress", "log", "ok", "skipped", "warning", "error")
+STATUSES = ("started", "progress", "log", "ok", "skipped", "warning", "unavailable", "error")
 
 
 def utc_now() -> str:

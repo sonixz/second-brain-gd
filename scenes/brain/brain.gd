@@ -60,6 +60,7 @@ var _toast_timer: Timer
 var view := "graph"   # graph | today | projects
 var today_view: TodayView
 var projects_view: ProjectsView
+var agents_view: AgentsView
 var view_buttons: Dictionary = {}
 # Sources
 var sources_box: VBoxContainer
@@ -158,7 +159,7 @@ func _build_top_bar() -> void:
 	seg.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(seg)
 	var group := ButtonGroup.new()
-	for pair in [["graph", "Graph"], ["today", "Today"], ["projects", "Projects"]]:
+	for pair in [["graph", "Graph"], ["today", "Today"], ["projects", "Projects"], ["agents", "Agents"]]:
 		var b := Button.new()
 		b.text = str(pair[1])
 		b.toggle_mode = true
@@ -203,7 +204,9 @@ func _build_top_bar() -> void:
 func _build_views() -> void:
 	today_view = TodayView.new().setup(app)
 	projects_view = ProjectsView.new().setup(app)
-	for v in [today_view, projects_view]:
+	agents_view = AgentsView.new().setup(app)
+	agents_view.failed.connect(func(msg: String) -> void: show_toast(msg))
+	for v in [today_view, projects_view, agents_view]:
 		v.set_anchors_preset(Control.PRESET_FULL_RECT)
 		v.offset_left = 388
 		v.offset_right = -24
@@ -235,6 +238,7 @@ func set_view(name: String) -> void:
 	view = name
 	today_view.visible = name == "today"
 	projects_view.visible = name == "projects"
+	agents_view.visible = name == "agents"
 	var dim := 0.28 if name != "graph" else 1.0
 	create_tween().tween_property(graph, "modulate", Color(1, 1, 1, dim), 0.25)
 	graph.mouse_filter = Control.MOUSE_FILTER_STOP if name == "graph" else Control.MOUSE_FILTER_IGNORE
@@ -244,6 +248,8 @@ func set_view(name: String) -> void:
 		await today_view.refresh()
 	elif name == "projects":
 		await projects_view.refresh()
+	elif name == "agents":
+		await agents_view.refresh()
 	app.state["view"] = name
 
 

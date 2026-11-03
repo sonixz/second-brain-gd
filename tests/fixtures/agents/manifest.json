@@ -1,0 +1,49 @@
+{
+  "_comment": "Test fixture: a fake app-server script. Regenerate with tools/make-agent-fixture.py after editing fake_codex.py.",
+  "name": "fake-codex",
+  "version": "test-1",
+  "platforms": {
+    "windows-x86_64": {
+      "url": "fake-codex.tar.gz",
+      "sha256": "7bfc901979f17287f8c4b9268458868c04e509b8309b214b086ef0786f45393e",
+      "size": 1765,
+      "member": "fake-codex.py",
+      "binary": "fake-codex.py"
+    },
+    "linux-x86_64": {
+      "url": "fake-codex.tar.gz",
+      "sha256": "7bfc901979f17287f8c4b9268458868c04e509b8309b214b086ef0786f45393e",
+      "size": 1765,
+      "member": "fake-codex.py",
+      "binary": "fake-codex.py"
+    },
+    "macos-aarch64": {
+      "url": "fake-codex.tar.gz",
+      "sha256": "7bfc901979f17287f8c4b9268458868c04e509b8309b214b086ef0786f45393e",
+      "size": 1765,
+      "member": "fake-codex.py",
+      "binary": "fake-codex.py"
+    },
+    "macos-x86_64": {
+      "url": "fake-codex.tar.gz",
+      "sha256": "7bfc901979f17287f8c4b9268458868c04e509b8309b214b086ef0786f45393e",
+      "size": 1765,
+      "member": "fake-codex.py",
+      "binary": "fake-codex.py"
+    },
+    "linux-aarch64": {
+      "url": "fake-codex.tar.gz",
+      "sha256": "7bfc901979f17287f8c4b9268458868c04e509b8309b214b086ef0786f45393e",
+      "size": 1765,
+      "member": "fake-codex.py",
+      "binary": "fake-codex.py"
+    },
+    "windows-aarch64": {
+      "url": "fake-codex.tar.gz",
+      "sha256": "7bfc901979f17287f8c4b9268458868c04e509b8309b214b086ef0786f45393e",
+      "size": 1765,
+      "member": "fake-codex.py",
+      "binary": "fake-codex.py"
+    }
+  }
+}

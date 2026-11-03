@@ -12,6 +12,13 @@ Cadence from 2026-11-03 (details in the roadmap): 5b ✅ meaning memory → 6b R
 6c agent room on by default (Codex native binary first, Claude Code later) → 7a hands-free (UI tools,
 push-to-talk) → 7b real-time conversation (owner's go on cost). The wake word is set aside for now.
 
+Agent room follow-ups (6c):
+- First run with the real `codex-app-server` (owner's permission): confirm the approval flow, the
+  `gpt-6-sol` model and MXC on Windows.
+- Expose the brain to agents as an MCP server (read notes, add notes to a project).
+- Claude Code connector (Agent SDK, Anthropic key) behind the same room.
+- Persist sessions across restarts (`thread/resume`).
+
 Small follow-ups from 5b:
 - Search box: show which hits came by meaning (≈) versus words.
 - Related ideas: let the user dismiss a suggestion, or turn it into a real [[link]].

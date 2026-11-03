@@ -1,5 +1,22 @@
 # Status
 
+**Loop 6c — Agent room, on by default: built; the real Codex binary is not yet verified (2026-11-03).**
+- **Setup:** a new step downloads the pinned official `codex-app-server` (about 95 MB). It checks the
+  SHA-256 and installs it in the user data folder, with no admin rights. Offline, the step ends as "Not
+  available", setup still succeeds, and the room offers a retry.
+- **The Agents view** (next to Graph, Today and Projects): add folders, start an agent in one, and follow
+  its messages, commands and file changes live. Every write or untrusted command shows an approval card
+  (Approve, Approve for this session, Decline).
+- **Tests:** the room is tested end to end against a fake app-server that speaks the documented protocol.
+- **Not verified yet:** the real binary has never run here. The development sandbox blocked running a
+  freshly downloaded executable, so the first real run needs the owner's go (see
+  docs/architecture/agent-room.md).
+
+| Suite | Platform | Result |
+|---|---|---|
+| Python (85) | Linux 3.12 / Windows Store 3.13 | OK |
+| Godot end-to-end (95, including the setup step, folder rules, a session, an approval and the applied change) | Linux and Windows native | 95 passed |
+
 **Loop 6b — Responses API and gpt-6-astra: done (2026-11-03).** Reasoning models that cannot turn reasoning
 off now use tools through the Responses API (`store: false`, reasoning passed back encrypted). The assistant
 code is unchanged: `engine/assistant/llm.py` translates. The weekly review now uses `gpt-6-astra` (effort

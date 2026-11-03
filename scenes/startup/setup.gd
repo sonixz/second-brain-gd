@@ -9,6 +9,7 @@ const STEPS: Array = [
 	["venv", "Virtual environment"],
 	["dependencies", "Locked dependencies"],
 	["database", "SQLite database"],
+	["agents", "Agent room (Codex, verified download)"],
 	["service", "Local API service"],
 	["health", "Health verification"],
 ]

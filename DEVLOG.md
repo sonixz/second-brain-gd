@@ -1,5 +1,25 @@
 # Devlog
 
+## Loop 6c — Agent room on by default (2026-11-03)
+
+- The owner chose the agent room on by default. Codex ships official native binaries, so no Node.js is
+  needed. A setup step downloads the pinned `codex-app-server` and verifies its SHA-256 (GitHub's
+  release digest). It is resumable and never fatal: the new event status `unavailable` means an optional
+  step ended without its feature.
+- The engine speaks the app-server protocol (JSON-RPC over stdio) and turns it into a polled list of small
+  UI events. Approvals are first-class: nothing is written until the user approves in Godot.
+- Safety: the key travels over stdin only, `CODEX_HOME` sits in the data folder, and any `auth.json` is
+  deleted when a session stops. Agents only run in added folders: whole drives, the home folder and the
+  app's data folder are refused. Defaults are `untrusted` with `read-only`. At most 4 sessions.
+- The Windows sandbox needs no admin rights in MXC (Windows 11 24H2 and later) or `unelevated` mode,
+  according to OpenAI's documentation.
+- Blocked: the development sandbox's classifier refused to execute the downloaded binary ("code from
+  external"), so the real binary is untested. A fake app-server built from the documented protocol covers
+  the flow in Python and Godot tests. The first real run waits for the owner's permission.
+- Lessons: two keyword collisions again (`kind` passed into `_event`, which now takes a positional-only
+  type). In GDScript, `_get` overrides `Object._get` and breaks compilation.
+
+
 ## Loop 6b — Responses API and gpt-6-astra (2026-11-03)
 
 - `MODEL_CAPS` in `llm.py` replaces `startswith("gpt-6")` guesses. Astra goes through `/v1/responses`.

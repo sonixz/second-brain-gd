@@ -40,10 +40,11 @@ class SetupFailed(Exception):
 STEPS: list[tuple[str, float, str]] = [
     ("python", 0.04, "Python interpreter"),
     ("directories", 0.04, "Data directories"),
-    ("venv", 0.14, "Virtual environment"),
-    ("dependencies", 0.46, "Locked dependencies"),
+    ("venv", 0.12, "Virtual environment"),
+    ("dependencies", 0.38, "Locked dependencies"),
     ("database", 0.08, "SQLite database"),
-    ("service", 0.16, "Local API service"),
+    ("agents", 0.12, "Agent room"),
+    ("service", 0.14, "Local API service"),
     ("health", 0.08, "Health verification"),
 ]
 
@@ -200,6 +201,7 @@ class Installer:
             "venv": self.step_venv,
             "dependencies": self.step_dependencies,
             "database": self.step_database,
+            "agents": self.step_agents,
             "service": self.step_service,
             "health": self.step_health,
         }
@@ -391,6 +393,28 @@ class Installer:
             self.fail("dependencies", "Packages installed but cannot be imported.")
         self.emit("dependencies", "verify", "ok", f"{total} packages installed and importable", 1.0)
         self._mark("dependencies", "ok", lock_sha256=digest)
+
+    def step_agents(self) -> None:
+        """Downloads the pinned Codex app-server. Never fatal: offline or failed, the rest of the app works
+        and the agent room offers a retry."""
+        from engine.agents import install
+
+        if os.environ.get("SBGD_AGENTS") == "off":
+            self.emit("agents", "skip", "skipped", "Agent room: turned off (SBGD_AGENTS=off)", 1.0)
+            self._mark("agents", "skipped")
+            return
+        try:
+            info = install.install(self.layout, lambda stage, frac, msg: self.emit("agents", stage, "progress", msg, frac))
+        except Exception as exc:  # network, disk, fingerprint: all recoverable later
+            msg = f"Agent room not installed: {str(exc)[:160]}. Everything else works; retry from the agent room."
+            self.emit("agents", "done", "unavailable", msg, 1.0, error=str(exc)[:300])
+            self._mark("agents", "unavailable", message=str(exc)[:300])
+            return
+        if info.get("already"):
+            self.emit("agents", "done", "skipped", f"Agent room ready ({info['version']}).", 1.0)
+        else:
+            self.emit("agents", "done", "ok", f"Agent room installed ({info['version']}, fingerprint verified).", 1.0)
+        self._mark("agents", "ok", version=info["version"])
 
     def step_database(self) -> None:
         db = self.layout.database

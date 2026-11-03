@@ -15,7 +15,7 @@ buffered and flushed then).
 | `run_id` | string | yes | one id per bootstrap run |
 | `component` | string | yes | `bootstrap`, `python`, `directories`, `venv`, `dependencies`, `database`, `service`, `health` |
 | `stage` | string | yes | sub-step, e.g. `begin`, `check`, `create`, `pip`, `download`, `migrate`, `spawn`, `verify`, `done` |
-| `status` | string | yes | `started`, `progress`, `log`, `ok`, `skipped`, `warning`, `error` |
+| `status` | string | yes | `started`, `progress`, `log`, `ok`, `skipped`, `warning`, `unavailable` (an optional step ended without its feature, setup goes on), `error` |
 | `message` | string | yes | human-readable, shown in the UI |
 | `progress` | float | no | overall progress 0..1, never decreasing |
 | `details` | object | no | extra data: `hint` (what to do), `tail` (last log lines), paths, versions |

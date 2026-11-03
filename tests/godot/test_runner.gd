@@ -41,6 +41,8 @@ func _run() -> void:
 	OS.set_environment("SBGD_VOICE_PROVIDER", "fake")
 	OS.set_environment("SBGD_ASSISTANT_PROVIDER", "fake")
 	OS.set_environment("SBGD_KEYRING_SERVICE", "SecondBrainGD-test")  # never the user's real key
+	# The agent room installs from a tiny local fixture (a fake app-server), never the 95 MB download.
+	OS.set_environment("SBGD_AGENTS_MANIFEST", ProjectSettings.globalize_path("res://tests/fixtures/agents/manifest.json"))
 	SbSettings.set_value("assistant", "speaks", true)
 	SbSettings.set_value("onboarding", "voice_done", false)
 	if OS.get_environment("SBGD_HOME") == "":
@@ -115,6 +117,7 @@ func _e2e() -> void:
 	var setup: Control = app.current()
 	var max_progress := 0.0
 	var saw_running_dependency := false
+	var agents_row_status := ""
 	var deadline := Time.get_ticks_msec() + int(E2E_TIMEOUT_S * 1000.0)
 	while app.current_screen in ["setup", "onboarding"] and Time.get_ticks_msec() < deadline:
 		if app.current_screen == "onboarding":
@@ -131,6 +134,7 @@ func _e2e() -> void:
 			var dep: StepRow = rows["dependencies"]
 			if dep.status in ["started", "progress"]:
 				saw_running_dependency = true
+			agents_row_status = (rows["agents"] as StepRow).status
 			var err_panel: PanelContainer = setup.get("error_panel")
 			if err_panel.visible:
 				var lbl: Label = setup.get("error_label")
@@ -141,6 +145,7 @@ func _e2e() -> void:
 	if app.current_screen != "brain":
 		return
 	check(max_progress > 0.5, "progress bar moved (max %.2f)" % max_progress)
+	check(agents_row_status in ["ok", "skipped"], "setup installs the agent room, fingerprint verified (%s)" % agents_row_status)
 	if not was_installed:
 		check(saw_running_dependency, "dependency step was shown running")
 
@@ -258,6 +263,28 @@ func _e2e() -> void:
 			rel_id = str(id)
 	var rres: Dictionary = await app.backend.api.call_api("/brain/notes/" + rel_id.uri_encode() + "/related")
 	check(rres["ok"] and (rres["data"] as Dictionary).has("related"), "a note's related ideas are served")
+	# Agent room: a folder, a session against the fake app-server, an approval, the change applied.
+	brain.call("set_view", "agents")
+	var av: AgentsView = brain.get("agents_view")
+	await av.refresh()
+	check(bool(av.info.get("installed", false)), "the agent room is installed and ready")
+	var work := ProjectSettings.globalize_path("user://agent-e2e-%d" % Time.get_ticks_msec())
+	DirAccess.make_dir_recursive_absolute(work)
+	var data_refused: bool = await av.add_folder(OS.get_environment("SBGD_HOME"))
+	check(not data_refused, "the app's own data folder cannot be given to agents")
+	check(await av.add_folder(work), "a project folder is added to the agent room")
+	check(await av.start_session(work), "an agent session starts in that folder")
+	var ready_agent := await wait_until(func() -> bool: return av.session_status == "idle", 10.0)
+	check(ready_agent, "the agent is ready (%s)" % av.session_status)
+	await av.send_message("please write a notes file")
+	var asked := await wait_until(func() -> bool: return not av.pending.is_empty(), 10.0)
+	check(asked and not FileAccess.file_exists(work.path_join("notes.md")), "a file change waits for approval, nothing written yet")
+	check(av.approvals_box.get_child_count() == 1, "an approval card is shown")
+	await av.decide(int((av.pending[0] as Dictionary)["request_id"]), "accept")
+	var applied := await wait_until(func() -> bool: return av.session_status == "idle" and FileAccess.file_exists(work.path_join("notes.md")), 10.0)
+	check(applied, "after approval the change is applied and the turn completes")
+	check(av.transcript.get_parsed_text().contains("Fait."), "the agent's reply streams into the transcript")
+	brain.call("set_view", "graph")
 	# Voice: a real session through the engine (fake provider), audio pushed through the real encoder.
 	var voice_before := graph.node_count("note")
 	var started: bool = await brain.call("start_voice", false)
