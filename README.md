@@ -1,0 +1,98 @@
+# Second Brain GD
+
+**Your knowledge. Your system. Your control.**
+
+Second Brain GD is an open-source, local-first personal knowledge environment. Godot is the user interface,
+a local Python engine runs the services, and everything is stored in your own user folder.
+
+> Status: **Loop 0**. The foundation works end to end: setup wizard, Python bootstrap, SQLite, local API and
+> System Console. Knowledge features (notes, search, graph) start in Loop 1. See [STATUS.md](STATUS.md).
+
+The repository is **private** during development.
+
+## Quick start on Windows
+
+### 1. Prerequisites
+
+| Tool | Version | Where |
+|---|---|---|
+| Godot | 4.7 (standard build, not .NET) | https://godotengine.org/download/windows/ |
+| Python | 3.12 or 3.13 | https://www.python.org/downloads/ |
+| Git | any recent | https://git-scm.com/download/win |
+
+When installing Python from python.org, tick **"Add python.exe to PATH"**. The Microsoft Store Python 3.12/3.13
+also works (tested). Nothing needs administrator rights, and Docker is not used.
+
+### 2. Clone and open
+
+```powershell
+git clone git@github.com:sonixz/second-brain-gd.git C:\git\second-brain-gd
+```
+
+Start Godot, choose **Import**, select `C:\git\second-brain-gd\project.godot`, then press **Run** (F5).
+
+### 3. Press Setup
+
+The app finds Python, creates a private virtual environment, installs the locked dependencies (internet access
+to PyPI is needed the first time, about 30 MB), creates the SQLite database, starts the local API and verifies it.
+Then the **System Console** opens.
+
+On the next launch the welcome screen says **Installed** and **Start** takes a few seconds: completed steps are
+verified and skipped.
+
+### Where are my files?
+
+| What | Location on Windows |
+|---|---|
+| Everything | `%LOCALAPPDATA%\SecondBrainGD` |
+| Database | `...\data\second_brain.sqlite3` |
+| Logs | `...\logs\bootstrap.log`, `...\logs\server.log` |
+| Settings | `...\config.json` (for example `{"port": 8765}`) |
+
+Linux uses `~/.local/share/second-brain-gd`, macOS `~/Library/Application Support/SecondBrainGD`.
+Set `SBGD_HOME` to use another folder. Nothing is ever written inside the repository.
+
+## Command line (optional)
+
+The bootstrap runs without Godot too:
+
+```powershell
+python engine\bootstrap.py detect     # is this Python compatible?
+python engine\bootstrap.py setup      # install / repair, then start the API
+python engine\bootstrap.py status     # show install_state.json
+python engine\bootstrap.py stop       # stop the API
+```
+
+With the Microsoft Store Python, create the data folder first (`mkdir %LOCALAPPDATA%\SecondBrainGD`);
+see [troubleshooting](docs/troubleshooting.md#microsoft-store-python).
+
+## Tests
+
+```powershell
+.\tools\test.ps1                                                  # Python tests
+.\tools\test.ps1 -Godot C:\path\Godot_v4.7.2-stable_win64_console.exe   # + Godot end-to-end
+```
+
+On Linux or WSL: `./tools/test.sh` (set `GODOT=` if `godot` is not on PATH).
+The Python tests create a real virtual environment and start the real API in a temporary folder.
+The Godot test presses the real Setup button headless and checks the System Console values.
+
+## Repository layout
+
+```
+scenes/        Godot screens (startup/, dashboard/) and UI components
+scripts/       GDScript: core/ (app, theme, paths), setup/ (Python locator, bootstrap runner), monitoring/ (API client)
+engine/        Python: bootstrap.py, installer/, database/ (+ migrations), api/, monitoring/
+tests/         python/ (unittest), godot/ (headless end-to-end)
+public/        static landing page (open public/index.html, no build)
+docs/          architecture/, troubleshooting, screenshots
+tools/         test.sh, test.ps1, capture.sh (screenshots on a private virtual display)
+```
+
+## Documentation
+
+- [Architecture overview](docs/architecture/overview.md)
+- [Event protocol (Python → Godot)](docs/architecture/events-protocol.md)
+- [Process lifecycle](docs/architecture/process-lifecycle.md)
+- [Troubleshooting](docs/troubleshooting.md)
+- [STATUS](STATUS.md) · [BACKLOG](BACKLOG.md) · [DEVLOG](DEVLOG.md)

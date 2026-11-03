@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Second Brain GD</title>
+  <meta name="description" content="Second Brain GD: an open-source, local-first personal knowledge system. A Godot desktop app with a local Python engine. Your knowledge. Your system. Your control.">
+  <meta name="theme-color" content="#0a1310">
+  <meta property="og:title" content="Second Brain GD">
+  <meta property="og:description" content="Your knowledge. Your system. Your control.">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <nav class="nav" aria-label="Main">
+      <a class="brand" href="#top" aria-label="Second Brain GD, back to top">
+        <img src="assets/logo.svg" alt="" width="32" height="32">
+        <span>SECOND BRAIN <b>GD</b></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">
+        <span class="sr-only">Menu</span><span aria-hidden="true">☰</span>
+      </button>
+      <ul id="nav-links" class="nav-links">
+        <li><a href="#vision">Vision</a></li>
+        <li><a href="#how">How it works</a></li>
+        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#roadmap">Roadmap</a></li>
+        <li><a href="#journal">Journal</a></li>
+        <li><a href="#source" class="nav-cta">Source</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top">
+      <canvas id="graph" class="hero-graph" aria-hidden="true"></canvas>
+      <div class="hero-inner">
+        <p class="overline">Open source · Local-first · In early development</p>
+        <h1>SECOND BRAIN <span class="accent">GD</span></h1>
+        <p class="tagline">Your knowledge. Your system. Your control.</p>
+        <p class="lead">A personal knowledge environment that runs on your own computer. A visual desktop
+          app built with Godot, a local Python engine, and an infrastructure you can actually see.</p>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="#how">See how it works</a>
+          <a class="btn" href="#roadmap">What works today</a>
+        </div>
+        <p class="hero-note"><span class="badge badge-done">Implemented</span> Loop 0: setup wizard, local engine and System Console.</p>
+      </div>
+    </section>
+
+    <section id="vision" class="section">
+      <div class="container">
+        <p class="overline">Vision</p>
+        <h2>A second brain you own, end to end</h2>
+        <div class="cards cards-3">
+          <article class="card">
+            <h3>Local-first</h3>
+            <p>Your notes and your database live in your user folder, on your disk. No account, no cloud
+              service required, no Docker to start.</p>
+          </article>
+          <article class="card">
+            <h3>Visual and interactive</h3>
+            <p>Godot gives a fluid, animated interface. Knowledge will be explored as a living graph,
+              not only as lists of files.</p>
+          </article>
+          <article class="card">
+            <h3>Transparent</h3>
+            <p>The System Console shows what really runs: the local API, the database, the Python
+              environment, storage and process metrics. Real measurements only.</p>
+          </article>
+        </div>
+        <ul class="principles" aria-label="Principles">
+          <li>Systems thinking</li><li>AI-native, agentic development</li><li>Data ownership</li>
+          <li>Open source</li><li>Modular and extensible</li><li>Premium experience</li>
+        </ul>
+      </div>
+    </section>
+
+    <section id="how" class="section section-alt">
+      <div class="container">
+        <p class="overline">How it works</p>
+        <h2>From clone to a running system in a few clicks</h2>
+        <ol class="steps">
+          <li><span class="step-n">1</span><div><h3>Open the project in Godot</h3>
+            <p>Run it. The welcome screen reads the install state from disk.</p></div></li>
+          <li><span class="step-n">2</span><div><h3>Press Setup</h3>
+            <p>Godot finds a compatible Python (3.12 or 3.13) and starts the bootstrap without freezing the interface.</p></div></li>
+          <li><span class="step-n">3</span><div><h3>Watch the real installation</h3>
+            <p>Virtual environment, hash-locked dependencies, SQLite migrations. Each step streams
+              structured events, progress and logs.</p></div></li>
+          <li><span class="step-n">4</span><div><h3>Verified, then ready</h3>
+            <p>The local API starts on 127.0.0.1, answers <code>/health</code> and enforces its token
+              before success is shown. Reopening the app skips what is already done.</p></div></li>
+        </ol>
+        <div class="shots">
+          <figure><img src="assets/screens/01-welcome.png" alt="Welcome screen with the animated knowledge graph logo and the Setup button" loading="lazy" width="1280" height="800"><figcaption>Welcome</figcaption></figure>
+          <figure><img src="assets/screens/03-setup-installing.png" alt="Setup screen during installation: steps with states, progress at 36 percent and a live log" loading="lazy" width="1280" height="800"><figcaption>Setup, live</figcaption></figure>
+          <figure><img src="assets/screens/05-system-console.png" alt="System Console showing API, database, Python, storage and process cards with real values" loading="lazy" width="1280" height="800"><figcaption>System Console</figcaption></figure>
+        </div>
+        <p class="caption-note">Screenshots captured from the real application during Loop 0.</p>
+      </div>
+    </section>
+
+    <section id="architecture" class="section">
+      <div class="container">
+        <p class="overline">Architecture</p>
+        <h2>Godot in front, Python behind, your disk underneath</h2>
+        <div class="arch" role="img" aria-label="Architecture diagram: the Godot app launches the bootstrap and reads its JSON Lines events, then talks to the local FastAPI service over 127.0.0.1 with a token; the service uses SQLite in the user data folder.">
+          <div class="arch-node arch-godot"><h3>Godot app</h3><p>Welcome · Setup · System Console</p><p class="muted">GDScript, GL Compatibility</p></div>
+          <div class="arch-link"><span>launches · tails JSON Lines events</span></div>
+          <div class="arch-node arch-boot"><h3>Bootstrap</h3><p>Python standard library only</p><p class="muted">detect · venv · pip --require-hashes · migrate · start · verify</p></div>
+          <div class="arch-link"><span>starts · HTTP on 127.0.0.1 + bearer token</span></div>
+          <div class="arch-node arch-api"><h3>Local API</h3><p>FastAPI + uvicorn</p><p class="muted">/health · /system/status · /system/storage · /system/events</p></div>
+          <div class="arch-link"><span>reads · writes</span></div>
+          <div class="arch-node arch-data"><h3>Your data folder</h3><p>SQLite · logs · venv</p><p class="muted">%LOCALAPPDATA%\SecondBrainGD on Windows</p></div>
+        </div>
+        <p class="note">The engine stops when the app closes, and also on its own if the app crashes (parent-process watchdog).</p>
+      </div>
+    </section>
+
+    <section id="roadmap" class="section section-alt">
+      <div class="container">
+        <p class="overline">Features roadmap</p>
+        <h2>What works, what is coming, what is an idea</h2>
+        <p class="legend"><span class="badge badge-done">Implemented</span> works today and is tested ·
+          <span class="badge badge-wip">In development</span> next loops ·
+          <span class="badge badge-idea">Future concept</span> direction, not a promise</p>
+        <div class="roadmap">
+          <div class="road-col">
+            <h3><span class="badge badge-done">Implemented</span></h3>
+            <ul>
+              <li>Setup wizard with real progress, logs and retry</li>
+              <li>Python detection with clear guidance when missing</li>
+              <li>Isolated venv and hash-verified, pinned dependencies</li>
+              <li>SQLite with versioned migrations</li>
+              <li>Local API on 127.0.0.1 with token auth</li>
+              <li>System Console with measured metrics</li>
+              <li>Idempotent, resumable install; no orphan processes</li>
+              <li>Automated tests on Linux and native Windows</li>
+            </ul>
+          </div>
+          <div class="road-col">
+            <h3><span class="badge badge-wip">In development</span></h3>
+            <ul>
+              <li>Notes: create, edit and store knowledge items</li>
+              <li>Full-text search</li>
+              <li>Knowledge graph view of linked notes</li>
+              <li>Packaged Windows build (no source checkout)</li>
+              <li>Guided Python installation</li>
+            </ul>
+          </div>
+          <div class="road-col">
+            <h3><span class="badge badge-idea">Future concept</span></h3>
+            <ul>
+              <li>Voice capture and transcription</li>
+              <li>Local language models and embeddings</li>
+              <li>Semantic and vector search</li>
+              <li>Assistant agents over your knowledge</li>
+              <li>Connectors (Microsoft 365, GitHub)</li>
+              <li>Optional sync you control</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="open-source" class="section">
+      <div class="container narrow">
+        <p class="overline">Open-source philosophy</p>
+        <h2>Readable, inspectable, yours to change</h2>
+        <p>Second Brain GD is developed in the open spirit: plain formats, a documented event protocol, and an
+          engine you can read in an afternoon. Nothing is hidden behind a service. Metrics that cannot be measured
+          say “Not available” instead of guessing.</p>
+        <p>The repository is private while the foundations settle. The license will be chosen before the first
+          public release.</p>
+      </div>
+    </section>
+
+    <section id="journal" class="section section-alt">
+      <div class="container narrow">
+        <p class="overline">Development journal</p>
+        <h2>Built in loops</h2>
+        <article class="entry">
+          <header><span class="badge badge-done">Loop 0</span> <time datetime="2026-11-02">November 2, 2026</time></header>
+          <h3>Foundation, bootstrap and System Console</h3>
+          <p>The first increment works end to end: Godot finds Python, a standard-library bootstrap builds the
+            environment, migrates SQLite and starts a local FastAPI service, and the System Console shows live,
+            measured state. Tested headless on Linux (Python 3.12) and native Windows (Microsoft Store Python 3.13),
+            including a fix for the Store's silent AppData redirection.</p>
+        </article>
+      </div>
+    </section>
+
+    <section id="source" class="section">
+      <div class="container narrow center">
+        <p class="overline">GitHub &amp; documentation</p>
+        <h2>Read the code, run it yourself</h2>
+        <p>The README covers Windows setup step by step. Architecture, the event protocol, the process
+          lifecycle and troubleshooting are documented in the repository’s <code>docs/</code> folder.</p>
+        <div class="hero-actions center">
+          <a class="btn btn-primary" href="https://github.com/sonixz/second-brain-gd" rel="noopener">GitHub repository</a>
+          <a class="btn" href="https://github.com/sonixz/second-brain-gd/tree/main/docs" rel="noopener">Documentation</a>
+        </div>
+        <p class="muted small">Access is limited while the repository is private.</p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span><img src="assets/logo.svg" alt="" width="20" height="20"> Second Brain GD</span>
+      <span class="muted">Local-first knowledge system · Godot + Python</span>
+    </div>
+  </footer>
+  <script src="js/main.js"></script>
+</body>
+</html>

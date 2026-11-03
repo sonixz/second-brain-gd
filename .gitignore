@@ -1,0 +1,27 @@
+# Godot
+.godot/
+/android/
+*.translation
+export/
+export_presets.cfg
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+
+# Local user data must never be committed (it lives in the OS user data folder)
+/data/
+*.sqlite3
+*.sqlite3-*
+api_token
+.env
+.env.*
+!.env.example
+
+# OS / editors
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
