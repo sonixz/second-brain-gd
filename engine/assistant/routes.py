@@ -16,6 +16,7 @@ from engine.voice import secrets
 class ChatIn(BaseModel):
     text: str = Field(min_length=1, max_length=8000)
     space_id: str | None = None
+    spoken: bool = False  # the message came by voice: the reply is read aloud, so it must be short
 
 
 class SpeakIn(BaseModel):
@@ -76,7 +77,7 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
 
     @r.post("/chat")
     def post_chat(body: ChatIn) -> dict[str, Any]:
-        return run(core.chat, body.text, body.space_id)
+        return run(core.chat, body.text, body.space_id, body.spoken)
 
     @r.post("/briefing")
     def post_briefing(force: bool = False) -> dict[str, Any]:

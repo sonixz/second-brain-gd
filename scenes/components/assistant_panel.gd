@@ -26,6 +26,10 @@ var _dots_t := 0.0
 
 
 var last_ui_actions: Array = []
+## What can be read again: every answer shown, newest last (texts only), and the last review.
+var spoken_history: Array[String] = []
+var last_review := ""
+var replayed := ""
 
 func setup(a: SbApp, b: Control) -> AssistantPanel:
 	app = a
@@ -136,7 +140,7 @@ func send(text: String, spoken: bool = false) -> void:
 		return
 	_add_bubble("user", t, [], [])
 	_set_busy(true)
-	var payload := {"text": t}
+	var payload := {"text": t, "spoken": spoken}
 	var focus := str(brain.get("current_space"))
 	if focus != "":
 		payload["space_id"] = focus
@@ -158,7 +162,11 @@ func send(text: String, spoken: bool = false) -> void:
 		brain_changed.emit()
 	var ui: Array = d.get("ui_actions", [])
 	last_ui_actions = ui
-	say(last_reply, spoken)
+	var replaying := false
+	for u in ui:
+		replaying = replaying or str((u as Dictionary).get("action", "")) == "replay"
+	if not replaying:
+		say(last_reply, spoken)
 	if not ui.is_empty():
 		ui_requested.emit(ui)
 
@@ -179,6 +187,23 @@ func run_review() -> bool:
 	app.audio.play("setup_complete", 0.0, -6.0)
 	say(text)
 	return true
+
+
+## « relis-moi ça »: the answer before the request that asked for it, or the last weekly review.
+func replay(which: String = "last") -> void:
+	var text := last_review
+	if which != "review":
+		# The newest entry is the reply to « relis-moi ça » itself; read the one before it.
+		text = spoken_history[-2] if spoken_history.size() >= 2 else (spoken_history[-1] if not spoken_history.is_empty() else "")
+	replay_text(text)
+
+
+func replay_text(text: String) -> void:
+	if text.strip_edges() == "":
+		return
+	app.audio.stop_voice()
+	replayed = text
+	say(text, true)
 
 
 func say(text: String, force: bool = false) -> void:
@@ -251,6 +276,21 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array) -> vo
 	rt.text = _linkify(text)
 	rt.meta_clicked.connect(func(meta: Variant) -> void: note_requested.emit(str(meta)))
 	inner.add_child(rt)
+	if not mine and text.strip_edges() != "":
+		spoken_history.append(text)
+		if role == "review":
+			last_review = text
+		var tools := HBoxContainer.new()
+		tools.alignment = BoxContainer.ALIGNMENT_END
+		inner.add_child(tools)
+		var play := Button.new()
+		play.text = "▶ Replay"
+		play.tooltip_text = "Read this answer aloud again (free: the audio is cached)"
+		play.theme_type_variation = "GhostButton"
+		play.add_theme_font_size_override("font_size", 12)
+		play.set_meta("sfx", "none")
+		play.pressed.connect(func() -> void: replay_text(text))
+		tools.add_child(play)
 	for item in actions:
 		var a: Dictionary = item
 		var line := HBoxContainer.new()

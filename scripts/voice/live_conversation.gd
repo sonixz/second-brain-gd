@@ -51,6 +51,7 @@ func _ready() -> void:
 	add_child(capture)
 	capture.chunk.connect(_on_mic)
 	stream.audio.connect(func(pcm: PackedByteArray) -> void: player.push_pcm(pcm))
+	app.audio.voice_speed_changed.connect(func(s: float) -> void: player.set_speed(s))
 	stream.audio_start.connect(func() -> void:
 		player.new_answer()
 		_set_state("speaking"))
@@ -142,6 +143,7 @@ func start(use_mic: bool = true) -> bool:
 	cost_usd = 0.0
 	minutes = 0.0
 	headphones = bool(SbSettings.get_value("voice", "headphones", false))
+	player.set_speed(app.audio.voice_speed)
 	active = true
 	_pill.visible = true
 	_set_state("connecting")

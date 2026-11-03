@@ -327,6 +327,20 @@ func _e2e() -> void:
 	var talked := await wait_until(func() -> bool: return ap.messages_shown >= replies_before + 2 and ap.last_reply.contains("fake transcript"), 20.0)
 	check(talked, "releasing F8 sends the speech to the assistant (%s)" % ap.last_reply.left(60))
 	check(not (brain.get("listening_overlay") as Control).visible, "the listening indicator hides after sending")
+	# Voice fixes (Loop 8b): replay by voice, speed by voice and setting, replay buttons.
+	var said_before := ap.last_reply
+	await ap.send("Relis-moi ça", true)
+	check(ap.replayed == said_before and ap.replayed != "", "« relis-moi ça » reads the previous answer again (%s)" % ap.replayed.left(40))
+	var speed_before := app.audio.voice_speed
+	await ap.send("Parle plus vite", true)
+	await process_frame
+	check(app.audio.voice_speed > speed_before, "« parle plus vite » speeds the voice up (%.2f → %.2f)" % [speed_before, app.audio.voice_speed])
+	app.audio.set_voice_speed(SbAudio.VOICE_SPEED_DEFAULT)
+	var replay_buttons := 0
+	for b2 in ap.list.find_children("*", "Button", true, false):
+		if (b2 as Button).text == "▶ Replay":
+			replay_buttons += 1
+	check(replay_buttons >= 3, "every answer has a replay button (%d)" % replay_buttons)
 	# Live conversation (Loop 7b): speech to speech through the engine (fake Realtime upstream).
 	SbSettings.set_value("voice", "headphones", true)  # the dummy audio driver never drains playback
 	await brain.call("set_view", "graph")

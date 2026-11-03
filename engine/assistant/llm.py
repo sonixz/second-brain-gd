@@ -203,6 +203,13 @@ class FakeChat:
             call = {"id": "call_ui", "type": "function",
                     "function": {"name": "ui_open_view", "arguments": json.dumps({"view": view})}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith(("relis", "répète", "repete")) and tools:
+            call = {"id": "call_replay", "type": "function", "function": {"name": "ui_replay", "arguments": "{}"}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if "plus vite" in low and tools:
+            call = {"id": "call_speed", "type": "function",
+                    "function": {"name": "ui_set_voice_speed", "arguments": json.dumps({"change": "faster"})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if low.startswith(("annule", "undo")) and tools:
             call = {"id": "call_undo", "type": "function", "function": {"name": "undo_last_action", "arguments": "{}"}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}

@@ -42,9 +42,9 @@ CLAIM_NUDGE = ("Tu viens d'affirmer une action sans appeler d'outil dans ce tour
 HISTORY = 20
 
 VOICE_TONES = {
-    "morning": "Voix chaleureuse, calme et souriante, comme une assistante bienveillante le matin. Débit posé.",
+    "morning": "Voix chaleureuse et souriante, débit vif et naturel, comme une collègue efficace.",
     "focus": "Voix claire, concise et posée, qui va droit au but sans précipitation.",
-    "evening": "Voix douce et détendue, chaleureuse, rythme lent de fin de journée.",
+    "evening": "Voix douce et chaleureuse, débit naturel, sans traîner.",
     "forest": "Voix calme et naturelle, apaisante.",
 }
 ACCENT = " Accent québécois naturel et léger, français du Québec."
@@ -66,13 +66,14 @@ Règles:
   « montre, ouvre, affiche, va dans, lance, mets », APPELLE l'outil d'interface correspondant:
   une vue (graphe, aujourd'hui, projets, agents) = ui_open_view; un projet = ui_open_project (id via
   get_structure); une note = ui_open_note (trouve son id avec search_notes d'abord); thème = ui_set_theme;
-  son = ui_set_volume; la revue de la semaine = ui_start_weekly_review; « annule ça » = undo_last_action.
+  son = ui_set_volume; la revue de la semaine = ui_start_weekly_review; « annule ça » = undo_last_action;
+  « relis-moi ça / répète » = ui_replay (rien d'autre à dire); « parle plus vite / moins vite » = ui_set_voice_speed.
   « Qu'est-ce que j'ai aujourd'hui? Affiche-le » = get_today ET ui_open_view(today).
   INTERDIT: dire « je l'ouvre », « c'est affiché » ou « c'est lancé » sans avoir appelé l'outil ui_* dans ce
   tour. Après une action d'interface, réponds en une phrase courte (elle est lue à voix haute).
 - Pour une question de fond, cherche dans les notes (search_notes) ET dans les documents importés (search_sources).
   Cite un document par le titre de sa fiche entre [[ ]].
-- Réponses courtes et parlées (2 à 5 phrases), sauf si on te demande du détail. Pas de listes à puces longues, pas d'emojis.
+- Réponses courtes et directes (1 à 3 phrases), sauf si on te demande du détail. Pas de listes à puces longues, pas d'emojis.
 - Ne refais jamais une action déjà indiquée comme effectuée dans l'historique.
 - Tout ce que tu modifies est visible et annulable: dis brièvement ce que tu as fait."""
 
@@ -294,6 +295,10 @@ UI_TOOLS = [
      "parameters": {"type": "object", "properties": {"change": {"type": "string", "enum": ["up", "down", "mute", "unmute"]}}, "required": ["change"]}}},
     {"type": "function", "function": {"name": "ui_start_weekly_review", "description": "Start the guided weekly review on screen.",
      "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {"name": "ui_replay", "description": "Read aloud again a previous answer: the last one (default) or the last weekly review.",
+     "parameters": {"type": "object", "properties": {"which": {"type": "string", "enum": ["last", "review"]}}}}},
+    {"type": "function", "function": {"name": "ui_set_voice_speed", "description": "Make the spoken voice faster, slower, or back to normal.",
+     "parameters": {"type": "object", "properties": {"change": {"type": "string", "enum": ["faster", "slower", "normal"]}}, "required": ["change"]}}},
     {"type": "function", "function": {"name": "undo_last_action", "description": "Undo the most recent change the assistant made (a filed note, a task, a list item...).",
      "parameters": {"type": "object", "properties": {}}}},
 ]
@@ -329,6 +334,14 @@ def _ui_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any]) -> dict[
         if change not in ("up", "down", "mute", "unmute"):
             return {"error": "change must be up, down, mute or unmute"}
         act = {"action": "set_volume", "change": change}
+    elif name == "ui_replay":
+        which = str(args.get("which") or "last")
+        act = {"action": "replay", "which": which if which in ("last", "review") else "last"}
+    elif name == "ui_set_voice_speed":
+        change = str(args.get("change", ""))
+        if change not in ("faster", "slower", "normal"):
+            return {"error": "change must be faster, slower or normal"}
+        act = {"action": "set_voice_speed", "change": change}
     else:  # ui_start_weekly_review
         act = {"action": "weekly_review"}
     _UI["actions"].append(act)
@@ -469,7 +482,12 @@ def project_context(conn: sqlite3.Connection, space_id: str) -> str:
 _CLIENT: dict[str, Any] = {}  # the current request's client, for tools that call the API (semantic search)
 
 
-def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None = None) -> dict[str, Any]:
+SPOKEN_RULE = ("\nCe message est arrivé à la VOIX et ta réponse sera lue à voix haute: une ou deux phrases courtes, "
+               "l'essentiel seulement. Le détail reste à l'écran.")
+
+
+def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None = None,
+         spoken: bool = False) -> dict[str, Any]:
     _CLIENT["c"] = client
     s = settings(conn)
     conversation = today_conversation()
@@ -480,7 +498,8 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
         except brain.NotFound:
             pass
     now = datetime.now().strftime("%A %Y-%m-%d %H:%M")
-    messages: list[dict[str, Any]] = [{"role": "system", "content": PERSONA + f"\nNous sommes le {now}." + focus}]
+    messages: list[dict[str, Any]] = [{"role": "system", "content": PERSONA + f"\nNous sommes le {now}." + focus
+                                        + (SPOKEN_RULE if spoken else "")}]
     for m in history(conn, conversation, HISTORY):
         content = m["content"]
         acts = (m.get("meta") or {}).get("actions") or []

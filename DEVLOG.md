@@ -1,5 +1,27 @@
 # Devlog
 
+## Loop 8b — Voice fixes (2026-11-03)
+
+- **Owner's feedback:** « il parle très lentement » and « je peux pas relire le weekly review ».
+- **Pace is now controlled in the app.** The model's own pace is unreliable: the same sentence with the
+  same instructions took 6.35 s, then 9.5 s. The `speed` parameter of gpt-4o-mini-tts barely changes it
+  (6.55 → 6.36 s).
+  - The Voice bus now plays faster and an `AudioEffectPitchShift` keeps the voice's natural height.
+  - The default is 1.2×, adjustable from 0.8× to 1.6× (slider in Voice settings).
+  - « parle plus vite / moins vite » changes it by voice.
+  - The live conversation (F9) uses the same speed.
+- **Shorter answers.**
+  - Messages that arrive by voice carry `spoken: true`, and the assistant then answers in one or two
+    sentences.
+  - The general rule went from 2–5 sentences to 1–3.
+  - The voice tones no longer ask for a slow pace.
+- **Replay.**
+  - Every answer, briefing and review has a **▶ Replay** button. It is free, because the audio is
+    cached.
+  - « relis-moi ça » reads the previous answer again (`ui_replay`), and « relis la revue » reads the last
+    weekly review.
+- **Tests.** Python 109 and Godot 114, on Linux and native Windows.
+
 ## Loop 7b — Live conversation (2026-11-03)
 
 - **What it is.** Speech to speech through OpenAI Realtime, relayed by the engine at `/voice/live`.

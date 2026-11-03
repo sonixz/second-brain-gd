@@ -6,6 +6,7 @@ extends Node
 
 signal track_changed(title: String)
 signal voice_finished
+signal voice_speed_changed(speed: float)
 
 const AUDIO_DIR := "res://assets/audio"
 const BUSES := ["Music", "SFX", "Ambience", "Voice"]
@@ -34,6 +35,14 @@ var _sfx_cache: Dictionary = {}
 var _last_hover_ms := 0
 var _voice: AudioStreamPlayer
 var _duck: Tween
+## Spoken voice speed. The model's own pace varies a lot between generations (measured
+## 6.4 to 9.5 s for the same sentence), so speed is applied here: faster playback, with a
+## pitch shift on the Voice bus so the voice keeps its natural height.
+const VOICE_SPEED_DEFAULT := 1.2
+const VOICE_SPEED_MIN := 0.8
+const VOICE_SPEED_MAX := 1.6
+var voice_speed := VOICE_SPEED_DEFAULT
+var _pitch: AudioEffectPitchShift
 
 
 func _ready() -> void:
@@ -62,6 +71,15 @@ func _ready() -> void:
 	_voice.bus = "Voice"
 	_voice.finished.connect(_on_voice_finished)
 	add_child(_voice)
+	var vidx := AudioServer.get_bus_index("Voice")
+	for i in AudioServer.get_bus_effect_count(vidx):
+		if AudioServer.get_bus_effect(vidx, i) is AudioEffectPitchShift:
+			_pitch = AudioServer.get_bus_effect(vidx, i) as AudioEffectPitchShift
+	if _pitch == null:
+		_pitch = AudioEffectPitchShift.new()
+		_pitch.oversampling = 8
+		AudioServer.add_bus_effect(vidx, _pitch)
+	set_voice_speed(float(SbSettings.get_value("audio", "voice_speed", VOICE_SPEED_DEFAULT)), false)
 	for i in 6:
 		var s := AudioStreamPlayer.new()
 		s.bus = "SFX"
@@ -240,6 +258,30 @@ func _on_press(b: BaseButton) -> void:
 
 
 # -------------------------------------------------------------------- voice
+func set_voice_speed(speed: float, save: bool = true) -> void:
+	voice_speed = clampf(snappedf(speed, 0.05), VOICE_SPEED_MIN, VOICE_SPEED_MAX)
+	_voice.pitch_scale = voice_speed
+	_pitch.pitch_scale = 1.0 / voice_speed
+	var vidx := AudioServer.get_bus_index("Voice")
+	for i in AudioServer.get_bus_effect_count(vidx):
+		if AudioServer.get_bus_effect(vidx, i) == _pitch:
+			AudioServer.set_bus_effect_enabled(vidx, i, absf(voice_speed - 1.0) > 0.01)
+	voice_speed_changed.emit(voice_speed)
+	if save:
+		SbSettings.set_value("audio", "voice_speed", voice_speed)
+
+
+## "faster" / "slower" / "normal", from the voice command.
+func change_voice_speed(change: String) -> void:
+	match change:
+		"faster":
+			set_voice_speed(voice_speed + 0.15)
+		"slower":
+			set_voice_speed(voice_speed - 0.15)
+		_:
+			set_voice_speed(VOICE_SPEED_DEFAULT)
+
+
 func play_voice(mp3: PackedByteArray) -> bool:
 	if mp3.is_empty():
 		return false

@@ -513,6 +513,10 @@ func run_ui_actions(actions: Array) -> void:
 				assistant_panel.run_review()
 			"set_volume":
 				_change_volume(str(a.get("change", "")))
+			"replay":
+				assistant_panel.replay(str(a.get("which", "last")))
+			"set_voice_speed":
+				app.audio.change_voice_speed(str(a.get("change", "normal")))
 			"refresh":
 				await refresh_graph()
 				await refresh_spaces()
@@ -1337,6 +1341,23 @@ func _open_voice_settings() -> void:
 	panel.saved.connect(func(st: Dictionary) -> void:
 		if bool(st.get("configured", false)):
 			capture_hint.text = "Voice is ready. Click the microphone and speak.")
+	var speed_row := HBoxContainer.new()
+	speed_row.add_theme_constant_override("separation", 10)
+	box.add_child(speed_row)
+	var speed_label := Label.new()
+	speed_label.text = "Voice speed  %.2f×" % app.audio.voice_speed
+	speed_label.custom_minimum_size = Vector2(150, 0)
+	speed_row.add_child(speed_label)
+	var speed := HSlider.new()
+	speed.min_value = SbAudio.VOICE_SPEED_MIN
+	speed.max_value = SbAudio.VOICE_SPEED_MAX
+	speed.step = 0.05
+	speed.value = app.audio.voice_speed
+	speed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	speed.value_changed.connect(func(v: float) -> void:
+		app.audio.set_voice_speed(v)
+		speed_label.text = "Voice speed  %.2f×" % app.audio.voice_speed)
+	speed_row.add_child(speed)
 	var phones := CheckButton.new()
 	phones.text = "I use headphones (in a live conversation, just talk over the assistant to interrupt it)"
 	phones.button_pressed = bool(SbSettings.get_value("voice", "headphones", false))

@@ -22,6 +22,11 @@ func _ready() -> void:
 	add_child(_player)
 
 
+## Same speed as the read-aloud voice (the Voice bus corrects the pitch).
+func set_speed(speed: float) -> void:
+	_player.pitch_scale = speed
+
+
 func _ensure() -> void:
 	if not _player.playing:
 		_player.play()

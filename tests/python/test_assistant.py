@@ -194,6 +194,22 @@ class HandsFreeTests(unittest.TestCase):
         again = core.chat(self.conn, self.client, "bonjour")
         self.assertEqual(again["ui_actions"], [])  # actions never leak into the next turn
 
+    def test_replay_and_voice_speed_by_voice(self):
+        out = core.chat(self.conn, self.client, "Relis-moi ça")
+        self.assertEqual(out["ui_actions"], [{"action": "replay", "which": "last"}])
+        out = core.chat(self.conn, self.client, "Parle plus vite s'il te plaît")
+        self.assertEqual(out["ui_actions"], [{"action": "set_voice_speed", "change": "faster"}])
+        self.assertIn("error", core.run_tool(self.conn, "ui_set_voice_speed", {"change": "warp"}, []))
+        core._UI["actions"] = []
+        core.run_tool(self.conn, "ui_replay", {"which": "review"}, [])
+        self.assertEqual(core._UI["actions"], [{"action": "replay", "which": "review"}])
+
+    def test_spoken_messages_ask_for_a_short_answer(self):
+        core.chat(self.conn, self.client, "bonjour", spoken=True)
+        self.assertIn("VOIX", FakeChat.last_messages[0]["content"])
+        core.chat(self.conn, self.client, "bonjour")
+        self.assertNotIn("VOIX", FakeChat.last_messages[0]["content"])
+
     def test_ui_tools_validate_ids_and_values(self):
         acts = []
         self.assertIn("error", core.run_tool(self.conn, "ui_open_project", {"space_id": "nope"}, acts))
