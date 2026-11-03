@@ -16,6 +16,9 @@ from engine.events import utc_now
 from engine.sources import extract
 
 EMBED_MODEL_DEFAULT = "text-embedding-3-small"
+# Cosine floor for text-embedding-3-small: relevant FR->EN hits scored 0.41-0.47,
+# unrelated ones at most 0.16 (measured 2026-11-03).
+MIN_MEANING_SCORE = 0.25
 
 
 def _record(conn: sqlite3.Connection, status: str, message: str, **details: Any) -> None:
@@ -154,13 +157,15 @@ def embed_pending(conn: sqlite3.Connection, client: Any, model: str, batch: int 
     return {"embedded": len(rows)}
 
 
-def semantic_search(conn: sqlite3.Connection, client: Any, model: str, query: str, limit: int = 8) -> list[dict[str, Any]]:
+def semantic_search(conn: sqlite3.Connection, client: Any, model: str, query: str, limit: int = 8,
+                    min_score: float = MIN_MEANING_SCORE) -> list[dict[str, Any]]:
     rows = conn.execute("SELECT c.id, c.source_id, c.text, c.embedding, s.title, s.uri, s.note_id FROM source_chunks c"
                         " JOIN sources s ON s.id = c.source_id WHERE c.embedding IS NOT NULL AND c.model = ?", (model,)).fetchall()
     if not rows:
         return []
     q = client.embed(model, [query])[0]
-    scored = sorted(((_cos(q, _unpack(r["embedding"])), r) for r in rows), key=lambda x: x[0], reverse=True)[:limit]
+    scored = sorted(((_cos(q, _unpack(r["embedding"])), r) for r in rows), key=lambda x: x[0], reverse=True)
+    scored = [(s, r) for s, r in scored if s >= min_score][:limit]
     return [{"id": r["id"], "source_id": r["source_id"], "title": r["title"], "uri": r["uri"], "note_id": r["note_id"],
              "snippet": r["text"][:300], "score": round(s, 4)} for s, r in scored]
 

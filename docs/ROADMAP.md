@@ -55,7 +55,19 @@ And five work loops the app supports:
   prompts appear in the UI, and the brain is exposed as an MCP server. It needs an Anthropic API key per
   user, because claude.ai login is not allowed for third-party apps.
 
-### Loop 7 — Real conversation
+### Cadence from 2026-11-03
+
+Order agreed with the owner: the loops that need no decision come first.
+
+| Loop | Content | Blocked by |
+|---|---|---|
+| **5b — Meaning memory** | Embeddings are now enabled (`text-embedding-3-small`, FR to EN search measured). Embed notes as well as sources, show "related ideas" as automatic links in the graph, the assistant searches by meaning first, and the keyword fallback ignores common words | Nothing |
+| **6b — Responses API and Astra** | A Responses API adapter so reasoning models can use tools. `gpt-6-astra` cannot turn reasoning off and refuses tools in Chat Completions. Use it for the weekly review and deep project syntheses. A per-model capability table replaces `startswith("gpt-6")` | Nothing |
+| **7a — Hands-free** | UI tools for the assistant (open a view or a project, read aloud, confirm, undo, theme, volume), a push-to-talk key, spoken confirmation for destructive actions, a visible "listening" indicator | Wake word: local model choice (see below) |
+| **6c — Agent room, multi-provider** | One Godot agent room with interchangeable connectors: Codex (GPT, the user's existing OpenAI key) first, then Claude Code (Agent SDK, Anthropic key). The brain is exposed as an MCP server | Node.js and the Codex CLI on the user's PC, installed by the user |
+| **7b — Real conversation** | Realtime speech-to-speech with interruptions, streaming replies, voice-driven project mode | The owner's go on cost |
+
+### Loop 7 — Real conversation (now 7a and 7b above)
 - Realtime speech-to-speech with interruptions, streaming replies, and voice-driven project mode
   ("on travaille sur Atlas"). Same tools as the text assistant.
 
@@ -67,9 +79,10 @@ And five work loops the app supports:
 
 | Use | Now | To evaluate in Loop 4 |
 |---|---|---|
-| Filing, quick classification | **gpt-6-sol** (measured: 10/10 French captures, 1.45 s; gpt-4o 9/10; gpt-4o-mini 7/10) | — |
+| Filing, quick classification | **gpt-6-sol** (measured: 10/10 French captures, 1.45 s; gpt-6-astra 10/10 but 2.7 s; gpt-4o 9/10; gpt-4o-mini 7/10) | — |
 | Conversation with tools, briefing, weekly review | **gpt-4o** (correct with tools in 2.9 s; gpt-6 also correct but 4.4 s) | gpt-6 for the weekly review if depth matters more than speed |
-| Weekly review, deep synthesis | — | gpt-6 with reasoning (Responses API) |
+| Weekly review, deep synthesis | — | **gpt-6-astra** (reasoning low minimum; tools only through the Responses API, Loop 6b) |
 | Voice to text | gpt-realtime-whisper | gpt-live-transcribe (now enabled) |
 | Text to speech | gpt-4o-mini-tts, voice marin, Québec accent | — |
+| Embeddings | **text-embedding-3-small** (enabled 2026-11-03; FR question to EN source: 0.41–0.47, unrelated at most 0.16, floor 0.25) | Local model later |
 | Images (later, e.g. project covers) | — | gpt-image-2.5-sunburst |

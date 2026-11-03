@@ -17,6 +17,10 @@ class LLMError(RuntimeError):
     pass
 
 
+# Models whose lowest accepted reasoning_effort is not "none" (measured 2026-11-03).
+MIN_REASONING_EFFORT: dict[str, str] = {"gpt-6-astra": "low"}
+
+
 def estimate_cost(model: str, usage: dict[str, Any] | None) -> float | None:
     """None when the model's price is unknown (never invent a number)."""
     if not usage:
@@ -56,8 +60,12 @@ class OpenAIChat:
             payload["tools"] = tools
         if model.startswith("gpt-6"):
             # Reasoning models refuse function tools and custom temperatures in Chat Completions
-            # unless reasoning is off (measured 2026-11-02).
-            payload["reasoning_effort"] = "none"
+            # unless reasoning is off (measured 2026-11-02). Some (gpt-6-astra) cannot turn
+            # reasoning off at all: they get their lowest effort and the default temperature.
+            effort = MIN_REASONING_EFFORT.get(model, "none")
+            payload["reasoning_effort"] = effort
+            if effort != "none":
+                payload.pop("temperature", None)
         if json_mode:
             payload["response_format"] = {"type": "json_object"}
         data = json.loads(_post("/chat/completions", self.key, payload))
