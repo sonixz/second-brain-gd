@@ -78,7 +78,8 @@ p { margin: 0 0 1em; }
 .lead { color: var(--muted); font-size: 1.08rem; max-width: 640px; margin: 0 auto 1.8em; animation: rise .9s .2s ease both; }
 .hero-actions { display: flex; gap: 12px; flex-wrap: wrap; justify-content: center; animation: rise .9s .3s ease both; }
 .hero-note { margin-top: 2em; color: var(--muted); font-size: .92rem; }
-@keyframes rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+/* Movement only: the hero text is never invisible, even for link previews and crawlers. */
+@keyframes rise { from { transform: translateY(14px); } to { transform: none; } }
 
 .btn { display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 22px; border-radius: 12px;
   border: 1px solid var(--border); background: var(--panel-2); color: var(--text); text-decoration: none; font-weight: 600;
@@ -144,7 +145,7 @@ p { margin: 0 0 1em; }
 .footer-inner span { display: inline-flex; gap: 8px; align-items: center; }
 
 /* Reveal on scroll (enabled by JS only) */
-.js .reveal { opacity: 0; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
+.js .reveal { opacity: 0.35; transform: translateY(16px); transition: opacity .6s ease, transform .6s ease; }
 .js .reveal.visible { opacity: 1; transform: none; }
 
 @media (max-width: 960px) {

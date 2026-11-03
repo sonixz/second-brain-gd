@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Second Brain GD</title>
-  <meta name="description" content="Second Brain GD: an open-source, local-first personal knowledge system. A Godot desktop app with a local Python engine. Your knowledge. Your system. Your control.">
+  <meta name="description" content="Second Brain GD: a local-first personal knowledge system with an assistant that briefs you, answers from your notes and files every thought. A Godot desktop app with a local Python engine. Your knowledge. Your system. Your control.">
   <meta name="theme-color" content="#2b3c54">
   <meta property="og:title" content="Second Brain GD">
   <meta property="og:description" content="Your knowledge. Your system. Your control.">
@@ -41,13 +41,14 @@
         <p class="overline">Open source · Local-first · In early development</p>
         <h1>SECOND BRAIN <span class="accent">GD</span></h1>
         <p class="tagline">Your knowledge. Your system. Your control.</p>
-        <p class="lead">A personal knowledge environment that runs on your own computer. A visual desktop
-          app built with Godot, a local Python engine, and an infrastructure you can actually see.</p>
+        <p class="lead">A personal knowledge environment that runs on your own computer, with an assistant who
+          briefs you each morning, answers from your own notes and files every thought you type or say.
+          Built with a game engine, so it feels alive.</p>
         <div class="hero-actions">
           <a class="btn btn-primary" href="#how">See how it works</a>
           <a class="btn" href="#roadmap">What works today</a>
         </div>
-        <p class="hero-note"><span class="badge badge-done">Implemented</span> A living knowledge graph, capture, themes and a calm soundtrack.</p>
+        <p class="hero-note"><span class="badge badge-done">Implemented</span> Living graph, voice capture and an assistant who talks back.</p>
       </div>
     </section>
 
@@ -58,8 +59,9 @@
         <div class="cards cards-3">
           <article class="card">
             <h3>Local-first</h3>
-            <p>Your notes and your database live in your user folder, on your disk. No account, no cloud
-              service required, no Docker to start.</p>
+            <p>Your notes and your database live in your user folder, on your disk. No account and no Docker.
+              AI features use your own OpenAI key, stored in your system's credential store, and send only
+              what each request needs.</p>
           </article>
           <article class="card">
             <h3>Immersive</h3>
@@ -68,8 +70,8 @@
           </article>
           <article class="card">
             <h3>Transparent</h3>
-            <p>The System Console shows what really runs: the local API, the database, the Python
-              environment, storage and process metrics. Real measurements only.</p>
+            <p>The engine room shows what really runs, with real measurements only. Everything the assistant
+              changes is journaled and can be undone, and every AI call shows its estimated cost.</p>
           </article>
         </div>
         <ul class="principles" aria-label="Principles">
@@ -91,16 +93,16 @@
           <li><span class="step-n">3</span><div><h3>Watch the real installation</h3>
             <p>Virtual environment, hash-locked dependencies, SQLite migrations. Each step streams
               structured events, progress and logs.</p></div></li>
-          <li><span class="step-n">4</span><div><h3>Capture and explore</h3>
-            <p>Type a thought and watch it join your graph. <code>[[links]]</code> and <code>#tags</code> draw the
-              connections. A morning briefing tells you what changed.</p></div></li>
+          <li><span class="step-n">4</span><div><h3>Talk to your brain</h3>
+            <p>Type or speak a thought: it blooms in the graph and the assistant files it in the right project.
+              Each morning she reads you a briefing. Ask her anything and she answers from your notes.</p></div></li>
         </ol>
         <div class="shots">
-          <figure><img src="assets/screens/05-brain-morning.png" alt="The brain screen in the Morning theme: a soft blue constellation of spaces, notes and tags, a briefing panel and a capture bar" loading="lazy" width="1280" height="800"><figcaption>Morning theme</figcaption></figure>
-          <figure><img src="assets/screens/06-brain-note-open.png" alt="A note open in the inspector next to the graph, its neighbours highlighted" loading="lazy" width="1280" height="800"><figcaption>A note and its connections</figcaption></figure>
+          <figure><img src="assets/screens/assistant-briefing.png" alt="The assistant's morning briefing next to the knowledge graph in the soft blue Morning theme" loading="lazy" width="1280" height="800"><figcaption>The morning briefing, read aloud</figcaption></figure>
+          <figure><img src="assets/screens/assistant-answer.png" alt="The assistant answering from the user's notes with clickable citations, and a toast saying a new thought was filed in Client Atlas with an Undo button" loading="lazy" width="1280" height="800"><figcaption>Answers with citations, auto-filing with undo</figcaption></figure>
           <figure><img src="assets/screens/08-brain-evening.png" alt="The same graph in the Evening theme, indigo with amber accents" loading="lazy" width="1280" height="800"><figcaption>Evening theme</figcaption></figure>
         </div>
-        <p class="caption-note">Screenshots captured from the real application (Loop 1).</p>
+        <p class="caption-note">Screenshots captured from the real application with the real assistant (Loop 3), on demo data.</p>
       </div>
     </section>
 
@@ -113,11 +115,12 @@
           <div class="arch-link"><span>launches · tails JSON Lines events</span></div>
           <div class="arch-node arch-boot"><h3>Bootstrap</h3><p>Python standard library only</p><p class="muted">detect · venv · pip --require-hashes · migrate · start · verify</p></div>
           <div class="arch-link"><span>starts · HTTP on 127.0.0.1 + bearer token</span></div>
-          <div class="arch-node arch-api"><h3>Local API</h3><p>FastAPI + uvicorn</p><p class="muted">/health · /system/status · /system/storage · /system/events</p></div>
+          <div class="arch-node arch-api"><h3>Local engine</h3><p>FastAPI: brain, voice, assistant</p><p class="muted">/health · /system/status · /system/storage · /system/events</p></div>
           <div class="arch-link"><span>reads · writes</span></div>
           <div class="arch-node arch-data"><h3>Your data folder</h3><p>SQLite · logs · venv</p><p class="muted">%LOCALAPPDATA%\SecondBrainGD on Windows</p></div>
         </div>
-        <p class="note">The engine stops when the app closes, and also on its own if the app crashes (parent-process watchdog).</p>
+        <p class="note">The engine stops when the app closes, and also on its own if the app crashes. Voice and the
+          assistant reach OpenAI only through the engine, with your own key: Godot never holds it.</p>
       </div>
     </section>
 
@@ -132,35 +135,32 @@
           <div class="road-col">
             <h3><span class="badge badge-done">Implemented</span></h3>
             <ul>
-              <li>Living knowledge graph with capture, spaces, links and tags</li>
-              <li>Full-text search and a morning briefing</li>
-              <li>Themes with their own generated music and sounds</li>
-              <li>Setup wizard with real progress, logs and retry</li>
-              <li>Python detection with clear guidance when missing</li>
-              <li>Isolated venv and hash-verified, pinned dependencies</li>
-              <li>SQLite with versioned migrations</li>
-              <li>Local API on 127.0.0.1 with token auth</li>
-              <li>System Console with measured metrics</li>
-              <li>Idempotent, resumable install; no orphan processes</li>
+              <li>Assistant: spoken morning briefing, answers with citations, acts on your notes</li>
+              <li>Every capture filed automatically, with undo</li>
+              <li>Voice capture with live transcription (your own key)</li>
+              <li>Living knowledge graph, spaces, links, tags, full-text search</li>
+              <li>Themes with generated music, ambience and sounds</li>
+              <li>One-click setup, local engine, measured System Console</li>
               <li>Automated tests on Linux and native Windows</li>
             </ul>
           </div>
           <div class="road-col">
             <h3><span class="badge badge-wip">In development</span></h3>
             <ul>
-              <li>Voice capture with a local Whisper model</li>
-              <li>Daily router agent that sorts the Inbox</li>
-              <li>Packaged Windows build (no source checkout)</li>
-              <li>One-script prerequisites install</li>
+              <li>Structure: areas, projects, next actions, a Today view, checklists</li>
+              <li>Guided weekly review with the assistant</li>
+              <li>Files and links as sources, with semantic memory</li>
+              <li>Project agents, including coding agents</li>
+              <li>Real-time voice conversation</li>
             </ul>
           </div>
           <div class="road-col">
             <h3><span class="badge badge-idea">Future concept</span></h3>
             <ul>
-              <li>Local language models and embeddings</li>
-              <li>Semantic and vector search</li>
-              <li>Assistant agents over your knowledge</li>
+              <li>Your brain shared with your other AI tools (MCP)</li>
+              <li>Local models and offline mode</li>
               <li>Connectors (Microsoft 365, GitHub)</li>
+              <li>Packaged installer</li>
               <li>Optional sync you control</li>
             </ul>
           </div>
@@ -184,6 +184,22 @@
       <div class="container narrow">
         <p class="overline">Development journal</p>
         <h2>Built in loops</h2>
+        <article class="entry">
+          <header><span class="badge badge-done">Loop 3</span> <time datetime="2026-11-02">November 2, 2026</time></header>
+          <h3>An assistant who talks back</h3>
+          <p>The assistant arrives. At the first opening of the day she reads a short briefing aloud: open tasks,
+            what is new, an idea that has been sleeping. She answers from your notes and cites them, saves or moves
+            notes when you ask, and files every capture in the right project. Everything she changes can be undone.
+            You can type to her or speak to her.</p>
+        </article>
+        <article class="entry">
+          <header><span class="badge badge-done">Loop 2</span> <time datetime="2026-11-02">November 2, 2026</time></header>
+          <h3>Voice capture</h3>
+          <p>Press the microphone and your words appear while you speak, then bloom as a note. Each user brings their
+            own OpenAI key during onboarding. It is stored in the system's credential store and never by the
+            interface. Measured on the real API: English transcribed without errors, first words in about a
+            second.</p>
+        </article>
         <article class="entry">
           <header><span class="badge badge-done">Loop 1</span> <time datetime="2026-11-02">November 2, 2026</time></header>
           <h3>Immersion and the knowledge core</h3>

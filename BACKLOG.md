@@ -4,6 +4,10 @@ Ordered by priority. ✅ = done.
 
 ## Next
 
+The agreed plan for Loops 4–7 (structure, sources & semantic memory, project agents, real conversation)
+and the model cadence live in [docs/ROADMAP.md](docs/ROADMAP.md).
+
+
 1. Loop 4, real conversation: realtime speech-to-speech (talk and interrupt), streaming replies, project mode
    driven by voice ("on travaille sur Atlas").
 2. Agent room: Claude Code sessions via the Claude Agent SDK, rendered natively in Godot, with permissions
