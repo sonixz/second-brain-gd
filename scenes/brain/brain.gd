@@ -33,6 +33,15 @@ var health_ok := false
 var notes_created := 0
 var _save_timer: Timer
 var _loading_note := false
+# Voice
+var voice_capture: VoiceCapture
+var voice_stream: VoiceStream
+var voice_state := "idle"   # idle | connecting | listening | finishing
+var voice_text := ""
+var voice_level := 0.0
+var voice_notes := 0
+var _voice_final := ""
+var _voice_error := ""
 
 
 func bind(a: SbApp) -> void:
@@ -52,6 +61,15 @@ func _ready() -> void:
 	_build_left_panel()
 	_build_inspector()
 	_build_capture_bar()
+	voice_capture = VoiceCapture.new()
+	add_child(voice_capture)
+	voice_capture.chunk.connect(func(pcm: PackedByteArray) -> void: voice_stream.send_audio(pcm))
+	voice_capture.level.connect(func(v: float) -> void: voice_level = lerpf(voice_level, clampf(v * 6.0, 0.0, 1.0), 0.5))
+	voice_stream = VoiceStream.new()
+	add_child(voice_stream)
+	voice_stream.delta.connect(_on_voice_delta)
+	voice_stream.final.connect(func(text: String) -> void: _voice_final = text)
+	voice_stream.failed.connect(func(msg: String) -> void: _voice_error = msg)
 	_save_timer = Timer.new()
 	_save_timer.one_shot = true
 	_save_timer.wait_time = SAVE_DELAY_S
@@ -265,9 +283,14 @@ func _build_capture_bar() -> void:
 	mic_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	mic_button.expand_icon = false
 	mic_button.custom_minimum_size = Vector2(54, 54)
-	mic_button.disabled = true
-	mic_button.tooltip_text = "Voice capture arrives with the local Whisper engine (next loop)."
+	mic_button.tooltip_text = "Speak a thought (Ctrl+M). Click again to finish."
+	mic_button.set_meta("sfx", "none")
+	mic_button.pressed.connect(toggle_voice)
 	row.add_child(mic_button)
+	var ring := _MicRing.new()
+	ring.brain = self
+	ring.set_anchors_preset(Control.PRESET_FULL_RECT)
+	mic_button.add_child(ring)
 	capture_hint = Label.new()
 	capture_hint.theme_type_variation = "Muted"
 	capture_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
@@ -408,7 +431,7 @@ func load_briefing() -> void:
 
 
 # ---------------------------------------------------------------- capture
-func capture(text: String) -> void:
+func capture(text: String, source: String = "typed") -> void:
 	var t := text.strip_edges()
 	if t == "":
 		return
@@ -420,7 +443,9 @@ func capture(text: String) -> void:
 		body = t
 	elif t.contains("[[") or t.contains("#"):
 		body = t
-	var payload := {"title": title, "body": body}
+	var payload := {"title": title, "body": body, "source": source}
+	if source == "voice" and body == "":
+		payload["body"] = t
 	if current_space != "":
 		payload["space_id"] = current_space
 	var res := await _post("/brain/notes", payload)
@@ -429,6 +454,8 @@ func capture(text: String) -> void:
 		capture_hint.text = "Could not save: %s" % res["error"]
 		return
 	notes_created += 1
+	if source == "voice":
+		voice_notes += 1
 	var note: Dictionary = res["data"]
 	var born := await refresh_graph()
 	app.audio.play("note_create", 0.04)
@@ -668,7 +695,148 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	elif k.keycode == KEY_SLASH and not k.ctrl_pressed:
 		search_edit.grab_focus()
 		accept_event()
+	elif k.keycode == KEY_M and k.ctrl_pressed:
+		toggle_voice()
+		accept_event()
 	elif k.keycode == KEY_ESCAPE:
 		graph.select("")
 		_close_inspector()
 		accept_event()
+
+
+# ------------------------------------------------------------------ voice
+func toggle_voice() -> void:
+	match voice_state:
+		"idle":
+			var res := await app.backend.api.call_api("/voice/status")
+			var st: Dictionary = res["data"] if res["ok"] else {}
+			if not bool(st.get("configured", false)) and OS.get_environment("SBGD_VOICE_PROVIDER") != "fake":
+				_open_voice_settings()
+				return
+			start_voice(true)
+		"listening":
+			stop_voice()
+
+
+## use_mic = false lets tests push audio with voice_capture.feed_frames().
+func start_voice(use_mic: bool) -> bool:
+	if voice_state != "idle":
+		return false
+	voice_state = "connecting"
+	voice_text = ""
+	_voice_final = ""
+	_voice_error = ""
+	capture_hint.text = "Connecting to voice…"
+	var err := voice_stream.connect_to(app.backend.api.port, app.backend.api.token)
+	if err != OK:
+		_voice_fail("Cannot open the voice connection (%s)." % error_string(err))
+		return false
+	var deadline := Time.get_ticks_msec() + 10000
+	while voice_stream._open == false and _voice_error == "" and Time.get_ticks_msec() < deadline:
+		await get_tree().process_frame
+	if not voice_stream._open:
+		_voice_fail(_voice_error if _voice_error != "" else "Voice service did not answer.")
+		return false
+	if use_mic:
+		voice_capture.start()
+	else:
+		voice_capture.recording = false
+	voice_state = "listening"
+	app.audio.play("mic_start")
+	capture_edit.text = ""
+	capture_edit.editable = false
+	capture_edit.placeholder_text = "Listening…  speak, then click the microphone again"
+	capture_hint.text = "Listening · Ctrl+M or click the mic to finish"
+	return true
+
+
+func stop_voice() -> void:
+	if voice_state != "listening":
+		return
+	voice_state = "finishing"
+	if voice_capture.recording:
+		voice_capture.stop()
+	else:
+		voice_capture._flush()
+	await get_tree().process_frame
+	voice_stream.commit()
+	app.audio.play("mic_stop")
+	capture_hint.text = "Transcribing…"
+	var deadline := Time.get_ticks_msec() + 20000
+	while _voice_final == "" and _voice_error == "" and Time.get_ticks_msec() < deadline:
+		await get_tree().process_frame
+	voice_stream.stop()
+	capture_edit.editable = true
+	capture_edit.placeholder_text = "Capture a thought…   (Enter to save · Ctrl+Space to focus · Ctrl+M to speak)"
+	voice_state = "idle"
+	var text := _voice_final.strip_edges()
+	if text == "":
+		_voice_fail(_voice_error if _voice_error != "" else "No speech was transcribed.")
+		return
+	capture_edit.text = ""
+	await capture(text, "voice")
+
+
+func _on_voice_delta(text: String) -> void:
+	voice_text += text
+	capture_edit.text = voice_text
+	capture_edit.caret_column = capture_edit.text.length()
+
+
+func _voice_fail(msg: String) -> void:
+	if voice_capture.recording:
+		voice_capture.stop()
+	voice_stream.stop()
+	voice_state = "idle"
+	capture_edit.editable = true
+	capture_hint.text = msg
+	app.audio.play("error")
+
+
+func _open_voice_settings() -> void:
+	var dlg := AcceptDialog.new()
+	dlg.title = "Voice capture"
+	dlg.ok_button_text = "Close"
+	var box := VBoxContainer.new()
+	box.custom_minimum_size = Vector2(560, 0)
+	dlg.add_child(box)
+	var intro := Label.new()
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	intro.text = "Voice capture uses OpenAI realtime transcription with your own API key."
+	box.add_child(intro)
+	var panel := VoiceKeyPanel.new().setup(app, false)
+	box.add_child(panel)
+	panel.saved.connect(func(st: Dictionary) -> void:
+		if bool(st.get("configured", false)):
+			capture_hint.text = "Voice is ready. Click the microphone and speak.")
+	add_child(dlg)
+	dlg.popup_centered()
+	dlg.confirmed.connect(dlg.queue_free)
+	dlg.canceled.connect(dlg.queue_free)
+
+
+class _MicRing:
+	extends Control
+	## Pulsing ring around the mic button while listening, driven by the input level.
+	var brain: Node
+	var _t := 0.0
+
+	func _ready() -> void:
+		mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	func _process(delta: float) -> void:
+		_t += delta
+		queue_redraw()
+
+	func _draw() -> void:
+		var state := str(brain.get("voice_state"))
+		if state == "idle":
+			return
+		var c := size * 0.5
+		var r := minf(size.x, size.y) * 0.5
+		var lvl: float = brain.get("voice_level")
+		if state == "listening":
+			draw_circle(c, r + 4.0 + lvl * 16.0, Color(SbTheme.MINT, 0.18 + lvl * 0.3))
+			draw_arc(c, r + 3.0, 0, TAU, 48, SbTheme.MINT, 2.0, true)
+		else:
+			draw_arc(c, r + 3.0, _t * 4.0, _t * 4.0 + PI * 1.2, 32, SbTheme.INFO, 2.5, true)

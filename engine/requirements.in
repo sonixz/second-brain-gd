@@ -3,3 +3,7 @@
 fastapi==0.115.12
 uvicorn==0.34.2
 psutil==7.0.0
+# Voice: WebSocket server (Godot <-> engine) and client (engine <-> OpenAI Realtime)
+websockets==15.0.1
+# Per-user API keys in the OS credential store (Windows Credential Manager, macOS Keychain, Secret Service)
+keyring==25.6.0

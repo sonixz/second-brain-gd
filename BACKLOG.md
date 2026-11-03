@@ -4,7 +4,8 @@ Ordered by priority. ✅ = done.
 
 ## Loop 2 candidates
 
-1. Voice capture with local Whisper (design in docs/architecture/knowledge-model.md; owner picks model size).
+1. Voice: run the real benchmark, then test with the owner's voice and microphone; record a dozen of their own
+   clips with expected text to tune `languages`, `delay` and `prompt` (project names as keywords).
 2. Prerequisites script: `tools/install-prereqs.ps1` (winget: Python, Godot, Git; per-user, with consent) and an
    "Install Python" button on the welcome screen.
 3. Daily router agent: proposes a space and links for each Inbox thought; approve or undo from the briefing.
@@ -38,7 +39,8 @@ Ordered by priority. ✅ = done.
 - Licence (MIT, Apache-2.0, AGPL-3.0…) before any public release.
 - When to make the repository and the site public.
 - Language of the UI (English now) and whether to add French.
-- Whisper model size and whether a cloud fallback is ever allowed.
+- Voice model default after the benchmark (`gpt-realtime-whisper` vs `gpt-live-transcribe`).
+- Whether a local Whisper fallback is ever needed (offline use, businesses that refuse cloud audio).
 - Music licensing for business distribution.
 
 ## Out of scope until later loops
@@ -49,5 +51,7 @@ cloud sync.
 ## Done
 
 - ✅ Loop 0: setup wizard, bootstrap, SQLite, local API, System Console, landing page, tests, docs.
+- ✅ Loop 2 (pending real API run): BYOK voice onboarding, OS credential store, mic capture, local WebSocket
+  relay to OpenAI realtime transcription, voice notes, engine-room Voice card, benchmark tool.
 - ✅ Loop 1: knowledge model (spaces, notes, links, tags, FTS5), brain screen with living graph, capture,
   briefing, search, inspector; themes; generated music, ambience and sound effects.

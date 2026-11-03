@@ -12,6 +12,7 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from engine import VERSION, database
 from engine.api.brain_routes import make_router
 from engine.brain.seed import seed_if_empty
+from engine.voice.routes import make_router as make_voice_router
 from engine.events import utc_now
 from engine.installer.state import load_state
 from engine.monitoring.metrics import ProcessSampler, StorageScanner, system_snapshot
@@ -111,4 +112,5 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
         return {"status": "stopping"}
 
     app.include_router(make_router(layout, require_token))
+    app.include_router(make_voice_router(layout, require_token, token))
     return app

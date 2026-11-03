@@ -40,28 +40,41 @@ GET    /brain/notes/{id}         PATCH /brain/notes/{id}     {title?, body?, spa
 DELETE /brain/notes/{id}         GET  /brain/search?q=
 ```
 
-## Next: voice capture with Whisper (proposed, not built)
+## Voice capture (Loop 2)
 
-Recommended design, consistent with local-first:
+Owner's decision: each user brings their own OpenAI key. Voice uses the realtime transcription model
+`gpt-realtime-whisper`, configurable. Typing works without a key.
 
-1. **Godot** records the microphone with `AudioEffectRecord` on a dedicated bus. Push-to-talk on the mic button
-   (sounds `mic_start` / `mic_stop` already exist). It saves a 16 kHz mono WAV to `runtime/`.
-   Project setting `audio/driver/enable_input = true` is required. Windows asks for microphone permission once.
-2. **Engine** gets an optional component, "Voice", installed from the console on demand. It uses
-   `faster-whisper` (CTranslate2) in the same venv. The model downloads once into `<data dir>/models/` from
-   Hugging Face, with its size and source shown before the user accepts.
-3. **API** gets `POST /brain/voice` (WAV upload). It transcribes in a worker thread and streams progress through
-   `system_events`. It creates a note with `source = 'voice'`. A `voice_captures` table (migration 0003) keeps
-   duration, model, language and the audio path, with an option to delete audio after transcription.
+```
+Godot mic ──(AudioEffectCapture, 48 kHz stereo)──► VoiceCapture: mono, 24 kHz, PCM16
+      └─► VoiceStream ──WebSocket ws://127.0.0.1/voice/stream (local bearer token)──► engine
+                                                    engine ──wss://api.openai.com/v1/realtime?intent=transcription──► OpenAI
+      ◄── delta / final text ◄────────────────────────────────────────────────────────┘
+```
 
-Choices the owner has to make:
+- **Key (BYOK).** It is entered once in the onboarding step after setup, or later from the mic button. Godot
+  sends it to `PUT /voice/key`. The engine checks it for free (`GET /v1/models/{model}`), refuses it on
+  401/403, and stores it with `keyring`: Windows Credential Manager, macOS Keychain or Secret Service. Without
+  a credential store, a user-only file in `<data>/secrets/` is used. `OPENAI_API_KEY` from the environment is
+  the last fallback, for developers using `dotenvx run`. Godot clears the field at once. The key never appears
+  in logs, events, SQLite or `/voice/status`, which shows only the last four characters.
+- **Session.** The engine sends `session.update` with `type: transcription`, `audio/pcm` at 24 kHz, the model,
+  `languages` (default `["fr","en"]`), `delay: "low"` and `turn_detection: null`. This model has no server VAD,
+  so the client commits. Push-to-talk: the first click starts, the second click commits.
+  Deltas fill the capture bar live. The final text becomes a note with `source = 'voice'`.
+- **Observability.** Every session is written to `system_events` with its audio duration and an estimated cost
+  at list price ($0.017/min). The engine room has a Voice card showing the model, where the key is stored and
+  its last four characters.
+- **Tests without a microphone or cost.** With `SBGD_VOICE_PROVIDER=fake`, set only by the tests, the engine
+  uses a test double that reports the audio duration it received. The Godot end-to-end test pushes a
+  synthetic tone through the real encoder, WebSocket and engine, and checks the voice note in the graph.
+- **Real benchmark.** `tools/voice-bench.sh` streams the WAV clips from `tests/fixtures/voice/` in real time
+  to OpenAI, through the same relay class. It reports word error rate, time to first words and time to final
+  text, and can compare models (`--models a,b`). Clips come from the built-in Windows voices
+  (`tools/make-voice-fixtures.ps1`). The ElevenLabs key is limited to sounds and music.
 
-| Choice | Options | Recommendation |
-|---|---|---|
-| Model size | `base` (~150 MB, fast on CPU), `small` (~500 MB), `large-v3-turbo` (~1.6 GB, best, wants a GPU) | `small` by default, `turbo` when CUDA is detected |
-| GPU | CPU only, or CUDA (the owner has an RTX 3060) | CPU first, CUDA as a detected bonus |
-| Languages | French and English mixed is fine with auto-detect | auto, with a preferred language setting |
-| Cloud fallback | ElevenLabs Scribe (key already in dotenvx) | off by default, explicit opt-in per user (not local-first) |
+Open questions to settle with the first real run: whether the account accepts `gpt-realtime-whisper` (the
+transcription guide's examples use `gpt-live-transcribe`), and whether that model honours `delay`.
 
 ## Later: daily router agent (direction)
 

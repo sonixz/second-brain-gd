@@ -1,6 +1,26 @@
 # Status
 
-**Loop 1 — Immersion & knowledge core: done (2026-11-02).** Loop 0 (foundation) done the same day.
+**Loop 2 — Voice capture (bring your own key): built and tested without OpenAI; real API run pending the
+owner's key (2026-11-02).** Loops 0 and 1 are done.
+
+## Loop 2
+
+- Onboarding step "Talk to your Second Brain" after the first setup: paste an OpenAI key, verified with OpenAI,
+  stored in the OS credential store. It can be skipped.
+- Mic button (Ctrl+M) in the capture bar. Live words appear while you speak, and a pulsing ring follows your
+  voice level. The second click turns the speech into a voice note that blooms in the graph.
+- Engine: `/voice/status|key|key/test|settings` and the `/voice/stream` WebSocket relay to OpenAI realtime.
+- Engine room: a Voice card (model, key last 4, where it is stored, list price).
+- `tools/voice-bench.sh` for real accuracy and latency measurements.
+
+| Suite | Platform | Result |
+|---|---|---|
+| Python (33) | Linux 3.12 | OK, 1 skipped |
+| Python (33), including the Windows Credential Manager round trip | Windows, Store Python 3.13 | OK |
+| Godot end-to-end (62 checks, voice session through the real pipeline with the test provider) | Linux and Windows native | 62 passed |
+| Real OpenAI transcription | | **not run yet: OPENAI_API_KEY not in .env** |
+
+## Loop 1
 
 ## What works now
 

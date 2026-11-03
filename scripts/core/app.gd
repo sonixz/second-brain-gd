@@ -12,6 +12,7 @@ const WELCOME := preload("res://scenes/startup/welcome.tscn")
 const SETUP := preload("res://scenes/startup/setup.tscn")
 const CONSOLE := preload("res://scenes/dashboard/system_console.tscn")
 const BRAIN := preload("res://scenes/brain/brain.tscn")
+const VOICE_ONBOARDING := preload("res://scenes/startup/voice_onboarding.tscn")
 
 var backend: Backend
 var audio: SbAudio
@@ -65,6 +66,14 @@ func show_console() -> void:
 
 func show_brain() -> void:
 	_switch(BRAIN.instantiate(), "brain")
+
+
+## After setup: the voice onboarding step once, then the brain.
+func after_setup() -> void:
+	if bool(SbSettings.get_value("onboarding", "voice_done", false)):
+		show_brain()
+	else:
+		_switch(VOICE_ONBOARDING.instantiate(), "onboarding")
 
 
 ## Theme choice from the ambiance panel ("auto" or a theme name).

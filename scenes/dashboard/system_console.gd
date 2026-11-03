@@ -12,6 +12,8 @@ var db_card: InfoCard
 var py_card: InfoCard
 var storage_card: InfoCard
 var proc_card: InfoCard
+var voice_card: InfoCard
+var last_voice: Dictionary = {}
 var events_view: RichTextLabel
 var header_dot: StatusDot
 var header_state: Label
@@ -121,6 +123,8 @@ func _ready() -> void:
 	var about := InfoCard.new().setup("Installation")
 	about.name = "InstallCard"
 	grid.add_child(about)
+	voice_card = InfoCard.new().setup("Voice capture")
+	grid.add_child(voice_card)
 
 	var ev_card := PanelContainer.new()
 	ev_card.theme_type_variation = "Card"
@@ -161,6 +165,7 @@ func refresh_all() -> void:
 	await _poll_status()
 	await _poll_storage()
 	await _poll_events()
+	await _poll_voice()
 	refresh_count += 1
 
 
@@ -202,6 +207,32 @@ func _poll_storage() -> void:
 	if res["ok"]:
 		last_storage = res["data"]
 	_render()
+
+
+func _poll_voice() -> void:
+	var res := await app.backend.api.call_api("/voice/status")
+	if not is_inside_tree() or voice_card == null:
+		return
+	if not res["ok"]:
+		voice_card.set_state("error" if not last_health.is_empty() else "checking", "No data")
+		return
+	last_voice = res["data"]
+	var v := last_voice
+	var sources := {"keyring": "System credential store", "file": "Private file (no credential store)",
+		"env": "Environment variable (dev)", "none": "Not configured"}
+	if bool(v.get("configured", false)):
+		voice_card.set_state("ok", "Ready")
+	else:
+		voice_card.set_state("pending", "No API key")
+	voice_card.set_rows([
+		["Provider", "OpenAI realtime"],
+		["Model", str(v.get("model", SbFormat.NA))],
+		["Key", str(v.get("hint", "")) if bool(v.get("configured", false)) else SbFormat.NA],
+		["Stored in", str(sources.get(str(v.get("source", "none")), "?"))],
+		["Backend", str(v.get("backend", SbFormat.NA))],
+		["List price", "$%s / min of audio" % str(v.get("price_per_minute_usd", "?"))],
+	])
+	voice_card.set_footer("The key never reaches Godot, logs or the database.")
 
 
 func _poll_events() -> void:

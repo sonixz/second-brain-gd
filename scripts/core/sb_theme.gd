@@ -235,6 +235,7 @@ static func build() -> Theme:
 	t.set_stylebox("normal", "CaptureEdit", box(Color(PANEL, 0.92), 26, BORDER, 1, 22))
 	t.set_stylebox("focus", "CaptureEdit", box(Color(PANEL, 0.97), 26, MINT, 2, 22))
 	t.set_font_size("font_size", "CaptureEdit", 17)
+	t.set_color("font_uneditable_color", "CaptureEdit", TEXT)  # live transcript stays readable
 	t.set_type_variation("SearchEdit", "LineEdit")
 	t.set_stylebox("normal", "SearchEdit", box(Color(PANEL, 0.8), 20, BORDER, 1, 16))
 	t.set_stylebox("focus", "SearchEdit", box(Color(PANEL, 0.95), 20, FOREST_LIGHT, 1, 16))

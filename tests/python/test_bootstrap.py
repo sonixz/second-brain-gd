@@ -286,6 +286,63 @@ class BootstrapIntegration(unittest.TestCase):
         self.assertGreaterEqual(brief["totals"]["notes"], 5)
         self.assertEqual(get(base + f"/notes/{note['id']}", tok, "DELETE")[0], 204)
 
+    def test_12_voice_api_and_stream(self):
+        stop(self.home)
+        os.environ["SBGD_VOICE_PROVIDER"] = "fake"   # the server inherits it: no OpenAI call, no cost
+        try:
+            code, _ = run_setup(self.home, "--port", str(self.port))
+        finally:
+            os.environ.pop("SBGD_VOICE_PROVIDER", None)
+        self.assertEqual(code, 0)
+        port, tok = self.server()["port"], self.token()
+        base = f"http://127.0.0.1:{port}/voice"
+        self.assertEqual(get(base + "/status")[0], 401)
+        code, st = get(base + "/status", tok)
+        self.assertEqual(code, 200)
+        self.assertEqual(st["model"], "gpt-realtime-whisper")
+        self.assertNotIn("api_key", json.dumps(st))
+        # A made-up key is checked against OpenAI and refused (or saved with a warning when offline).
+        code, res = get(base + "/key", tok, "PUT", {"api_key": "sk-proj-not-a-real-key-000000000000"})
+        self.assertIn(code, (422, 200))
+        if code == 200:
+            self.assertFalse(res["check"]["ok"])
+            get(base + "/key", tok, "DELETE")
+        # The WebSocket refuses a wrong token, then streams with the right one.
+        venv_py = str(self.home / ".venv" / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python"))
+        client = str(ROOT / "tests" / "python" / "voice_client.py")
+        pcm = self.home / "tone.pcm"
+        pcm.write_bytes(b"\x10\x00" * 24000 * 2)  # 2 s of audio
+        bad = subprocess.run([venv_py, client, "stream", str(port), "wrong-token", str(pcm)], capture_output=True,
+                             text=True, timeout=60, **NO_WINDOW)
+        self.assertNotEqual(bad.returncode, 0, "a wrong token must not open a voice session")
+        ok = subprocess.run([venv_py, client, "stream", str(port), tok, str(pcm)], capture_output=True, text=True,
+                            timeout=60, **NO_WINDOW)
+        self.assertEqual(ok.returncode, 0, ok.stderr[-800:])
+        out = json.loads(ok.stdout.strip().splitlines()[-1])
+        self.assertEqual(out["messages"][0]["type"], "ready")
+        self.assertEqual(out["finals"], ["[fake transcript of 2.0 s of audio]"])
+        self.assertTrue(out["deltas"])
+        found = False
+        for _ in range(30):  # the session-closed event is written right after the socket closes
+            _, ev = get(f"http://127.0.0.1:{port}/system/events?limit=50", tok)
+            found = any(e["component"] == "voice" and "2.0 s of audio" in e["message"] for e in ev["events"])
+            if found:
+                break
+            time.sleep(0.1)
+        self.assertTrue(found, "the voice session is recorded with its duration and estimated cost")
+
+    def test_13_os_credential_store_roundtrip(self):
+        venv_py = str(self.home / ".venv" / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python"))
+        out = subprocess.run([venv_py, str(ROOT / "tests" / "python" / "voice_client.py"), "keyring-roundtrip"],
+                             capture_output=True, text=True, timeout=60, cwd=str(ROOT), **NO_WINDOW)
+        self.assertEqual(out.returncode, 0, out.stderr[-800:])
+        res = json.loads(out.stdout.strip().splitlines()[-1])
+        self.assertTrue(res["match"])
+        self.assertTrue(res["deleted"])
+        self.assertEqual(res["hint"], "••••cdef")
+        if sys.platform == "win32":
+            self.assertEqual(res["where"], "keyring", "Windows must use the Credential Manager")
+
 
 class DetectCommand(unittest.TestCase):
     def test_detect_reports_json(self):

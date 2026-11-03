@@ -46,6 +46,8 @@ func api(path: String, payload: Dictionary) -> Dictionary:
 func _run() -> void:
 	root.size = Vector2i(1280, 800)
 	SbSettings.set_value("ui", "theme", "morning")
+	SbSettings.set_value("onboarding", "voice_done", false)
+	OS.set_environment("SBGD_VOICE_PROVIDER", "fake")  # screenshots never call OpenAI
 	app = load("res://scenes/main.tscn").instantiate()
 	root.add_child(app)
 	await pause(1.2)
@@ -65,6 +67,12 @@ func _run() -> void:
 			await shot("03-setup-ready")
 			break
 		await process_frame
+	while app.current_screen not in ["onboarding", "brain"] and Time.get_ticks_msec() < deadline:
+		await pause(0.2)
+	if app.current_screen == "onboarding":
+		await pause(1.5)
+		await shot("03b-voice-onboarding")
+		(app.current().get("panel") as VoiceKeyPanel).skipped.emit()
 	while app.current_screen != "brain" and Time.get_ticks_msec() < deadline:
 		await pause(0.2)
 	await pause(4.0)
@@ -97,6 +105,21 @@ func _run() -> void:
 	capture_edit.text_submitted.emit(capture_edit.text)
 	await pause(0.45)
 	await shot("07-brain-note-born")
+	# Listening state: real session (fake provider), synthetic audio through the real encoder.
+	brain = app.current()
+	await brain.call("start_voice", false)
+	var vc: VoiceCapture = brain.get("voice_capture")
+	for k in 12:
+		var frames := PackedVector2Array()
+		for i in 4800:
+			var s := sin(TAU * 180.0 * float(i) / 48000.0) * (0.25 + 0.2 * sin(float(k)))
+			frames.append(Vector2(s, s))
+		vc.feed_frames(frames, 48000.0)
+		await pause(0.1)
+	(brain.get("capture_edit") as LineEdit).text = "Remind me to send the Atlas proposal on Friday…"
+	await shot("07b-voice-listening")
+	await brain.call("stop_voice")
+	await pause(1.0)
 	for theme in ["focus", "evening", "forest"]:
 		app.set_theme_choice(theme)
 		await pause(6.0)

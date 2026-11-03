@@ -135,7 +135,7 @@ func _ready() -> void:
 	continue_button.text = "Enter your Second Brain"
 	continue_button.theme_type_variation = "PrimaryButton"
 	continue_button.visible = false
-	continue_button.pressed.connect(func() -> void: app.show_brain())
+	continue_button.pressed.connect(func() -> void: app.after_setup())
 	brow.add_child(continue_button)
 
 	var right := VBoxContainer.new()
@@ -260,7 +260,7 @@ func _on_finished(ok: bool, final_event: Dictionary) -> void:
 		app.backend.load_runtime()
 		get_tree().create_timer(AUTO_CONTINUE_S).timeout.connect(func() -> void:
 			if is_inside_tree() and app.current_screen == "setup":
-				app.show_brain())
+				app.after_setup())
 	else:
 		headline.text = "Setup needs attention"
 		if not error_panel.visible:

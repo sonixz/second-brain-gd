@@ -60,6 +60,8 @@ Set `SBGD_HOME` to use another folder. Nothing is ever written inside the reposi
   a space to filter, a tag to search. Press `/` to search and Esc to close.
 - **Ambiance:** the ♪ button at the bottom right sets the theme (Auto, Morning, Focus, Evening, Forest), music,
   effects and ambience.
+- **Voice:** click the microphone (Ctrl+M), speak, click again. It needs your own OpenAI API key, asked once
+  after setup or on first use. The key is stored in your system's credential store.
 - **Engine room:** click "All systems operational" at the top right.
 
 ## Audio assets
@@ -74,6 +76,14 @@ then run:
 
 The ElevenLabs key comes from the encrypted `.env` via dotenvx (`dotenvx set ELEVENLABS_API_KEY ...`).
 `.env.keys` is never committed.
+
+## Voice benchmark (developers)
+
+```bash
+# once: add the key to the encrypted .env without showing it
+read -rsp "OpenAI key: " K && echo && ~/.local/bin/dotenvx set OPENAI_API_KEY "$K" && unset K
+./tools/voice-bench.sh --models gpt-realtime-whisper,gpt-live-transcribe
+```
 
 ## Command line (optional)
 

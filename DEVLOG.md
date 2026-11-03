@@ -1,5 +1,23 @@
 # Devlog
 
+## Loop 2 — Voice capture, bring your own key (2026-11-02)
+
+**Owner's decision:** voice uses OpenAI's realtime transcription (`gpt-realtime-whisper`) with each user's own
+key, entered during onboarding.
+
+- The key never touches Godot beyond the input field. The engine verifies it for free, stores it in the OS
+  credential store (tested on Windows Credential Manager) and relays audio to OpenAI.
+- Godot captures the mic and converts it to 24 kHz mono PCM16. A unit test checks sample count, amplitude and
+  continuity across buffers.
+- Deltas stream into the capture bar. A voice note blooms on the second click.
+- Lessons: a GDScript signal named `ready` collides with Node's own. A test must not read a screen after
+  switching away, because the freed screen crashed Godot natively. Again, a `**details` keyword collided with a
+  parameter named `status`. The ElevenLabs key lacks the text-to-speech permission, so test speech comes from
+  the Windows voices.
+- The OpenAI docs disagree with themselves. The model page says `gpt-realtime-whisper`, while the
+  transcription guide uses `gpt-live-transcribe`. The model is configurable, and the first real run decides.
+
+
 ## Loop 1 — Immersion & knowledge core (2026-11-02)
 
 **Owner's direction:** "Godot is immersion, it needs sound." Soft, felted blue instead of green, cosy themes
