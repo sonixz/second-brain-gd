@@ -5,7 +5,7 @@ Order of lookup:
    Keychain, Linux Secret Service);
 2. a private file in the data folder when no credential store exists
    (e.g. WSL/headless Linux), readable by the user only;
-3. the OPENAI_API_KEY environment variable (developers: `dotenvx run`).
+3. the OPENAI_API_KEY (or OPENAI_ADMIN_KEY) environment variable (developers: `dotenvx run`).
 """
 from __future__ import annotations
 
@@ -16,7 +16,7 @@ from pathlib import Path
 from engine.paths import Layout
 
 SERVICE = os.environ.get("SBGD_KEYRING_SERVICE", "SecondBrainGD")
-ENV_VARS = {"openai": "OPENAI_API_KEY"}
+ENV_VARS = {"openai": "OPENAI_API_KEY", "openai_admin": "OPENAI_ADMIN_KEY"}
 
 
 @dataclass

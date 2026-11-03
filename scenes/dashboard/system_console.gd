@@ -14,6 +14,7 @@ var storage_card: InfoCard
 var proc_card: InfoCard
 var voice_card: InfoCard
 var sources_card: InfoCard
+var billing_panel: BillingPanel
 var last_voice: Dictionary = {}
 var events_view: RichTextLabel
 var header_dot: StatusDot
@@ -128,6 +129,10 @@ func _ready() -> void:
 	grid.add_child(voice_card)
 	sources_card = InfoCard.new().setup("Sources & memory")
 	grid.add_child(sources_card)
+
+	billing_panel = BillingPanel.new().setup(app)
+	billing_panel.name = "BillingPanel"
+	body.add_child(billing_panel)
 
 	var ev_card := PanelContainer.new()
 	ev_card.theme_type_variation = "Card"

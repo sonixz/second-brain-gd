@@ -84,6 +84,7 @@ func _run() -> void:
 	SbSettings.set_value("ui", "theme", "morning")
 	SbSettings.set_value("onboarding", "voice_done", false)
 	OS.set_environment("SBGD_VOICE_PROVIDER", "fake")  # screenshots never call OpenAI
+	OS.set_environment("SBGD_BILLING_PROVIDER", "fake")  # canned billing pages in OpenAI's shapes
 	app = load("res://scenes/main.tscn").instantiate()
 	root.add_child(app)
 	await pause(1.2)
@@ -207,6 +208,15 @@ func _run() -> void:
 	app.show_console()
 	await pause(6.5)
 	await shot("09-engine-room")
+	var console: Control = app.current()
+	var bp: BillingPanel = console.get("billing_panel")
+	var sc := bp.get_parent().get_parent() as ScrollContainer
+	if sc != null:
+		sc.ensure_control_visible(bp)
+		await pause(0.6)
+		sc.scroll_vertical = int(bp.position.y) - 8
+	await pause(0.8)
+	await shot("09b-real-costs")
 	(app.get("_widget") as AudioWidget).call("_open")
 	await pause(0.6)
 	await shot("10-ambiance-panel")

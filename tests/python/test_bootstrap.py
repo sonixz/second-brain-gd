@@ -311,11 +311,13 @@ class BootstrapIntegration(unittest.TestCase):
         stop(self.home)
         os.environ["SBGD_VOICE_PROVIDER"] = "fake"   # the server inherits it: no OpenAI call, no cost
         os.environ["SBGD_ASSISTANT_PROVIDER"] = "fake"
+        os.environ["SBGD_BILLING_PROVIDER"] = "fake"
         try:
             code, _ = run_setup(self.home, "--port", str(self.port))
         finally:
             os.environ.pop("SBGD_VOICE_PROVIDER", None)
             os.environ.pop("SBGD_ASSISTANT_PROVIDER", None)
+            os.environ.pop("SBGD_BILLING_PROVIDER", None)
         self.assertEqual(code, 0)
         port, tok = self.server()["port"], self.token()
         base = f"http://127.0.0.1:{port}/voice"
@@ -371,6 +373,22 @@ class BootstrapIntegration(unittest.TestCase):
         with urllib.request.urlopen(req, timeout=10) as r:
             self.assertEqual(r.headers["Content-Type"], "audio/mpeg")
             self.assertGreater(len(r.read()), 1000)
+        # Real costs: read live from OpenAI's shapes (fake pages here), never stored.
+        bl = f"http://127.0.0.1:{port}/billing"
+        self.assertEqual(get(bl)[0], 401)
+        code, st = get(bl + "/status", tok)
+        self.assertEqual((code, st["configured"]), (200, True))
+        code, data = get(bl + "?days=30", tok)
+        self.assertEqual(code, 200)
+        self.assertEqual(len(data["days"]), 30)
+        self.assertGreater(data["month"], 0)
+        self.assertTrue(data["models"])
+        code, again = get(bl + "?days=30", tok)
+        self.assertTrue(again["cached"])
+        code, res = get(bl + "/key", tok, "PUT", {"api_key": "sk-admin-not-a-real-key-0000000000"})
+        self.assertIn(code, (422, 200))  # refused by OpenAI (401), or saved when offline
+        if code == 200:
+            get(bl + "/key", tok, "DELETE")
 
     def test_13_os_credential_store_roundtrip(self):
         venv_py = str(self.home / ".venv" / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python"))

@@ -41,6 +41,8 @@ func _run() -> void:
 	OS.set_environment("SBGD_VOICE_PROVIDER", "fake")
 	OS.set_environment("SBGD_ASSISTANT_PROVIDER", "fake")
 	OS.set_environment("SBGD_KEYRING_SERVICE", "SecondBrainGD-test")  # never the user's real key
+	OS.set_environment("SBGD_BILLING_PROVIDER", "fake")  # real-costs panel reads canned OpenAI pages
+	OS.unset_environment("OPENAI_ADMIN_KEY")
 	# The agent room installs from a tiny local fixture (a fake app-server), never the 160 MB download.
 	OS.set_environment("SBGD_AGENTS_MANIFEST", ProjectSettings.globalize_path("res://tests/fixtures/agents/manifest.json"))
 	SbSettings.set_value("assistant", "speaks", true)
@@ -355,6 +357,16 @@ func _e2e() -> void:
 		if str(ev.get("component")) == "bootstrap" and str(ev.get("status")) == "ok":
 			has_ready = true
 	check(has_ready, "recent operations include the verified setup")
+	var bp: BillingPanel = console.get("billing_panel")
+	var billed := await wait_until(func() -> bool: return not bp.last.is_empty(), 20.0)
+	check(billed and bool(bp.last.get("configured", false)) and bp.data_box.visible,
+		"real-costs panel shows OpenAI's billed figures")
+	check(bp.chart.days.size() == 30 and not bp.chart.groups.is_empty() and bp.legend.get_child_count() > 0,
+		"cost chart has 30 daily bars with a legend (%d bars)" % bp.chart.days.size())
+	check(bp.month_value.text.begins_with("$") and bp.models_grid.get_child_count() > 5,
+		"month total and the per-model table are filled (%s)" % bp.month_value.text)
+	check(bp.chart._get_tooltip(Vector2(bp.chart.size.x - 8, 40)).contains("—"),
+		"hovering a bar explains that day's cost")
 	var installed_at := str(db.get("installed_at", ""))
 
 	# Second launch of the app: install is recognised and the fast path works.

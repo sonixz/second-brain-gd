@@ -1,5 +1,26 @@
 # Devlog
 
+## Loop 8a — Real costs on the dashboard (2026-11-03)
+
+- The owner asked for OpenAI's real billed costs on the dashboard, with tokens and charts. They do not
+  want estimates or a local copy, because OpenAI already stores it all.
+  - A first approach, a local ledger that priced tokens, was dropped before commit at the owner's request.
+- **A project key cannot read costs.** The call returned HTTP 403, "Missing scopes: api.usage.read". The
+  app therefore takes an optional **admin key** restricted to "Usage API: Read". It is stored in the OS
+  keyring, as the `openai_admin` provider.
+- **What the engine reads.** `engine/billing.py` reads the Costs API (daily, by line item) and the Usage
+  API (by model) live, with only a 5-minute memory cache. Errors (401, 403, 429, offline) become plain
+  messages, and the key never appears in them.
+- **The System Console's new "Real costs · OpenAI billing" card:**
+  - totals for this month, today and the last 30 days, plus tokens this month;
+  - a 30-day stacked bar chart, with hover details per day;
+  - a legend with each product's amount;
+  - a per-model table and the month's billed line items.
+- **Chart colours.** The palette was validated with the data-viz checker on all four themes. On the
+  Morning theme the contrast is only partly sufficient, so the legend and table carry the values.
+- **Tests.** Python 99 (7 new billing tests, plus route checks against a real engine) and Godot 104.
+- **Still to do.** Verify against the owner's real admin key, then Loop 7b.
+
 ## Loop 6c follow-up — First real Codex run (2026-11-03)
 
 - The owner allowed running the real app-server, so the room is no longer tested only against the fake.
