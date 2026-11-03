@@ -11,11 +11,12 @@ func base_url() -> String:
 	return "http://127.0.0.1:%d" % port
 
 
-func call_api(path: String, auth: bool = true, method: int = HTTPClient.METHOD_GET, body: String = "") -> Dictionary:
+func call_api(path: String, auth: bool = true, method: int = HTTPClient.METHOD_GET, body: String = "",
+		raw: bool = false) -> Dictionary:
 	if port <= 0:
 		return {"ok": false, "code": 0, "error": "API port unknown", "data": {}, "ms": 0}
 	var req := HTTPRequest.new()
-	req.timeout = timeout_s
+	req.timeout = timeout_s if not path.begins_with("/assistant") else 90.0
 	add_child(req)
 	var headers := PackedStringArray(["Accept: application/json"])
 	if auth:
@@ -36,6 +37,8 @@ func call_api(path: String, auth: bool = true, method: int = HTTPClient.METHOD_G
 	var body_bytes: PackedByteArray = res[3]
 	if result != HTTPRequest.RESULT_SUCCESS:
 		return {"ok": false, "code": code, "error": _result_text(result), "data": {}, "ms": elapsed}
+	if raw and code >= 200 and code < 300:
+		return {"ok": true, "code": code, "error": "", "data": {}, "bytes": body_bytes, "ms": elapsed}
 	var text := body_bytes.get_string_from_utf8()
 	var parsed: Variant = JSON.parse_string(text) if text != "" else {}
 	var data: Dictionary = parsed if parsed is Dictionary else {}

@@ -289,10 +289,12 @@ class BootstrapIntegration(unittest.TestCase):
     def test_12_voice_api_and_stream(self):
         stop(self.home)
         os.environ["SBGD_VOICE_PROVIDER"] = "fake"   # the server inherits it: no OpenAI call, no cost
+        os.environ["SBGD_ASSISTANT_PROVIDER"] = "fake"
         try:
             code, _ = run_setup(self.home, "--port", str(self.port))
         finally:
             os.environ.pop("SBGD_VOICE_PROVIDER", None)
+            os.environ.pop("SBGD_ASSISTANT_PROVIDER", None)
         self.assertEqual(code, 0)
         port, tok = self.server()["port"], self.token()
         base = f"http://127.0.0.1:{port}/voice"
@@ -330,6 +332,24 @@ class BootstrapIntegration(unittest.TestCase):
                 break
             time.sleep(0.1)
         self.assertTrue(found, "the voice session is recorded with its duration and estimated cost")
+        # Assistant routes (fake provider, still running in this server)
+        a = f"http://127.0.0.1:{port}/assistant"
+        self.assertEqual(get(a + "/status")[0], 401)
+        code, st = get(a + "/status", tok)
+        self.assertEqual((code, st["configured"], st["assistant_voice"]), (200, True, "marin"))
+        code, out = get(a + "/chat", tok, "POST", {"text": "cherche constellations"})
+        self.assertEqual(code, 200)
+        self.assertTrue(out["cited"])
+        code, b = get(a + "/briefing", tok, "POST")
+        self.assertEqual(code, 200)
+        self.assertTrue(b["text"])
+        code, h = get(a + "/history", tok)
+        self.assertEqual([m["role"] for m in h["messages"]], ["user", "assistant", "briefing"])
+        req = urllib.request.Request(a + "/speak", data=json.dumps({"text": "Bonjour"}).encode(), method="POST",
+                                     headers={"Authorization": f"Bearer {tok}", "Content-Type": "application/json"})
+        with urllib.request.urlopen(req, timeout=10) as r:
+            self.assertEqual(r.headers["Content-Type"], "audio/mpeg")
+            self.assertGreater(len(r.read()), 1000)
 
     def test_13_os_credential_store_roundtrip(self):
         venv_py = str(self.home / ".venv" / ("Scripts/python.exe" if sys.platform == "win32" else "bin/python"))

@@ -5,10 +5,12 @@ extends Node
 ## the tree gets hover/click sounds automatically.
 
 signal track_changed(title: String)
+signal voice_finished
 
 const AUDIO_DIR := "res://assets/audio"
-const BUSES := ["Music", "SFX", "Ambience"]
-const DEFAULTS := {"Music": 0.45, "SFX": 0.7, "Ambience": 0.35}
+const BUSES := ["Music", "SFX", "Ambience", "Voice"]
+const DEFAULTS := {"Music": 0.45, "SFX": 0.7, "Ambience": 0.35, "Voice": 0.9}
+const DUCK_DB := -12.0  # music and ambience step back while the assistant speaks
 const FADE_S := 2.5
 const TRACK_TITLES := {
 	"morning_1": "Sunrise Coffee", "morning_2": "Open Window",
@@ -30,6 +32,8 @@ var _ambience: AudioStreamPlayer
 var _sfx_pool: Array[AudioStreamPlayer] = []
 var _sfx_cache: Dictionary = {}
 var _last_hover_ms := 0
+var _voice: AudioStreamPlayer
+var _duck: Tween
 
 
 func _ready() -> void:
@@ -54,6 +58,10 @@ func _ready() -> void:
 	_ambience = AudioStreamPlayer.new()
 	_ambience.bus = "Ambience"
 	add_child(_ambience)
+	_voice = AudioStreamPlayer.new()
+	_voice.bus = "Voice"
+	_voice.finished.connect(_on_voice_finished)
+	add_child(_voice)
 	for i in 6:
 		var s := AudioStreamPlayer.new()
 		s.bus = "SFX"
@@ -231,6 +239,47 @@ func _on_press(b: BaseButton) -> void:
 	play(custom if custom != "" else "click", 0.05)
 
 
+# -------------------------------------------------------------------- voice
+func play_voice(mp3: PackedByteArray) -> bool:
+	if mp3.is_empty():
+		return false
+	var stream := AudioStreamMP3.new()
+	stream.data = mp3
+	if stream.get_length() <= 0.0:
+		return false
+	_voice.stream = stream
+	_voice.play()
+	_set_duck(true)
+	return true
+
+
+func stop_voice() -> void:
+	if _voice.playing:
+		_voice.stop()
+		_on_voice_finished()
+
+
+func is_speaking() -> bool:
+	return _voice != null and _voice.playing
+
+
+func _on_voice_finished() -> void:
+	_set_duck(false)
+	voice_finished.emit()
+
+
+func _set_duck(on: bool) -> void:
+	if _duck != null and _duck.is_valid():
+		_duck.kill()
+	_duck = create_tween().set_parallel()
+	for bus in ["Music", "Ambience"]:
+		var idx := AudioServer.get_bus_index(bus)
+		var base := linear_to_db(maxf(float(SbSettings.get_value("audio", bus, DEFAULTS[bus])), 0.0001))
+		var target := base + (DUCK_DB if on else 0.0)
+		_duck.tween_method(func(v: float) -> void: AudioServer.set_bus_volume_db(idx, v),
+			AudioServer.get_bus_volume_db(idx), target, 0.4 if on else 1.2)
+
+
 func stop_all() -> void:
 	for p in _music:
 		p.stop()
@@ -240,6 +289,9 @@ func stop_all() -> void:
 		p.stream = null
 	_ambience.stop()
 	_ambience.stream = null
+	if _voice != null:
+		_voice.stop()
+		_voice.stream = null
 	_sfx_cache.clear()
 
 

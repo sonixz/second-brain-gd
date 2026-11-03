@@ -35,8 +35,12 @@ func wait_until(cond: Callable, timeout_s: float) -> bool:
 
 
 func _run() -> void:
+	# Private settings file: never touch the user's real preferences (theme, onboarding, volumes).
+	OS.set_environment("SBGD_SETTINGS", OS.get_environment("SBGD_HOME").path_join("test-settings.cfg"))
 	# The engine started by this test uses a fake transcription provider: no OpenAI call, no cost.
 	OS.set_environment("SBGD_VOICE_PROVIDER", "fake")
+	OS.set_environment("SBGD_ASSISTANT_PROVIDER", "fake")
+	SbSettings.set_value("assistant", "speaks", true)
 	SbSettings.set_value("onboarding", "voice_done", false)
 	if OS.get_environment("SBGD_HOME") == "":
 		printerr("Set SBGD_HOME to a temporary folder before running these tests.")
@@ -144,6 +148,24 @@ func _e2e() -> void:
 	var seeded := await wait_until(func() -> bool: return graph.node_count("note") >= 4, 20.0)
 	check(seeded, "first visit shows the starter graph (%d notes)" % graph.node_count("note"))
 	check(bool(brain.get("health_ok")), "brain header reports the engine healthy")
+	# Assistant: briefing on open, a question with a cited note, auto-filing of a capture with undo.
+	var ap: AssistantPanel = brain.get("assistant_panel")
+	var briefed := await wait_until(func() -> bool: return ap.configured and ap.messages_shown >= 1 and not ap.busy, 20.0)
+	check(briefed, "the assistant opens with today's briefing")
+	ap.send("cherche constellations")
+	var answered := await wait_until(func() -> bool: return ap.last_reply.contains("[["), 20.0)
+	check(answered, "the assistant answers from the notes and cites them (%s)" % ap.last_reply.left(60))
+	var gs_before := graph.node_count("note")
+	var ce: LineEdit = brain.get("capture_edit")
+	ce.text = "Getting started checklist for new users"
+	ce.text_submitted.emit(ce.text)
+	var filed := await wait_until(func() -> bool: return int(brain.get("classified")) == 1, 20.0)
+	check(filed, "a capture is filed automatically by the assistant")
+	var toast_label: Label = brain.get("toast_label")
+	check(toast_label.text.begins_with("Filed in Getting started"), "a toast says where it went (%s)" % toast_label.text)
+	await brain.call("_undo_toast")
+	check(toast_label.text.begins_with("Put back"), "the filing can be undone from the toast")
+	check(graph.node_count("note") == gs_before + 1, "undo keeps the note, only its place changes")
 	var before := graph.node_count("note")
 	var capture_edit: LineEdit = brain.get("capture_edit")
 	capture_edit.text = "Test thought linking [[Engine room]] #e2e"

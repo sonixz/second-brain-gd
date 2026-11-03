@@ -15,17 +15,11 @@ static func custom_python() -> String:
 	var env := OS.get_environment("SBGD_PYTHON")
 	if env != "":
 		return env
-	var cfg := ConfigFile.new()
-	if cfg.load(SETTINGS_PATH) == OK:
-		return str(cfg.get_value("python", "path", ""))
-	return ""
+	return str(SbSettings.get_value("python", "path", ""))
 
 
 static func save_custom_python(path: String) -> void:
-	var cfg := ConfigFile.new()
-	cfg.load(SETTINGS_PATH)
-	cfg.set_value("python", "path", path.strip_edges())
-	cfg.save(SETTINGS_PATH)
+	SbSettings.set_value("python", "path", path.strip_edges())
 
 
 static func candidates() -> Array[Dictionary]:

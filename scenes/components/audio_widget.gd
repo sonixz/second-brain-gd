@@ -71,6 +71,7 @@ func _build_popup() -> void:
 	col.add_child(_slider_row("Music", "Music", app.audio.music_enabled,
 		func(on: bool) -> void: app.audio.set_music_enabled(on)))
 	col.add_child(_slider_row("Effects", "SFX", true, Callable()))
+	col.add_child(_slider_row("Assistant", "Voice", true, Callable()))
 	col.add_child(_slider_row("Ambience", "Ambience", app.audio.ambience_enabled,
 		func(on: bool) -> void: app.audio.set_ambience_enabled(on)))
 	var row := HBoxContainer.new()

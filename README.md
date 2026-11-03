@@ -62,6 +62,9 @@ Set `SBGD_HOME` to use another folder. Nothing is ever written inside the reposi
   effects and ambience.
 - **Voice:** click the microphone (Ctrl+M), speak, click again. It needs your own OpenAI API key, asked once
   after setup or on first use. The key is stored in your system's credential store.
+- **Assistant:** the left panel. She briefs you at the first opening of the day, answers from your notes
+  (click a cited note to open it), and saves or moves notes when you ask. Everything she changes has an
+  Undo. Toggle *Voice* to hear her, or use her mic to talk to her.
 - **Engine room:** click "All systems operational" at the top right.
 
 ## Audio assets

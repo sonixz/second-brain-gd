@@ -1,6 +1,17 @@
 # Status
 
-**Loop 2 — Voice capture (bring your own key): done and verified against the real OpenAI API (2026-11-02).** Loops 0 and 1 are done.
+**Loop 3 — The assistant: done (2026-11-02).** She briefs you when you open the app and reads the
+briefing aloud with the marin voice and a Québec accent. She answers from your notes, citing them as
+links, and acts on your brain through tools: create, move, edit. She files every capture automatically,
+and everything she does can be undone. You can type or speak to her.
+
+| Suite | Platform | Result |
+|---|---|---|
+| Python (42) | Linux 3.12 / Windows Store 3.13 | OK |
+| Godot end-to-end (68 checks: briefing, cited answer, auto-filing with toast and undo) | Linux and Windows native | 68 passed |
+| Real OpenAI run (briefing, chat with tools, filing, speech) | Linux engine | correct, about 3 cents per demo session |
+
+**Loop 2 — Voice capture (bring your own key): done and verified against the real OpenAI API.** Loops 0 and 1 are done.
 
 ## Loop 2
 

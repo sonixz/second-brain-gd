@@ -13,6 +13,7 @@ from engine import VERSION, database
 from engine.api.brain_routes import make_router
 from engine.brain.seed import seed_if_empty
 from engine.voice.routes import make_router as make_voice_router
+from engine.assistant.routes import make_router as make_assistant_router
 from engine.events import utc_now
 from engine.installer.state import load_state
 from engine.monitoring.metrics import ProcessSampler, StorageScanner, system_snapshot
@@ -113,4 +114,5 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
 
     app.include_router(make_router(layout, require_token))
     app.include_router(make_voice_router(layout, require_token, token))
+    app.include_router(make_assistant_router(layout, require_token))
     return app

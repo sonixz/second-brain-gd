@@ -5,6 +5,7 @@ extends SceneTree
 
 var out_dir := ""
 var app: SbApp
+var _filled := false
 
 const DEMO_SPACES := [["Client Atlas", "ffd2a1"], ["Second Brain GD", "a6dcff"], ["Health & energy", "c8b6ff"]]
 const DEMO_NOTES := [
@@ -45,6 +46,7 @@ func api(path: String, payload: Dictionary) -> Dictionary:
 
 func _run() -> void:
 	root.size = Vector2i(1280, 800)
+	OS.set_environment("SBGD_SETTINGS", OS.get_environment("SBGD_HOME").path_join("capture-settings.cfg"))
 	SbSettings.set_value("ui", "theme", "morning")
 	SbSettings.set_value("onboarding", "voice_done", false)
 	OS.set_environment("SBGD_VOICE_PROVIDER", "fake")  # screenshots never call OpenAI
@@ -62,9 +64,20 @@ func _run() -> void:
 		if not got_mid and dep.status == "progress" and (setup.get("progress") as ProgressBar).value > 0.35:
 			await shot("02-setup-installing")
 			got_mid = true
-		if (setup.get("continue_button") as Button).visible:
-			await pause(0.3)
+		if (setup.get("continue_button") as Button).visible and not _filled:
+			_filled = true
 			await shot("03-setup-ready")
+			app.backend.load_runtime()
+			# Fill a demo brain through the real API, once, before the first brain visit.
+			var space_ids: Array[String] = []
+			for s in DEMO_SPACES:
+				var res := await api("/brain/spaces", {"name": s[0], "color": "#" + str(s[1])})
+				space_ids.append(str((res["data"] as Dictionary).get("id", "")))
+			for n in DEMO_NOTES:
+				var payload := {"title": n[1], "kind": n[2], "body": n[3]}
+				if int(n[0]) >= 0:
+					payload["space_id"] = space_ids[int(n[0])]
+				await api("/brain/notes", payload)
 			break
 		await process_frame
 	while app.current_screen not in ["onboarding", "brain"] and Time.get_ticks_msec() < deadline:
@@ -75,20 +88,31 @@ func _run() -> void:
 		(app.current().get("panel") as VoiceKeyPanel).skipped.emit()
 	while app.current_screen != "brain" and Time.get_ticks_msec() < deadline:
 		await pause(0.2)
-	await pause(4.0)
-	await shot("04-brain-first-visit")
-	# Fill a demo brain through the real API.
-	var space_ids: Array[String] = []
-	for s in DEMO_SPACES:
-		var res := await api("/brain/spaces", {"name": s[0], "color": "#" + str(s[1])})
-		space_ids.append(str((res["data"] as Dictionary).get("id", "")))
-	for n in DEMO_NOTES:
-		var payload := {"title": n[1], "kind": n[2], "body": n[3]}
-		if int(n[0]) >= 0:
-			payload["space_id"] = space_ids[int(n[0])]
-		await api("/brain/notes", payload)
+	var b0: Control = app.current()
+	var ap: AssistantPanel = b0.get("assistant_panel")
+	var waited := Time.get_ticks_msec() + 60000
+	while (ap.busy or ap.messages_shown == 0) and Time.get_ticks_msec() < waited:
+		await pause(0.3)
+	await pause(5.0)
+	await shot("04-brain-briefing")
+	ap.send("C'est quoi les risques sur Atlas, et qu'est-ce qui est dû cette semaine?")
+	await pause(0.5)
+	while ap.busy and Time.get_ticks_msec() < waited + 60000:
+		await pause(0.3)
+	await pause(1.0)
+	await shot("04b-assistant-answer")
+	var ce: LineEdit = b0.get("capture_edit")
+	ce.text = "faut que je rappelle le monsieur d'Atlas pour le problème de migration"
+	ce.text_submitted.emit(ce.text)
+	while int(b0.get("classified")) == 0 and Time.get_ticks_msec() < waited + 90000:
+		await pause(0.3)
+	await pause(2.5)
+	await shot("04c-auto-filed")
 	app.show_brain()
 	await pause(7.0)
+	(app.current().get("tab_spaces") as Button).pressed.emit()
+	(app.current().get("tab_spaces") as Button).button_pressed = true
+	await pause(0.5)
 	await shot("05-brain-morning")
 	var brain: Control = app.current()
 	var graph: GraphView = brain.get("graph")

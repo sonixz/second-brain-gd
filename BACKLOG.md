@@ -4,8 +4,8 @@ Ordered by priority. ✅ = done.
 
 ## Next
 
-1. Loop 3, assistant: chat panel with second-brain tools, auto-classification of every input, generated
-   morning briefing spoken with the marin voice.
+1. Loop 4, real conversation: realtime speech-to-speech (talk and interrupt), streaming replies, project mode
+   driven by voice ("on travaille sur Atlas").
 2. Agent room: Claude Code sessions via the Claude Agent SDK, rendered natively in Godot, with permissions
    in the UI and the brain exposed as an MCP server. It needs an Anthropic API key per user, because
    claude.ai login is not allowed for third-party apps.
@@ -44,7 +44,7 @@ Ordered by priority. ✅ = done.
 
 ## Decisions taken
 
-- 2026-11-02: assistant voice = OpenAI `gpt-4o-mini-tts`, voice **marin** (chosen by ear from 16 samples of a
+- 2026-11-02: assistant voice = OpenAI `gpt-4o-mini-tts`, voice **marin** with the Québec-accent instruction (chosen by ear from 16 samples of a
   morning briefing). Tone set by instructions per theme. ElevenLabs stays a possible premium option.
 - 2026-11-02: voice-to-text = `gpt-realtime-whisper`, each user brings their own OpenAI key.
 
@@ -65,7 +65,9 @@ cloud sync.
 ## Done
 
 - ✅ Loop 0: setup wizard, bootstrap, SQLite, local API, System Console, landing page, tests, docs.
-- ✅ Loop 2 (pending real API run): BYOK voice onboarding, OS credential store, mic capture, local WebSocket
+- ✅ Loop 3: assistant (briefing spoken by marin, chat with tools and citations, auto-filing with undo, voice in
+  and out, action journal).
+- ✅ Loop 2: BYOK voice onboarding, OS credential store, mic capture, local WebSocket
   relay to OpenAI realtime transcription, voice notes, engine-room Voice card, benchmark tool.
 - ✅ Loop 1: knowledge model (spaces, notes, links, tags, FTS5), brain screen with living graph, capture,
   briefing, search, inspector; themes; generated music, ambience and sound effects.

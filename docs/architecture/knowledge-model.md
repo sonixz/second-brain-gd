@@ -94,6 +94,25 @@ Facts learned:
   WebSocket, deletion. First words after 0.93 s, final text 0.36 s after commit, transcription exact, key absent
   from every log.
 
+## The assistant (Loop 3)
+
+It uses the user's own OpenAI key, the same as voice. `gpt-4o` handles conversation and the briefing,
+`gpt-4o-mini` handles classification. Both are configurable through `PATCH /assistant/settings`. The
+owner's key currently allows only these two chat models.
+
+| Feature | How |
+|---|---|
+| Morning briefing | `POST /assistant/briefing`. Facts (open tasks, new notes, inbox, oldest ideas) go to the model, which writes a 60–110-word spoken text. It is cached once per day and spoken with **marin** (Québec accent instruction) |
+| Conversation | `POST /assistant/chat` with tools (`search_notes`, `get_note`, `list_spaces`, `list_notes`, `create_note`, `update_note`), up to 5 tool rounds. Today's conversation is stored in `assistant_messages`. The reply cites notes as `[[Title]]`, which become clickable links |
+| Auto-filing | After every capture made outside a selected space, `POST /assistant/classify/{id}` proposes a space, title, kind, 0–2 tags and 0–2 related links. It is applied only above 0.6 confidence, and a toast offers Undo |
+| Voice out | `POST /assistant/speak` uses `gpt-4o-mini-tts`, voice `marin`, with a tone per theme and a Québec accent. It returns MP3, cached in `runtime/tts/`. Music and ambience duck while it speaks |
+| Voice in | The assistant panel has its own mic: speech goes to the chat instead of becoming a note |
+| Transparency | Every change goes into `assistant_actions` with the state before it, and can be undone. Notes created by the assistant have `source = 'agent'`, links it adds have `created_by = 'assistant'`. Every call is logged in `system_events` with tokens and estimated cost |
+
+Measured with the real API (2026-11-02): auto-filing took 1.3–1.8 s and was correct on three messy
+French captures. The briefing took about 1.3 s, a chat turn with tools about 3 s, and speech about 5 s for
+a briefing. A whole demo session cost about 3 cents.
+
 ## Later: daily router agent (direction)
 
 A "daily" agent runs in the morning: it reads the Inbox, proposes a space for each thought, and suggests links.

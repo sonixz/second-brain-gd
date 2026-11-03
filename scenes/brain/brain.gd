@@ -42,6 +42,18 @@ var voice_level := 0.0
 var voice_notes := 0
 var _voice_final := ""
 var _voice_error := ""
+var voice_target := "capture"   # capture | chat
+# Assistant
+var assistant_panel: AssistantPanel
+var spaces_page: VBoxContainer
+var tab_assistant: Button
+var tab_spaces: Button
+var toast: PanelContainer
+var toast_label: Label
+var toast_undo: Button
+var toast_action := 0
+var classified := 0
+var _toast_timer: Timer
 
 
 func bind(a: SbApp) -> void:
@@ -61,6 +73,7 @@ func _ready() -> void:
 	_build_left_panel()
 	_build_inspector()
 	_build_capture_bar()
+	_build_toast()
 	voice_capture = VoiceCapture.new()
 	add_child(voice_capture)
 	voice_capture.chunk.connect(func(pcm: PackedByteArray) -> void: voice_stream.send_audio(pcm))
@@ -82,6 +95,7 @@ func _ready() -> void:
 	await refresh_spaces()
 	await refresh_graph()
 	await load_briefing()
+	assistant_panel.start()
 	var keep := str(app.state.get("selected_note", ""))
 	if keep != "":
 		open_note(keep)
@@ -156,13 +170,46 @@ func _build_top_bar() -> void:
 func _build_left_panel() -> void:
 	var panel := PanelContainer.new()
 	panel.theme_type_variation = "Glass"
-	panel.position = Vector2(24, 92)
-	panel.custom_minimum_size = Vector2(270, 0)
-	panel.size = Vector2(270, 0)
+	panel.set_anchors_preset(Control.PRESET_LEFT_WIDE)
+	panel.offset_left = 24
+	panel.offset_right = 24 + 340
+	panel.offset_top = 92
+	panel.offset_bottom = -112
 	add_child(panel)
-	var col := VBoxContainer.new()
-	col.add_theme_constant_override("separation", 10)
-	panel.add_child(col)
+	var root := VBoxContainer.new()
+	root.add_theme_constant_override("separation", 10)
+	panel.add_child(root)
+	var tabs := HBoxContainer.new()
+	tabs.add_theme_constant_override("separation", 6)
+	root.add_child(tabs)
+	var group := ButtonGroup.new()
+	tab_assistant = Button.new()
+	tab_assistant.text = "Assistant"
+	tab_spaces = Button.new()
+	tab_spaces.text = "Spaces & briefing"
+	for b in [tab_assistant, tab_spaces]:
+		b.toggle_mode = true
+		b.button_group = group
+		b.theme_type_variation = "GhostButton"
+		tabs.add_child(b)
+	tab_assistant.button_pressed = true
+	assistant_panel = AssistantPanel.new().setup(app, self)
+	assistant_panel.note_requested.connect(_open_note_by_title)
+	assistant_panel.brain_changed.connect(func() -> void:
+		await refresh_graph()
+		await refresh_spaces())
+	root.add_child(assistant_panel)
+	spaces_page = VBoxContainer.new()
+	spaces_page.add_theme_constant_override("separation", 10)
+	spaces_page.visible = false
+	root.add_child(spaces_page)
+	tab_assistant.pressed.connect(func() -> void:
+		assistant_panel.visible = true
+		spaces_page.visible = false)
+	tab_spaces.pressed.connect(func() -> void:
+		assistant_panel.visible = false
+		spaces_page.visible = true)
+	var col := spaces_page
 	var over := Label.new()
 	over.text = "BRIEFING"
 	over.theme_type_variation = "Overline"
@@ -191,6 +238,81 @@ func _build_left_panel() -> void:
 	stats_label.theme_type_variation = "Muted"
 	stats_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	col.add_child(stats_label)
+
+
+func _build_toast() -> void:
+	var wrap := CenterContainer.new()
+	wrap.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
+	wrap.offset_top = -150
+	wrap.offset_bottom = -104
+	wrap.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	add_child(wrap)
+	toast = PanelContainer.new()
+	toast.theme_type_variation = "Pill"
+	toast.visible = false
+	wrap.add_child(toast)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 10)
+	toast.add_child(row)
+	toast_label = Label.new()
+	row.add_child(toast_label)
+	toast_undo = Button.new()
+	toast_undo.text = "Undo"
+	toast_undo.theme_type_variation = "GhostButton"
+	toast_undo.pressed.connect(_undo_toast)
+	row.add_child(toast_undo)
+	_toast_timer = Timer.new()
+	_toast_timer.one_shot = true
+	_toast_timer.wait_time = 8.0
+	_toast_timer.timeout.connect(func() -> void: toast.visible = false)
+	add_child(_toast_timer)
+
+
+func show_toast(text: String, action_id: int = 0) -> void:
+	toast_label.text = text
+	toast_action = action_id
+	toast_undo.visible = action_id > 0
+	toast.visible = true
+	toast.modulate.a = 0.0
+	create_tween().tween_property(toast, "modulate:a", 1.0, 0.25)
+	_toast_timer.start()
+
+
+func _undo_toast() -> void:
+	if toast_action <= 0:
+		return
+	var res := await app.backend.api.call_api("/assistant/actions/%d/undo" % toast_action, true, HTTPClient.METHOD_POST)
+	if res["ok"]:
+		app.audio.play("whoosh")
+		show_toast("Put back where it was.")
+		await refresh_graph()
+		await refresh_spaces()
+
+
+func _open_note_by_title(title: String) -> void:
+	for id in graph.nodes:
+		var n: Dictionary = graph.nodes[id]
+		if str(n["type"]) == "note" and str(n["label"]).to_lower() == title.to_lower():
+			open_note(str(id), true)
+			return
+
+
+func _classify(note_id: String) -> void:
+	if not assistant_panel.configured:
+		return
+	var res := await app.backend.api.call_api("/assistant/classify/" + note_id, true, HTTPClient.METHOD_POST)
+	if not res["ok"] or not is_inside_tree():
+		return
+	var d: Dictionary = res["data"]
+	var prop: Dictionary = d.get("proposal", {})
+	if bool(d.get("applied", false)):
+		classified += 1
+		app.audio.play("node_link", 0.05)
+		show_toast("Filed in %s · « %s »" % [prop.get("space_name", "?"), prop.get("title", "")], int(d.get("action_id", 0)))
+		await refresh_graph()
+		await refresh_spaces()
+	else:
+		show_toast("Left in the Inbox · not sure where it belongs")
 
 
 func _build_inspector() -> void:
@@ -467,6 +589,8 @@ func capture(text: String, source: String = "typed") -> void:
 		graph.focus_on(born[0])
 	await refresh_spaces()
 	capture_hint.text = "Saved to %s. Keep going." % _space_name(str(note["space_id"]))
+	if current_space == "":
+		_classify(str(note["id"]))
 
 
 func _post(path: String, payload: Dictionary, method: int = HTTPClient.METHOD_POST) -> Dictionary:
@@ -530,11 +654,13 @@ func _on_node_selected(id: String, type: String) -> void:
 
 
 func open_note(id: String, focus: bool = false) -> void:
+	if id.strip_edges() == "":
+		return
 	if not current_note.is_empty() and _save_timer.time_left > 0.0:
 		_save_timer.stop()
 		await _save_note()
-	var res := await app.backend.api.call_api("/brain/notes/" + id)
-	if not res["ok"]:
+	var res := await app.backend.api.call_api("/brain/notes/" + id.uri_encode())
+	if not res["ok"] or not (res["data"] as Dictionary).has("title"):
 		return
 	current_note = res["data"]
 	app.state["selected_note"] = id
@@ -705,9 +831,10 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 
 # ------------------------------------------------------------------ voice
-func toggle_voice() -> void:
+func toggle_voice(target: String = "capture") -> void:
 	match voice_state:
 		"idle":
+			voice_target = target
 			var res := await app.backend.api.call_api("/voice/status")
 			var st: Dictionary = res["data"] if res["ok"] else {}
 			if not bool(st.get("configured", false)) and OS.get_environment("SBGD_VOICE_PROVIDER") != "fake":
@@ -746,7 +873,8 @@ func start_voice(use_mic: bool) -> bool:
 	capture_edit.text = ""
 	capture_edit.editable = false
 	capture_edit.placeholder_text = "Listening…  speak, then click the microphone again"
-	capture_hint.text = "Listening · Ctrl+M or click the mic to finish"
+	capture_hint.text = "Listening for the assistant · click the mic to finish" if voice_target == "chat" \
+		else "Listening · Ctrl+M or click the mic to finish"
 	return true
 
 
@@ -774,7 +902,11 @@ func stop_voice() -> void:
 		_voice_fail(_voice_error if _voice_error != "" else "No speech was transcribed.")
 		return
 	capture_edit.text = ""
-	await capture(text, "voice")
+	if voice_target == "chat":
+		voice_target = "capture"
+		await assistant_panel.send(text)
+	else:
+		await capture(text, "voice")
 
 
 func _on_voice_delta(text: String) -> void:

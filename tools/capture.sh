@@ -13,6 +13,6 @@ trap 'vdisplay_stop; rm -rf "$TMP_HOME"' EXIT
 TMP_HOME="$(mktemp -d -t sbgd-capture-XXXX)"
 "$GODOT" --headless --path . --import >/dev/null 2>&1 || true
 DISPLAY="$VDISPLAY" WAYLAND_DISPLAY="" SBGD_HOME="$TMP_HOME" SBGD_PORT=18767 SBGD_CAPTURE_DIR="$OUT" \
-  "$GODOT" --display-driver x11 --audio-driver Dummy --rendering-driver opengl3 --resolution 1280x800 \
+  ${DOTENVX_RUN:-} "$GODOT" --display-driver x11 --audio-driver Dummy --rendering-driver opengl3 --resolution 1280x800 \
   --path . --script res://tools/capture.gd 2>&1 | grep -E "captured|ERROR|SCRIPT" || true
 ls -1 "$OUT"

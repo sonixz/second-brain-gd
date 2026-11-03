@@ -1,5 +1,23 @@
 # Devlog
 
+## Loop 3 — The assistant (2026-11-02)
+
+**Owner's request:** "Open it in the morning, it summarises, it talks to me, every input gets filed, then we
+work on a project." The voice is marin with a Québec accent, picked by ear from 16 samples.
+
+- Engine `engine/assistant/`: an OpenAI client (stdlib), tools over the brain, a classification JSON
+  contract, a fact-only briefing, spoken output with a tone per theme, and a journal plus undo for every
+  change (migration 0003).
+- Godot: an Assistant tab with bubbles, clickable `[[citations]]`, undo buttons under actions, a "Thinking…"
+  indicator, a voice toggle and its own mic. A toast follows each auto-filed capture. Music ducks under the
+  voice.
+- Prompt tuning from real runs: tags came glued ("modenuit"), so hyphens are now asked for. Citations were
+  missing, so they are now explicitly required, and they come back.
+- Lessons: an edit script missed its anchor because earlier voice code sat between two lines, and the toast
+  was never built. A moved GDScript block lost its indentation and filled the demo data twice. Tests now
+  use a private settings file (`SBGD_SETTINGS`) instead of the user's.
+
+
 ## Loop 2 — Voice capture, bring your own key (2026-11-02)
 
 **Owner's decision:** voice uses OpenAI's realtime transcription (`gpt-realtime-whisper`) with each user's own
