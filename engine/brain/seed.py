@@ -33,3 +33,10 @@ def seed_if_empty(conn: sqlite3.Connection) -> bool:
             brain.create_note(conn, title, body, space["id"], kind=kind, source="seed")
     database.set_setting(conn, "seeded_v1", True)
     return True
+
+
+def seed_all(conn: sqlite3.Connection) -> None:
+    from engine.brain.structure import seed_structure
+
+    seed_if_empty(conn)
+    seed_structure(conn)

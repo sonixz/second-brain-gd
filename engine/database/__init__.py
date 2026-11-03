@@ -104,7 +104,8 @@ def _split_sql(script: str) -> list[str]:
     for ln in lines:
         buf.append(ln)
         candidate = "\n".join(buf).strip()
-        if candidate.endswith(";") and sqlite3.complete_statement(candidate):
+        # complete_statement also accepts a trailing "-- comment" after the semicolon.
+        if sqlite3.complete_statement(candidate):
             statements.append(candidate)
             buf = []
     tail = "\n".join(buf).strip()

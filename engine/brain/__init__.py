@@ -120,7 +120,7 @@ def create_note(conn: sqlite3.Connection, title: str, body: str = "", space_id: 
 
 def update_note(conn: sqlite3.Connection, note_id: str, **fields: Any) -> dict[str, Any]:
     _note_row(conn, note_id)
-    allowed = {"title", "body", "space_id", "kind", "status", "pinned"}
+    allowed = {"title", "body", "space_id", "kind", "status", "pinned", "due_date"}
     changes = {k: v for k, v in fields.items() if k in allowed and v is not None}
     if "title" in changes:
         changes["title"] = str(changes["title"]).strip()[:300]
@@ -132,6 +132,8 @@ def update_note(conn: sqlite3.Connection, note_id: str, **fields: Any) -> dict[s
         raise ValueError("invalid kind")
     if "pinned" in changes:
         changes["pinned"] = 1 if changes["pinned"] else 0
+    if "status" in changes:
+        changes["done_at"] = utc_now() if changes["status"] == "done" else None
     if changes:
         changes["updated_at"] = utc_now()
         sets = ", ".join(f"{k} = :{k}" for k in changes)
@@ -197,7 +199,9 @@ def graph(conn: sqlite3.Connection) -> dict[str, Any]:
     edges: list[dict[str, Any]] = []
     for s in list_spaces(conn):
         nodes.append({"id": f"space:{s['id']}", "type": "space", "label": s["name"], "kind": s["kind"],
-                      "color": s["color"], "weight": s["note_count"]})
+                      "color": s["color"], "weight": s["note_count"], "status": s.get("status")})
+        if s.get("area_id"):
+            edges.append({"from": f"space:{s['id']}", "to": f"space:{s['area_id']}", "type": "area"})
     degree: dict[str, int] = {}
     for r in conn.execute("SELECT from_note, to_note FROM links"):
         edges.append({"from": r["from_note"], "to": r["to_note"], "type": "link"})
