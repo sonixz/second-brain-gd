@@ -1,5 +1,19 @@
 # Devlog
 
+## Loop 6b — Responses API and gpt-6-astra (2026-11-03)
+
+- `MODEL_CAPS` in `llm.py` replaces `startswith("gpt-6")` guesses. Astra goes through `/v1/responses`.
+  Chat-style messages are translated to input items and back, so the tool loop in `core.py` is unchanged.
+  The model's raw output items (reasoning included) ride along in a private `_items` key and are sent back
+  verbatim. The key is stripped before any Chat Completions call.
+- `store: false` with `include: reasoning.encrypted_content`, so nothing about the user's brain is kept on
+  OpenAI's side between turns.
+- Measured: the weekly review is clearly better on astra@low (10.6 s) than on gpt-4o (3.5 s). Medium effort
+  (16.4 s) adds little. Chat stays on gpt-4o, which is faster with tools.
+- `complete_with_fallback`: users bring their own key, and their project may lack gpt-6 models. A 403 or 404
+  about the model falls back once per job, records a single warning event, and never hides other errors.
+
+
 ## Loop 5b — Meaning memory (2026-11-03)
 
 - Migration 0006: `note_embeddings` (one normalised float32 vector per note, re-embedded when the title or

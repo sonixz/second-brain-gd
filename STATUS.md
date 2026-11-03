@@ -1,5 +1,23 @@
 # Status
 
+**Loop 6b — Responses API and gpt-6-astra: done (2026-11-03).** Reasoning models that cannot turn reasoning
+off now use tools through the Responses API (`store: false`, reasoning passed back encrypted). The assistant
+code is unchanged: `engine/assistant/llm.py` translates. The weekly review now uses `gpt-6-astra` (effort
+low). If a user's OpenAI project lacks a configured model, the job falls back (review to gpt-4o, filing to
+gpt-4o-mini), and the engine room shows one warning.
+
+| Measured (real API, tools/model_bench.py) | Time | Verdict |
+|---|---|---|
+| Weekly review, gpt-4o | 3.5 s | Generic ("explore a new feature") |
+| Weekly review, gpt-6-astra low | 10.6 s | Cites notes, links facts (the delayed Atlas demo and the late supplier call), sharp questions. **Default** |
+| Weekly review, gpt-6-astra medium | 16.4 s | Barely deeper |
+| Chat with tools, gpt-6-astra | 8.4 s | Correct; chat stays on gpt-4o (2.9 s) |
+
+| Suite | Platform | Result |
+|---|---|---|
+| Python (75) | Linux 3.12 / Windows Store 3.13 | OK |
+| Godot end-to-end (85) | Linux and Windows native | 85 passed |
+
 **Loop 5b — Meaning memory: done (2026-11-03).** The embeddings model is now enabled. Every note is embedded
 in the background (new or changed notes within seconds), related ideas are linked automatically (warm dashed
 lines in the graph, a Related ideas section in the inspector), and search (the search box and the assistant)

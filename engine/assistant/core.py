@@ -11,7 +11,7 @@ from typing import Any
 
 from engine import brain, database
 from engine.brain import structure
-from engine.assistant.llm import TTS_PRICE_PER_1M_CHARS, estimate_cost
+from engine.assistant.llm import LLMError, TTS_PRICE_PER_1M_CHARS, estimate_cost
 from engine.events import utc_now
 
 DEFAULTS = {
@@ -19,10 +19,17 @@ DEFAULTS = {
     # Measured 2026-11-02 on 10 French captures (tools/model_bench.py): gpt-6-sol 10/10 in 1.45 s,
     # gpt-4o 9/10, gpt-4o-mini 7/10. Chat stays on gpt-4o: as correct with tools and faster (2.9 s vs 4.4 s).
     "assistant_classify_model": "gpt-6-sol",
+    # Weekly review and deep syntheses: a reasoning model through the Responses API (Loop 6b).
+    "assistant_review_model": "gpt-6-astra",
+    # Measured 2026-11-03 (tools/model_bench.py --review): astra@low 10.6 s cites notes and links facts;
+    # astra@medium 16.4 s barely deeper; gpt-4o 3.5 s but generic.
+    "assistant_review_effort": "low",
     "assistant_voice": "marin",
     "assistant_auto_classify": True,
     "assistant_min_confidence": 0.6,
 }
+# When a user's OpenAI project lacks a configured model, the job falls back instead of failing.
+FALLBACK_MODELS = {"assistant_classify_model": "gpt-4o-mini", "assistant_review_model": "gpt-4o"}
 MAX_TOOL_ROUNDS = 8
 HISTORY = 20
 
@@ -152,9 +159,10 @@ def classify(conn: sqlite3.Connection, client: Any, note_id: str) -> dict[str, A
               "vraiment; une idée sur une app ou un produit va dans le projet de ce produit), title (titre court et clair, dans la langue de la note, "
               "garde le sens), kind (note|idea|task|journal|reference), tags (0 à 2 mots-clés courts en minuscules, sans #; plusieurs mots reliés par un tiret, ex. mode-nuit), "
               "link_ids (0 à 2 ids parmi candidates vraiment liés), confidence (0 à 1), reason (une phrase courte en français).")
-    res = client.complete(s["assistant_classify_model"], [{"role": "system", "content": system},
-                                                          {"role": "user", "content": json.dumps(ctx, ensure_ascii=False)}],
-                          json_mode=True, temperature=0.1)
+    res = complete_with_fallback(conn, client, "assistant_classify_model",
+                                 [{"role": "system", "content": system},
+                                  {"role": "user", "content": json.dumps(ctx, ensure_ascii=False)}],
+                                 json_mode=True, temperature=0.1)
     _usage_event(conn, "classify", res["model"], res["usage"], client.provider)
     try:
         prop = json.loads(res["message"]["content"] or "{}")
@@ -410,7 +418,8 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
         if not calls:
             reply = (msg.get("content") or "").strip()
             break
-        messages.append({"role": "assistant", "content": msg.get("content"), "tool_calls": calls})
+        messages.append({"role": "assistant", "content": msg.get("content"), "tool_calls": calls,
+                         **({"_items": msg["_items"]} if msg.get("_items") else {})})
         for call in calls:
             try:
                 args = json.loads(call["function"].get("arguments") or "{}")
@@ -478,6 +487,32 @@ def briefing(conn: sqlite3.Connection, client: Any, force: bool = False) -> dict
     return {**out, "cached": False}
 
 
+def _model_refused(exc: Exception) -> bool:
+    msg = str(exc).lower()
+    return ("http 403" in msg or "http 404" in msg) and "model" in msg
+
+
+def complete_with_fallback(conn: sqlite3.Connection, client: Any, setting: str, messages: list[dict[str, Any]],
+                           **kwargs: Any) -> dict[str, Any]:
+    """Calls the model chosen in `setting`; if the user's project lacks it, uses the fallback and says so once."""
+    s = settings(conn)
+    model = str(s[setting])
+    try:
+        return client.complete(model, messages, **kwargs)
+    except LLMError as exc:
+        fallback = FALLBACK_MODELS.get(setting, s["assistant_chat_model"])
+        if not _model_refused(exc) or fallback == model:
+            raise
+        if database.get_setting(conn, f"model_refused:{model}") is None:
+            database.set_setting(conn, f"model_refused:{model}", utc_now())
+            database.record_event(conn, {"timestamp": utc_now(), "component": "assistant", "stage": "model_fallback",
+                                         "status": "warning",
+                                         "message": f"{model} is not available on this OpenAI project; using {fallback}",
+                                         "details": {"model": model, "fallback": fallback}})
+        kwargs.pop("effort", None)
+        return client.complete(fallback, messages, **kwargs)
+
+
 # ------------------------------------------------------------ weekly review
 def weekly_review(conn: sqlite3.Connection, client: Any) -> dict[str, Any]:
     """Guided weekly review: progress, blockers and a proposed next step per project,
@@ -508,8 +543,10 @@ def weekly_review(conn: sqlite3.Connection, client: Any) -> dict[str, Any]:
               "3) Inbox: combien de pensées à trier, et une suggestion.\n4) Trois questions de réflexion pour faire "
               "avancer la vision (surtout le domaine Vision au travail), inspirées des notes de la semaine.\n"
               "N'invente rien: seulement les faits fournis. 150 à 280 mots.")
-    res = client.complete(s["assistant_chat_model"], [{"role": "system", "content": system},
-                                                      {"role": "user", "content": json.dumps(facts, ensure_ascii=False)}])
+    res = complete_with_fallback(conn, client, "assistant_review_model",
+                                 [{"role": "system", "content": system},
+                                  {"role": "user", "content": json.dumps(facts, ensure_ascii=False)}],
+                                 effort=str(s.get("assistant_review_effort") or "") or None)
     cost = _usage_event(conn, "weekly_review", res["model"], res["usage"], client.provider)
     text = (res["message"].get("content") or "").strip()
     _save(conn, today_conversation(), "assistant", text, {"kind": "weekly_review", "estimated_cost_usd": cost})

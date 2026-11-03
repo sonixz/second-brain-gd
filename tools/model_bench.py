@@ -103,13 +103,45 @@ def bench_chat(key: str, models: list[str]) -> None:
             print(f"  {model:<14} {dt:5.1f}s  correct={right}  tasks={tasks}\n                 « {out['reply'][:160]} »")
 
 
+def bench_review(key: str, specs: list[str]) -> None:
+    """specs: model or model@effort. Prints time, tokens and the full review to judge depth by eye."""
+    print("\nWEEKLY REVIEW (demo week: done and late tasks, new notes, a project without next action)")
+    for spec in specs:
+        model, _, effort = spec.partition("@")
+        db = Path(tempfile.mkdtemp()) / "r.db"
+        demo(db)
+        with database.session(db) as conn:
+            sp = {s["name"]: s["id"] for s in brain.list_spaces(conn)}
+            t1 = structure.add_task(conn, "Envoyer la soumission Atlas", sp["Client Atlas"], "2026-11-01")
+            structure.set_task(conn, t1["id"], done=True)
+            structure.add_task(conn, "Appeler le fournisseur pour la migration", sp["Client Atlas"], "2026-10-30")
+            structure.add_task(conn, "Réserver la salle", sp["Fête de Léa"], "2026-11-20")
+            brain.create_note(conn, "Idée: mesurer la satisfaction client chaque trimestre", "", sp["Vision au travail"])
+            brain.create_note(conn, "Le client Atlas veut repousser la démo à jeudi", "", sp["Client Atlas"])
+            brain.create_note(conn, "lire Thinking in Systems", "")
+            core.database.set_setting(conn, "assistant_review_model", model)
+            core.database.set_setting(conn, "assistant_review_effort", effort or "")
+            t0 = time.monotonic()
+            try:
+                out = core.weekly_review(conn, make_client(key))
+            except Exception as exc:
+                print(f"  {spec}: ERROR {exc}")
+                continue
+            dt = time.monotonic() - t0
+            ev = conn.execute("SELECT details FROM system_events WHERE stage='weekly_review' ORDER BY id DESC").fetchone()
+            usage = json.loads(ev["details"])["usage"]
+        print(f"\n--- {spec}: {dt:.1f}s, tokens {usage}\n{out['text']}")
+
+
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
     ap.add_argument("--classify", default="gpt-4o-mini,gpt-4o,gpt-6-luna,gpt-6-sol")
     ap.add_argument("--chat", default="gpt-4o,gpt-6-luna,gpt-6-sol")
+    ap.add_argument("--review", default="", help="e.g. gpt-4o,gpt-6-astra@low,gpt-6-astra@medium")
     a = ap.parse_args()
     key = os.environ.get("OPENAI_API_KEY", "")
     if not key:
         sys.exit("OPENAI_API_KEY missing (run through dotenvx)")
     bench_classify(key, [m for m in a.classify.split(",") if m])
     bench_chat(key, [m for m in a.chat.split(",") if m])
+    bench_review(key, [m for m in a.review.split(",") if m])

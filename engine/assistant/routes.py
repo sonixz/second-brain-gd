@@ -1,7 +1,7 @@
 """Assistant HTTP routes (all behind the local token)."""
 from __future__ import annotations
 
-from typing import Any, Callable
+from typing import Any, Callable, Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
@@ -26,6 +26,8 @@ class SpeakIn(BaseModel):
 class SettingsIn(BaseModel):
     chat_model: str | None = Field(default=None, max_length=60)
     classify_model: str | None = Field(default=None, max_length=60)
+    review_model: str | None = Field(default=None, max_length=60)
+    review_effort: Literal["", "low", "medium", "high", "xhigh"] | None = None
     voice: str | None = Field(default=None, max_length=30)
     auto_classify: bool | None = None
 
@@ -60,6 +62,7 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     def patch_settings(body: SettingsIn) -> dict[str, Any]:
         with database.session(layout.database) as conn:
             for field, key in (("chat_model", "assistant_chat_model"), ("classify_model", "assistant_classify_model"),
+                               ("review_model", "assistant_review_model"), ("review_effort", "assistant_review_effort"),
                                ("voice", "assistant_voice"), ("auto_classify", "assistant_auto_classify")):
                 v = getattr(body, field)
                 if v is not None:

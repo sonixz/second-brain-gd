@@ -62,7 +62,7 @@ Order agreed with the owner: the loops that need no decision come first.
 | Loop | Content | Blocked by |
 |---|---|---|
 | **5b — Meaning memory** ✅ 2026-11-03 | Embeddings are now enabled (`text-embedding-3-small`, FR to EN search measured). Embed notes as well as sources, show "related ideas" as automatic links in the graph, the assistant searches by meaning first, and the keyword fallback ignores common words | Done |
-| **6b — Responses API and Astra** | A Responses API adapter so reasoning models can use tools. `gpt-6-astra` cannot turn reasoning off and refuses tools in Chat Completions. Use it for the weekly review and deep project syntheses. A per-model capability table replaces `startswith("gpt-6")` | Nothing |
+| **6b — Responses API and Astra** ✅ 2026-11-03 | A Responses API adapter so reasoning models can use tools. `gpt-6-astra` cannot turn reasoning off and refuses tools in Chat Completions. Use it for the weekly review and deep project syntheses. A per-model capability table replaces `startswith("gpt-6")` | Nothing |
 | **7a — Hands-free** | UI tools for the assistant (open a view or a project, read aloud, confirm, undo, theme, volume), a push-to-talk key, spoken confirmation for destructive actions, a visible "listening" indicator | Wake word: local model choice (see below) |
 | **6c — Agent room, on by default** | One Godot agent room with interchangeable connectors: Codex (GPT, the user's existing OpenAI key) first, then Claude Code (Agent SDK, Anthropic key). Codex comes as official native Windows binaries (no Node.js): a visible "Agents" setup step downloads a pinned release, checks its SHA-256, stores it in the user data folder, needs no admin, and is resumable. If it fails or the machine is offline, the rest of the app works and the room says "Non disponible". Agents start with approval on every action, inside folders the user chose. The brain is exposed as an MCP server | Nothing (Windows sandbox without admin to verify) |
 | **7b — Real conversation** | Realtime speech-to-speech with interruptions, streaming replies, voice-driven project mode | The owner's go on cost |
@@ -81,7 +81,7 @@ Order agreed with the owner: the loops that need no decision come first.
 |---|---|---|
 | Filing, quick classification | **gpt-6-sol** (measured: 10/10 French captures, 1.45 s; gpt-6-astra 10/10 but 2.7 s; gpt-4o 9/10; gpt-4o-mini 7/10) | — |
 | Conversation with tools, briefing, weekly review | **gpt-4o** (correct with tools in 2.9 s; gpt-6 also correct but 4.4 s) | gpt-6 for the weekly review if depth matters more than speed |
-| Weekly review, deep synthesis | — | **gpt-6-astra** (reasoning low minimum; tools only through the Responses API, Loop 6b) |
+| Weekly review, deep synthesis | **gpt-6-astra**, effort low, via the Responses API (10.6 s; it cites notes and links facts; gpt-4o is generic; medium effort is barely deeper) | — |
 | Voice to text | gpt-realtime-whisper | gpt-live-transcribe (now enabled) |
 | Text to speech | gpt-4o-mini-tts, voice marin, Québec accent | — |
 | Embeddings | **text-embedding-3-small** (enabled 2026-11-03; FR question to EN source: 0.41–0.47, unrelated at most 0.16, floor 0.25) | Local model later |
