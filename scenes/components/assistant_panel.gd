@@ -96,7 +96,8 @@ func start() -> void:
 		for item in msgs:
 			var m: Dictionary = item
 			var meta: Dictionary = m["meta"] if m.get("meta") is Dictionary else {}
-			_add_bubble(str(m["role"]), str(m["content"]), meta.get("actions", []), meta.get("cited", []))
+			var role := "review" if str(meta.get("kind", "")) == "weekly_review" else str(m["role"])
+			_add_bubble(role, str(m["content"]), meta.get("actions", []), meta.get("cited", []))
 			if str(m["role"]) == "briefing":
 				had_briefing = true
 	if not had_briefing:
@@ -144,6 +145,24 @@ func send(text: String) -> void:
 	say(last_reply)
 
 
+## Guided weekly review: generated from the week's facts, shown and read aloud.
+func run_review() -> bool:
+	if busy or not configured:
+		return false
+	_set_busy(true)
+	var res := await app.backend.api.call_api("/assistant/review", true, HTTPClient.METHOD_POST)
+	_set_busy(false)
+	if not res["ok"] or not is_inside_tree():
+		_add_bubble("assistant", "I could not prepare the review: %s" % _err(res), [], [])
+		return false
+	var text := str((res["data"] as Dictionary).get("text", ""))
+	last_reply = text
+	_add_bubble("review", text, [], [])
+	app.audio.play("setup_complete", 0.0, -6.0)
+	say(text)
+	return true
+
+
 func say(text: String) -> void:
 	if not speak_toggle.button_pressed or app.audio.muted or text.strip_edges() == "":
 		return
@@ -172,8 +191,9 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array) -> vo
 	wrap.alignment = BoxContainer.ALIGNMENT_END if mine else BoxContainer.ALIGNMENT_BEGIN
 	list.add_child(wrap)
 	var bubble := PanelContainer.new()
-	var col := SbTheme.MINT if mine else (SbTheme.WARM if role == "briefing" else SbTheme.PANEL_2)
-	bubble.add_theme_stylebox_override("panel", SbTheme.box(Color(col, 0.22 if mine or role == "briefing" else 0.9), 14,
+	var special := role in ["briefing", "review"]
+	var col := SbTheme.MINT if mine else (SbTheme.WARM if role == "briefing" else (SbTheme.INFO if role == "review" else SbTheme.PANEL_2))
+	bubble.add_theme_stylebox_override("panel", SbTheme.box(Color(col, 0.22 if mine or special else 0.9), 14,
 		Color(col, 0.35), 1, 12))
 	bubble.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	if mine:
@@ -184,11 +204,11 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array) -> vo
 	var inner := VBoxContainer.new()
 	inner.add_theme_constant_override("separation", 4)
 	bubble.add_child(inner)
-	if role == "briefing":
+	if special:
 		var over := Label.new()
-		over.text = "TODAY"
+		over.text = "TODAY" if role == "briefing" else "WEEKLY REVIEW"
 		over.theme_type_variation = "Overline"
-		over.add_theme_color_override("font_color", SbTheme.WARM)
+		over.add_theme_color_override("font_color", col)
 		inner.add_child(over)
 	var rt := RichTextLabel.new()
 	rt.bbcode_enabled = true

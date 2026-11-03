@@ -16,7 +16,9 @@ from engine.events import utc_now
 
 DEFAULTS = {
     "assistant_chat_model": "gpt-4o",
-    "assistant_classify_model": "gpt-4o-mini",
+    # Measured 2026-11-02 on 10 French captures (tools/model_bench.py): gpt-6-sol 10/10 in 1.45 s,
+    # gpt-4o 9/10, gpt-4o-mini 7/10. Chat stays on gpt-4o: as correct with tools and faster (2.9 s vs 4.4 s).
+    "assistant_classify_model": "gpt-6-sol",
     "assistant_voice": "marin",
     "assistant_auto_classify": True,
     "assistant_min_confidence": 0.6,
@@ -68,11 +70,12 @@ def _journal(conn: sqlite3.Connection, kind: str, note_id: str | None, before: A
 
 def _usage_event(conn: sqlite3.Connection, what: str, model: str, usage: dict[str, Any], provider: str) -> float:
     cost = estimate_cost(model, usage) if provider == "openai" else 0.0
+    price = f"≈ ${cost:.4f}" if cost is not None else "cost unknown (no price for this model)"
     database.record_event(conn, {"timestamp": utc_now(), "component": "assistant", "stage": what, "status": "ok",
                                  "message": f"{what}: {model}, {usage.get('prompt_tokens', 0)}+"
-                                            f"{usage.get('completion_tokens', 0)} tokens, ≈ ${cost:.4f}",
+                                            f"{usage.get('completion_tokens', 0)} tokens, {price}",
                                  "details": {"model": model, "usage": usage, "estimated_cost_usd": cost}})
-    return cost
+    return cost or 0.0
 
 
 def _snapshot(conn: sqlite3.Connection, note_id: str) -> dict[str, Any]:
@@ -122,10 +125,18 @@ def classify(conn: sqlite3.Connection, client: Any, note_id: str) -> dict[str, A
     s = settings(conn)
     note = brain.get_note(conn, note_id)
     spaces = []
-    for sp in brain.list_spaces(conn):
+    all_spaces = brain.list_spaces(conn)
+    names = {sp["id"]: sp["name"] for sp in all_spaces}
+    for sp in all_spaces:
         titles = [r["title"] for r in conn.execute(
             "SELECT title FROM notes WHERE space_id = ? AND id != ? ORDER BY updated_at DESC LIMIT 5", (sp["id"], note_id))]
-        spaces.append({"id": sp["id"], "name": sp["name"], "kind": sp["kind"], "examples": titles})
+        entry = {"id": sp["id"], "name": sp["name"], "kind": sp["kind"], "examples": titles}
+        for k in ("goal", "why"):
+            if sp.get(k):
+                entry[k] = sp[k]
+        if sp.get("area_id"):
+            entry["area"] = names.get(sp["area_id"], "")
+        spaces.append(entry)
     words = " ".join(re.findall(r"[\w-]{4,}", note["title"] + " " + note["body"])[:8])
     candidates = [{"id": r["id"], "title": r["title"]} for r in brain.search(conn, words, 8) if r["id"] != note_id][:6] if words else []
     checklists = [{"id": c["id"], "name": c["name"]} for c in structure.list_checklists(conn)]
@@ -134,7 +145,9 @@ def classify(conn: sqlite3.Connection, client: Any, note_id: str) -> dict[str, A
     system = ("Tu ranges les notes d'un second cerveau. Si la note n'est qu'une liste d'articles à ajouter à une liste "
               "existante (ex. épicerie: « acheter lait et pain »), réponds {\"target\": \"checklist\", \"checklist_id\": id, "
               "\"items\": [articles courts], \"confidence\": 0-1, \"reason\": phrase}. Sinon réponds en JSON avec les clés: "
-              "space_id (un id de la liste, 'inbox' si incertain), title (titre court et clair, dans la langue de la note, "
+              "space_id (l'espace le plus précis: un projet si la note le concerne, sinon le domaine de vie qui "
+              "correspond (kind=area: famille, santé, maison, travail/vision); 'inbox' seulement si rien ne colle "
+              "vraiment; une idée sur une app ou un produit va dans le projet de ce produit), title (titre court et clair, dans la langue de la note, "
               "garde le sens), kind (note|idea|task|journal|reference), tags (0 à 2 mots-clés courts en minuscules, sans #; plusieurs mots reliés par un tiret, ex. mode-nuit), "
               "link_ids (0 à 2 ids parmi candidates vraiment liés), confidence (0 à 1), reason (une phrase courte en français).")
     res = client.complete(s["assistant_classify_model"], [{"role": "system", "content": system},
@@ -422,6 +435,45 @@ def briefing(conn: sqlite3.Connection, client: Any, force: bool = False) -> dict
     database.set_setting(conn, "assistant_last_briefing_at", utc_now())
     _save(conn, today_conversation(), "briefing", text, {"estimated_cost_usd": cost})
     return {**out, "cached": False}
+
+
+# ------------------------------------------------------------ weekly review
+def weekly_review(conn: sqlite3.Connection, client: Any) -> dict[str, Any]:
+    """Guided weekly review: progress, blockers and a proposed next step per project,
+    the Inbox, and a few reflective questions for the areas (vision at work)."""
+    s = settings(conn)
+    week_ago = (datetime.now(timezone.utc).timestamp() - 7 * 86400)
+    since = datetime.fromtimestamp(week_ago, timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    projects = []
+    for p in conn.execute("SELECT id, name, goal, due_date, status, area_id FROM spaces WHERE kind = 'project'"
+                          " AND archived_at IS NULL AND status != 'done' ORDER BY due_date IS NULL, due_date"):
+        done = [r["title"] for r in conn.execute("SELECT title FROM notes WHERE space_id = ? AND kind = 'task'"
+                                                 " AND status = 'done' AND done_at > ?", (p["id"], since))]
+        open_ = [{"title": r["title"], "due": r["due_date"]} for r in conn.execute(
+            "SELECT title, due_date FROM notes WHERE space_id = ? AND kind = 'task' AND status = 'active'"
+            " ORDER BY due_date IS NULL, due_date LIMIT 8", (p["id"],))]
+        new_notes = [r["title"] for r in conn.execute("SELECT title FROM notes WHERE space_id = ? AND kind != 'task'"
+                                                      " AND created_at > ? LIMIT 8", (p["id"], since))]
+        projects.append({"name": p["name"], "goal": p["goal"], "due": p["due_date"], "status": p["status"],
+                         "done_this_week": done, "open_tasks": open_, "new_notes": new_notes})
+    areas = [{"name": a["name"], "new_notes": [r["title"] for r in conn.execute(
+        "SELECT title FROM notes WHERE space_id = ? AND created_at > ? LIMIT 8", (a["id"], since))]}
+        for a in conn.execute("SELECT id, name FROM spaces WHERE kind = 'area' AND archived_at IS NULL")]
+    inbox = [r["title"] for r in conn.execute("SELECT title FROM notes WHERE space_id = 'inbox' AND status = 'active' LIMIT 15")]
+    facts = {"week_ending": datetime.now().strftime("%A %d %B %Y"), "projects": projects, "areas": areas, "inbox": inbox}
+    system = (PERSONA + "\nTu animes la REVUE HEBDOMADAIRE. Format (texte simple, titres courts, pas de tableau):\n"
+              "1) Une phrase d'ouverture sur la semaine.\n2) Pour chaque projet actif: ce qui a avancé, ce qui bloque ou "
+              "manque (ex. pas de prochaine action, échéance proche), et UNE prochaine étape concrète proposée.\n"
+              "3) Inbox: combien de pensées à trier, et une suggestion.\n4) Trois questions de réflexion pour faire "
+              "avancer la vision (surtout le domaine Vision au travail), inspirées des notes de la semaine.\n"
+              "N'invente rien: seulement les faits fournis. 150 à 280 mots.")
+    res = client.complete(s["assistant_chat_model"], [{"role": "system", "content": system},
+                                                      {"role": "user", "content": json.dumps(facts, ensure_ascii=False)}])
+    cost = _usage_event(conn, "weekly_review", res["model"], res["usage"], client.provider)
+    text = (res["message"].get("content") or "").strip()
+    _save(conn, today_conversation(), "assistant", text, {"kind": "weekly_review", "estimated_cost_usd": cost})
+    database.set_setting(conn, "assistant_last_review_at", utc_now())
+    return {"text": text, "estimated_cost_usd": cost, "projects": len(projects)}
 
 
 # ------------------------------------------------------------------ voice

@@ -79,6 +79,10 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     def post_briefing(force: bool = False) -> dict[str, Any]:
         return run(core.briefing, force)
 
+    @r.post("/review")
+    def post_review() -> dict[str, Any]:
+        return run(core.weekly_review)
+
     @r.post("/classify/{note_id}")
     def post_classify(note_id: str) -> dict[str, Any]:
         return run(core.classify, note_id)

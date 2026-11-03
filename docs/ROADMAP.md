@@ -26,7 +26,7 @@ And five work loops the app supports:
 
 ## Next loops
 
-### Loop 4 — Structure
+### Loop 4 — Structure ✅ (2026-11-02)
 - Migration: areas, and projects with goal, why, deadline, status (active, waiting, done) and
   `area_id`. Next actions are tasks linked to a project. Checklists support items, recurring lists, and
   the grocery case.
@@ -67,8 +67,8 @@ And five work loops the app supports:
 
 | Use | Now | To evaluate in Loop 4 |
 |---|---|---|
-| Filing, quick classification | gpt-4o-mini | gpt-6-luna / gpt-6-sol with reasoning off |
-| Conversation with tools, briefing | gpt-4o | gpt-6-sol / gpt-6-luna |
+| Filing, quick classification | **gpt-6-sol** (measured: 10/10 French captures, 1.45 s; gpt-4o 9/10; gpt-4o-mini 7/10) | — |
+| Conversation with tools, briefing, weekly review | **gpt-4o** (correct with tools in 2.9 s; gpt-6 also correct but 4.4 s) | gpt-6 for the weekly review if depth matters more than speed |
 | Weekly review, deep synthesis | — | gpt-6 with reasoning (Responses API) |
 | Voice to text | gpt-realtime-whisper | gpt-live-transcribe (now enabled) |
 | Text to speech | gpt-4o-mini-tts, voice marin, Québec accent | — |

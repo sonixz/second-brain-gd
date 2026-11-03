@@ -209,6 +209,8 @@ func _e2e() -> void:
 		if str((n as Dictionary)["id"]) == found_next:
 			still = true
 	check(not still, "ticking it in Today marks it done")
+	var reviewed: bool = await ap.run_review()
+	check(reviewed and ap.last_reply.begins_with("Revue"), "the weekly review runs from the assistant")
 	await brain.call("set_view", "graph")
 	var before := graph.node_count("note")
 	var capture_edit: LineEdit = brain.get("capture_edit")

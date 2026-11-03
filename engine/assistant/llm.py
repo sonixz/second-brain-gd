@@ -17,10 +17,13 @@ class LLMError(RuntimeError):
     pass
 
 
-def estimate_cost(model: str, usage: dict[str, Any] | None) -> float:
+def estimate_cost(model: str, usage: dict[str, Any] | None) -> float | None:
+    """None when the model's price is unknown (never invent a number)."""
     if not usage:
         return 0.0
-    pin, pout = PRICES.get(model, (2.50, 10.00))
+    if model not in PRICES:
+        return None
+    pin, pout = PRICES[model]
     return round((usage.get("prompt_tokens", 0) * pin + usage.get("completion_tokens", 0) * pout) / 1e6, 6)
 
 
@@ -51,9 +54,10 @@ class OpenAIChat:
         payload: dict[str, Any] = {"model": model, "messages": messages, "temperature": temperature}
         if tools:
             payload["tools"] = tools
-            if model.startswith("gpt-6"):
-                # Reasoning models refuse function tools in Chat Completions unless reasoning is off.
-                payload["reasoning_effort"] = "none"
+        if model.startswith("gpt-6"):
+            # Reasoning models refuse function tools and custom temperatures in Chat Completions
+            # unless reasoning is off (measured 2026-11-02).
+            payload["reasoning_effort"] = "none"
         if json_mode:
             payload["response_format"] = {"type": "json_object"}
         data = json.loads(_post("/chat/completions", self.key, payload))
@@ -100,6 +104,9 @@ class FakeChat:
             call = {"id": "call_fake", "type": "function",
                     "function": {"name": "search_notes", "arguments": json.dumps({"query": q})}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if "REVUE HEBDOMADAIRE" in str(messages[0].get("content", "")) and len(messages) <= 2:
+            return {"message": {"role": "assistant", "content": "Revue de test: une semaine tranquille."},
+                    "usage": usage, "model": model}
         if "briefing" in str(messages[0].get("content", "")).lower() and len(messages) <= 2:
             return {"message": {"role": "assistant", "content": "Bon matin! Ceci est un briefing de test."},
                     "usage": usage, "model": model}

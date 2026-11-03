@@ -113,6 +113,26 @@ Measured with the real API (2026-11-02): auto-filing took 1.3–1.8 s and was co
 French captures. The briefing took about 1.3 s, a chat turn with tools about 3 s, and speech about 5 s for
 a briefing. A whole demo session cost about 3 cents.
 
+## Structure (Loop 4)
+
+Migration 0004 turns spaces into PARA cards: `goal`, `why`, `due_date`, `status` (active, waiting, someday,
+done), `area_id` and `instructions`. Tasks are notes of kind `task`, with `due_date` and `done_at`.
+`checklists` and `checklist_items` hold lists such as the grocery list. Four editable areas are seeded once:
+Famille, Santé, Maison, Vision au travail, plus an Épicerie list.
+
+| Endpoint | Purpose |
+|---|---|
+| `GET /brain/structure` | areas with their projects, loose projects, resources, archive |
+| `GET /brain/today` | overdue, today, this week, next action per project, projects without one, inbox, checklists |
+| `GET /brain/spaces/{id}/card`, `PATCH /brain/spaces/{id}`, `POST /brain/projects` | project and area cards |
+| `GET/POST /brain/tasks`, `PATCH /brain/tasks/{id}` | next actions, done, due dates |
+| `/brain/checklists…`, `/brain/checklist-items/{id}` | lists: add, tick, rename, delete, clear checked |
+| `POST /assistant/review` | guided weekly review |
+
+The assistant gained `get_today`, `get_structure`, `create_project`, `add_task`, `complete_task` and
+`add_to_checklist`. All of them are journaled and undoable. The classifier sends list-like captures to a
+checklist, and it now sees each space's kind, goal and area.
+
 ## Later: daily router agent (direction)
 
 A "daily" agent runs in the morning: it reads the Inbox, proposes a space for each thought, and suggests links.

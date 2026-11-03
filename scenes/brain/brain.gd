@@ -206,6 +206,10 @@ func _build_views() -> void:
 		set_view("projects")
 		projects_view.show_card(pid))
 	today_view.changed.connect(func() -> void: refresh_graph())
+	today_view.review_requested.connect(func() -> void:
+		tab_assistant.button_pressed = true
+		tab_assistant.pressed.emit()
+		assistant_panel.run_review())
 	projects_view.changed.connect(func() -> void:
 		refresh_graph()
 		refresh_spaces())

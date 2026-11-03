@@ -1,5 +1,20 @@
 # Status
 
+**Loop 4 — Structure: done (2026-11-02).** Areas (Famille, Santé, Maison, Vision au travail) own projects
+with goals, due dates and statuses. Next actions have dates. Checklists start with Épicerie. Today and
+Projects views live next to the graph, and the assistant runs a guided weekly review. The assistant creates
+projects, adds dated tasks, ticks them and fills lists. Grocery-like captures go straight to the list. Filing
+uses gpt-6-sol, which scored 10/10 on real French captures.
+
+| Suite | Platform | Result |
+|---|---|---|
+| Python (51) | Linux 3.12 / Windows Store 3.13 | OK |
+| Godot end-to-end (78 checks, including Today, groceries, project card, dated task, weekly review) | Linux and Windows native | 78 passed |
+| Model comparison (`tools/model_bench.py`, real API) | Linux engine | filing: gpt-6-sol 10/10, gpt-6-luna 10/10, gpt-4o 9/10, gpt-4o-mini 7/10; tools: all correct |
+
+Known limits: French questions do not find English notes (words, not meaning) until Loop 5. gpt-6 prices
+are unknown, so their costs show as "unknown".
+
 **Loop 3 — The assistant: done (2026-11-02).** She briefs you when you open the app and reads the
 briefing aloud with the marin voice and a Québec accent. She answers from your notes, citing them as
 links, and acts on your brain through tools: create, move, edit. She files every capture automatically,

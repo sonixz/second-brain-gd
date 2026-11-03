@@ -84,6 +84,7 @@ class AssistantTests(unittest.TestCase):
 
     def test_cost_estimate(self):
         self.assertAlmostEqual(estimate_cost("gpt-4o-mini", {"prompt_tokens": 1_000_000, "completion_tokens": 0}), 0.15)
+        self.assertIsNone(estimate_cost("gpt-6-sol", {"prompt_tokens": 10, "completion_tokens": 10}))
 
 
 if __name__ == "__main__":
@@ -139,6 +140,17 @@ class StructureToolTests(unittest.TestCase):
         core.undo(self.conn, actions[0]["action_id"])  # undo the project creation: it is archived
         self.assertNotIn("Fête de Léa", [s["name"] for s in brain.list_spaces(self.conn)])
         self.assertIn("error", core.run_tool(self.conn, "add_task", {"title": "x", "due_date": "demain"}, actions))
+
+    def test_weekly_review(self):
+        from engine.brain import structure
+        p = structure.create_project(self.conn, "Atlas")
+        t = structure.add_task(self.conn, "Envoyer", p["id"])
+        structure.set_task(self.conn, t["id"], done=True)
+        out = core.weekly_review(self.conn, self.client)
+        self.assertTrue(out["text"])
+        self.assertEqual(out["projects"], 1)
+        hist = core.history(self.conn, core.today_conversation())
+        self.assertEqual(hist[-1]["meta"]["kind"], "weekly_review")
 
     def test_briefing_facts_include_structure(self):
         self.assertTrue(core.briefing(self.conn, self.client)["text"])

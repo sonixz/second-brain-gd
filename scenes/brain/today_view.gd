@@ -4,6 +4,7 @@ extends PanelContainer
 ## next action of every project, projects that have none, and checklists.
 
 signal open_project(space_id: String)
+signal review_requested
 signal changed
 
 var app: SbApp
@@ -34,7 +35,14 @@ func setup(a: SbApp) -> TodayView:
 	htext.add_child(title_label)
 	summary = Label.new()
 	summary.theme_type_variation = "Muted"
+	summary.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(summary)
+	var review := Button.new()
+	review.text = "Weekly review"
+	review.tooltip_text = "The assistant walks through each project: progress, blockers, next step, and questions for your vision"
+	review.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	review.pressed.connect(func() -> void: review_requested.emit())
+	head.add_child(review)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED

@@ -1,5 +1,23 @@
 # Devlog
 
+## Loop 4 — Structure (2026-11-02)
+
+**Owner's critique:** "I see bubbles, but no structure, no project management." The answer is PARA plus
+working loops: capture, process, triage, review, express (docs/ROADMAP.md).
+
+- Engine: migration 0004 adds PARA cards, dated tasks and checklists, with Today, card and structure
+  endpoints. The assistant gets structure tools and a weekly review. The classifier routes list items to
+  checklists.
+- Godot: a Graph / Today / Projects switcher, a Today view with checkboxes and inline lists, a Projects grid,
+  and a project card. "@YYYY-MM-DD" adds a due date.
+- Real-API findings: a multi-step request ran out of tool rounds ("could not finish"), and the next turn
+  re-created a task because the history did not show past actions. Both are fixed with a forced summary and
+  actions noted in the history. gpt-6 models refuse custom temperatures and need reasoning off. The
+  classifier went from 5/10 (gpt-4o-mini) to 10/10 (gpt-6-sol) once it saw each space's kind, goal and area.
+- Lessons: SQLite's `lower()` ignores accents (« Épicerie »). The migration splitter needed to accept
+  trailing comments.
+
+
 ## Loop 3 — The assistant (2026-11-02)
 
 **Owner's request:** "Open it in the morning, it summarises, it talks to me, every input gets filed, then we
