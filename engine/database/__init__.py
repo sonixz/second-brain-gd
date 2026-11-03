@@ -48,7 +48,9 @@ def available_migrations(directory: Path = MIGRATIONS_DIR) -> list[tuple[int, st
 
 
 def _checksum(path: Path) -> str:
-    return hashlib.sha256(path.read_bytes()).hexdigest()
+    # Line endings are normalised: a Windows checkout with CRLF must not look
+    # like an edited migration. (Same hash as before for LF files.)
+    return hashlib.sha256(path.read_bytes().replace(b"\r\n", b"\n")).hexdigest()
 
 
 def migrate(db_path: Path, directory: Path = MIGRATIONS_DIR) -> dict[str, Any]:

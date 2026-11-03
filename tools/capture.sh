@@ -4,7 +4,7 @@
 #   tools/capture.sh [name]
 set -euo pipefail
 cd "$(dirname "$0")/.."
-NAME="${1:-loop-0}"
+NAME="${1:-loop-1}"
 OUT="$(pwd)/docs/screenshots/$NAME"
 GODOT="${GODOT:-godot}"
 source tools/vdisplay.sh

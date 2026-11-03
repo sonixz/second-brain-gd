@@ -1,5 +1,35 @@
 # Devlog
 
+## Loop 1 — Immersion & knowledge core (2026-11-02)
+
+**Owner's direction:** "Godot is immersion, it needs sound." Soft, felted blue instead of green, cosy themes
+like *Morning*, and above all the second brain itself, not only the system console.
+
+### What was built
+
+- **Knowledge model** (`engine/brain/`, migration 0002): spaces, notes, wikilinks, tags, FTS5 search, graph
+  and briefing endpoints. A first run seeds four starter notes so the graph is never empty.
+- **Brain screen** (`scenes/brain/`): a living graph drawn by hand. It has springs and repulsion, a pan/zoom
+  camera, a birth bloom with ripple and sparks, pulses travelling along links, neighbour highlight, and
+  parallax stars. Around it sit glass panels for the briefing, spaces and inspector, plus a capture bar.
+- **Themes** (`SbTheme`): palettes as roles, switched at runtime. Auto picks by hour.
+- **Audio** (`SbAudio`, `tools/audio.sh`, `tools/audio-prompts.txt`): prompts written for this project and
+  generated through ElevenLabs. The key was moved into this repo's encrypted `.env` with dotenvx and never
+  displayed. 26 files: 8 tracks (about 23 min), 4 ambience loops and 14 interface sounds. Every button gets
+  hover and click sounds automatically.
+
+### Things learned
+
+- The ElevenLabs sound endpoint refuses effects shorter than 0.5 s.
+- FastAPI 0.115 refuses a 204 route without an explicit `Response` class. The server crashed at startup and
+  the bootstrap reported it correctly as "API exited during startup".
+- A server whose parent app has died must not be reused. Its watchdog is about to stop it.
+- A Windows CRLF copy of a migration looked "edited". Checksums now normalise line endings.
+- `--quit-after` can stop Godot while the audio thread still holds a track. That is a benign "resource still
+  in use". The real close path stops audio first.
+- The briefing records a visit, so a theme switch (which rebuilds the screen) must reuse it.
+
+
 ## Loop 0 — Foundation, Bootstrap & System Console (2026-11-02)
 
 **Goal:** clone, open in Godot, press Setup, watch a real install, land on a System Console with real values,

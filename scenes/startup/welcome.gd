@@ -69,6 +69,7 @@ func _ready() -> void:
 	primary = Button.new()
 	primary.theme_type_variation = "PrimaryButton"
 	primary.custom_minimum_size = Vector2(200, 50)
+	primary.set_meta("sfx", "confirm")
 	primary.pressed.connect(func() -> void: app.start_setup())
 	buttons.add_child(primary)
 	secondary = Button.new()

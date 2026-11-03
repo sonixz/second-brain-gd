@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Second Brain GD</title>
   <meta name="description" content="Second Brain GD: an open-source, local-first personal knowledge system. A Godot desktop app with a local Python engine. Your knowledge. Your system. Your control.">
-  <meta name="theme-color" content="#0a1310">
+  <meta name="theme-color" content="#2b3c54">
   <meta property="og:title" content="Second Brain GD">
   <meta property="og:description" content="Your knowledge. Your system. Your control.">
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
@@ -47,7 +47,7 @@
           <a class="btn btn-primary" href="#how">See how it works</a>
           <a class="btn" href="#roadmap">What works today</a>
         </div>
-        <p class="hero-note"><span class="badge badge-done">Implemented</span> Loop 0: setup wizard, local engine and System Console.</p>
+        <p class="hero-note"><span class="badge badge-done">Implemented</span> A living knowledge graph, capture, themes and a calm soundtrack.</p>
       </div>
     </section>
 
@@ -62,9 +62,9 @@
               service required, no Docker to start.</p>
           </article>
           <article class="card">
-            <h3>Visual and interactive</h3>
-            <p>Godot gives a fluid, animated interface. Knowledge will be explored as a living graph,
-              not only as lists of files.</p>
+            <h3>Immersive</h3>
+            <p>Built with a game engine. Your ideas form a living constellation, thoughts bloom when you capture them,
+              and each theme (Morning, Focus, Evening) has its own music and sounds.</p>
           </article>
           <article class="card">
             <h3>Transparent</h3>
@@ -91,16 +91,16 @@
           <li><span class="step-n">3</span><div><h3>Watch the real installation</h3>
             <p>Virtual environment, hash-locked dependencies, SQLite migrations. Each step streams
               structured events, progress and logs.</p></div></li>
-          <li><span class="step-n">4</span><div><h3>Verified, then ready</h3>
-            <p>The local API starts on 127.0.0.1, answers <code>/health</code> and enforces its token
-              before success is shown. Reopening the app skips what is already done.</p></div></li>
+          <li><span class="step-n">4</span><div><h3>Capture and explore</h3>
+            <p>Type a thought and watch it join your graph. <code>[[links]]</code> and <code>#tags</code> draw the
+              connections. A morning briefing tells you what changed.</p></div></li>
         </ol>
         <div class="shots">
-          <figure><img src="assets/screens/01-welcome.png" alt="Welcome screen with the animated knowledge graph logo and the Setup button" loading="lazy" width="1280" height="800"><figcaption>Welcome</figcaption></figure>
-          <figure><img src="assets/screens/03-setup-installing.png" alt="Setup screen during installation: steps with states, progress at 36 percent and a live log" loading="lazy" width="1280" height="800"><figcaption>Setup, live</figcaption></figure>
-          <figure><img src="assets/screens/05-system-console.png" alt="System Console showing API, database, Python, storage and process cards with real values" loading="lazy" width="1280" height="800"><figcaption>System Console</figcaption></figure>
+          <figure><img src="assets/screens/05-brain-morning.png" alt="The brain screen in the Morning theme: a soft blue constellation of spaces, notes and tags, a briefing panel and a capture bar" loading="lazy" width="1280" height="800"><figcaption>Morning theme</figcaption></figure>
+          <figure><img src="assets/screens/06-brain-note-open.png" alt="A note open in the inspector next to the graph, its neighbours highlighted" loading="lazy" width="1280" height="800"><figcaption>A note and its connections</figcaption></figure>
+          <figure><img src="assets/screens/08-brain-evening.png" alt="The same graph in the Evening theme, indigo with amber accents" loading="lazy" width="1280" height="800"><figcaption>Evening theme</figcaption></figure>
         </div>
-        <p class="caption-note">Screenshots captured from the real application during Loop 0.</p>
+        <p class="caption-note">Screenshots captured from the real application (Loop 1).</p>
       </div>
     </section>
 
@@ -109,7 +109,7 @@
         <p class="overline">Architecture</p>
         <h2>Godot in front, Python behind, your disk underneath</h2>
         <div class="arch" role="img" aria-label="Architecture diagram: the Godot app launches the bootstrap and reads its JSON Lines events, then talks to the local FastAPI service over 127.0.0.1 with a token; the service uses SQLite in the user data folder.">
-          <div class="arch-node arch-godot"><h3>Godot app</h3><p>Welcome · Setup · System Console</p><p class="muted">GDScript, GL Compatibility</p></div>
+          <div class="arch-node arch-godot"><h3>Godot app</h3><p>Brain graph · Capture · Setup · Engine room</p><p class="muted">GDScript, GL Compatibility</p></div>
           <div class="arch-link"><span>launches · tails JSON Lines events</span></div>
           <div class="arch-node arch-boot"><h3>Bootstrap</h3><p>Python standard library only</p><p class="muted">detect · venv · pip --require-hashes · migrate · start · verify</p></div>
           <div class="arch-link"><span>starts · HTTP on 127.0.0.1 + bearer token</span></div>
@@ -132,6 +132,9 @@
           <div class="road-col">
             <h3><span class="badge badge-done">Implemented</span></h3>
             <ul>
+              <li>Living knowledge graph with capture, spaces, links and tags</li>
+              <li>Full-text search and a morning briefing</li>
+              <li>Themes with their own generated music and sounds</li>
               <li>Setup wizard with real progress, logs and retry</li>
               <li>Python detection with clear guidance when missing</li>
               <li>Isolated venv and hash-verified, pinned dependencies</li>
@@ -145,17 +148,15 @@
           <div class="road-col">
             <h3><span class="badge badge-wip">In development</span></h3>
             <ul>
-              <li>Notes: create, edit and store knowledge items</li>
-              <li>Full-text search</li>
-              <li>Knowledge graph view of linked notes</li>
+              <li>Voice capture with a local Whisper model</li>
+              <li>Daily router agent that sorts the Inbox</li>
               <li>Packaged Windows build (no source checkout)</li>
-              <li>Guided Python installation</li>
+              <li>One-script prerequisites install</li>
             </ul>
           </div>
           <div class="road-col">
             <h3><span class="badge badge-idea">Future concept</span></h3>
             <ul>
-              <li>Voice capture and transcription</li>
               <li>Local language models and embeddings</li>
               <li>Semantic and vector search</li>
               <li>Assistant agents over your knowledge</li>
@@ -183,6 +184,13 @@
       <div class="container narrow">
         <p class="overline">Development journal</p>
         <h2>Built in loops</h2>
+        <article class="entry">
+          <header><span class="badge badge-done">Loop 1</span> <time datetime="2026-11-02">November 2, 2026</time></header>
+          <h3>Immersion and the knowledge core</h3>
+          <p>The second brain itself arrives: a living graph where captured thoughts bloom, spaces for projects,
+            [[links]], #tags, full-text search and a morning briefing. A soft blue Morning theme replaces the green,
+            with Focus, Evening and Forest alongside. Each theme has generated music, ambience and interface sounds.</p>
+        </article>
         <article class="entry">
           <header><span class="badge badge-done">Loop 0</span> <time datetime="2026-11-02">November 2, 2026</time></header>
           <h3>Foundation, bootstrap and System Console</h3>

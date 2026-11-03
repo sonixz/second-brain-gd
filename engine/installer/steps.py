@@ -430,6 +430,13 @@ class Installer:
 
     def step_service(self) -> None:
         current = running_server(self.layout)
+        orphaned = current and current.get("parent_pid") and not pid_alive(int(current["parent_pid"]))
+        if orphaned:
+            # Its watchdog is about to stop it: do not reuse a server that is going away.
+            self.emit("service", "replace", "progress",
+                      f"The running API (pid {current['pid']}) belongs to a closed app; replacing it…", 0.2)
+            stop_server(self.layout)
+            current = None
         if current and self.parent_pid and current.get("parent_pid") != self.parent_pid:
             # The watchdog must follow the app that asked for the engine now.
             self.emit("service", "reattach", "progress",

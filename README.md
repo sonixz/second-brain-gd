@@ -5,8 +5,8 @@
 Second Brain GD is an open-source, local-first personal knowledge environment. Godot is the user interface,
 a local Python engine runs the services, and everything is stored in your own user folder.
 
-> Status: **Loop 0**. The foundation works end to end: setup wizard, Python bootstrap, SQLite, local API and
-> System Console. Knowledge features (notes, search, graph) start in Loop 1. See [STATUS.md](STATUS.md).
+> Status: **Loop 1**. Setup wizard, local engine, and a living knowledge graph with capture, spaces, search,
+> morning briefing, themes and a generated soundtrack. See [STATUS.md](STATUS.md).
 
 The repository is **private** during development.
 
@@ -52,6 +52,29 @@ verified and skipped.
 Linux uses `~/.local/share/second-brain-gd`, macOS `~/Library/Application Support/SecondBrainGD`.
 Set `SBGD_HOME` to use another folder. Nothing is ever written inside the repository.
 
+## Using it
+
+- **Capture:** type in the bottom bar and press Enter (Ctrl+Space focuses it). `[[Another note]]` links,
+  `#tag` groups.
+- **Explore:** use the wheel to zoom, drag to pan, drag a node to move it. Click a note to edit it,
+  a space to filter, a tag to search. Press `/` to search and Esc to close.
+- **Ambiance:** the ♪ button at the bottom right sets the theme (Auto, Morning, Focus, Evening, Forest), music,
+  effects and ambience.
+- **Engine room:** click "All systems operational" at the top right.
+
+## Audio assets
+
+Generated once and committed, so users never need an API key. To regenerate, edit `tools/audio-prompts.txt`,
+then run:
+
+```bash
+./tools/audio.sh              # only missing files
+./tools/audio.sh music/focus_2 # one file again
+```
+
+The ElevenLabs key comes from the encrypted `.env` via dotenvx (`dotenvx set ELEVENLABS_API_KEY ...`).
+`.env.keys` is never committed.
+
 ## Command line (optional)
 
 The bootstrap runs without Godot too:
@@ -94,5 +117,6 @@ tools/         test.sh, test.ps1, capture.sh (screenshots on a private virtual d
 - [Architecture overview](docs/architecture/overview.md)
 - [Event protocol (Python → Godot)](docs/architecture/events-protocol.md)
 - [Process lifecycle](docs/architecture/process-lifecycle.md)
+- [Knowledge model, Whisper and agents plan](docs/architecture/knowledge-model.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [STATUS](STATUS.md) · [BACKLOG](BACKLOG.md) · [DEVLOG](DEVLOG.md)

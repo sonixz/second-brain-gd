@@ -11,8 +11,14 @@ signal screen_changed(screen_name: String)
 const WELCOME := preload("res://scenes/startup/welcome.tscn")
 const SETUP := preload("res://scenes/startup/setup.tscn")
 const CONSOLE := preload("res://scenes/dashboard/system_console.tscn")
+const BRAIN := preload("res://scenes/brain/brain.tscn")
 
 var backend: Backend
+var audio: SbAudio
+var state: Dictionary = {}   # survives screen rebuilds (theme switch)
+var theme_choice := "auto"
+var _backdrop: Control
+var _widget: AudioWidget
 var current_screen := ""
 var _current: Control
 var _layer: Control
@@ -21,23 +27,26 @@ var _quitting := false
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	theme_choice = str(SbSettings.get_value("ui", "theme", "auto"))
+	SbTheme.apply(theme_choice)
 	theme = SbTheme.build()
 	get_tree().auto_accept_quit = false
-	var bg := ColorRect.new()
-	bg.color = SbTheme.BG
-	bg.set_anchors_preset(Control.PRESET_FULL_RECT)
-	bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	add_child(bg)
-	var glow := _Backdrop.new()
-	glow.set_anchors_preset(Control.PRESET_FULL_RECT)
-	add_child(glow)
+	_backdrop = _Backdrop.new()
+	_backdrop.set_anchors_preset(Control.PRESET_FULL_RECT)
+	add_child(_backdrop)
 	_layer = Control.new()
 	_layer.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_layer)
 	backend = Backend.new()
 	backend.name = "Backend"
 	add_child(backend)
+	audio = SbAudio.new()
+	audio.name = "Audio"
+	add_child(audio)
+	audio.set_theme(SbTheme.current)
 	show_welcome()
+	_widget = AudioWidget.new().setup(self)
+	add_child(_widget)
 	if "--autosetup" in OS.get_cmdline_user_args():
 		start_setup()
 
@@ -54,11 +63,39 @@ func show_console() -> void:
 	_switch(CONSOLE.instantiate(), "console")
 
 
+func show_brain() -> void:
+	_switch(BRAIN.instantiate(), "brain")
+
+
+## Theme choice from the ambiance panel ("auto" or a theme name).
+func set_theme_choice(choice: String) -> void:
+	theme_choice = choice
+	SbSettings.set_value("ui", "theme", choice)
+	var before := SbTheme.current
+	SbTheme.apply(choice)
+	if SbTheme.current == before:
+		return
+	audio.play("theme_switch")
+	audio.set_theme(SbTheme.current)
+	theme = SbTheme.build()
+	_backdrop.queue_redraw()
+	# Rebuild the current screen so every colour follows the new palette.
+	match current_screen:
+		"welcome":
+			_switch(WELCOME.instantiate(), "welcome", 0.5)
+		"console":
+			_switch(CONSOLE.instantiate(), "console", 0.5)
+		"brain":
+			_switch(BRAIN.instantiate(), "brain", 0.5)
+
+
 func current() -> Control:
 	return _current
 
 
-func _switch(screen: Control, screen_name: String) -> void:
+func _switch(screen: Control, screen_name: String, fade_s: float = 0.28) -> void:
+	if current_screen != "" and audio != null:
+		audio.play("whoosh", 0.05, -6.0)
 	if screen.has_method("bind"):
 		screen.call("bind", self)
 	var old := _current
@@ -68,7 +105,7 @@ func _switch(screen: Control, screen_name: String) -> void:
 	screen.modulate.a = 0.0
 	_layer.add_child(screen)
 	var tw := create_tween()
-	tw.tween_property(screen, "modulate:a", 1.0, 0.28).set_trans(Tween.TRANS_SINE)
+	tw.tween_property(screen, "modulate:a", 1.0, fade_s).set_trans(Tween.TRANS_SINE)
 	if old != null:
 		old.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		var tw_old := create_tween()
@@ -88,7 +125,11 @@ func quit_app() -> void:
 	if _quitting:
 		return
 	_quitting = true
+	audio.stop_all()
 	await backend.shutdown_engine(2.5)
+	# Let the audio thread release its playbacks before the engine shuts down.
+	await get_tree().process_frame
+	await get_tree().process_frame
 	get_tree().quit()
 
 
@@ -100,6 +141,7 @@ class _Backdrop:
 		resized.connect(queue_redraw)
 
 	func _draw() -> void:
+		draw_rect(Rect2(Vector2.ZERO, size), SbTheme.BG)
 		for i in 12:
 			var f := float(i) / 12.0
 			draw_circle(Vector2(size.x * 0.82, size.y * 0.08), size.x * 0.45 * (1.0 - f),

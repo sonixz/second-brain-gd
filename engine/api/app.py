@@ -10,6 +10,8 @@ from typing import Any, AsyncIterator, Callable
 from fastapi import Depends, FastAPI, HTTPException, Query, Request
 
 from engine import VERSION, database
+from engine.api.brain_routes import make_router
+from engine.brain.seed import seed_if_empty
 from engine.events import utc_now
 from engine.installer.state import load_state
 from engine.monitoring.metrics import ProcessSampler, StorageScanner, system_snapshot
@@ -28,6 +30,8 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
 
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
+        with database.session(layout.database) as conn:
+            seed_if_empty(conn)
         if on_started is not None:
             on_started()
         yield
@@ -106,4 +110,5 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
         request_shutdown()
         return {"status": "stopping"}
 
+    app.include_router(make_router(layout, require_token))
     return app

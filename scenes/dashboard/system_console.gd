@@ -56,11 +56,11 @@ func _ready() -> void:
 	htext.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(htext)
 	var over := Label.new()
-	over.text = "SECOND BRAIN GD"
+	over.text = "SECOND BRAIN GD · TRANSPARENCY"
 	over.theme_type_variation = "Overline"
 	htext.add_child(over)
 	var title := Label.new()
-	title.text = "System Console"
+	title.text = "Engine Room · System Console"
 	title.theme_type_variation = "Heading"
 	title.add_theme_font_size_override("font_size", 24)
 	htext.add_child(title)
@@ -81,6 +81,12 @@ func _ready() -> void:
 	last_check_label.theme_type_variation = "Muted"
 	last_check_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(last_check_label)
+	var back := Button.new()
+	back.text = "← Back to your brain"
+	back.theme_type_variation = "PrimaryButton"
+	back.custom_minimum_size = Vector2(0, 44)
+	back.pressed.connect(func() -> void: app.show_brain())
+	head.add_child(back)
 	var refresh := Button.new()
 	refresh.text = "Refresh"
 	refresh.pressed.connect(func() -> void: refresh_all())

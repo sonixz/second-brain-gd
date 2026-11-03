@@ -47,13 +47,17 @@ def run_setup(home: Path, *extra: str, timeout: int = 600) -> tuple[int, list[di
     return proc.returncode, lines
 
 
-def get(url: str, token: str | None = None) -> tuple[int, dict]:
-    req = urllib.request.Request(url)
+def get(url: str, token: str | None = None, method: str = "GET", body: dict | None = None) -> tuple[int, dict]:
+    data = json.dumps(body).encode() if body is not None else None
+    req = urllib.request.Request(url, data=data, method=method)
+    if data is not None:
+        req.add_header("Content-Type", "application/json")
     if token:
         req.add_header("Authorization", f"Bearer {token}")
     try:
         with urllib.request.urlopen(req, timeout=5) as r:
-            return r.status, json.loads(r.read())
+            raw = r.read()
+            return r.status, json.loads(raw) if raw else {}
     except urllib.error.HTTPError as e:
         return e.code, {}
 
@@ -134,7 +138,7 @@ class BootstrapIntegration(unittest.TestCase):
         code, status = get(base + "/system/status", self.token())
         self.assertEqual(code, 200)
         self.assertTrue(status["python"]["in_venv"])
-        self.assertEqual(status["database"]["schema_version"], 1)
+        self.assertGreaterEqual(status["database"]["schema_version"], 2)
         self.assertGreater(status["process"]["rss_bytes"], 0)
         self.assertEqual(status["process"]["pid"], self.server()["pid"])
         code, storage = get(base + "/system/storage", self.token())
@@ -255,6 +259,32 @@ class BootstrapIntegration(unittest.TestCase):
         finally:
             parent.kill()
             parent.wait()
+
+    def test_11_brain_api(self):
+        code, _ = run_setup(self.home, "--port", str(self.port))
+        self.assertEqual(code, 0)
+        base = f"http://127.0.0.1:{self.server()['port']}/brain"
+        tok = self.token()
+        self.assertEqual(get(base + "/graph")[0], 401)
+        code, g = get(base + "/graph", tok)
+        self.assertEqual(code, 200)
+        self.assertTrue(any(n["type"] == "note" for n in g["nodes"]), "first start seeds a welcome graph")
+        code, note = get(base + "/notes", tok, "POST", {"title": "API idea", "body": "links [[Engine room]] #api"})
+        self.assertEqual(code, 201)
+        self.assertEqual(note["space_id"], "inbox")
+        self.assertEqual(len(note["links_out"]), 1)
+        code, found = get(base + "/search?q=api", tok)
+        self.assertIn(note["id"], [r["id"] for r in found["results"]])
+        code, patched = get(base + f"/notes/{note['id']}", tok, "PATCH", {"title": "API idea 2"})
+        self.assertEqual((code, patched["title"]), (200, "API idea 2"))
+        self.assertEqual(get(base + "/notes", tok, "POST", {"title": ""})[0], 422)
+        self.assertEqual(get(base + "/notes/nope", tok)[0], 404)
+        code, sp = get(base + "/spaces", tok, "POST", {"name": "Client X"})
+        self.assertEqual(code, 201)
+        code, brief = get(base + "/briefing", tok)
+        self.assertEqual(code, 200)
+        self.assertGreaterEqual(brief["totals"]["notes"], 5)
+        self.assertEqual(get(base + f"/notes/{note['id']}", tok, "DELETE")[0], 204)
 
 
 class DetectCommand(unittest.TestCase):

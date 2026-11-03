@@ -1,0 +1,36 @@
+# Second Brain GD audio, generated through the ElevenLabs API by tools/audio.sh.
+# One line each:  kind|path|seconds|prompt
+#   kind = sfx | amb (seamless loop) | music     path is relative to assets/audio/ (no extension)
+# Outputs are committed (users never need a key); the key never is.
+
+# --- Interface: soft, felted, short. Business-friendly: nothing arcade, nothing loud.
+sfx|sfx/hover|0.5|an extremely soft, airy UI hover tick, felt-muted, barely audible, no reverb
+sfx|sfx/click|0.5|a soft rounded UI click, like a felt-padded key, warm and dry
+sfx|sfx/confirm|0.8|a gentle two-note confirmation, soft glass and felt piano, warm, short decay
+sfx|sfx/step_done|0.9|a delicate single chime ping, soft celesta, calm and satisfying, short tail
+sfx|sfx/setup_complete|2.5|a warm rising three-note chord on soft felt piano and airy pad, a calm sense of everything being ready
+sfx|sfx/error|0.8|a soft low muted wooden knock, two gentle taps, calm, not alarming
+sfx|sfx/whoosh|0.8|a soft airy whoosh, like a page of light turning, smooth and quiet
+sfx|sfx/theme_switch|1.5|a soft shimmering swell that resolves into a warm pad, like morning light changing
+sfx|sfx/note_create|1.4|a small idea being born: a soft magical bloom, gentle sparkle and a warm low glow, calm and delightful
+sfx|sfx/node_link|0.7|a soft plucked connection, kalimba note with a faint glassy shimmer, two ideas connecting
+sfx|sfx/capture_open|0.6|a soft breath of air and paper opening, quiet and intimate
+sfx|sfx/notification|1.0|a gentle soft notification, two warm marimba notes, polite and calm
+sfx|sfx/mic_start|0.6|a soft rising blip, warm, signals listening has started
+sfx|sfx/mic_stop|0.6|a soft falling blip, warm, signals listening has stopped
+
+# --- Ambience loops, one per theme (quiet bed under the music, off by default)
+amb|ambience/morning|20|quiet early morning by an open window, distant soft birdsong, light breeze, very calm, no traffic, seamless loop
+amb|ambience/focus|20|soft steady rain on a window, cozy indoor room tone, calm, no thunder, seamless loop
+amb|ambience/evening|20|a quiet fireplace crackling gently in a cozy room, warm, calm, seamless loop
+amb|ambience/forest|20|a calm forest, gentle wind in leaves, a distant stream, soft and peaceful, seamless loop
+
+# --- Music: a playlist per theme, instrumental, calm, made to work under.
+music|music/morning_1|170|instrumental morning music for calm focus, soft felt piano, warm Rhodes, light brushed percussion, gentle lo-fi texture, hopeful and cozy like coffee at sunrise, 72 bpm, no vocals
+music|music/morning_2|170|instrumental gentle acoustic morning, fingerpicked nylon guitar, soft piano and airy strings, peaceful and bright, slow tempo, uplifting and serene, no vocals
+music|music/focus_1|180|instrumental deep focus ambient, slow evolving warm synth pads, soft piano motifs, subtle pulse, spacious and calm, for concentrated work, no drums, no vocals
+music|music/focus_2|180|instrumental minimal electronic focus music, soft arpeggiated synths, deep warm bass, gentle steady rhythm, clean and modern, calm flow state, 90 bpm, no vocals
+music|music/evening_1|170|instrumental evening lo-fi jazz, mellow Rhodes chords, upright bass, soft brushed drums, vinyl warmth, relaxed and cozy, 70 bpm, no vocals
+music|music/evening_2|170|instrumental cinematic calm evening, soft strings and warm piano, slow and reflective, gentle and tender, wind-down mood, no vocals
+music|music/forest_1|170|instrumental organic ambient, soft kalimba, wooden marimba, airy flute, gentle nature-inspired textures, calm and grounded, no vocals
+music|music/forest_2|170|instrumental downtempo chill, soft acoustic guitar loops, warm pads, light hand percussion, peaceful and green, 80 bpm, no vocals

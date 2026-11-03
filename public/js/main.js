@@ -58,7 +58,7 @@
       for (var j = i + 1; j < nodes.length; j++) {
         var b = nodes[j], dx = a.x - b.x, dy = a.y - b.y, d = Math.sqrt(dx * dx + dy * dy);
         if (d < maxD) {
-          ctx.strokeStyle = "rgba(47,143,104," + (0.35 * (1 - d / maxD)).toFixed(3) + ")";
+          ctx.strokeStyle = "rgba(121,165,211," + (0.35 * (1 - d / maxD)).toFixed(3) + ")";
           ctx.lineWidth = 1;
           ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
         }
@@ -66,9 +66,9 @@
     }
     for (var k = 0; k < nodes.length; k++) {
       var n = nodes[k], glow = reduce ? .6 : .5 + .5 * Math.sin(t / 900 + n.p);
-      ctx.fillStyle = "rgba(94,242,176," + (0.08 + 0.10 * glow).toFixed(3) + ")";
+      ctx.fillStyle = "rgba(169,212,255," + (0.08 + 0.10 * glow).toFixed(3) + ")";
       ctx.beginPath(); ctx.arc(n.x, n.y, n.r * 3.2, 0, Math.PI * 2); ctx.fill();
-      ctx.fillStyle = "rgba(94,242,176," + (0.55 + 0.4 * glow).toFixed(3) + ")";
+      ctx.fillStyle = "rgba(169,212,255," + (0.55 + 0.4 * glow).toFixed(3) + ")";
       ctx.beginPath(); ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2); ctx.fill();
     }
     if (!reduce) raf = requestAnimationFrame(frame);

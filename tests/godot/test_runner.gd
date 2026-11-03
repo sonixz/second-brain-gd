@@ -63,6 +63,15 @@ func _unit() -> void:
 	check(PythonLocator.which(OS.get_executable_path()) != "", "absolute paths are accepted when they exist")
 	check(SbFormat.bytes(null) == SbFormat.NA, "missing measurement shows Not available")
 	check(SbFormat.local_time("2026-11-03T00:55:55.859Z") != SbFormat.NA, "ISO timestamps are formatted")
+	check(SbFormat.number(42.0) == "42", "whole JSON numbers display without decimals")
+	for name in SbTheme.THEMES:
+		SbTheme.apply(name)
+		check(SbTheme.current == name and SbTheme.build() != null, "theme %s applies" % name)
+		check(SbAudio.tracks_for(name).size() >= 2, "theme %s has a music playlist" % name)
+	check(SbTheme.resolve("auto") in SbTheme.THEMES, "auto theme resolves by time of day")
+	SbTheme.apply("morning")
+	for sfx in ["click", "hover", "note_create", "setup_complete", "error"]:
+		check(ResourceLoader.exists("res://assets/audio/sfx/%s.mp3" % sfx), "sound effect %s exists" % sfx)
 
 
 func _e2e() -> void:
@@ -98,13 +107,38 @@ func _e2e() -> void:
 				printerr("  setup error: ", lbl.text)
 				break
 		await create_timer(0.1).timeout
-	check(app.current_screen == "console", "setup completes and opens the System Console")
-	if app.current_screen != "console":
+	check(app.current_screen == "brain", "setup completes and opens the Second Brain")
+	if app.current_screen != "brain":
 		return
 	check(max_progress > 0.5, "progress bar moved (max %.2f)" % max_progress)
 	if not was_installed:
 		check(saw_running_dependency, "dependency step was shown running")
 
+	var brain: Control = app.current()
+	var graph: GraphView = brain.get("graph")
+	var seeded := await wait_until(func() -> bool: return graph.node_count("note") >= 4, 20.0)
+	check(seeded, "first visit shows the starter graph (%d notes)" % graph.node_count("note"))
+	check(bool(brain.get("health_ok")), "brain header reports the engine healthy")
+	var before := graph.node_count("note")
+	var capture_edit: LineEdit = brain.get("capture_edit")
+	capture_edit.text = "Test thought linking [[Engine room]] #e2e"
+	capture_edit.text_submitted.emit(capture_edit.text)
+	var grew := await wait_until(func() -> bool: return graph.node_count("note") == before + 1, 15.0)
+	check(grew, "a captured thought becomes a new node in the graph")
+	check(graph.nodes.has("tag:e2e"), "its #tag appears in the graph")
+	var linked := false
+	for e in graph.edges:
+		if str(e["type"]) == "link" and str((graph.nodes[e["from"]] as Dictionary)["label"]).begins_with("Test thought"):
+			linked = true
+	check(linked, "its [[link]] appears as an edge")
+	app.set_theme_choice("evening")
+	await process_frame
+	check(SbTheme.current == "evening" and app.current_screen == "brain", "theme switch keeps you in the brain")
+	check(app.audio.playlist.size() >= 2 and app.audio.theme_name == "evening", "music follows the theme")
+	app.set_theme_choice("auto")
+	app.show_console()
+	await process_frame
+	check(app.current_screen == "console", "engine room opens from the brain")
 	var console: Control = app.current()
 	var ready := await wait_until(func() -> bool:
 		return bool(console.get("health_ok")) and not (console.get("last_status") as Dictionary).is_empty() \
@@ -143,10 +177,16 @@ func _e2e() -> void:
 	check(p2.text == "Start", "reopened app recognises the installation")
 	var started_ms := Time.get_ticks_msec()
 	p2.pressed.emit()
-	var reopened := await wait_until(func() -> bool: return app2.current_screen == "console", 120.0)
-	check(reopened, "Start reaches the console again")
+	var reopened := await wait_until(func() -> bool: return app2.current_screen == "brain", 120.0)
+	check(reopened, "Start reaches the brain again")
 	var fast_s := (Time.get_ticks_msec() - started_ms) / 1000.0
 	check(fast_s < 30.0, "second start does not reinstall (%.1f s)" % fast_s)
+	var b2: Control = app2.current()
+	var g2: GraphView = b2.get("graph")
+	var kept := await wait_until(func() -> bool: return g2.node_count("note") == before + 1, 20.0)
+	check(kept, "captured notes are still there after a restart")
+	app2.show_console()
+	await process_frame
 	var c2: Control = app2.current()
 	var ok2 := await wait_until(func() -> bool:
 		return bool(c2.get("health_ok")) and not (c2.get("last_status") as Dictionary).is_empty(), 20.0)

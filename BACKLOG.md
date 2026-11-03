@@ -2,13 +2,15 @@
 
 Ordered by priority. ✅ = done.
 
-## Loop 1 candidates (knowledge core)
+## Loop 2 candidates
 
-1. Notes: `notes` table (migration 0002), CRUD API, Markdown files in `data/notes/` or SQLite-only (decide).
-2. Notes UI in Godot: list, editor, quick capture.
-3. Full-text search with SQLite FTS5.
-4. Links between notes and a first graph view (Godot 2D, reuse the logo's graph drawing).
-5. Navigation shell: sidebar with Notes / Search / Graph / System Console.
+1. Voice capture with local Whisper (design in docs/architecture/knowledge-model.md; owner picks model size).
+2. Prerequisites script: `tools/install-prereqs.ps1` (winget: Python, Godot, Git; per-user, with consent) and an
+   "Install Python" button on the welcome screen.
+3. Daily router agent: proposes a space and links for each Inbox thought; approve or undo from the briefing.
+4. Graph: remember node positions, label collision avoidance, cluster by space, mini-map.
+5. Markdown rendering in the inspector (read mode), note history.
+6. Per-space ambience and accent colour; more tracks per theme.
 
 ## Platform and install
 
@@ -36,6 +38,8 @@ Ordered by priority. ✅ = done.
 - Licence (MIT, Apache-2.0, AGPL-3.0…) before any public release.
 - When to make the repository and the site public.
 - Language of the UI (English now) and whether to add French.
+- Whisper model size and whether a cloud fallback is ever allowed.
+- Music licensing for business distribution.
 
 ## Out of scope until later loops
 
@@ -45,3 +49,5 @@ cloud sync.
 ## Done
 
 - ✅ Loop 0: setup wizard, bootstrap, SQLite, local API, System Console, landing page, tests, docs.
+- ✅ Loop 1: knowledge model (spaces, notes, links, tags, FTS5), brain screen with living graph, capture,
+  briefing, search, inspector; themes; generated music, ambience and sound effects.

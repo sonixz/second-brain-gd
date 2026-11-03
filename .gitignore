@@ -16,9 +16,11 @@ __pycache__/
 *.sqlite3
 *.sqlite3-*
 api_token
-.env
-.env.*
-!.env.example
+# Secrets: dotenvx. The encrypted .env IS committed; private keys never are.
+.env.keys
+.env.*.keys
+.env.local
+.env.*.local
 
 # OS / editors
 .DS_Store

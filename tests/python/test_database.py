@@ -18,11 +18,13 @@ class DatabaseTests(unittest.TestCase):
 
     def test_migrate_creates_required_tables(self):
         result = database.migrate(self.db)
-        self.assertEqual(result["applied"], ["0001_initial"])
-        self.assertEqual(result["schema_version"], 1)
+        expected = [name for _, name, _ in database.available_migrations()]
+        self.assertEqual(result["applied"], expected)
+        self.assertEqual(result["schema_version"], len(expected))
         with database.session(self.db) as conn:
             tables = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
-        for t in ("application_settings", "schema_migrations", "system_events", "service_status"):
+        for t in ("application_settings", "schema_migrations", "system_events", "service_status",
+                  "spaces", "notes", "links", "tags", "note_tags", "notes_fts"):
             self.assertIn(t, tables)
 
     def test_migrate_is_idempotent_and_keeps_data(self):
@@ -33,7 +35,21 @@ class DatabaseTests(unittest.TestCase):
         self.assertEqual(again["applied"], [])
         with database.session(self.db) as conn:
             self.assertEqual(database.get_setting(conn, "k"), {"a": 1})
-            self.assertEqual(conn.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0], 1)
+            self.assertEqual(conn.execute("SELECT COUNT(*) FROM schema_migrations").fetchone()[0],
+                             len(database.available_migrations()))
+
+    def test_upgrade_from_loop0_keeps_data(self):
+        """An install made by Loop 0 (schema 1) upgrades in place."""
+        v1 = Path(self.tmp.name) / "v1"
+        v1.mkdir()
+        (v1 / "0001_initial.sql").write_text((MIGRATIONS_DIR / "0001_initial.sql").read_text())
+        database.migrate(self.db, v1)
+        with database.session(self.db) as conn:
+            database.set_setting(conn, "installed_at", "2026-11-02T00:00:00Z")
+        result = database.migrate(self.db)
+        self.assertIn("0002_knowledge", result["applied"])
+        with database.session(self.db) as conn:
+            self.assertEqual(database.get_setting(conn, "installed_at"), "2026-11-02T00:00:00Z")
 
     def test_edited_migration_is_refused(self):
         mig_dir = Path(self.tmp.name) / "migs"
@@ -44,6 +60,15 @@ class DatabaseTests(unittest.TestCase):
         (mig_dir / "0001_initial.sql").write_text(src + "\n-- edited\nCREATE TABLE x (a);")
         with self.assertRaises(database.MigrationError):
             database.migrate(self.db, mig_dir)
+
+    def test_crlf_checkout_is_not_an_edit(self):
+        mig_dir = Path(self.tmp.name) / "crlf"
+        mig_dir.mkdir()
+        src = (MIGRATIONS_DIR / "0001_initial.sql").read_bytes().replace(b"\r\n", b"\n")
+        (mig_dir / "0001_initial.sql").write_bytes(src)
+        database.migrate(self.db, mig_dir)
+        (mig_dir / "0001_initial.sql").write_bytes(src.replace(b"\n", b"\r\n"))
+        self.assertEqual(database.migrate(self.db, mig_dir)["applied"], [])
 
     def test_failed_migration_rolls_back(self):
         mig_dir = Path(self.tmp.name) / "migs"

@@ -11,7 +11,7 @@ func base_url() -> String:
 	return "http://127.0.0.1:%d" % port
 
 
-func call_api(path: String, auth: bool = true, method: int = HTTPClient.METHOD_GET) -> Dictionary:
+func call_api(path: String, auth: bool = true, method: int = HTTPClient.METHOD_GET, body: String = "") -> Dictionary:
 	if port <= 0:
 		return {"ok": false, "code": 0, "error": "API port unknown", "data": {}, "ms": 0}
 	var req := HTTPRequest.new()
@@ -20,8 +20,10 @@ func call_api(path: String, auth: bool = true, method: int = HTTPClient.METHOD_G
 	var headers := PackedStringArray(["Accept: application/json"])
 	if auth:
 		headers.append("Authorization: Bearer " + token)
+	if body != "":
+		headers.append("Content-Type: application/json")
 	var started := Time.get_ticks_msec()
-	var err := req.request(base_url() + path, headers, method, "")
+	var err := req.request(base_url() + path, headers, method, body)
 	if err != OK:
 		req.queue_free()
 		return {"ok": false, "code": 0, "error": "request failed to start (%s)" % error_string(err), "data": {},
@@ -31,10 +33,11 @@ func call_api(path: String, auth: bool = true, method: int = HTTPClient.METHOD_G
 	var elapsed := Time.get_ticks_msec() - started
 	var result: int = res[0]
 	var code: int = res[1]
-	var body: PackedByteArray = res[3]
+	var body_bytes: PackedByteArray = res[3]
 	if result != HTTPRequest.RESULT_SUCCESS:
 		return {"ok": false, "code": code, "error": _result_text(result), "data": {}, "ms": elapsed}
-	var parsed: Variant = JSON.parse_string(body.get_string_from_utf8())
+	var text := body_bytes.get_string_from_utf8()
+	var parsed: Variant = JSON.parse_string(text) if text != "" else {}
 	var data: Dictionary = parsed if parsed is Dictionary else {}
 	if code < 200 or code >= 300:
 		return {"ok": false, "code": code, "error": "HTTP %d" % code, "data": data, "ms": elapsed}

@@ -132,10 +132,10 @@ func _ready() -> void:
 	retry_button.pressed.connect(begin)
 	brow.add_child(retry_button)
 	continue_button = Button.new()
-	continue_button.text = "Open System Console"
+	continue_button.text = "Enter your Second Brain"
 	continue_button.theme_type_variation = "PrimaryButton"
 	continue_button.visible = false
-	continue_button.pressed.connect(func() -> void: app.show_console())
+	continue_button.pressed.connect(func() -> void: app.show_brain())
 	brow.add_child(continue_button)
 
 	var right := VBoxContainer.new()
@@ -239,6 +239,8 @@ func _on_event(ev: Dictionary) -> void:
 	if rows.has(component):
 		var row: StepRow = rows[component]
 		row.set_state(status, message)
+		if status in ["ok", "skipped"] and component != "bootstrap":
+			app.audio.play("step_done", 0.06, -4.0 if status == "skipped" else 0.0)
 	if status == "error":
 		var details: Dictionary = ev.get("details", {}) if ev.get("details") is Dictionary else {}
 		if component != "bootstrap":
@@ -250,6 +252,7 @@ func _on_finished(ok: bool, final_event: Dictionary) -> void:
 	back_button.disabled = false
 	if ok:
 		succeeded = true
+		app.audio.play("setup_complete")
 		_target_progress = 1.0
 		headline.text = "Your Second Brain is ready"
 		continue_button.visible = true
@@ -257,7 +260,7 @@ func _on_finished(ok: bool, final_event: Dictionary) -> void:
 		app.backend.load_runtime()
 		get_tree().create_timer(AUTO_CONTINUE_S).timeout.connect(func() -> void:
 			if is_inside_tree() and app.current_screen == "setup":
-				app.show_console())
+				app.show_brain())
 	else:
 		headline.text = "Setup needs attention"
 		if not error_panel.visible:
@@ -266,6 +269,8 @@ func _on_finished(ok: bool, final_event: Dictionary) -> void:
 
 
 func _fail(message: String, hint_bbcode: String, tail: String = "") -> void:
+	if not error_panel.visible:
+		app.audio.play("error")
 	error_panel.visible = true
 	error_label.text = message
 	var hint := hint_bbcode
