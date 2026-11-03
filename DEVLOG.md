@@ -1,5 +1,26 @@
 # Devlog
 
+## Loop 5b — Meaning memory (2026-11-03)
+
+- Migration 0006: `note_embeddings` (one normalised float32 vector per note, re-embedded when the title or
+  body hash changes) and `note_related` (each note's own picks). `engine/brain/meaning.py` is stdlib only.
+- A background worker in the engine embeds pending notes and passages every 30 s, and within seconds after
+  any write (a middleware pokes it). It never holds SQLite during a network call: read, call, write, and it
+  drops vectors for notes edited or deleted meanwhile.
+- Related ideas: no fixed similarity floor works. With `text-embedding-3-small`, the same idea across French
+  and English scored 0.34–0.56, while two unrelated work notes reached 0.33. Rule: a note keeps its closest
+  note when it scores ≥ 0.33, plus any note ≥ 0.45. A pair is related when either note picked the other.
+  `tools/meaning_bench.py`: 3 of 3 true pairs, 0 false.
+- Search: meaning first (floor 0.25), then keyword hits. Keywords drop common French and English words, and
+  when no note has every word, any word counts.
+- Lesson: on Windows the Python tests found the owner's real key in the OS keyring, so a test engine would
+  have called the real API. `tests/python/__init__.py` now uses a test keyring service and drops
+  `OPENAI_API_KEY`. The Godot runner does the same. A slow shutdown (the worker held the database during the
+  call) revealed it.
+- Models: `gpt-6-astra` refuses `reasoning_effort: none` (lowest is `low`), and with reasoning on it refuses
+  function tools in Chat Completions. Filing 10/10 in 2.7 s. Tools for it need the Responses API (Loop 6b).
+
+
 ## Loop 6, part 1 — Project mode (2026-11-02)
 
 - Per-project assistant instructions are stored on the space and edited on the card. Project mode puts the

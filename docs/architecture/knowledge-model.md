@@ -166,3 +166,20 @@ follow-up email request in French produced an English email addressed to Mark.
 A "daily" agent runs in the morning: it reads the Inbox, proposes a space for each thought, and suggests links.
 Every proposal is written with `created_by = 'agent'` and shown in the briefing for approval. The graph can
 show the agent as a visible actor moving between nodes, in line with the transparency principle.
+
+
+## Meaning memory for notes (Loop 5b)
+
+- `note_embeddings`: one vector per note (`text-embedding-3-small`, normalised float32, so cosine is a dot
+  product), with the hash of title and body at embedding time. A changed hash means re-embed.
+- A background worker (`engine/brain/meaning.py`, started in the API lifespan) embeds pending notes every
+  30 s, and right after any write to `/brain`, `/assistant` or `/sources`. It reads, calls the API with no
+  database lock held, then writes. Without a key, or when the model is refused, it does nothing, and the
+  refusal is re-checked every 6 hours.
+- `note_related(owner, other, score)`: each note's picks, which are its closest note if it scores ≥ 0.33,
+  plus any note ≥ 0.45, up to 5. A pair is related when either side picked it. Adding a note also refreshes
+  the picks of a note whose closest neighbour it becomes. Thresholds come from `tools/meaning_bench.py`.
+- Served as `type: "related"` edges in `/brain/graph` (drawn as warm dashed lines), and by
+  `/brain/notes/{id}/related` (the inspector's Related ideas section). `/brain/meaning/status` gives counts.
+- Search (`/brain/search` and the assistant's `search_notes`): meaning first (floor 0.25), then keyword hits.
+  Keywords skip common French and English words. If no note has every word, any word counts.

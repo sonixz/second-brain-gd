@@ -14,7 +14,7 @@ const SPRING := 0.035
 const DAMPING := 0.86
 const GRAVITY := 0.012
 const BIRTH_S := 1.1
-const REST := {"space": 150.0, "link": 120.0, "tag": 85.0}
+const REST := {"space": 150.0, "link": 120.0, "tag": 85.0, "related": 150.0}
 
 var nodes: Dictionary = {}      # id -> Dictionary (see _make_node)
 var edges: Array[Dictionary] = []
@@ -268,12 +268,20 @@ func _draw() -> void:
 		elif type == "tag":
 			col = SbTheme.MUTED
 			alpha = 0.16
+		elif type == "related":
+			# Related ideas found by meaning: warm, dashed, so they read as suggestions rather than links
+			col = SbTheme.WARM
+			alpha = 0.42
+			width = 1.4
 		if dim:
 			alpha *= 0.25
 		elif hovered != "" and (str(e["from"]) == hovered or str(e["to"]) == hovered):
 			alpha = minf(1.0, alpha * 2.2)
 		var end := pa.lerp(pb, grow)
-		draw_line(pa, end, Color(col, alpha * grow), width * clampf(zoom, 0.6, 1.4), true)
+		if type == "related":
+			draw_dashed_line(pa, end, Color(col, alpha * grow), width * clampf(zoom, 0.6, 1.4), 6.0 * clampf(zoom, 0.6, 1.4))
+		else:
+			draw_line(pa, end, Color(col, alpha * grow), width * clampf(zoom, 0.6, 1.4), true)
 		if type == "link" and not dim and grow >= 1.0:
 			var k := fmod(_t * 0.35 + float(hash(str(e["from"])) % 97) / 97.0, 1.0)
 			draw_circle(pa.lerp(pb, k), 2.2, Color(SbTheme.MINT_SOFT, 0.75))

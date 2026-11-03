@@ -7,7 +7,9 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 
 from engine import brain, database
-from engine.brain import structure
+from engine.brain import meaning, structure
+from engine.assistant.llm import make_client
+from engine.voice import secrets
 from engine.paths import Layout
 
 
@@ -131,9 +133,30 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         run(brain.delete_note, note_id)
         return Response(status_code=204)
 
+    def client_or_none():
+        key, _ = secrets.get(layout, "openai")
+        try:
+            return make_client(key)
+        except PermissionError:
+            return None
+
     @r.get("/search")
     def get_search(q: str = Query(min_length=1, max_length=200), limit: int = Query(30, ge=1, le=200)) -> dict[str, Any]:
-        return {"results": run(brain.search, q, limit)}
+        return {"results": run(meaning.search_notes, client_or_none(), q, limit)}
+
+    @r.get("/notes/{note_id}/related")
+    def get_related(note_id: str) -> dict[str, Any]:
+        run(brain.get_note, note_id)  # 404 for an unknown note
+        return {"related": run(meaning.related, note_id)}
+
+    @r.get("/meaning/status")
+    def get_meaning_status() -> dict[str, Any]:
+        from engine.sources.core import embeddings_model
+
+        def st(conn):
+            return {**meaning.status(conn, embeddings_model(conn)), "model": embeddings_model(conn),
+                    "embeddings": database.get_setting(conn, "embeddings_status") or {"available": None}}
+        return run(st)
 
     # ---------------------------------------------------------- structure
     @r.get("/structure")

@@ -209,7 +209,7 @@ def _file_to_checklist(conn: sqlite3.Connection, note: dict[str, Any], prop: dic
 
 # ------------------------------------------------------------------ tools
 TOOLS = [
-    {"type": "function", "function": {"name": "search_notes", "description": "Full-text search in the user's notes. Optional space_ids limits the scope (project mode); resources are always included.",
+    {"type": "function", "function": {"name": "search_notes", "description": "Search the user's notes by meaning (any language) and by keywords. Optional space_ids limits the scope (project mode); resources are always included.",
         "parameters": {"type": "object", "properties": {"query": {"type": "string"},
                                                          "space_ids": {"type": "array", "items": {"type": "string"}}},
                        "required": ["query"]}}},
@@ -258,12 +258,14 @@ TOOLS = [
 def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions: list[dict[str, Any]]) -> Any:
     try:
         if name == "search_notes":
-            hits = brain.search(conn, str(args.get("query", "")), 20)
+            from engine.brain.meaning import search_notes
+
+            hits = search_notes(conn, _CLIENT.get("c"), str(args.get("query", "")), 20)
             scope = [str(s) for s in (args.get("space_ids") or []) if s]
             if scope:
                 shared = {r["id"] for r in conn.execute("SELECT id FROM spaces WHERE kind = 'resource'")}
                 hits = [h for h in hits if h["space_id"] in scope or h["space_id"] in shared]
-            return {"results": [{k: r[k] for k in ("id", "title", "space_id", "kind", "snippet")} for r in hits[:8]],
+            return {"results": [{k: r.get(k) for k in ("id", "title", "space_id", "kind", "snippet", "match")} for r in hits[:8]],
                     "scope": "project + shared resources" if scope else "everything"}
         if name == "get_note":
             n = brain.get_note(conn, str(args["note_id"]))

@@ -40,6 +40,7 @@ func _run() -> void:
 	# The engine started by this test uses a fake transcription provider: no OpenAI call, no cost.
 	OS.set_environment("SBGD_VOICE_PROVIDER", "fake")
 	OS.set_environment("SBGD_ASSISTANT_PROVIDER", "fake")
+	OS.set_environment("SBGD_KEYRING_SERVICE", "SecondBrainGD-test")  # never the user's real key
 	SbSettings.set_value("assistant", "speaks", true)
 	SbSettings.set_value("onboarding", "voice_done", false)
 	if OS.get_environment("SBGD_HOME") == "":
@@ -241,6 +242,22 @@ func _e2e() -> void:
 		if str(e["type"]) == "link" and str((graph.nodes[e["from"]] as Dictionary)["label"]).begins_with("Test thought"):
 			linked = true
 	check(linked, "its [[link]] appears as an edge")
+	# Meaning memory: the engine's background worker embeds new notes (fake provider) within seconds.
+	var meaning: Dictionary = {}
+	for i in 40:
+		var mres: Dictionary = await app.backend.api.call_api("/brain/meaning/status")
+		meaning = mres["data"] if mres["ok"] else {}
+		if int(meaning.get("embedded", 0)) > 0 and int(meaning.get("pending", 1)) == 0:
+			break
+		await create_timer(0.25).timeout
+	check(int(meaning.get("embedded", 0)) > 0 and int(meaning.get("pending", 1)) == 0,
+		"notes are indexed by meaning in the background (%s)" % str(meaning))
+	var rel_id := str(brain.get("current_note").get("id", "")) if not (brain.get("current_note") as Dictionary).is_empty() else ""
+	for id in graph.nodes:
+		if rel_id == "" and str((graph.nodes[id] as Dictionary)["type"]) == "note":
+			rel_id = str(id)
+	var rres: Dictionary = await app.backend.api.call_api("/brain/notes/" + rel_id.uri_encode() + "/related")
+	check(rres["ok"] and (rres["data"] as Dictionary).has("related"), "a note's related ideas are served")
 	# Voice: a real session through the engine (fake provider), audio pushed through the real encoder.
 	var voice_before := graph.node_count("note")
 	var started: bool = await brain.call("start_voice", false)

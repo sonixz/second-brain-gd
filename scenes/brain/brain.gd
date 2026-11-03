@@ -24,6 +24,8 @@ var body_edit: TextEdit
 var space_option: OptionButton
 var kind_option: OptionButton
 var links_box: VBoxContainer
+var related_label: Label
+var related_box: VBoxContainer
 var save_label: Label
 var stats_label: Label
 var spaces: Array = []
@@ -568,6 +570,15 @@ func _build_inspector() -> void:
 	links_box = VBoxContainer.new()
 	links_box.add_theme_constant_override("separation", 0)
 	col.add_child(links_box)
+	related_label = Label.new()
+	related_label.text = "RELATED IDEAS"
+	related_label.theme_type_variation = "Overline"
+	related_label.tooltip_text = "Found by meaning, in any language. Dashed warm lines in the graph."
+	related_label.visible = false
+	col.add_child(related_label)
+	related_box = VBoxContainer.new()
+	related_box.add_theme_constant_override("separation", 0)
+	col.add_child(related_box)
 
 
 func _build_capture_bar() -> void:
@@ -867,6 +878,7 @@ func open_note(id: String, focus: bool = false) -> void:
 	_loading_note = false
 	save_label.text = "Edited %s" % SbFormat.local_time(current_note["updated_at"], true)
 	_render_links()
+	_load_related(id)
 	graph.select(id)
 	if focus:
 		graph.focus_on(id)
@@ -905,6 +917,29 @@ func _render_links() -> void:
 		t.theme_type_variation = "Muted"
 		t.text = "  ".join(tags.map(func(x: Variant) -> String: return "#" + str(x)))
 		links_box.add_child(t)
+
+
+## Related ideas come from the meaning index; the section stays hidden when there are none
+## (no key, no embeddings model, or nothing close enough).
+func _load_related(id: String) -> void:
+	for c in related_box.get_children():
+		c.queue_free()
+	related_label.visible = false
+	var res := await app.backend.api.call_api("/brain/notes/" + id.uri_encode() + "/related")
+	if not res["ok"] or current_note.is_empty() or str(current_note["id"]) != id:
+		return
+	var items: Array = (res["data"] as Dictionary).get("related", [])
+	related_label.visible = not items.is_empty()
+	for item in items:
+		var n: Dictionary = item
+		var b := Button.new()
+		b.theme_type_variation = "GhostButton"
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		b.text = "≈ " + str(n["title"])
+		b.tooltip_text = "Similarity %d%%" % int(round(float(n.get("score", 0.0)) * 100.0))
+		var nid := str(n["id"])
+		b.pressed.connect(func() -> void: open_note(nid, true))
+		related_box.add_child(b)
 
 
 func _rebuild_space_option() -> void:

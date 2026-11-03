@@ -1,5 +1,19 @@
 # Status
 
+**Loop 5b — Meaning memory: done (2026-11-03).** The embeddings model is now enabled. Every note is embedded
+in the background (new or changed notes within seconds), related ideas are linked automatically (warm dashed
+lines in the graph, a Related ideas section in the inspector), and search (the search box and the assistant)
+uses meaning first, then words. Keyword search ignores common words and falls back to any word. Real API:
+« habitudes pour mieux dormir » found nothing by words; by meaning the assistant cited the English note
+“Bedtime routine”. Related-idea rule measured in `tools/meaning_bench.py`: 3 true pairs, 0 false.
+`gpt-6-astra` measured: filing 10/10 in 2.7 s; it cannot turn reasoning off, and tools need the Responses API
+(Loop 6b).
+
+| Suite | Platform | Result |
+|---|---|---|
+| Python (68) | Linux 3.12 / Windows Store 3.13 | OK |
+| Godot end-to-end (85 checks, including background meaning index and related ideas) | Linux and Windows native | 85 passed |
+
 **Loop 6 (part 1) — Project mode: done (2026-11-02).** Each project has its own assistant instructions. In
 project mode the assistant knows the card (goal, due date, next actions) and searches the project plus shared
 resources first. Verified with the real API. The agent room (Claude Code sessions) needs an Anthropic API key.
@@ -8,8 +22,7 @@ Tests: 59 Python and 83 Godot checks.
 **Loop 5 — Sources: done; meaning search waiting for the embeddings model (2026-11-02).** Drop files (PDF,
 Word, Markdown, text, HTML) or paste a link. Each becomes a summarised reference note in the graph, with
 searchable passages, and the assistant answers from them with citations. A real Wikipedia page took 3.5 s.
-**Blocked on the owner:** enable `text-embedding-3-small` on the OpenAI project (`proj_k45r…`) for search by
-meaning. Until then, search uses words.
+Meaning search was unblocked on 2026-11-03 (Loop 5b).
 
 | Suite | Platform | Result |
 |---|---|---|

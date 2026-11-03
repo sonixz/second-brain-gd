@@ -8,11 +8,14 @@ The agreed plan for Loops 4–7 (structure, sources & semantic memory, project a
 and the model cadence live in [docs/ROADMAP.md](docs/ROADMAP.md).
 
 
-1. Loop 4, real conversation: realtime speech-to-speech (talk and interrupt), streaming replies, project mode
-   driven by voice ("on travaille sur Atlas").
-2. Agent room: Claude Code sessions via the Claude Agent SDK, rendered natively in Godot, with permissions
-   in the UI and the brain exposed as an MCP server. It needs an Anthropic API key per user, because
-   claude.ai login is not allowed for third-party apps.
+Cadence from 2026-11-03 (details in the roadmap): 5b ✅ meaning memory → 6b Responses API and gpt-6-astra →
+6c agent room on by default (Codex native binary first, Claude Code later) → 7a hands-free (UI tools,
+push-to-talk) → 7b real-time conversation (owner's go on cost). The wake word is set aside for now.
+
+Small follow-ups from 5b:
+- Search box: show which hits came by meaning (≈) versus words.
+- Related ideas: let the user dismiss a suggestion, or turn it into a real [[link]].
+- Embed in a local model later (offline); the worker already isolates the network call.
 
 ## Loop 2 candidates (older list)
 

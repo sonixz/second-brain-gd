@@ -112,7 +112,9 @@ def ingest(conn: sqlite3.Connection, client: Any | None, kind: str, uri: str, ti
 def search_chunks(conn: sqlite3.Connection, query: str, limit: int = 8) -> list[dict[str, Any]]:
     import re
 
-    words = [w for w in re.findall(r"[\w-]+", query, re.UNICODE) if len(w) > 1]
+    from engine.brain.meaning import keywords
+
+    words = keywords(query)
     if not words:
         return []
     q = " OR ".join(f'"{w}"*' for w in words)

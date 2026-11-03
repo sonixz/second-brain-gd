@@ -180,10 +180,18 @@ def _link_incoming(conn: sqlite3.Connection, note_id: str, title: str) -> None:
 
 # ------------------------------------------------------------------ search
 def search(conn: sqlite3.Connection, query: str, limit: int = 30) -> list[dict[str, Any]]:
-    words = [w for w in re.findall(r"[\w-]+", query, re.UNICODE) if w]
+    from engine.brain.meaning import keywords
+
+    words = keywords(query)
     if not words:
         return []
-    fts_query = " ".join(f'"{w}"*' for w in words)
+    rows = _fts_notes(conn, " ".join(f'"{w}"*' for w in words), limit)
+    if not rows and len(words) > 1:  # every word did not match: any word, best first
+        rows = _fts_notes(conn, " OR ".join(f'"{w}"*' for w in words), limit)
+    return rows
+
+
+def _fts_notes(conn: sqlite3.Connection, fts_query: str, limit: int) -> list[dict[str, Any]]:
     rows = conn.execute(
         "SELECT n.id, n.space_id, n.title, n.kind, n.updated_at,"
         " snippet(notes_fts, 1, '[', ']', '…', 12) AS snippet, bm25(notes_fts, 4.0, 1.0) AS score"
@@ -219,6 +227,9 @@ def graph(conn: sqlite3.Connection) -> dict[str, Any]:
     for r in conn.execute("SELECT nt.note_id, t.name FROM note_tags nt JOIN tags t ON t.id = nt.tag_id"
                           " JOIN notes n ON n.id = nt.note_id AND n.status != 'archived'"):
         edges.append({"from": r["note_id"], "to": f"tag:{r['name']}", "type": "tag"})
+    from engine.brain.meaning import related_edges
+
+    edges.extend(related_edges(conn))
     return {"nodes": nodes, "edges": edges}
 
 

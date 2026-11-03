@@ -11,7 +11,10 @@ from fastapi import Depends, FastAPI, HTTPException, Query, Request
 
 from engine import VERSION, database
 from engine.api.brain_routes import make_router
+from engine.brain import meaning
 from engine.brain.seed import seed_all
+from engine.assistant.llm import make_client
+from engine.voice import secrets as key_store
 from engine.voice.routes import make_router as make_voice_router
 from engine.assistant.routes import make_router as make_assistant_router
 from engine.sources.routes import make_router as make_sources_router
@@ -35,12 +38,33 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         with database.session(layout.database) as conn:
             seed_all(conn)
+        worker = meaning.Worker(layout.database, client_or_none)
+        worker.start()
+        app.state.meaning_worker = worker
         if on_started is not None:
             on_started()
-        yield
+        try:
+            yield
+        finally:
+            worker.stop()
+
+    def client_or_none():
+        key, _ = key_store.get(layout, "openai")
+        try:
+            return make_client(key)
+        except PermissionError:
+            return None
 
     app = FastAPI(title="Second Brain GD engine", version=VERSION, docs_url=None, redoc_url=None,
                   openapi_url=None, lifespan=lifespan)
+
+    @app.middleware("http")
+    async def poke_meaning(request: Request, call_next):
+        response = await call_next(request)
+        if request.method in ("POST", "PATCH", "PUT", "DELETE") and response.status_code < 400 and \
+                request.url.path.startswith(("/brain", "/assistant", "/sources")):
+            meaning.poke()  # new or changed notes get embedded within seconds
+        return response
 
     def require_token(request: Request) -> None:
         header = request.headers.get("authorization", "")

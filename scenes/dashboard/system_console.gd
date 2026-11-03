@@ -249,7 +249,14 @@ func _poll_sources() -> void:
 	var chunks := 0
 	for item in list:
 		chunks += int((item as Dictionary).get("chunks", 0))
+	var mres := await app.backend.api.call_api("/brain/meaning/status")
+	if not is_inside_tree():
+		return
+	var m: Dictionary = mres["data"] if mres["ok"] else {}
 	var avail: Variant = emb.get("available")
+	if avail == null and m.has("embeddings"):
+		emb = m["embeddings"]
+		avail = emb.get("available")
 	if avail == true:
 		sources_card.set_state("ok", "Search by meaning")
 	elif avail == false:
@@ -259,6 +266,8 @@ func _poll_sources() -> void:
 	sources_card.set_rows([
 		["Sources", SbFormat.number(list.size())],
 		["Passages indexed", SbFormat.number(chunks)],
+		["Notes by meaning", ("%s of %s" % [SbFormat.number(m.get("embedded", 0)), SbFormat.number(m.get("notes", 0))]) if not m.is_empty() else SbFormat.NA],
+		["Related idea pairs", SbFormat.number(m.get("related_pairs", 0)) if not m.is_empty() else SbFormat.NA],
 		["Embeddings model", str(emb.get("model", "text-embedding-3-small"))],
 		["Embeddings", "available" if avail == true else ("unavailable: " + str(emb.get("error", "")).left(70) if avail == false else SbFormat.NA)],
 		["Formats", "PDF, Word, Markdown, text, HTML, web links"],
