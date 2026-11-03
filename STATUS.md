@@ -7,7 +7,7 @@ and everything she does can be undone. You can type or speak to her.
 
 | Suite | Platform | Result |
 |---|---|---|
-| Python (42) | Linux 3.12 / Windows Store 3.13 | OK |
+| Python (41) | Linux 3.12 / Windows Store 3.13 | OK |
 | Godot end-to-end (68 checks: briefing, cited answer, auto-filing with toast and undo) | Linux and Windows native | 68 passed |
 | Real OpenAI run (briefing, chat with tools, filing, speech) | Linux engine | correct, about 3 cents per demo session |
 
