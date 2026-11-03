@@ -2,7 +2,15 @@
 
 Ordered by priority. ✅ = done.
 
-## Loop 2 candidates
+## Next
+
+1. Loop 3, assistant: chat panel with second-brain tools, auto-classification of every input, generated
+   morning briefing spoken with the marin voice.
+2. Agent room: Claude Code sessions via the Claude Agent SDK, rendered natively in Godot, with permissions
+   in the UI and the brain exposed as an MCP server. It needs an Anthropic API key per user, because
+   claude.ai login is not allowed for third-party apps.
+
+## Loop 2 candidates (older list)
 
 1. Voice: run the real benchmark, then test with the owner's voice and microphone; record a dozen of their own
    clips with expected text to tune `languages`, `delay` and `prompt` (project names as keywords).
@@ -33,6 +41,12 @@ Ordered by priority. ✅ = done.
 - Run CI on the next push and fix anything platform-specific it finds.
 - Godot UI tests for error states (no Python, failing pip) with fake interpreters.
 - Accessibility pass on the Godot UI (keyboard focus order, font scaling).
+
+## Decisions taken
+
+- 2026-11-02: assistant voice = OpenAI `gpt-4o-mini-tts`, voice **marin** (chosen by ear from 16 samples of a
+  morning briefing). Tone set by instructions per theme. ElevenLabs stays a possible premium option.
+- 2026-11-02: voice-to-text = `gpt-realtime-whisper`, each user brings their own OpenAI key.
 
 ## Decisions for the owner
 

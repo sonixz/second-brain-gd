@@ -27,3 +27,6 @@ api_token
 Thumbs.db
 .vscode/
 .idea/
+
+# Local listening samples (generated, not shipped)
+samples/
