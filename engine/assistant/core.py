@@ -209,8 +209,10 @@ def _file_to_checklist(conn: sqlite3.Connection, note: dict[str, Any], prop: dic
 
 # ------------------------------------------------------------------ tools
 TOOLS = [
-    {"type": "function", "function": {"name": "search_notes", "description": "Full-text search in the user's notes.",
-        "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}}},
+    {"type": "function", "function": {"name": "search_notes", "description": "Full-text search in the user's notes. Optional space_ids limits the scope (project mode); resources are always included.",
+        "parameters": {"type": "object", "properties": {"query": {"type": "string"},
+                                                         "space_ids": {"type": "array", "items": {"type": "string"}}},
+                       "required": ["query"]}}},
     {"type": "function", "function": {"name": "get_note", "description": "Read a note with its links and tags.",
         "parameters": {"type": "object", "properties": {"note_id": {"type": "string"}}, "required": ["note_id"]}}},
     {"type": "function", "function": {"name": "list_spaces", "description": "List spaces (projects, areas) with note counts.",
@@ -256,8 +258,13 @@ TOOLS = [
 def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions: list[dict[str, Any]]) -> Any:
     try:
         if name == "search_notes":
-            return {"results": [{k: r[k] for k in ("id", "title", "space_id", "kind", "snippet")}
-                                for r in brain.search(conn, str(args.get("query", "")), 8)]}
+            hits = brain.search(conn, str(args.get("query", "")), 20)
+            scope = [str(s) for s in (args.get("space_ids") or []) if s]
+            if scope:
+                shared = {r["id"] for r in conn.execute("SELECT id FROM spaces WHERE kind = 'resource'")}
+                hits = [h for h in hits if h["space_id"] in scope or h["space_id"] in shared]
+            return {"results": [{k: r[k] for k in ("id", "title", "space_id", "kind", "snippet")} for r in hits[:8]],
+                    "scope": "project + shared resources" if scope else "everything"}
         if name == "get_note":
             n = brain.get_note(conn, str(args["note_id"]))
             n["body"] = n["body"][:4000]
@@ -349,6 +356,24 @@ def _save(conn: sqlite3.Connection, conversation: str, role: str, content: str, 
                  (conversation, role, content, json.dumps(meta, ensure_ascii=False) if meta else None, utc_now()))
 
 
+def project_context(conn: sqlite3.Connection, space_id: str) -> str:
+    """System-prompt block for project mode: the card, its own instructions, and the search scope."""
+    sp = brain.get_space(conn, space_id)
+    lines = [f"\nMODE PROJET: l'utilisateur travaille sur « {sp['name']} » (id {sp['id']}, {sp['kind']})."]
+    for key, label in (("goal", "Objectif"), ("why", "Pourquoi"), ("due_date", "Échéance"), ("status", "Statut")):
+        if sp.get(key):
+            lines.append(f"{label}: {sp[key]}")
+    open_tasks = [t["title"] + (f" (due {t['due_date']})" if t["due_date"] else "") for t in structure.tasks(conn, space_id)][:10]
+    if open_tasks:
+        lines.append("Prochaines actions ouvertes: " + "; ".join(open_tasks))
+    if sp.get("instructions"):
+        lines.append("Consignes propres à ce projet (à respecter): " + str(sp["instructions"]).strip())
+    lines.append("Portée: cherche d'abord dans ce projet (search_notes avec space_ids=[cet id]) et dans les ressources "
+                 "partagées. Ne cherche dans tout le cerveau que si l'utilisateur le demande (« partout », « dans tout »). "
+                 "Range ce qu'il dicte dans ce projet par défaut.")
+    return "\n".join(lines)
+
+
 _CLIENT: dict[str, Any] = {}  # the current request's client, for tools that call the API (semantic search)
 
 
@@ -359,8 +384,7 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
     focus = ""
     if space_id:
         try:
-            sp = brain.get_space(conn, space_id)
-            focus = f"\nMode projet: l'utilisateur travaille sur l'espace « {sp['name']} » (id {sp['id']}). Concentre-toi dessus."
+            focus = project_context(conn, space_id)
         except brain.NotFound:
             pass
     now = datetime.now().strftime("%A %Y-%m-%d %H:%M")

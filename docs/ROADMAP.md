@@ -48,7 +48,7 @@ And five work loops the app supports:
 - Needs an embeddings model enabled on the OpenAI project (for example `text-embedding-3-small`).
   A local embedding model is a later option.
 
-### Loop 6 — Project agents
+### Loop 6 — Project agents (project mode ✅ 2026-11-02; agent room waits for an Anthropic API key)
 - Per-project instructions and memory, sharing rules between projects (default scope is the project plus
   shared resources, with explicit "search everything" and walls such as Family and Work).
 - **Agent room:** Claude Code sessions through the Claude Agent SDK, rendered natively. Permission

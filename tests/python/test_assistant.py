@@ -152,5 +152,21 @@ class StructureToolTests(unittest.TestCase):
         hist = core.history(self.conn, core.today_conversation())
         self.assertEqual(hist[-1]["meta"]["kind"], "weekly_review")
 
+    def test_project_mode_uses_card_instructions_and_scope(self):
+        from engine.brain import structure
+        p = structure.create_project(self.conn, "Atlas", goal="Signer le mandat")
+        structure.update_space(self.conn, p["id"], instructions="Toujours répondre en anglais au client.")
+        structure.add_task(self.conn, "Envoyer la proposition", p["id"], "2030-01-10")
+        core.chat(self.conn, self.client, "Où en est le projet?", p["id"])
+        system = FakeChat.last_messages[0]["content"]
+        for expected in ("MODE PROJET", "Signer le mandat", "Toujours répondre en anglais", "Envoyer la proposition (due 2030-01-10)"):
+            self.assertIn(expected, system)
+        other = brain.create_space(self.conn, "Autre")
+        brain.create_note(self.conn, "Atlas dans un autre espace", "", other["id"])
+        brain.create_note(self.conn, "Atlas dans le projet", "", p["id"])
+        res = core.run_tool(self.conn, "search_notes", {"query": "Atlas", "space_ids": [p["id"]]}, [])
+        self.assertEqual([r["title"] for r in res["results"]], ["Atlas dans le projet"])
+        self.assertEqual(res["scope"], "project + shared resources")
+
     def test_briefing_facts_include_structure(self):
         self.assertTrue(core.briefing(self.conn, self.client)["text"])

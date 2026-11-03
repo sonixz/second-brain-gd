@@ -151,6 +151,16 @@ Drop files on the window, use **+ File** in the Spaces tab, or paste a web link 
 Search (`/sources/search`, assistant tool `search_sources`) uses meaning first when vectors exist, and words
 otherwise. The engine room shows sources, indexed passages and the embeddings status.
 
+## Project mode (Loop 6, first part)
+
+Each space has **assistant instructions**, edited on its card (tone, language, people, constraints). When the
+assistant works in a project (the card's *Ask the assistant*, or a selected space), its system prompt includes
+the card: goal, why, due date, status, open next actions, and those instructions. Search defaults to the project
+plus shared resources, through `search_notes` with `space_ids`. It looks everywhere only when asked.
+
+Real check: in "Client Atlas", with the instruction "the client is English-speaking, contact Mark Chen", a
+follow-up email request in French produced an English email addressed to Mark.
+
 ## Later: daily router agent (direction)
 
 A "daily" agent runs in the morning: it reads the Inbox, proposes a space for each thought, and suggests links.

@@ -80,8 +80,11 @@ class FakeChat:
     def __init__(self, *_: Any):
         pass
 
+    last_messages: list[dict[str, Any]] = []
+
     def complete(self, model: str, messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None = None,
                  json_mode: bool = False, temperature: float = 0.4) -> dict[str, Any]:
+        FakeChat.last_messages = messages
         last = messages[-1]
         usage = {"prompt_tokens": 100, "completion_tokens": 20}
         if json_mode and "fiche de référence" in str(messages[0].get("content", "")):

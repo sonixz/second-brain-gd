@@ -1,5 +1,13 @@
 # Devlog
 
+## Loop 6, part 1 — Project mode (2026-11-02)
+
+- Per-project assistant instructions are stored on the space and edited on the card. Project mode puts the
+  card into the system prompt and scopes `search_notes` to the project plus resources.
+- Stopped here on purpose: the agent room needs an Anthropic API key per user (claude.ai login is not allowed
+  for third-party apps), and real-time voice (Loop 7) costs more. Both are the owner's call.
+
+
 ## Loop 5 — Sources (2026-11-02)
 
 - Files and links become summarised reference notes, with indexed passages (migration 0005, `engine/sources/`).

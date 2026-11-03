@@ -204,6 +204,13 @@ func show_card(space_id: String) -> void:
 				area.select(area.item_count - 1)
 		_labelled(grid, "Area", area)
 		_fields["area_id"] = area
+	var instr := TextEdit.new()
+	instr.placeholder_text = "Instructions for the assistant in this project (tone, language, people, constraints…)"
+	instr.text = "" if c.get("instructions") == null else str(c["instructions"])
+	instr.custom_minimum_size = Vector2(0, 70)
+	instr.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	_labelled(grid, "Assistant", instr)
+	_fields["instructions"] = instr
 	var save := Button.new()
 	save.text = "Save"
 	save.pressed.connect(func() -> void: save_card())
@@ -287,6 +294,8 @@ func save_card() -> bool:
 		var f: Variant = _fields[key]
 		if f is LineEdit:
 			payload[key] = (f as LineEdit).text.strip_edges()
+		elif f is TextEdit:
+			payload[key] = (f as TextEdit).text.strip_edges()
 		elif f is OptionButton:
 			var o := f as OptionButton
 			payload[key] = str(o.get_item_metadata(o.selected))

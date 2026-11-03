@@ -195,6 +195,11 @@ func _e2e() -> void:
 	check(await pv.add_task(pid, "Réserver la salle @2030-01-15"), "a next action with a date is added from the card")
 	var tasks: Array = pv.card_data.get("tasks", [])
 	check(tasks.size() == 1 and str((tasks[0] as Dictionary)["due_date"]) == "2030-01-15", "the date was parsed from @YYYY-MM-DD")
+	var instr_field: TextEdit = pv.get("_fields")["instructions"]
+	instr_field.text = "Ton festif, budget serré."
+	check(await pv.save_card(), "project card saves its assistant instructions")
+	await pv.show_card(pid)
+	check(str(pv.card_data.get("instructions", "")) == "Ton festif, budget serré.", "instructions are stored on the project")
 	await brain.call("set_view", "today")
 	var nexts: Array = tv.data.get("next_actions", [])
 	var found_next := ""

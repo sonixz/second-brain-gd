@@ -1,5 +1,10 @@
 # Status
 
+**Loop 6 (part 1) — Project mode: done (2026-11-02).** Each project has its own assistant instructions. In
+project mode the assistant knows the card (goal, due date, next actions) and searches the project plus shared
+resources first. Verified with the real API. The agent room (Claude Code sessions) needs an Anthropic API key.
+Tests: 59 Python and 83 Godot checks.
+
 **Loop 5 — Sources: done; meaning search waiting for the embeddings model (2026-11-02).** Drop files (PDF,
 Word, Markdown, text, HTML) or paste a link. Each becomes a summarised reference note in the graph, with
 searchable passages, and the assistant answers from them with citations. A real Wikipedia page took 3.5 s.
