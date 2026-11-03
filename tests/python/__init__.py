@@ -10,6 +10,6 @@ import os
 os.environ["SBGD_KEYRING_SERVICE"] = "SecondBrainGD-test"
 os.environ.pop("OPENAI_API_KEY", None)
 
-# The agent room installs a pinned 95 MB download during setup; tests use a tiny local fixture instead.
+# The agent room installs a pinned 160 MB download during setup; tests use a tiny local fixture instead.
 os.environ["SBGD_AGENTS_MANIFEST"] = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "fixtures",
                                                   "agents", "manifest.json")

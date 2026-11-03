@@ -148,7 +148,7 @@ func refresh() -> void:
 	elif job.get("error") != null:
 		status_label.text = "Install failed: %s" % str(job.get("error"))
 	else:
-		status_label.text = "Agents are not installed yet (download of about 95 MB, fingerprint checked)."
+		status_label.text = "Agents are not installed yet (download of about 160 MB, fingerprint checked)."
 	install_button.visible = not bool(info.get("installed", false)) and not bool(job.get("running", false))
 	_render_folders()
 	_render_sessions()

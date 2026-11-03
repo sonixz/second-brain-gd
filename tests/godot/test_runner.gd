@@ -41,7 +41,7 @@ func _run() -> void:
 	OS.set_environment("SBGD_VOICE_PROVIDER", "fake")
 	OS.set_environment("SBGD_ASSISTANT_PROVIDER", "fake")
 	OS.set_environment("SBGD_KEYRING_SERVICE", "SecondBrainGD-test")  # never the user's real key
-	# The agent room installs from a tiny local fixture (a fake app-server), never the 95 MB download.
+	# The agent room installs from a tiny local fixture (a fake app-server), never the 160 MB download.
 	OS.set_environment("SBGD_AGENTS_MANIFEST", ProjectSettings.globalize_path("res://tests/fixtures/agents/manifest.json"))
 	SbSettings.set_value("assistant", "speaks", true)
 	SbSettings.set_value("onboarding", "voice_done", false)

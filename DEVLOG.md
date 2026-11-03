@@ -1,5 +1,26 @@
 # Devlog
 
+## Loop 6c follow-up — First real Codex run (2026-11-03)
+
+- The owner allowed running the real app-server, so the room is no longer tested only against the fake.
+- **Finding 1, the bare binary is not enough.** The pinned asset was the bare `codex-app-server`. The
+  handshake, API-key login and `gpt-6-sol` worked at once, but every tool call failed with "failed to
+  spawn code-mode host".
+  - The release also ships `codex-app-server-package-<target>.tar.gz`. It contains the app-server plus
+    the code-mode host, the exec server, ripgrep, and the sandbox helpers (`bwrap` on Linux; the command
+    runner and sandbox setup on Windows).
+  - The manifest now pins those packages, and the installer unpacks the whole package. It unpacks to a
+    staging folder before swapping it in, refuses links, absolute paths and `..`, and removes older
+    versions.
+  - Download size goes from 95 to 160 MB.
+- **Finding 2, commands had no Decline button.** For commands, the server suggests only `accept` and
+  `cancel`, and the card showed only what was suggested, so a command could only be approved.
+  - `decline` works (tested), and the agent continues.
+  - The engine now always offers Decline, and the fake app-server mirrors the real suggestions.
+- **Results.** Install, then a turn with approvals, on Linux and native Windows, about 11 s each. Details
+  and the key-leak check are in docs/architecture/agent-room.md.
+- **Tests.** Python 92 (Linux and Windows) and Godot 100 (Linux and Windows).
+
 ## Loop 7a — Hands-free (2026-11-03)
 
 - Interface tools: `ui_open_view`, `ui_open_project`, `ui_open_note`, `ui_set_theme`, `ui_set_volume`,

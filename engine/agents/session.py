@@ -154,11 +154,14 @@ class AgentSession:
                 self._write({"id": mid, "error": {"code": -32601, "message": "Not supported by Second Brain GD"}})
                 self._event("log", text=f"refused request {method}")
                 return
+            offered = [d for d in (params.get("availableDecisions") or DECISIONS) if d in DECISIONS] or list(DECISIONS)
+            if "decline" not in offered:
+                # The real app-server suggests only accept/cancel for commands, but takes `decline` and the agent
+                # carries on, whereas `cancel` ends the whole turn. The user must always be able to say no.
+                offered.append("decline")
             approval = {"request_id": mid, "kind": kind, "item_id": params.get("itemId"),
                         "reason": params.get("reason"), "command": params.get("command"), "cwd": params.get("cwd"),
-                        "grant_root": params.get("grantRoot"),
-                        "decisions": [d for d in (params.get("availableDecisions") or DECISIONS) if isinstance(d, str)]
-                        or list(DECISIONS)}
+                        "grant_root": params.get("grantRoot"), "decisions": offered}
             self.pending[mid] = approval
             self.status = "waiting_approval"
             self._event("approval", **approval)

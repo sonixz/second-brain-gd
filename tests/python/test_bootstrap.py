@@ -124,7 +124,7 @@ class BootstrapIntegration(unittest.TestCase):
         self.assertEqual({k for k, v in state["steps"].items() if v["status"] == "ok"},
                          {"python", "directories", "venv", "dependencies", "database", "agents", "service", "health"})
         agents = json.loads((self.home / "agents" / "installed.json").read_text())
-        self.assertEqual(agents["version"], "test-1")  # the fixture manifest, never the 95 MB download
+        self.assertEqual(agents["version"], "test-1")  # the fixture manifest, never the 160 MB download
         self.assertNotIn(self.token(), (self.home / "logs" / "bootstrap.log").read_text())
         self.assertNotIn(self.token(), (self.home / "logs" / "server.log").read_text())
 

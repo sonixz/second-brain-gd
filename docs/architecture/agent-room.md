@@ -5,11 +5,17 @@ happens and collects decisions.
 
 ## Install (setup step "agents", on by default)
 
-- `engine/agents/manifest.json` pins one official release of `codex-app-server` per platform: the URL on
-  `github.com/openai/codex/releases`, its size and its SHA-256 (from the GitHub release API).
+- `engine/agents/manifest.json` pins one official `codex-app-server-package-<target>.tar.gz` per platform:
+  the URL on `github.com/openai/codex/releases`, its size and its SHA-256 (from the GitHub release API).
+  It must be the **package**, not the bare `codex-app-server` asset. The app-server looks for companion
+  binaries next to itself, and without them every tool call fails with "failed to spawn code-mode host".
+  The companions are `bin/codex-code-mode-host` and `bin/codex-exec-server`, ripgrep in `codex-path/`, and
+  in `codex-resources/` `bwrap` on Linux, or the command runner and sandbox setup on Windows.
 - `engine/agents/install.py` (stdlib only) downloads it into `<data>/agents/downloads/*.part`. HTTP Range
-  resumes an interrupted download. It checks the fingerprint, extracts the single executable to
-  `<data>/agents/codex/<version>/`, and writes `installed.json`. No admin rights, nothing outside the user
+  resumes an interrupted download. It checks the fingerprint and unpacks the whole package
+  into `<data>/agents/codex/<version>/`. It unpacks to a staging folder first, then swaps it in, and only
+  accepts plain files and folders with relative paths. Then it writes `installed.json` and removes older
+  versions. No admin rights, nothing outside the user
   data folder, and nothing is executed during install.
 - The step is never fatal. Offline or on a failed check, it ends with status `unavailable`, setup succeeds,
   and the agent room offers **Install agents** (`POST /agents/install`, progress in `/agents/status`).
@@ -44,12 +50,29 @@ Per OpenAI's docs, the MXC sandbox (Windows 11 24H2 and later) needs no admin se
 fallback avoids admin too. Only the `elevated` mode needs a one-time admin setup. Second Brain GD never asks
 for admin rights.
 
-## Not yet verified
+## Verified with the real Codex (2026-11-03, rust-v0.166.0)
 
-The real `codex-app-server` binary has not run in development yet. The download and fingerprint were
-checked by hand for the Linux asset. Running a freshly downloaded binary was blocked by the development
-sandbox's safety classifier, and needs the owner's permission. The protocol code follows the official docs
-and is tested against `tests/fixtures/agents/fake_codex.py`. Still to confirm with the real binary:
-- the exact approval flow under `untrusted` with `read-only`;
-- whether `gpt-6-sol` is accepted as the Codex model;
-- MXC on the owner's Windows build.
+The run was approved by the owner. It used the real package, the owner's key (from dotenvx, over stdin),
+`gpt-6-sol`, `untrusted` and `read-only`. The prompt was « crée notes.txt et dis-moi ce que contient
+readme.txt ».
+
+| | Linux (WSL) | Windows 11 native |
+|---|---|---|
+| Install (download, SHA-256, unpack) | 14 s, 398 MB on disk | 13 s, 458 MB on disk |
+| Thread ready | 1.2 to 2.2 s | 2.5 s |
+| Full turn with 3 or 4 approvals | 11 s | 11.6 s |
+| Shell used by the agent | bash, with the bundled `rg` and `bwrap` | PowerShell, no admin |
+
+- **Approvals.** Every command (even `cat`) and every file change asked first.
+  - Decline: nothing ran or changed, and the agent explained that access was refused.
+  - Accept: the file was created and read back.
+- **Decisions.** For commands, the server suggests only `accept` and `cancel`, while file changes offer
+  all four.
+  - `decline` is accepted for commands too and lets the agent carry on. `cancel` would end the turn.
+  - So the engine always adds Decline to the card. Without it, a command could only be approved.
+- **Model.** `gpt-6-sol` is accepted as the Codex model.
+- **Secrets.** No file under `CODEX_HOME` contains the key, and `auth.json` is absent after the session.
+- **Warnings seen.**
+  - Linux: "bubblewrap not on PATH", after which Codex uses the bundled copy.
+  - Windows: under a temporary folder, Codex declines to create PATH aliases. The app's data folder is not
+    temporary.

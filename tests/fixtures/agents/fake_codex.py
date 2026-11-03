@@ -61,7 +61,9 @@ def run_turn(thread_id, text):
         notify("item/started", {"threadId": thread_id, "turnId": tid, "item": cmd})
         decision = ask("item/commandExecution/requestApproval", {"itemId": "cmd_1", "threadId": thread_id, "turnId": tid,
                                                                 "command": "echo hi", "cwd": state["cwd"],
-                                                                "reason": "Say hi"})
+                                                                "reason": "Say hi",
+                                                                # what the real app-server offers for commands
+                                                                "availableDecisions": ["accept", "cancel"]})
         ok = decision in ("accept", "acceptForSession")
         notify("item/completed", {"threadId": thread_id, "turnId": tid, "item": {
             **cmd, "status": "completed" if ok else "declined", "aggregatedOutput": "hi\n" if ok else None,

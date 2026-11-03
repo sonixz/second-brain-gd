@@ -38,6 +38,9 @@ class InstallTests(unittest.TestCase):
             spec = m["platforms"][key]
             self.assertTrue(spec["url"].startswith("https://github.com/openai/codex/releases/download/" + m["version"] + "/"))
             self.assertRegex(spec["sha256"], r"^[0-9a-f]{64}$")
+            # The full package: a bare app-server cannot run any tool without its companion binaries.
+            self.assertIn("codex-app-server-package-", spec["url"])
+            self.assertTrue(spec["binary"].startswith("bin/codex-app-server"))
 
     def test_install_verifies_and_is_idempotent(self):
         steps = []
@@ -49,6 +52,34 @@ class InstallTests(unittest.TestCase):
         again = install.install(self.layout)
         self.assertTrue(again["already"])
         self.assertIsNotNone(install.installed_info(self.layout))
+
+    def test_package_is_unpacked_in_its_layout(self):
+        info = install.install(self.layout)
+        self.assertEqual(Path(info["binary"]).relative_to(self.layout.root / "agents" / "codex" / "test-1"),
+                         Path("bin/fake-codex.py"))
+        self.assertFalse(list((self.layout.root / "agents" / "codex").glob("*.unpacking")))
+
+    def test_unsafe_archive_is_refused(self):
+        import io, tarfile, hashlib
+        root = Path(self.tmp.name)
+        for evil in ("../escape.txt", "/abs.txt"):
+            buf = io.BytesIO()
+            with tarfile.open(fileobj=buf, mode="w:gz") as t:
+                ti = tarfile.TarInfo(evil)
+                ti.size = 2
+                t.addfile(ti, io.BytesIO(b"hi"))
+            arc = root / "evil.tar.gz"
+            arc.write_bytes(buf.getvalue())
+            spec = {"url": arc.as_uri(), "sha256": hashlib.sha256(buf.getvalue()).hexdigest(),
+                    "size": len(buf.getvalue()), "binary": "bin/x"}
+            path = root / "evil.json"
+            path.write_text(json.dumps({"name": "evil", "version": "e1", "platforms": {install.platform_key(): spec}}))
+            with mock.patch.dict(os.environ, {"SBGD_AGENTS_MANIFEST": str(path)}):
+                with self.assertRaises(install.InstallError):
+                    install.install(self.layout)
+                self.assertIsNone(install.installed_info(self.layout))
+        self.assertFalse((root / "escape.txt").exists())
+        self.assertFalse((self.layout.root / "agents" / "escape.txt").exists())
 
     def test_wrong_fingerprint_is_refused_and_deleted(self):
         bad = json.loads((FIXTURES / "manifest.json").read_text())
@@ -89,6 +120,7 @@ class SessionTests(unittest.TestCase):
         req = next(iter(s.pending.values()))
         self.assertEqual(req["kind"], "file_change")
         self.assertIn("accept", req["decisions"])
+        self.assertIn("decline", req["decisions"])
         self.assertFalse((self.work / "notes.md").exists())  # nothing happens before the user decides
         snap = s.snapshot()
         self.assertEqual(snap["status"], "waiting_approval")
@@ -108,6 +140,7 @@ class SessionTests(unittest.TestCase):
         self.assertTrue(wait(lambda: s.pending))
         req = next(iter(s.pending.values()))
         self.assertEqual(req["kind"], "command")
+        self.assertEqual(req["decisions"], ["accept", "cancel", "decline"])  # Decline is always offered
         self.assertEqual(req["command"], "echo hi")
         s.decide(req["request_id"], "decline")
         self.assertTrue(wait(lambda: s.status == "idle"))

@@ -2,9 +2,12 @@
 
 Visible, verified and resumable: the file is fetched from the official release
 URL in manifest.json into `<data>/agents/downloads/*.part` (HTTP Range resumes an
-interrupted download), its SHA-256 must match the pinned digest, then the single
-executable member is extracted to `<data>/agents/codex/<version>/`. No admin
-rights, nothing outside the user data folder, nothing run during install.
+interrupted download), its SHA-256 must match the pinned digest, then the whole
+package (app-server plus its companions: code-mode host, exec server, ripgrep,
+sandbox helpers) is extracted to `<data>/agents/codex/<version>/`. The app-server
+finds those companions next to itself; without them every tool call fails.
+Only plain files and folders with relative paths are extracted. No admin rights,
+nothing outside the user data folder, nothing run during install.
 
 Test hook: SBGD_AGENTS_MANIFEST points to another manifest (a local fixture).
 """
@@ -14,6 +17,7 @@ import hashlib
 import json
 import os
 import platform
+import shutil
 import stat
 import sys
 import tarfile
@@ -97,6 +101,43 @@ def download(url: str, dest: Path, expected_size: int | None,
     part.replace(dest)
 
 
+def _safe_name(name: str) -> str | None:
+    parts = [p for p in name.replace("\\", "/").split("/") if p not in ("", ".")]
+    if not parts or ".." in parts or ":" in parts[0] or name.startswith(("/", "\\")):
+        return None
+    return "/".join(parts)
+
+
+def _extract_package(archive: Path, target: Path) -> None:
+    """Extracts into a fresh folder next to target, then swaps it in, so a half-unpacked package never counts."""
+    staging = target.with_name(target.name + ".unpacking")
+    shutil.rmtree(staging, ignore_errors=True)
+    staging.mkdir(parents=True)
+    try:
+        with tarfile.open(archive, "r:gz") as tar:
+            for member in tar:
+                name = _safe_name(member.name)
+                if name is None or not (member.isfile() or member.isdir()):
+                    raise InstallError(f"Unexpected archive content: {member.name!r}.")
+                dest = staging / name
+                if member.isdir():
+                    dest.mkdir(parents=True, exist_ok=True)
+                    continue
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                src = tar.extractfile(member)
+                assert src is not None
+                with dest.open("wb") as out:
+                    for block in iter(lambda: src.read(CHUNK), b""):
+                        out.write(block)
+                if sys.platform != "win32" and member.mode & 0o111:
+                    dest.chmod(dest.stat().st_mode | stat.S_IXUSR | stat.S_IXGRP)
+        shutil.rmtree(target, ignore_errors=True)
+        staging.replace(target)
+    except BaseException:
+        shutil.rmtree(staging, ignore_errors=True)
+        raise
+
+
 def install(layout: Layout, progress: Callable[[str, float, str], None] | None = None) -> dict[str, Any]:
     """Idempotent. progress(stage, fraction, message) is called along the way."""
     say = progress or (lambda *_: None)
@@ -134,25 +175,19 @@ def install(layout: Layout, progress: Callable[[str, float, str], None] | None =
     if digest != spec["sha256"]:
         archive.unlink(missing_ok=True)
         raise InstallError("The downloaded file does not match the pinned fingerprint; it was deleted.")
+    say("verify", 0.95, "Unpacking the agent package…")
     target = root / "codex" / manifest["version"]
-    target.mkdir(parents=True, exist_ok=True)
+    _extract_package(archive, target)
     binary = target / spec["binary"]
-    with tarfile.open(archive, "r:gz") as tar:
-        member = tar.getmember(spec["member"])
-        if not member.isfile():
-            raise InstallError("Unexpected archive content.")
-        src = tar.extractfile(member)
-        assert src is not None
-        tmp = binary.with_name(binary.name + ".tmp")
-        with tmp.open("wb") as out:
-            for block in iter(lambda: src.read(CHUNK), b""):
-                out.write(block)
-        tmp.replace(binary)
-    if sys.platform != "win32":
-        binary.chmod(binary.stat().st_mode | stat.S_IXUSR)
+    if not binary.is_file():
+        shutil.rmtree(target, ignore_errors=True)
+        raise InstallError("The agent package does not contain its app-server.")
     info = {"name": manifest["name"], "version": manifest["version"], "platform": key, "binary": str(binary),
             "sha256": digest}
     (root / "installed.json").write_text(json.dumps(info, indent=2), encoding="utf-8")
-    archive.unlink(missing_ok=True)  # the binary is what we keep
+    archive.unlink(missing_ok=True)  # the unpacked package is what we keep
+    for old in (root / "codex").iterdir():  # earlier pinned versions are dead weight (about 0.5 GB each)
+        if old.is_dir() and old.name != manifest["version"]:
+            shutil.rmtree(old, ignore_errors=True)
     say("verify", 1.0, f"Agents ready ({manifest['version']}).")
     return {**info, "already": False}
