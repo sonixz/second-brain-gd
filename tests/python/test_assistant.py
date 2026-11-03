@@ -88,3 +88,57 @@ class AssistantTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class StructureToolTests(unittest.TestCase):
+    def setUp(self):
+        from engine.brain import structure
+        from engine.brain.seed import seed_all
+        self.structure = structure
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db = Path(self.tmp.name) / "s.sqlite3"
+        database.migrate(self.db)
+        self.conn = database.connect(self.db)
+        seed_all(self.conn)
+        self.client = FakeChat()
+
+    def tearDown(self):
+        self.conn.close()
+        self.tmp.cleanup()
+
+    def test_grocery_capture_becomes_list_items_and_undo_restores(self):
+        n = brain.create_note(self.conn, "acheter lait, pain")
+        res = core.classify(self.conn, self.client, n["id"])
+        self.assertTrue(res["applied"])
+        self.assertEqual(res["proposal"]["checklist_name"], "Épicerie")
+        items = [i["text"] for i in self.structure.find_checklist(self.conn, "Épicerie")["items"]]
+        self.assertEqual(items, ["lait", "pain"])
+        with self.assertRaises(brain.NotFound):
+            brain.get_note(self.conn, n["id"])
+        back = core.undo(self.conn, res["action_id"])
+        self.assertEqual(self.structure.find_checklist(self.conn, "Épicerie")["items"], [])
+        self.assertEqual(brain.get_note(self.conn, back["note_id"])["title"], "acheter lait, pain")
+
+    def test_tools_projects_tasks_lists(self):
+        actions = []
+        area = next(a for a in self.structure.structure(self.conn)["areas"] if a["name"] == "Famille")
+        p = core.run_tool(self.conn, "create_project", {"name": "Fête de Léa", "area_id": area["id"],
+                                                         "due_date": "2027-03-01"}, actions)["created_project"]
+        t = core.run_tool(self.conn, "add_task", {"title": "Réserver la salle", "space_id": p["id"],
+                                                  "due_date": "2027-02-01"}, actions)["created_task"]
+        today = core.run_tool(self.conn, "get_today", {}, actions)
+        self.assertIn("Réserver la salle", [x["title"] for x in today["next_actions"]])
+        core.run_tool(self.conn, "complete_task", {"note_id": t["id"]}, actions)
+        self.assertEqual(brain.get_note(self.conn, t["id"])["status"], "done")
+        core.undo(self.conn, actions[-1]["action_id"])
+        self.assertEqual(brain.get_note(self.conn, t["id"])["status"], "active")
+        r = core.run_tool(self.conn, "add_to_checklist", {"checklist": "épicerie", "items": ["Café"]}, actions)
+        self.assertEqual(r["added"], 1)
+        core.undo(self.conn, actions[-1]["action_id"])
+        self.assertEqual(self.structure.find_checklist(self.conn, "Épicerie")["items"], [])
+        core.undo(self.conn, actions[0]["action_id"])  # undo the project creation: it is archived
+        self.assertNotIn("Fête de Léa", [s["name"] for s in brain.list_spaces(self.conn)])
+        self.assertIn("error", core.run_tool(self.conn, "add_task", {"title": "x", "due_date": "demain"}, actions))
+
+    def test_briefing_facts_include_structure(self):
+        self.assertTrue(core.briefing(self.conn, self.client)["text"])

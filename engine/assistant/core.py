@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from engine import brain, database
+from engine.brain import structure
 from engine.assistant.llm import TTS_PRICE_PER_1M_CHARS, estimate_cost
 from engine.events import utc_now
 
@@ -20,7 +21,7 @@ DEFAULTS = {
     "assistant_auto_classify": True,
     "assistant_min_confidence": 0.6,
 }
-MAX_TOOL_ROUNDS = 5
+MAX_TOOL_ROUNDS = 8
 HISTORY = 20
 
 VOICE_TONES = {
@@ -39,8 +40,13 @@ Règles:
 - Ne jamais inventer le contenu d'une note.
 - IMPORTANT: chaque fois que ta réponse s'appuie sur une note, écris son titre EXACT entre doubles crochets
   dans ta phrase, ex. « d'après [[Atlas risks]], ... ». L'interface en fait un lien cliquable.
-- Quand il te dicte une idée, une tâche ou une décision, enregistre-la avec create_note dans le bon espace.
-- Réponses courtes et parlées (2 à 5 phrases), sauf si on te demande du détail. Pas de listes à puces longues.
+- Structure: domaines (areas, permanents) > projets (résultat + échéance) > tâches (prochaines actions).
+  Une tâche à faire = add_task dans le bon projet (avec due_date AAAA-MM-JJ si une date est dite).
+  Une idée, une décision ou une info = create_note. Des articles d'épicerie ou de liste = add_to_checklist.
+  Un nouveau projet = create_project sous le bon domaine. « C'est fait » = complete_task.
+- Pour « qu'est-ce que j'ai aujourd'hui / cette semaine », utilise get_today.
+- Réponses courtes et parlées (2 à 5 phrases), sauf si on te demande du détail. Pas de listes à puces longues, pas d'emojis.
+- Ne refais jamais une action déjà indiquée comme effectuée dans l'historique.
 - Tout ce que tu modifies est visible et annulable: dis brièvement ce que tu as fait."""
 
 
@@ -71,7 +77,7 @@ def _usage_event(conn: sqlite3.Connection, what: str, model: str, usage: dict[st
 
 def _snapshot(conn: sqlite3.Connection, note_id: str) -> dict[str, Any]:
     n = brain.get_note(conn, note_id)
-    return {k: n[k] for k in ("title", "body", "space_id", "kind")}
+    return {k: n[k] for k in ("title", "body", "space_id", "kind", "status", "due_date")}
 
 
 def undo(conn: sqlite3.Connection, action_id: int) -> dict[str, Any]:
@@ -80,21 +86,34 @@ def undo(conn: sqlite3.Connection, action_id: int) -> dict[str, Any]:
         raise brain.NotFound(f"action {action_id}")
     if row["undone_at"]:
         return {"undone": False, "reason": "already undone"}
+    kind = row["kind"]
     before = json.loads(row["before"]) if row["before"] else None
-    if row["kind"] == "create_note":
+    after = json.loads(row["after"]) if row["after"] else {}
+    result: dict[str, Any] = {"undone": True, "kind": kind, "note_id": row["note_id"]}
+    if kind == "to_checklist":
+        for item_id in after.get("item_ids", []):
+            structure.delete_item(conn, int(item_id))
+        if before:  # a capture had been turned into list items: bring the note back
+            restored = brain.create_note(conn, before["title"], before["body"], before["space_id"], before["kind"],
+                                         source=before.get("source") if before.get("source") in ("typed", "voice") else "typed")
+            result["note_id"] = restored["id"]
+    elif kind == "create_project":
+        conn.execute("UPDATE spaces SET archived_at = ? WHERE id = ?", (utc_now(), row["note_id"]))
+    elif kind in ("create_note", "add_task"):
         try:
             brain.delete_note(conn, row["note_id"])
         except brain.NotFound:
             pass
-    elif before:
+    elif before:  # classify, update_note, complete_task: restore the previous state
         try:
-            brain.update_note(conn, row["note_id"], **before)
+            brain.update_note(conn, row["note_id"], **{k: v for k, v in before.items() if k != "due_date"})
+            conn.execute("UPDATE notes SET due_date = ? WHERE id = ?", (before.get("due_date"), row["note_id"]))
         except brain.NotFound:
             pass
         conn.execute("DELETE FROM links WHERE from_note = ? AND created_by = 'assistant' AND created_at >= ?",
                      (row["note_id"], row["created_at"]))
     conn.execute("UPDATE assistant_actions SET undone_at = ? WHERE id = ?", (utc_now(), action_id))
-    return {"undone": True, "kind": row["kind"], "note_id": row["note_id"]}
+    return result
 
 
 # ---------------------------------------------------------- classification
@@ -109,8 +128,12 @@ def classify(conn: sqlite3.Connection, client: Any, note_id: str) -> dict[str, A
         spaces.append({"id": sp["id"], "name": sp["name"], "kind": sp["kind"], "examples": titles})
     words = " ".join(re.findall(r"[\w-]{4,}", note["title"] + " " + note["body"])[:8])
     candidates = [{"id": r["id"], "title": r["title"]} for r in brain.search(conn, words, 8) if r["id"] != note_id][:6] if words else []
-    ctx = {"note": {"title": note["title"], "body": note["body"][:2000]}, "spaces": spaces, "candidates": candidates}
-    system = ("Tu ranges les notes d'un second cerveau. Réponds en JSON uniquement avec les clés: "
+    checklists = [{"id": c["id"], "name": c["name"]} for c in structure.list_checklists(conn)]
+    ctx = {"note": {"title": note["title"], "body": note["body"][:2000]}, "spaces": spaces, "candidates": candidates,
+           "checklists": checklists}
+    system = ("Tu ranges les notes d'un second cerveau. Si la note n'est qu'une liste d'articles à ajouter à une liste "
+              "existante (ex. épicerie: « acheter lait et pain »), réponds {\"target\": \"checklist\", \"checklist_id\": id, "
+              "\"items\": [articles courts], \"confidence\": 0-1, \"reason\": phrase}. Sinon réponds en JSON avec les clés: "
               "space_id (un id de la liste, 'inbox' si incertain), title (titre court et clair, dans la langue de la note, "
               "garde le sens), kind (note|idea|task|journal|reference), tags (0 à 2 mots-clés courts en minuscules, sans #; plusieurs mots reliés par un tiret, ex. mode-nuit), "
               "link_ids (0 à 2 ids parmi candidates vraiment liés), confidence (0 à 1), reason (une phrase courte en français).")
@@ -122,6 +145,8 @@ def classify(conn: sqlite3.Connection, client: Any, note_id: str) -> dict[str, A
         prop = json.loads(res["message"]["content"] or "{}")
     except ValueError:
         return {"applied": False, "reason": "unreadable proposal"}
+    if prop.get("target") == "checklist":
+        return _file_to_checklist(conn, note, prop, checklists, float(s["assistant_min_confidence"]))
     valid_spaces = {sp["id"] for sp in spaces}
     space_id = prop.get("space_id") if prop.get("space_id") in valid_spaces else note["space_id"]
     confidence = float(prop.get("confidence") or 0)
@@ -147,6 +172,26 @@ def classify(conn: sqlite3.Connection, client: Any, note_id: str) -> dict[str, A
     return {"applied": True, "action_id": action_id, "proposal": proposal}
 
 
+def _file_to_checklist(conn: sqlite3.Connection, note: dict[str, Any], prop: dict[str, Any],
+                       checklists: list[dict[str, Any]], min_conf: float) -> dict[str, Any]:
+    cid = prop.get("checklist_id")
+    items = [str(i).strip()[:200] for i in (prop.get("items") or []) if str(i).strip()][:30]
+    target = next((c for c in checklists if c["id"] == cid), None)
+    confidence = float(prop.get("confidence") or 0)
+    proposal = {"target": "checklist", "checklist_id": cid, "checklist_name": target["name"] if target else "",
+                "items": items, "confidence": confidence, "reason": str(prop.get("reason") or "")[:300]}
+    if not target or not items or confidence < min_conf:
+        return {"applied": False, "proposal": proposal, "reason": "not confident enough; left in place"}
+    before_ids = {i["id"] for i in structure.get_checklist(conn, cid)["items"]}
+    structure.add_items(conn, cid, items, source="agent")
+    added = [i["id"] for i in structure.get_checklist(conn, cid)["items"] if i["id"] not in before_ids]
+    snapshot = {k: note[k] for k in ("title", "body", "space_id", "kind", "source", "created_at")}
+    brain.delete_note(conn, note["id"])
+    action_id = _journal(conn, "to_checklist", note["id"], snapshot, {"checklist_id": cid, "item_ids": added},
+                         proposal["reason"])
+    return {"applied": True, "action_id": action_id, "proposal": proposal}
+
+
 # ------------------------------------------------------------------ tools
 TOOLS = [
     {"type": "function", "function": {"name": "search_notes", "description": "Full-text search in the user's notes.",
@@ -164,6 +209,24 @@ TOOLS = [
                                                          "space_id": {"type": "string"},
                                                          "kind": {"type": "string", "enum": list(brain.KINDS)}},
                        "required": ["title"]}}},
+    {"type": "function", "function": {"name": "get_today", "description": "Today's view: overdue, due today and soon, next action per project, projects without next action, inbox count, checklists.",
+        "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {"name": "get_structure", "description": "Areas with their projects, resources.",
+        "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {"name": "create_project", "description": "Create a project (an outcome with a deadline) under an area.",
+        "parameters": {"type": "object", "properties": {"name": {"type": "string"}, "area_id": {"type": "string"},
+                                                         "goal": {"type": "string"}, "due_date": {"type": "string", "description": "YYYY-MM-DD"}},
+                       "required": ["name"]}}},
+    {"type": "function", "function": {"name": "add_task", "description": "Add a next action (task) to a project or area.",
+        "parameters": {"type": "object", "properties": {"title": {"type": "string"}, "space_id": {"type": "string"},
+                                                         "due_date": {"type": "string", "description": "YYYY-MM-DD"}},
+                       "required": ["title"]}}},
+    {"type": "function", "function": {"name": "complete_task", "description": "Mark a task as done.",
+        "parameters": {"type": "object", "properties": {"note_id": {"type": "string"}}, "required": ["note_id"]}}},
+    {"type": "function", "function": {"name": "add_to_checklist", "description": "Add items to a checklist such as Épicerie (by name or id).",
+        "parameters": {"type": "object", "properties": {"checklist": {"type": "string"},
+                                                         "items": {"type": "array", "items": {"type": "string"}}},
+                       "required": ["checklist", "items"]}}},
     {"type": "function", "function": {"name": "update_note", "description": "Move or edit a note (space, title, kind, body, status).",
         "parameters": {"type": "object", "properties": {"note_id": {"type": "string"}, "space_id": {"type": "string"},
                                                          "title": {"type": "string"}, "body": {"type": "string"},
@@ -195,6 +258,45 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
             aid = _journal(conn, "create_note", n["id"], None, _snapshot(conn, n["id"]), "créée par l'assistante")
             actions.append({"action_id": aid, "kind": "create_note", "note_id": n["id"], "title": n["title"]})
             return {"created": {"id": n["id"], "title": n["title"], "space_id": n["space_id"]}}
+        if name == "get_today":
+            d = structure.today(conn)
+            d["checklists"] = [{"name": c["name"], "open_items": [i["text"] for i in c["items"] if not i["done"]][:30]}
+                               for c in d["checklists"]]
+            return d
+        if name == "get_structure":
+            s = structure.structure(conn)
+            slim = lambda x: {k: x.get(k) for k in ("id", "name", "kind", "status", "goal", "due_date", "open_tasks", "note_count")}
+            return {"areas": [{**slim(a), "projects": [slim(p) for p in a["projects"]]} for a in s["areas"]],
+                    "loose_projects": [slim(p) for p in s["loose_projects"]], "resources": [slim(r) for r in s["resources"]]}
+        if name == "create_project":
+            p = structure.create_project(conn, str(args["name"]), args.get("area_id") or None, args.get("goal"),
+                                         args.get("due_date") or None)
+            aid = _journal(conn, "create_project", p["id"], None, {"name": p["name"]}, "projet créé par l'assistante")
+            actions.append({"action_id": aid, "kind": "create_project", "note_id": p["id"], "title": p["name"]})
+            return {"created_project": {"id": p["id"], "name": p["name"]}}
+        if name == "add_task":
+            n = structure.add_task(conn, str(args["title"]), args.get("space_id") or None, args.get("due_date") or None,
+                                   source="agent")
+            aid = _journal(conn, "add_task", n["id"], None, _snapshot(conn, n["id"]), "tâche ajoutée par l'assistante")
+            actions.append({"action_id": aid, "kind": "add_task", "note_id": n["id"], "title": n["title"]})
+            return {"created_task": {"id": n["id"], "title": n["title"], "space_id": n["space_id"], "due_date": n["due_date"]}}
+        if name == "complete_task":
+            nid = str(args["note_id"])
+            before = _snapshot(conn, nid)
+            n = structure.set_task(conn, nid, done=True)
+            aid = _journal(conn, "complete_task", nid, before, _snapshot(conn, nid), "tâche cochée par l'assistante")
+            actions.append({"action_id": aid, "kind": "complete_task", "note_id": nid, "title": n["title"]})
+            return {"done": {"id": nid, "title": n["title"]}}
+        if name == "add_to_checklist":
+            cl = structure.find_checklist(conn, str(args["checklist"]))
+            before_ids = {i["id"] for i in cl["items"]}
+            cl = structure.add_items(conn, cl["id"], [str(i) for i in args.get("items") or []], source="agent")
+            added = [i["id"] for i in cl["items"] if i["id"] not in before_ids]
+            aid = _journal(conn, "to_checklist", None, None, {"checklist_id": cl["id"], "item_ids": added},
+                           f"ajouté à {cl['name']}")
+            actions.append({"action_id": aid, "kind": "to_checklist", "note_id": None,
+                            "title": f"{cl['name']}: " + ", ".join(i["text"] for i in cl["items"] if i["id"] in added)})
+            return {"checklist": cl["name"], "added": len(added)}
         if name == "update_note":
             nid = str(args["note_id"])
             before = _snapshot(conn, nid)
@@ -236,7 +338,11 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
     now = datetime.now().strftime("%A %Y-%m-%d %H:%M")
     messages: list[dict[str, Any]] = [{"role": "system", "content": PERSONA + f"\nNous sommes le {now}." + focus}]
     for m in history(conn, conversation, HISTORY):
-        messages.append({"role": "assistant" if m["role"] in ("assistant", "briefing") else "user", "content": m["content"]})
+        content = m["content"]
+        acts = (m.get("meta") or {}).get("actions") or []
+        if acts:  # so the model knows what it already did and never repeats it
+            content += "\n(Actions déjà effectuées: " + "; ".join(f"{a['kind']} « {a['title']} »" for a in acts) + ")"
+        messages.append({"role": "assistant" if m["role"] in ("assistant", "briefing") else "user", "content": content})
     messages.append({"role": "user", "content": text})
     _save(conn, conversation, "user", text)
     actions: list[dict[str, Any]] = []
@@ -259,7 +365,11 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
             result = run_tool(conn, call["function"]["name"], args, actions)
             messages.append({"role": "tool", "tool_call_id": call["id"], "content": json.dumps(result, ensure_ascii=False)[:12000]})
     if not reply:
-        reply = "Je n'ai pas réussi à terminer. Peux-tu reformuler?"
+        # Out of tool rounds: ask for a plain summary of what was done, without tools.
+        messages.append({"role": "user", "content": "Résume en 1 à 3 phrases ce que tu viens de faire, sans appeler d'outil."})
+        res = client.complete(s["assistant_chat_model"], messages)
+        cost += _usage_event(conn, "chat", res["model"], res["usage"], client.provider)
+        reply = (res["message"].get("content") or "").strip() or "C'est fait."
     cited = _cited(conn, reply)
     _save(conn, conversation, "assistant", reply, {"actions": actions, "cited": cited, "estimated_cost_usd": round(cost, 6)})
     return {"reply": reply, "actions": actions, "cited": cited, "estimated_cost_usd": round(cost, 6)}
@@ -291,11 +401,17 @@ def briefing(conn: sqlite3.Connection, client: Any, force: bool = False) -> dict
     dormant = [dict(r) for r in conn.execute("SELECT title, updated_at FROM notes WHERE kind = 'idea' AND status = 'active'"
                                              " ORDER BY updated_at LIMIT 3")]
     spaces = [{"name": sp["name"], "notes": sp["note_count"]} for sp in brain.list_spaces(conn)]
-    facts = {"now": datetime.now().strftime("%A %d %B %Y, %H:%M"), "new_since_last_briefing": new, "open_tasks": tasks,
+    td = structure.today(conn)
+    slim = lambda xs: [{"title": x["title"], "project": x.get("space_name"), "due": x.get("due_date")} for x in xs]
+    facts = {"now": datetime.now().strftime("%A %d %B %Y, %H:%M"), "new_since_last_briefing": new,
+             "overdue": slim(td["overdue"]), "due_today": slim(td["today"]), "due_this_week": slim(td["soon"]),
+             "next_action_per_project": [{"project": x["project"], "next": x["title"]} for x in td["next_actions"]],
+             "projects_without_next_action": [p["name"] for p in td["projects_without_next_action"]],
+             "checklists": [{"name": c["name"], "open_items": sum(1 for i in c["items"] if not i["done"])} for c in td["checklists"]],
              "inbox_count": inbox, "oldest_ideas": dormant, "spaces": spaces}
     system = (PERSONA + "\nTu écris le briefing du matin qui sera LU À VOIX HAUTE. 60 à 110 mots, ton parlé, "
               "pas de listes ni de crochets ni d'emojis. Salue selon l'heure, résume ce qui compte aujourd'hui "
-              "(tâches ouvertes, nouveautés, Inbox), rappelle au plus une idée qui dort, puis propose par quoi commencer "
+              "(retards et échéances, prochaines actions, projets sans prochaine action, nouveautés, Inbox), rappelle au plus une idée qui dort, puis propose par quoi commencer "
               "avec une question. N'invente rien: utilise seulement les faits fournis.")
     res = client.complete(s["assistant_chat_model"], [{"role": "system", "content": system},
                                                       {"role": "user", "content": json.dumps(facts, ensure_ascii=False)}])
@@ -312,6 +428,7 @@ def briefing(conn: sqlite3.Connection, client: Any, force: bool = False) -> dict
 def speak(conn: sqlite3.Connection, client: Any, text: str, theme: str, cache_dir: Path) -> tuple[bytes, bool]:
     s = settings(conn)
     text = re.sub(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]", r"\1", text)[:3000]  # say titles, not brackets
+    text = re.sub(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F]", "", text).strip()  # never read emojis aloud
     instructions = VOICE_TONES.get(theme, VOICE_TONES["morning"]) + ACCENT
     digest = hashlib.sha256(f"{s['assistant_voice']}|{instructions}|{text}".encode()).hexdigest()[:24]
     cache_dir.mkdir(parents=True, exist_ok=True)

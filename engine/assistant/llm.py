@@ -51,6 +51,9 @@ class OpenAIChat:
         payload: dict[str, Any] = {"model": model, "messages": messages, "temperature": temperature}
         if tools:
             payload["tools"] = tools
+            if model.startswith("gpt-6"):
+                # Reasoning models refuse function tools in Chat Completions unless reasoning is off.
+                payload["reasoning_effort"] = "none"
         if json_mode:
             payload["response_format"] = {"type": "json_object"}
         data = json.loads(_post("/chat/completions", self.key, payload))
@@ -76,6 +79,11 @@ class FakeChat:
         if json_mode:  # classification: pick the space whose name appears in the note
             ctx = json.loads(last["content"])
             text = (ctx["note"]["title"] + " " + ctx["note"]["body"]).lower()
+            if text.startswith(("acheter ", "buy ")) and ctx.get("checklists"):
+                out = {"target": "checklist", "checklist_id": ctx["checklists"][0]["id"],
+                       "items": [w.strip() for w in text.split(" ", 1)[1].split(",")], "confidence": 0.9,
+                       "reason": "fake list item"}
+                return {"message": {"role": "assistant", "content": json.dumps(out)}, "usage": usage, "model": model}
             space = next((s for s in ctx["spaces"] if s["name"].lower() in text and s["id"] != "inbox"), None)
             out = {"space_id": space["id"] if space else "inbox", "title": ctx["note"]["title"], "kind": "note",
                    "tags": ["fake"], "link_ids": [c["id"] for c in ctx["candidates"][:1]],
