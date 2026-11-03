@@ -76,6 +76,35 @@ Order agreed with the owner: the loops that need no decision come first.
 - MCP server so Claude Code, ChatGPT and other tools can read and write the brain.
 - Packaged Windows build, prerequisites script (winget), offline and local models, licence, going public.
 
+## Refocus on the Brain (owner, 2026-11-03)
+
+The app had drifted into a personal assistant: Today, tasks, projects, agents and the daily briefing.
+The owner's definition of the product is:
+
+> A tool that takes in context. You inject any data (URL, PDF, text, voice…). AI parses it and files it by
+> theme, links it to the rest, and lets you find it again by meaning at any time. You then use the whole
+> base to explore, ask questions, brainstorm and structure ideas, and what comes out goes back into it.
+
+The method is **CODE**: Capture, Organize, Distill, Express. **PARA** is the skeleton: Projects, Areas,
+Resources, Archives. Free themes and links by meaning go on top. The **Graph is the first module** and the
+home screen.
+
+Principles:
+- **Today, Projects, Agents and the assistant are kept, but hidden as modules.** Nothing is deleted; they
+  return through the module system later.
+- **Everything works by voice, 100%.** Each loop below lists the spoken commands it adds. F8, F9, the
+  voices and the API integrations all stay.
+- **Structure every input before injecting data.** One intake, with the same structured record whatever
+  the input type.
+
+| Loop | Content | Spoken commands added |
+|---|---|---|
+| **8b — Voice fixes** (small) | Concise spoken answers (1–2 sentences, detail on screen). A natural to brisk pace, with a speed setting, for both the read-aloud voice and the live voice. A **▶ Replay** button on every answer, which costs nothing because the audio is already cached | « relis-moi ça », « parle plus vite / moins vite » |
+| **9 — One intake for everything** | **Input record.** Every input becomes one **item**, which keeps the original (file or page, with a hash), its type, source and date.<br>**Pipeline.** Each item goes through the same pipeline: extract per type (text, voice, PDF, Word, Markdown, URL; images and email later), then Distill (title, summary, key points, language), then Organize (PARA place, themes, confidence; low confidence goes to the Inbox), then link by meaning, then index.<br>**Migration.** Notes and sources merge into this one model; the existing data migrates.<br>**Capture in one gesture.** Paste anything in the capture bar, drop files, use a clipboard hotkey, or tell the browser « Envoyer au Brain » (bookmarklet first, extension later).<br>**Captures feed.** A view of what came in: cards with summary, place and themes | « ajoute ça au Brain » (clipboard URL or text), « classe-le dans… », « qu'est-ce que j'ai ajouté aujourd'hui? » |
+| **10 — The Graph first, deep zoom** | The Graph is home. Module tabs are hidden behind a Modules switch.<br>**Semantic zoom**, so the scale fades as you get closer: clusters by PARA and theme from afar; nodes and titles at mid range; cards with summary and themes up close; the **readable full text inside the node** very close.<br>A much wider zoom range, level-of-detail rendering for thousands of nodes, smooth zoom to the cursor, a minimap, and a visual pass | « zoome sur Atlas », « montre les thèmes », « ouvre cet article », « recule », « cherche… » (results light up in the graph) |
+| **11 — Brain packs: export, import, share** | **Export** the whole Brain or a selection (a project, a theme, a search result) as a `.brain` file. It is a zip holding a SQLite subset (items, links, themes, vectors and the embedding model's name), the originals as an option, and a manifest (version, counts, checksum, author, licence).<br>**Import** a pack as a **layer** you can switch on or off, merge, or remove. Duplicates are found by content hash, and the pack is re-embedded if its embedding model differs.<br>**Restart a project** from a pack.<br>**Share** a pack by any means; a catalogue of packs comes later.<br>**Safety.** Imported text is data, never instructions, and checksums are verified. Packs never hold keys, because keys live in the OS keyring. The export preview shows exactly what leaves | « exporte le projet Atlas », « importe ce pack », « désactive le pack X » |
+| **12 — Working conversations** (the assistant module, reborn) | Open a conversation on a subject, a project or a pack. It starts with the relevant items, and answers cite them. Templates for brainstorms and structure (« standards »). Results go back into the Brain as linked items. Live voice (F9) talks to the Brain | « on brainstorme sur… », « structure ça en plan », « garde ça dans le Brain » |
+
 ## Model cadence (owner's OpenAI project, 2026-11-02)
 
 | Use | Now | To evaluate in Loop 4 |
