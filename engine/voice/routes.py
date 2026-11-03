@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import time
 import secrets as pysecrets
 import urllib.error
 import urllib.request
@@ -15,6 +16,7 @@ from engine import database
 from engine.events import utc_now
 from engine.paths import Layout
 from engine.voice import secrets
+from engine.voice import live
 from engine.voice.realtime import PRICE_PER_MINUTE_USD, Meter, make_relay
 
 DEFAULTS = {"voice_model": "gpt-realtime-whisper", "voice_languages": [], "voice_delay": "low",
@@ -31,6 +33,9 @@ class VoiceSettingsIn(BaseModel):
     languages: list[str] | None = None
     delay: str | None = Field(default=None, max_length=16)
     prompt: str | None = Field(default=None, max_length=1000)
+    live_model: str | None = Field(default=None, max_length=80)
+    live_session_cap_usd: float | None = Field(default=None, ge=0, le=50)
+    live_max_minutes: int | None = Field(default=None, ge=1, le=120)
 
 
 def verify_key(api_key: str, model: str) -> dict[str, Any]:
@@ -54,7 +59,7 @@ def make_router(layout: Layout, auth: Callable[..., None], token: str) -> APIRou
 
     def settings() -> dict[str, Any]:
         with database.session(layout.database) as conn:
-            return {k: database.get_setting(conn, k, v) for k, v in DEFAULTS.items()}
+            return {k: database.get_setting(conn, k, v) for k, v in {**DEFAULTS, **live.DEFAULTS}.items()}
 
     def record(stage: str, status: str, message: str, **details: Any) -> None:
         with database.session(layout.database) as conn:
@@ -66,7 +71,9 @@ def make_router(layout: Layout, auth: Callable[..., None], token: str) -> APIRou
         s = settings()
         return {"configured": info.configured, "source": info.source, "backend": info.backend, "hint": info.hint,
                 "model": s["voice_model"], "languages": s["voice_languages"], "delay": s["voice_delay"],
-                "price_per_minute_usd": PRICE_PER_MINUTE_USD, "provider": "openai"}
+                "price_per_minute_usd": PRICE_PER_MINUTE_USD, "provider": "openai",
+                "live": {"model": s["live_model"], "models": live.LIVE_MODELS, "session_cap_usd": s["live_session_cap_usd"],
+                         "max_minutes": s["live_max_minutes"], "transcribe_model": s["live_transcribe_model"]}}
 
     @r.get("/status", dependencies=[Depends(auth)])
     def get_status() -> dict[str, Any]:
@@ -101,11 +108,106 @@ def make_router(layout: Layout, auth: Callable[..., None], token: str) -> APIRou
     def patch_settings(body: VoiceSettingsIn) -> dict[str, Any]:
         with database.session(layout.database) as conn:
             for field, key in (("model", "voice_model"), ("languages", "voice_languages"),
-                               ("delay", "voice_delay"), ("prompt", "voice_prompt")):
+                               ("delay", "voice_delay"), ("prompt", "voice_prompt"), ("live_model", "live_model"),
+                               ("live_session_cap_usd", "live_session_cap_usd"), ("live_max_minutes", "live_max_minutes")):
                 value = getattr(body, field)
                 if value is not None:
                     database.set_setting(conn, key, value)
         return status_payload()
+
+    @r.websocket("/live")
+    async def live_conversation(ws: WebSocket) -> None:
+        header = ws.headers.get("authorization", "")
+        scheme, _, given = header.partition(" ")
+        if scheme.lower() != "bearer" or not pysecrets.compare_digest(given.strip(), token):
+            await ws.close(code=4401)
+            return
+        await ws.accept()
+        s = settings()
+        key, _ = secrets.get(layout, "openai")
+        lock = asyncio.Lock()
+
+        async def send_json(msg: dict[str, Any]) -> None:
+            async with lock:
+                try:
+                    await ws.send_text(json.dumps(msg, ensure_ascii=False))
+                except Exception:
+                    pass
+
+        async def send_audio(pcm: bytes) -> None:
+            async with lock:
+                try:
+                    await ws.send_bytes(pcm)
+                except Exception:
+                    pass
+
+        from engine.assistant import core as assistant_core
+        from engine.assistant.llm import make_client
+
+        with database.session(layout.database) as conn:
+            voice = assistant_core.settings(conn)["assistant_voice"]
+        try:
+            up = live.make_upstream(key, s["live_model"])
+        except PermissionError:
+            await send_json({"type": "error", "message": "No OpenAI key configured. Add yours in Voice settings."})
+            await ws.close(code=4403)
+            return
+        try:
+            text_client = make_client(key)  # meaning search inside the tools; keyword search without it
+        except PermissionError:
+            text_client = None
+        sess = live.LiveSession(layout.database, up, s, voice, send_json, send_audio, text_client)
+        try:
+            await sess.start()
+        except Exception as exc:
+            msg = live.friendly_error(exc, up.close_reason() if hasattr(up, "close_reason") else "", s["live_model"])
+            await send_json({"type": "error", "message": msg})
+            record("live", "error", msg)
+            await ws.close(code=1011)
+            return
+        record("live", "started", f"Live conversation opened ({up.provider}, {up.model})")
+        await send_json({"type": "ready", "model": up.model, "voice": voice, "provider": up.provider})
+        pump = asyncio.create_task(sess.pump())
+        idle = asyncio.create_task(sess.idle_watch())
+
+        async def from_godot() -> None:
+            while True:
+                msg = await ws.receive()
+                if msg.get("type") == "websocket.disconnect":
+                    return
+                if msg.get("bytes"):
+                    await sess.mic(msg["bytes"])
+                elif msg.get("text"):
+                    cmd = json.loads(msg["text"])
+                    if cmd.get("type") == "interrupt":
+                        await sess.interrupt(int(cmd.get("audio_end_ms") or 0))
+                    elif cmd.get("type") == "stop":
+                        sess.ended = sess.ended or "user"
+                        return
+
+        reader = asyncio.create_task(from_godot())
+        try:
+            done, _ = await asyncio.wait({pump, idle, reader}, return_when=asyncio.FIRST_COMPLETED)
+            for t in done:
+                if t.exception() is not None and t is pump:
+                    reason = up.close_reason() if hasattr(up, "close_reason") else ""
+                    await send_json({"type": "error",
+                                     "message": live.friendly_error(t.exception(), reason, s["live_model"])})
+        except (WebSocketDisconnect, RuntimeError):
+            pass
+        finally:
+            for t in (pump, idle, reader):
+                t.cancel()
+            await sess.close()
+            spent = f"≈ ${sess.cost:.4f}" if sess.cost_known else "cost unknown"
+            minutes = (time.monotonic() - sess.started) / 60.0
+            record("live", "ok", f"Live conversation ended ({sess.ended or 'closed'}): {minutes:.1f} min, {spent} "
+                   f"({up.provider}, {up.model})", minutes=round(minutes, 2),
+                   estimated_cost_usd=round(sess.cost, 5) if sess.cost_known else None)
+            try:
+                await ws.close()
+            except Exception:
+                pass
 
     @r.websocket("/stream")
     async def stream(ws: WebSocket) -> None:

@@ -327,6 +327,42 @@ func _e2e() -> void:
 	var talked := await wait_until(func() -> bool: return ap.messages_shown >= replies_before + 2 and ap.last_reply.contains("fake transcript"), 20.0)
 	check(talked, "releasing F8 sends the speech to the assistant (%s)" % ap.last_reply.left(60))
 	check(not (brain.get("listening_overlay") as Control).visible, "the listening indicator hides after sending")
+	# Live conversation (Loop 7b): speech to speech through the engine (fake Realtime upstream).
+	SbSettings.set_value("voice", "headphones", true)  # the dummy audio driver never drains playback
+	await brain.call("set_view", "graph")
+	var lc: LiveConversation = app.live
+	var live_on: bool = await lc.start(false)
+	check(live_on and lc.active and lc.state == "listening", "F9 opens a live conversation (%s)" % lc.last_error)
+	var second := PackedVector2Array()
+	for i in 48000:
+		var s2 := sin(TAU * 200.0 * float(i) / 48000.0) * 0.3
+		second.append(Vector2(s2, s2))
+	var bubbles_before := ap.messages_shown
+	for c in range(0, second.size(), 4800):
+		lc.capture.feed_frames(second.slice(c, c + 4800), 48000.0)
+		await process_frame
+	var turned := await wait_until(func() -> bool: return str(brain.get("view")) == "today" \
+		and ap.last_reply.begins_with("C'est ouvert"), 15.0)
+	check(turned, "a spoken request opens Today and the answer joins the conversation (%s)" % ap.last_reply.left(40))
+	check(ap.messages_shown >= bubbles_before + 2, "what you said and what she answered both appear")
+	check(lc.player._pushed > 0 or lc.player.buffered_frames() > 0, "her voice streams into the player")
+	check(lc.cost_usd != null and float(lc.cost_usd) > 0.0 and lc._meter.text.contains("$"),
+		"the live pill shows this conversation's running cost (%s)" % lc._meter.text)
+	app.set_theme_choice("focus")  # rebuilds the brain screen: the conversation must survive
+	for _i in 10:
+		await process_frame
+	brain = app.current()
+	graph = brain.get("graph")
+	ap = brain.get("assistant_panel")
+	check(lc.active and lc._pill.visible, "the conversation survives a theme change")
+	for _t in 2:
+		for c in range(0, second.size(), 4800):
+			lc.capture.feed_frames(second.slice(c, c + 4800), 48000.0)
+			await process_frame
+		await create_timer(0.3).timeout
+	var said_bye := await wait_until(func() -> bool: return not lc.active, 15.0)
+	check(said_bye and lc.last_end == "goodbye", "« merci, c'est tout » ends the conversation (%s)" % lc.last_end)
+	SbSettings.set_value("voice", "headphones", false)
 	var notes_before_restart := graph.node_count("note")  # before leaving the brain screen (it is freed)
 	app.set_theme_choice("evening")
 	await process_frame

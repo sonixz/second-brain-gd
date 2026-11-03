@@ -99,6 +99,9 @@ func _ready() -> void:
 	voice_stream.delta.connect(_on_voice_delta)
 	voice_stream.final.connect(func(text: String) -> void: _voice_final = text)
 	voice_stream.failed.connect(func(msg: String) -> void: _voice_error = msg)
+	app.live.user_said.connect(_on_live_text.bind("user"))
+	app.live.assistant_said.connect(_on_live_text.bind("assistant"))
+	app.live.finished.connect(_on_live_finished)
 	_save_timer = Timer.new()
 	_save_timer.one_shot = true
 	_save_timer.wait_time = SAVE_DELAY_S
@@ -536,6 +539,8 @@ func _change_volume(change: String) -> void:
 ## Hold F8 to talk to the assistant, release to send: the reply is spoken.
 ## use_mic = false lets tests feed audio frames instead.
 func push_to_talk(pressed: bool, use_mic: bool = true) -> void:
+	if app.live.active:
+		return
 	if pressed and not ptt_active and voice_state == "idle":
 		ptt_active = true
 		tab_assistant.button_pressed = true
@@ -1161,7 +1166,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	if k == null:
 		return
 	if k.keycode == PTT_KEY and not k.echo:
-		push_to_talk(k.pressed)
+		if app.live.active:
+			if k.pressed:
+				app.live.barge_in()
+		else:
+			push_to_talk(k.pressed)
 		accept_event()
 		return
 	if not k.pressed:
@@ -1183,6 +1192,8 @@ func _unhandled_key_input(event: InputEvent) -> void:
 
 # ------------------------------------------------------------------ voice
 func toggle_voice(target: String = "capture") -> void:
+	if app.live.active:
+		return  # the live conversation owns the microphone
 	match voice_state:
 		"idle":
 			voice_target = target
@@ -1266,6 +1277,40 @@ func _on_voice_delta(text: String) -> void:
 	capture_edit.caret_column = capture_edit.text.length()
 
 
+func _on_live_text(text: String, role: String) -> void:
+	if tab_assistant != null and not tab_assistant.button_pressed:
+		tab_assistant.button_pressed = true
+		tab_assistant.pressed.emit()
+	assistant_panel.add_live(role, text)
+
+
+func _on_live_finished(reason: String) -> void:
+	if reason == "error":
+		capture_hint.text = app.live.last_error
+	else:
+		capture_hint.text = str(LiveConversation.ENDINGS.get(reason, "Conversation ended."))
+	if reason != "error":
+		refresh_graph()
+		_refresh_view()
+
+
+## F9 or the Live button: start or end a spoken conversation with the assistant.
+func toggle_live() -> void:
+	if app.live.active:
+		app.live.stop("user")
+		return
+	var res := await app.backend.api.call_api("/voice/status")
+	var st: Dictionary = res["data"] if res["ok"] else {}
+	if not bool(st.get("configured", false)) and OS.get_environment("SBGD_VOICE_PROVIDER") != "fake":
+		_open_voice_settings()
+		return
+	if voice_state != "idle":
+		return
+	tab_assistant.button_pressed = true
+	tab_assistant.pressed.emit()
+	app.live.start(true)
+
+
 func _voice_fail(msg: String) -> void:
 	if voice_capture.recording:
 		voice_capture.stop()
@@ -1292,6 +1337,17 @@ func _open_voice_settings() -> void:
 	panel.saved.connect(func(st: Dictionary) -> void:
 		if bool(st.get("configured", false)):
 			capture_hint.text = "Voice is ready. Click the microphone and speak.")
+	var phones := CheckButton.new()
+	phones.text = "I use headphones (in a live conversation, just talk over the assistant to interrupt it)"
+	phones.button_pressed = bool(SbSettings.get_value("voice", "headphones", false))
+	phones.toggled.connect(func(on: bool) -> void: SbSettings.set_value("voice", "headphones", on))
+	box.add_child(phones)
+	var live_note := Label.new()
+	live_note.theme_type_variation = "Muted"
+	live_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	live_note.text = ("Live conversation (F9): speech to speech with OpenAI Realtime. With speakers, the microphone "
+		+ "pauses while the assistant talks so it never hears itself; press F8 to interrupt it.")
+	box.add_child(live_note)
 	add_child(dlg)
 	dlg.popup_centered()
 	dlg.confirmed.connect(dlg.queue_free)

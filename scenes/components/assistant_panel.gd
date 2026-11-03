@@ -16,6 +16,7 @@ var input: LineEdit
 var send_button: Button
 var mic_button: Button
 var speak_toggle: CheckButton
+var live_button: Button
 var thinking: Label
 var configured := false
 var busy := false
@@ -43,6 +44,14 @@ func setup(a: SbApp, b: Control) -> AssistantPanel:
 		if not on:
 			app.audio.stop_voice())
 	head.add_child(speak_toggle)
+	live_button = Button.new()
+	live_button.text = "Talk live"
+	live_button.tooltip_text = "A spoken conversation with the assistant (F9 to start and end)"
+	live_button.toggle_mode = false
+	live_button.pressed.connect(func() -> void: brain.call("toggle_live"))
+	head.add_child(live_button)
+	app.live.state_changed.connect(_on_live_state)
+	_on_live_state(app.live.state)
 	scroll = ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -191,6 +200,18 @@ func _set_busy(on: bool) -> void:
 func _err(res: Dictionary) -> String:
 	var d: Dictionary = res.get("data", {})
 	return str(d.get("detail", res.get("error", "?")))
+
+
+func _on_live_state(st: String) -> void:
+	live_button.text = "End live (F9)" if st != "idle" else "Talk live"
+
+
+## A line of the live conversation (already saved by the engine in today's conversation).
+func add_live(role: String, text: String) -> void:
+	_add_bubble(role, text, [], [])
+	last_reply = text if role == "assistant" else last_reply
+	await get_tree().process_frame
+	scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)
 
 
 func _add_bubble(role: String, text: String, actions: Array, cited: Array) -> void:

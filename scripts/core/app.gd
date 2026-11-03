@@ -16,6 +16,7 @@ const VOICE_ONBOARDING := preload("res://scenes/startup/voice_onboarding.tscn")
 
 var backend: Backend
 var audio: SbAudio
+var live: LiveConversation
 var state: Dictionary = {}   # survives screen rebuilds (theme switch)
 var theme_choice := "auto"
 var _backdrop: Control
@@ -48,6 +49,9 @@ func _ready() -> void:
 	show_welcome()
 	_widget = AudioWidget.new().setup(self)
 	add_child(_widget)
+	live = LiveConversation.new().setup(self)
+	live.name = "LiveConversation"
+	add_child(live)
 	if "--autosetup" in OS.get_cmdline_user_args():
 		start_setup()
 
@@ -134,6 +138,8 @@ func quit_app() -> void:
 	if _quitting:
 		return
 	_quitting = true
+	if live != null and live.active:
+		live.stop("closed")
 	audio.stop_all()
 	await backend.shutdown_engine(2.5)
 	# Let the audio thread release its playbacks before the engine shuts down.

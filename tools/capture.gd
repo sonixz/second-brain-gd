@@ -198,6 +198,23 @@ func _run() -> void:
 	await pause(1.5)
 	await shot("07c-push-to-talk")
 	await brain.call("push_to_talk", false, false)
+	await pause(4.0)
+	# Live conversation (Loop 7b), fake Realtime upstream: one spoken turn, then the pill mid-answer.
+	SbSettings.set_value("voice", "headphones", true)
+	var lc: LiveConversation = app.live
+	await lc.start(false)
+	var sec := PackedVector2Array()
+	for i in 48000:
+		var v := sin(TAU * 200.0 * float(i) / 48000.0) * 0.3
+		sec.append(Vector2(v, v))
+	for c in range(0, sec.size(), 4800):
+		lc.capture.feed_frames(sec.slice(c, c + 4800), 48000.0)
+		await process_frame
+	await pause(2.5)
+	lc._set_state("listening")
+	await shot("07d-live-conversation")
+	lc.stop("user")
+	SbSettings.set_value("voice", "headphones", false)
 	await pause(1.0)
 	for theme in ["focus", "evening", "forest"]:
 		app.set_theme_choice(theme)

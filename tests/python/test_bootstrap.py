@@ -373,6 +373,22 @@ class BootstrapIntegration(unittest.TestCase):
         with urllib.request.urlopen(req, timeout=10) as r:
             self.assertEqual(r.headers["Content-Type"], "audio/mpeg")
             self.assertGreater(len(r.read()), 1000)
+        # Live conversation (Loop 7b) through the real route, fake Realtime upstream: 3 spoken turns.
+        lv = subprocess.run([venv_py, client, "live", str(port), tok, "3"], capture_output=True, text=True,
+                            timeout=90, **NO_WINDOW)
+        self.assertEqual(lv.returncode, 0, lv.stderr[-800:])
+        res = json.loads(lv.stdout.strip().splitlines()[-1])
+        self.assertEqual(res["types"][0], "ready")
+        self.assertIn({"action": "open_view", "view": "today"}, res["ui_actions"])
+        self.assertEqual(res["user_text"][0], "Montre-moi ma journée.")
+        self.assertGreater(res["audio_bytes"], 10000)
+        self.assertEqual(res["ended"], "goodbye")
+        self.assertGreater(res["cost"], 0)
+        bad = subprocess.run([venv_py, client, "live", str(port), "wrong-token", "1"], capture_output=True, text=True,
+                             timeout=60, **NO_WINDOW)
+        self.assertNotEqual(bad.returncode, 0, "a wrong token must not open a live conversation")
+        code, st = get(base + "/status", tok)
+        self.assertEqual(st["live"]["model"], "gpt-realtime-2.1-mini")
         # Real costs: read live from OpenAI's shapes (fake pages here), never stored.
         bl = f"http://127.0.0.1:{port}/billing"
         self.assertEqual(get(bl)[0], 401)

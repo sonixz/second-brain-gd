@@ -1,6 +1,7 @@
 """Helper run with the engine's venv Python (it has websockets/keyring).
 
   voice_client.py stream <port> <token> <pcm file> [chunk_ms]
+  voice_client.py live <port> <token> <seconds of speech>
   voice_client.py keyring-roundtrip
 Prints one JSON line with the result.
 """
@@ -53,6 +54,49 @@ async def stream(port: int, token: str, pcm_path: str, chunk_ms: int = 100) -> d
     return out
 
 
+async def live(port: int, token: str, seconds: int) -> dict:
+    """A live conversation: N one-second bursts of audio, then waits for the end (fake upstream)."""
+    import websockets
+
+    out = {"types": [], "audio_bytes": 0, "ui_actions": [], "user_text": [], "assistant_text": [], "ended": None,
+           "cost": None}
+    async with websockets.connect(f"ws://127.0.0.1:{port}/voice/live",
+                                  additional_headers={"Authorization": f"Bearer {token}"}) as ws:
+        ready = json.loads(await asyncio.wait_for(ws.recv(), 15))
+        out["types"].append(ready["type"])
+        if ready["type"] != "ready":
+            out["error"] = ready.get("message")
+            return out
+
+        async def reader():
+            async for raw in ws:
+                if isinstance(raw, bytes):
+                    out["audio_bytes"] += len(raw)
+                    continue
+                m = json.loads(raw)
+                out["types"].append(m["type"])
+                if m["type"] == "ui_actions":
+                    out["ui_actions"] += m["actions"]
+                elif m["type"] in ("user_text", "assistant_text"):
+                    out[m["type"]].append(m["text"])
+                elif m["type"] == "cost":
+                    out["cost"] = m["usd"]
+                elif m["type"] == "ended":
+                    out["ended"] = m["reason"]
+                    return
+
+        task = asyncio.create_task(reader())
+        for _ in range(seconds):
+            for _ in range(10):
+                await ws.send(b"\x10\x00" * 2400)
+            await asyncio.sleep(0.3)
+        try:
+            await asyncio.wait_for(task, 15)
+        except asyncio.TimeoutError:
+            out["timeout"] = True
+    return out
+
+
 def keyring_roundtrip() -> dict:
     import os
 
@@ -76,6 +120,8 @@ if __name__ == "__main__":
     sys.path.insert(0, __file__.rsplit("tests", 1)[0])
     if sys.argv[1] == "stream":
         res = asyncio.run(stream(int(sys.argv[2]), sys.argv[3], sys.argv[4], int(sys.argv[5]) if len(sys.argv) > 5 else 100))
+    elif sys.argv[1] == "live":
+        res = asyncio.run(live(int(sys.argv[2]), sys.argv[3], int(sys.argv[4])))
     else:
         res = keyring_roundtrip()
     print(json.dumps(res))

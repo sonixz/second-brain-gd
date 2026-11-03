@@ -1,5 +1,32 @@
 # Devlog
 
+## Loop 7b — Live conversation (2026-11-03)
+
+- **What it is.** Speech to speech through OpenAI Realtime, relayed by the engine at `/voice/live`.
+  - The assistant keeps its persona, voice and every tool. A spoken « montre-moi ma journée » opens Today,
+    the same way a typed request does.
+  - Voice-driven project mode: « on travaille sur Atlas » calls `focus_project`, which loads the project's
+    context and opens its card.
+  - « Merci, c'est tout » ends the conversation.
+- **Lives at the app level.** A theme switch rebuilds the brain screen, which would have cut the
+  conversation mid-sentence. `LiveConversation` is therefore owned by the app, and a test switches the
+  theme mid-conversation.
+- **Echo.** Godot has no echo cancellation. With speakers, the microphone pauses while she speaks, and F8
+  interrupts her: playback stops, and the engine cancels the response and truncates it to what was heard.
+  With headphones (a new Voice setting), you can just talk over her.
+- **Cost.** A running cost per conversation, from OpenAI's usage in each `response.done`; nothing is
+  stored. Limits per conversation: $1, 20 minutes, and 3 idle minutes. The model defaults to
+  `gpt-realtime-2.1-mini`, as the owner chose.
+- **Blocked on model access.** The real probe found that the project has no speech-to-speech model
+  (`model_not_found`), so the app explains how to enable it. Everything is tested against a scripted fake
+  Realtime server that uses the same events.
+- **Bugs found in the screenshots:**
+  - the status pill had no size, because its parent had no full-rect offsets;
+  - the pill covered the view's header, so it moved above the capture bar;
+  - a missing text key blocked the live session, so the text client is now optional.
+- **Tests.** Python 107 (8 live, plus the route through a real engine) and Godot 111 (5 live). Linux and
+  native Windows.
+
 ## Loop 8a — Real costs on the dashboard (2026-11-03)
 
 - The owner asked for OpenAI's real billed costs on the dashboard, with tokens and charts. They do not
