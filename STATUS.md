@@ -1,7 +1,6 @@
 # Status
 
-**Loop 2 — Voice capture (bring your own key): built and tested without OpenAI; real API run pending the
-owner's key (2026-11-02).** Loops 0 and 1 are done.
+**Loop 2 — Voice capture (bring your own key): done and verified against the real OpenAI API (2026-11-02).** Loops 0 and 1 are done.
 
 ## Loop 2
 
@@ -18,7 +17,8 @@ owner's key (2026-11-02).** Loops 0 and 1 are done.
 | Python (33) | Linux 3.12 | OK, 1 skipped |
 | Python (33), including the Windows Credential Manager round trip | Windows, Store Python 3.13 | OK |
 | Godot end-to-end (62 checks, voice session through the real pipeline with the test provider) | Linux and Windows native | 62 passed |
-| Real OpenAI transcription | | **not run yet: OPENAI_API_KEY not in .env** |
+| Real OpenAI transcription (`tools/voice-bench.sh`, full app path) | Linux engine | English 0 % word errors, first words about 1 s, final 0.4 s after release |
+| Owner's own voice and microphone | Windows | **not tested yet** |
 
 ## Loop 1
 

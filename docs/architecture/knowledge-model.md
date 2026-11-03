@@ -73,8 +73,26 @@ Godot mic ──(AudioEffectCapture, 48 kHz stereo)──► VoiceCapture: mono,
   text, and can compare models (`--models a,b`). Clips come from the built-in Windows voices
   (`tools/make-voice-fixtures.ps1`). The ElevenLabs key is limited to sounds and music.
 
-Open questions to settle with the first real run: whether the account accepts `gpt-realtime-whisper` (the
-transcription guide's examples use `gpt-live-transcribe`), and whether that model honours `delay`.
+### Measured against the real API (2026-11-02)
+
+The clips were streamed in real time in 100 ms chunks. The French clip is read by an English Windows voice, so
+it tests robustness, not a real accent.
+
+| Model | Clip | Word errors | First words | Final text after commit |
+|---|---|---|---|---|
+| gpt-realtime-whisper | English sentence (15 words) | 0 % | 1.2 s | 0.4–0.65 s |
+| gpt-realtime-whisper | English sentence (10 words) | 0 % | 1.2 s | 0.4–0.7 s |
+| gpt-realtime-whisper | French read by English voice, auto-detect | 43–57 % | 1.35 s | 0.4–0.6 s |
+| gpt-realtime-whisper | same, `language: "fr"` | 29 % | 1.15 s | 0.4 s |
+| gpt-live-transcribe | — | not available to the owner's project yet | | |
+
+Facts learned:
+- `gpt-realtime-whisper` refuses `languages`, the plural form. It accepts `language` (one code) and `delay`.
+- The engine sends `language` when exactly one language is set. The default is auto-detect, which suits
+  mixed French and English.
+- The full app path was verified with the real key: verification, storage, streaming through the local
+  WebSocket, deletion. First words after 0.93 s, final text 0.36 s after commit, transcription exact, key absent
+  from every log.
 
 ## Later: daily router agent (direction)
 

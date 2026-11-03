@@ -17,7 +17,7 @@ from engine.paths import Layout
 from engine.voice import secrets
 from engine.voice.realtime import PRICE_PER_MINUTE_USD, Meter, make_relay
 
-DEFAULTS = {"voice_model": "gpt-realtime-whisper", "voice_languages": ["fr", "en"], "voice_delay": "low",
+DEFAULTS = {"voice_model": "gpt-realtime-whisper", "voice_languages": [], "voice_delay": "low",
             "voice_prompt": ""}
 MODELS_URL = "https://api.openai.com/v1/models/"
 

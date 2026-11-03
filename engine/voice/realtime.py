@@ -26,8 +26,12 @@ Send = Callable[[dict[str, Any]], Awaitable[None]]
 
 
 def session_update(model: str, languages: list[str], delay: str | None, prompt: str | None) -> dict[str, Any]:
+    """`languages` with one entry is sent as `language` (gpt-realtime-whisper refuses the
+    plural form, measured 2026-11-02); several entries use `languages`; none = auto-detect."""
     transcription: dict[str, Any] = {"model": model}
-    if languages:
+    if len(languages) == 1:
+        transcription["language"] = languages[0]
+    elif languages:
         transcription["languages"] = languages
     if delay:
         transcription["delay"] = delay

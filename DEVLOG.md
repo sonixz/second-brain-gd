@@ -14,6 +14,9 @@ key, entered during onboarding.
   switching away, because the freed screen crashed Godot natively. Again, a `**details` keyword collided with a
   parameter named `status`. The ElevenLabs key lacks the text-to-speech permission, so test speech comes from
   the Windows voices.
+- First real run: `gpt-realtime-whisper` refused `languages` (plural). It accepts `language`, so the default
+  became auto-detect. English transcribed with 0 % errors, first words in about 1 s, final text 0.4 s after
+  release. `gpt-live-transcribe` was not yet enabled for the key's project.
 - The OpenAI docs disagree with themselves. The model page says `gpt-realtime-whisper`, while the
   transcription guide uses `gpt-live-transcribe`. The model is configurable, and the first real run decides.
 
