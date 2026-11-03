@@ -1223,7 +1223,7 @@ func start_voice(use_mic: bool) -> bool:
 	app.audio.play("mic_start")
 	capture_edit.text = ""
 	capture_edit.editable = false
-	capture_edit.placeholder_text = "Listening…  speak, then click the microphone again"
+	capture_edit.placeholder_text = "Listening…  speak, then release F8" if ptt_active else "Listening…  speak, then click the microphone again"
 	capture_hint.text = ("Listening for the assistant · release F8 to send" if ptt_active else "Listening for the assistant · click the mic to finish") if voice_target == "chat" \
 		else "Listening · Ctrl+M or click the mic to finish"
 	return true

@@ -159,6 +159,15 @@ func _run() -> void:
 	for id in graph.nodes:
 		if str((graph.nodes[id] as Dictionary)["label"]) == "Daily router agent":
 			target = str(id)
+	# Related ideas need the background meaning index (real embeddings when run through dotenvx).
+	var mdeadline := Time.get_ticks_msec() + 40000
+	while Time.get_ticks_msec() < mdeadline:
+		var ms: Dictionary = await app.backend.api.call_api("/brain/meaning/status")
+		if ms["ok"] and int((ms["data"] as Dictionary).get("pending", 1)) == 0 and int((ms["data"] as Dictionary).get("embedded", 0)) > 0:
+			break
+		await pause(1.0)
+	await brain.call("refresh_graph")
+	await pause(3.0)
 	brain.call("open_note", target, true)
 	await pause(2.5)
 	await shot("06-brain-note-open")
@@ -182,6 +191,12 @@ func _run() -> void:
 	(brain.get("capture_edit") as LineEdit).text = "Remind me to send the Atlas proposal on Friday…"
 	await shot("07b-voice-listening")
 	await brain.call("stop_voice")
+	await pause(1.0)
+	# Hands-free: holding F8 shows the listening indicator (fake voice provider, no mic).
+	brain.call("push_to_talk", true, false)
+	await pause(1.5)
+	await shot("07c-push-to-talk")
+	await brain.call("push_to_talk", false, false)
 	await pause(1.0)
 	for theme in ["focus", "evening", "forest"]:
 		app.set_theme_choice(theme)
