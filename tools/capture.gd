@@ -44,6 +44,40 @@ func api(path: String, payload: Dictionary) -> Dictionary:
 	return await app.backend.api.call_api(path, true, HTTPClient.METHOD_POST, JSON.stringify(payload))
 
 
+func _day(offset: int) -> String:
+	return Time.get_date_string_from_unix_time(int(Time.get_unix_time_from_system()) + offset * 86400)
+
+
+## A realistic demo brain through the real API: projects under areas, tasks
+## with near due dates, notes, groceries.
+func fill_demo() -> void:
+	var st := await app.backend.api.call_api("/brain/structure")
+	var area: Dictionary = {}
+	for a in (st["data"] as Dictionary).get("areas", []):
+		area[str((a as Dictionary)["name"])] = str((a as Dictionary)["id"])
+	var proj: Dictionary = {}
+	for spec in [["Client Atlas", "Vision au travail", "Signer le mandat Q1", 10, "ffd2a1"],
+			["Second Brain GD", "Vision au travail", "Assistant quotidien utile", 45, "a6dcff"],
+			["Fête de Léa", "Famille", "Une fête simple et joyeuse", 20, "ffa9c6"]]:
+		var res := await api("/brain/projects", {"name": spec[0], "area_id": area.get(spec[1], ""), "goal": spec[2],
+			"due_date": _day(int(spec[3])), "color": "#" + str(spec[4])})
+		proj[spec[0]] = str((res["data"] as Dictionary).get("id", ""))
+	for n in DEMO_NOTES:
+		var payload := {"title": n[1], "kind": n[2], "body": n[3]}
+		var target: String = str(["Client Atlas", "Second Brain GD", "Santé"][int(n[0])]) if int(n[0]) >= 0 else ""
+		if target != "":
+			payload["space_id"] = proj.get(target, area.get(target, ""))
+		await api("/brain/notes", payload)
+	for task in [["Envoyer la proposition Atlas", "Client Atlas", -1], ["Appeler le fournisseur de données", "Client Atlas", 0],
+			["Réserver la salle", "Fête de Léa", 3], ["Inviter la famille", "Fête de Léa", 6],
+			["Prendre rendez-vous chez le dentiste", "Santé", 2]]:
+		await api("/brain/tasks", {"title": task[0], "space_id": proj.get(task[1], area.get(task[1], "")), "due_date": _day(int(task[2]))})
+	var lists := await app.backend.api.call_api("/brain/checklists")
+	for cl in (lists["data"] as Dictionary).get("checklists", []):
+		if str((cl as Dictionary)["name"]) == "Épicerie":
+			await api("/brain/checklists/%s/items" % (cl as Dictionary)["id"], {"items": ["Lait", "Œufs", "Café", "Bananes", "Pain de seigle"]})
+
+
 func _run() -> void:
 	root.size = Vector2i(1280, 800)
 	OS.set_environment("SBGD_SETTINGS", OS.get_environment("SBGD_HOME").path_join("capture-settings.cfg"))
@@ -68,16 +102,7 @@ func _run() -> void:
 			_filled = true
 			await shot("03-setup-ready")
 			app.backend.load_runtime()
-			# Fill a demo brain through the real API, once, before the first brain visit.
-			var space_ids: Array[String] = []
-			for s in DEMO_SPACES:
-				var res := await api("/brain/spaces", {"name": s[0], "color": "#" + str(s[1])})
-				space_ids.append(str((res["data"] as Dictionary).get("id", "")))
-			for n in DEMO_NOTES:
-				var payload := {"title": n[1], "kind": n[2], "body": n[3]}
-				if int(n[0]) >= 0:
-					payload["space_id"] = space_ids[int(n[0])]
-				await api("/brain/notes", payload)
+			await fill_demo()
 			break
 		await process_frame
 	while app.current_screen not in ["onboarding", "brain"] and Time.get_ticks_msec() < deadline:
@@ -108,6 +133,20 @@ func _run() -> void:
 		await pause(0.3)
 	await pause(2.5)
 	await shot("04c-auto-filed")
+	await b0.call("set_view", "today")
+	await pause(1.5)
+	await shot("04d-today")
+	await b0.call("set_view", "projects")
+	await pause(1.2)
+	await shot("04e-projects")
+	var pv: ProjectsView = b0.get("projects_view")
+	for a in pv.structure_data.get("areas", []):
+		for pj in (a as Dictionary).get("projects", []):
+			if str((pj as Dictionary)["name"]) == "Client Atlas":
+				await pv.show_card(str((pj as Dictionary)["id"]))
+	await pause(1.0)
+	await shot("04f-project-card")
+	await b0.call("set_view", "graph")
 	app.show_brain()
 	await pause(7.0)
 	(app.current().get("tab_spaces") as Button).pressed.emit()

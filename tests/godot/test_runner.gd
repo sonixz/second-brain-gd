@@ -166,6 +166,50 @@ func _e2e() -> void:
 	await brain.call("_undo_toast")
 	check(toast_label.text.begins_with("Put back"), "the filing can be undone from the toast")
 	check(graph.node_count("note") == gs_before + 1, "undo keeps the note, only its place changes")
+	# Structure: Today view, checklists, Projects view, project card, next actions.
+	await brain.call("set_view", "today")
+	var tv: TodayView = brain.get("today_view")
+	check(tv.visible and tv.data.has("checklists"), "Today view opens with real data")
+	var lists: Array = tv.data.get("checklists", [])
+	var groceries: Dictionary = {}
+	for l in lists:
+		if str((l as Dictionary)["name"]) == "Épicerie":
+			groceries = l
+	check(not groceries.is_empty(), "the Épicerie list exists from the start")
+	await tv.add_items(str(groceries["id"]), "lait, pain")
+	var items_now: Array = []
+	for l in tv.data.get("checklists", []):
+		if str((l as Dictionary)["name"]) == "Épicerie":
+			items_now = (l as Dictionary)["items"]
+	check(items_now.size() == 2, "items added to the grocery list from the Today view")
+	await brain.call("set_view", "projects")
+	var pv: ProjectsView = brain.get("projects_view")
+	var areas: Array = pv.structure_data.get("areas", [])
+	check(areas.size() == 4, "four starter areas (%d)" % areas.size())
+	var famille := ""
+	for a in areas:
+		if str((a as Dictionary)["name"]) == "Famille":
+			famille = str((a as Dictionary)["id"])
+	var pid: String = await pv.create_project(famille, "Fête de Léa")
+	check(pid != "" and pv.showing_card == pid, "a project is created in an area and its card opens")
+	check(await pv.add_task(pid, "Réserver la salle @2030-01-15"), "a next action with a date is added from the card")
+	var tasks: Array = pv.card_data.get("tasks", [])
+	check(tasks.size() == 1 and str((tasks[0] as Dictionary)["due_date"]) == "2030-01-15", "the date was parsed from @YYYY-MM-DD")
+	await brain.call("set_view", "today")
+	var nexts: Array = tv.data.get("next_actions", [])
+	var found_next := ""
+	for n in nexts:
+		if str((n as Dictionary)["title"]) == "Réserver la salle":
+			found_next = str((n as Dictionary)["id"])
+	check(found_next != "", "the project's next action shows in Today")
+	await tv.set_done(found_next, true)
+	await create_timer(1.0).timeout
+	var still := false
+	for n in tv.data.get("next_actions", []):
+		if str((n as Dictionary)["id"]) == found_next:
+			still = true
+	check(not still, "ticking it in Today marks it done")
+	await brain.call("set_view", "graph")
 	var before := graph.node_count("note")
 	var capture_edit: LineEdit = brain.get("capture_edit")
 	capture_edit.text = "Test thought linking [[Engine room]] #e2e"

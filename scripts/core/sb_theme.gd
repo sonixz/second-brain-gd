@@ -231,6 +231,17 @@ static func build() -> Theme:
 	t.set_color("selection_color", "TextEdit", Color(MINT, 0.25))
 	t.set_color("caret_color", "LineEdit", MINT)
 	t.set_color("selection_color", "LineEdit", Color(MINT, 0.25))
+	# Check boxes stay light: no button frame, a soft highlight on hover.
+	for cb_type in ["CheckBox"]:
+		t.set_stylebox("normal", cb_type, box(Color(0, 0, 0, 0), 8, Color(0, 0, 0, 0), 0, 6))
+		t.set_stylebox("pressed", cb_type, box(Color(0, 0, 0, 0), 8, Color(0, 0, 0, 0), 0, 6))
+		t.set_stylebox("hover", cb_type, box(Color(1, 1, 1, 0.05), 8, Color(0, 0, 0, 0), 0, 6))
+		t.set_stylebox("hover_pressed", cb_type, box(Color(1, 1, 1, 0.05), 8, Color(0, 0, 0, 0), 0, 6))
+		t.set_stylebox("focus", cb_type, box(Color(0, 0, 0, 0), 8, Color(MINT, 0.5), 1, 6))
+		t.set_color("font_color", cb_type, TEXT)
+		t.set_color("font_pressed_color", cb_type, MUTED)
+		t.set_color("font_hover_color", cb_type, MINT_SOFT)
+		t.set_color("font_hover_pressed_color", cb_type, MUTED)
 	t.set_type_variation("CaptureEdit", "LineEdit")
 	t.set_stylebox("normal", "CaptureEdit", box(Color(PANEL, 0.92), 26, BORDER, 1, 22))
 	t.set_stylebox("focus", "CaptureEdit", box(Color(PANEL, 0.97), 26, MINT, 2, 22))

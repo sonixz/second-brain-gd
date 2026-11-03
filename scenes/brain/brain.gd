@@ -54,6 +54,11 @@ var toast_undo: Button
 var toast_action := 0
 var classified := 0
 var _toast_timer: Timer
+# Views
+var view := "graph"   # graph | today | projects
+var today_view: TodayView
+var projects_view: ProjectsView
+var view_buttons: Dictionary = {}
 
 
 func bind(a: SbApp) -> void:
@@ -69,6 +74,7 @@ func _ready() -> void:
 		graph.select("")
 		_close_inspector())
 	add_child(graph)
+	_build_views()
 	_build_top_bar()
 	_build_left_panel()
 	_build_inspector()
@@ -96,6 +102,8 @@ func _ready() -> void:
 	await refresh_graph()
 	await load_briefing()
 	assistant_panel.start()
+	if str(app.state.get("view", "graph")) != "graph":
+		set_view(str(app.state["view"]))
 	var keep := str(app.state.get("selected_note", ""))
 	if keep != "":
 		open_note(keep)
@@ -136,10 +144,26 @@ func _build_top_bar() -> void:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	spacer.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bar.add_child(spacer)
+	var seg := HBoxContainer.new()
+	seg.add_theme_constant_override("separation", 4)
+	seg.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	bar.add_child(seg)
+	var group := ButtonGroup.new()
+	for pair in [["graph", "Graph"], ["today", "Today"], ["projects", "Projects"]]:
+		var b := Button.new()
+		b.text = str(pair[1])
+		b.toggle_mode = true
+		b.button_group = group
+		b.theme_type_variation = "GhostButton"
+		b.button_pressed = pair[0] == "graph"
+		var key := str(pair[0])
+		b.pressed.connect(func() -> void: set_view(key))
+		seg.add_child(b)
+		view_buttons[key] = b
 	search_edit = LineEdit.new()
 	search_edit.theme_type_variation = "SearchEdit"
 	search_edit.placeholder_text = "Search your brain   ( / )"
-	search_edit.custom_minimum_size = Vector2(320, 40)
+	search_edit.custom_minimum_size = Vector2(260, 40)
 	search_edit.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	search_edit.clear_button_enabled = true
 	search_edit.text_changed.connect(_on_search_changed)
@@ -165,6 +189,49 @@ func _build_top_bar() -> void:
 	status_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	prow.add_child(status_label)
 	pill.custom_minimum_size = Vector2(196, 40)
+
+
+func _build_views() -> void:
+	today_view = TodayView.new().setup(app)
+	projects_view = ProjectsView.new().setup(app)
+	for v in [today_view, projects_view]:
+		v.set_anchors_preset(Control.PRESET_FULL_RECT)
+		v.offset_left = 388
+		v.offset_right = -24
+		v.offset_top = 92
+		v.offset_bottom = -112
+		v.visible = false
+		add_child(v)
+	today_view.open_project.connect(func(pid: String) -> void:
+		set_view("projects")
+		projects_view.show_card(pid))
+	today_view.changed.connect(func() -> void: refresh_graph())
+	projects_view.changed.connect(func() -> void:
+		refresh_graph()
+		refresh_spaces())
+	projects_view.open_note.connect(func(nid: String) -> void: open_note(nid))
+	projects_view.failed.connect(func(msg: String) -> void: show_toast(msg))
+	projects_view.ask_assistant.connect(func(sid: String, prompt: String) -> void:
+		current_space = sid
+		tab_assistant.button_pressed = true
+		tab_assistant.pressed.emit()
+		assistant_panel.send(prompt))
+
+
+func set_view(name: String) -> void:
+	view = name
+	today_view.visible = name == "today"
+	projects_view.visible = name == "projects"
+	var dim := 0.28 if name != "graph" else 1.0
+	create_tween().tween_property(graph, "modulate", Color(1, 1, 1, dim), 0.25)
+	graph.mouse_filter = Control.MOUSE_FILTER_STOP if name == "graph" else Control.MOUSE_FILTER_IGNORE
+	for key in view_buttons:
+		(view_buttons[key] as Button).button_pressed = key == name
+	if name == "today":
+		await today_view.refresh()
+	elif name == "projects":
+		await projects_view.refresh()
+	app.state["view"] = name
 
 
 func _build_left_panel() -> void:
@@ -197,7 +264,8 @@ func _build_left_panel() -> void:
 	assistant_panel.note_requested.connect(_open_note_by_title)
 	assistant_panel.brain_changed.connect(func() -> void:
 		await refresh_graph()
-		await refresh_spaces())
+		await refresh_spaces()
+		_refresh_view())
 	root.add_child(assistant_panel)
 	spaces_page = VBoxContainer.new()
 	spaces_page.add_theme_constant_override("separation", 10)
@@ -287,6 +355,13 @@ func _undo_toast() -> void:
 		show_toast("Put back where it was.")
 		await refresh_graph()
 		await refresh_spaces()
+
+
+func _refresh_view() -> void:
+	if view == "today":
+		today_view.refresh()
+	elif view == "projects":
+		projects_view.refresh()
 
 
 func _open_note_by_title(title: String) -> void:
@@ -590,7 +665,8 @@ func capture(text: String, source: String = "typed") -> void:
 	await refresh_spaces()
 	capture_hint.text = "Saved to %s. Keep going." % _space_name(str(note["space_id"]))
 	if current_space == "":
-		_classify(str(note["id"]))
+		await _classify(str(note["id"]))
+	_refresh_view()
 
 
 func _post(path: String, payload: Dictionary, method: int = HTTPClient.METHOD_POST) -> Dictionary:
