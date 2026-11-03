@@ -170,3 +170,85 @@ class StructureToolTests(unittest.TestCase):
 
     def test_briefing_facts_include_structure(self):
         self.assertTrue(core.briefing(self.conn, self.client)["text"])
+
+
+class HandsFreeTests(unittest.TestCase):
+    """Loop 7a: the assistant drives the interface (Godot performs the returned ui_actions)."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db = Path(self.tmp.name) / "h.sqlite3"
+        database.migrate(self.db)
+        self.conn = database.connect(self.db)
+        seed_if_empty(self.conn)
+        self.client = FakeChat()
+
+    def tearDown(self):
+        self.conn.close()
+        self.tmp.cleanup()
+
+    def test_open_view_by_voice_returns_ui_action(self):
+        out = core.chat(self.conn, self.client, "Ouvre ma journée d'aujourd'hui")
+        self.assertEqual(out["ui_actions"], [{"action": "open_view", "view": "today"}])
+        self.assertEqual(out["actions"], [])  # nothing changed in the brain
+        again = core.chat(self.conn, self.client, "bonjour")
+        self.assertEqual(again["ui_actions"], [])  # actions never leak into the next turn
+
+    def test_ui_tools_validate_ids_and_values(self):
+        acts = []
+        self.assertIn("error", core.run_tool(self.conn, "ui_open_project", {"space_id": "nope"}, acts))
+        self.assertIn("error", core.run_tool(self.conn, "ui_open_note", {"note_id": "nope"}, acts))
+        self.assertIn("error", core.run_tool(self.conn, "ui_set_theme", {"theme": "neon"}, acts))
+        self.assertIn("error", core.run_tool(self.conn, "ui_open_view", {"view": "settings"}, acts))
+        n = brain.create_note(self.conn, "Plan Atlas")
+        core._UI["actions"] = []
+        out = core.run_tool(self.conn, "ui_open_note", {"note_id": n["id"]}, acts)
+        self.assertTrue(out["done"])
+        self.assertEqual(core._UI["actions"][0]["title"], "Plan Atlas")
+
+    def test_undo_last_action_by_voice(self):
+        core.run_tool(self.conn, "create_note", {"title": "À défaire"}, [])
+        self.assertTrue(self.conn.execute("SELECT 1 FROM notes WHERE title = 'À défaire'").fetchone())
+        out = core.chat(self.conn, self.client, "Annule ça")
+        self.assertIn({"action": "refresh"}, out["ui_actions"])
+        row = self.conn.execute("SELECT status FROM notes WHERE title = 'À défaire'").fetchone()
+        self.assertTrue(row is None or row["status"] == "archived")
+        nothing = core.run_tool(self.conn, "undo_last_action", {}, [])
+        self.assertFalse(nothing["undone"])
+
+
+class ClaimGuardTests(unittest.TestCase):
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db = Path(self.tmp.name) / "g.sqlite3"
+        database.migrate(self.db)
+        self.conn = database.connect(self.db)
+        seed_if_empty(self.conn)
+
+    def tearDown(self):
+        self.conn.close()
+        self.tmp.cleanup()
+
+    def test_claimed_action_without_tool_gets_one_nudge(self):
+        replies = iter([
+            {"message": {"role": "assistant", "content": "D'accord, j'annule ça."}},
+            {"message": {"role": "assistant", "content": None, "tool_calls": [
+                {"id": "u1", "type": "function", "function": {"name": "undo_last_action", "arguments": "{}"}}]}},
+            {"message": {"role": "assistant", "content": "Il n'y avait rien à annuler."}},
+        ])
+        seen = []
+
+        def fake(self_, model, messages, **kw):
+            seen.append(messages[-1]["content"])
+            return {**next(replies), "usage": {}, "model": model}
+
+        with mock.patch.object(FakeChat, "complete", fake):
+            out = core.chat(self.conn, FakeChat(), "annule ça")
+        self.assertEqual(out["reply"], "Il n'y avait rien à annuler.")
+        self.assertIn(core.CLAIM_NUDGE, seen)
+
+    def test_plain_answers_are_not_nudged(self):
+        with mock.patch.object(FakeChat, "complete", return_value={
+                "message": {"role": "assistant", "content": "Bonjour! Comment je peux t'aider?"}, "usage": {}, "model": "m"}) as m:
+            core.chat(self.conn, FakeChat(), "salut")
+        self.assertEqual(m.call_count, 1)

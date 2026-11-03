@@ -1,5 +1,24 @@
 # Devlog
 
+## Loop 7a — Hands-free (2026-11-03)
+
+- Interface tools: `ui_open_view`, `ui_open_project`, `ui_open_note`, `ui_set_theme`, `ui_set_volume`,
+  `ui_start_weekly_review`, and `undo_last_action`. The engine validates ids and values, collects the
+  actions per turn, and returns them as `ui_actions`. Godot runs them, with the theme always last because
+  it rebuilds the screen.
+- Push-to-talk: hold F8, release to send. The reply is always spoken for a voice turn. A listening pill
+  shows while the mic is open. The wake word is set aside, as the owner decided.
+- Real-API finding: gpt-4o sometimes said « je l'ouvre », « la revue est lancée » or « j'annule » without
+  calling the tool. Fixes:
+  - an explicit rule in the prompt;
+  - past interface actions noted in the history;
+  - `CLAIM_RE`, which gives one nudge when a reply claims an action in a turn where no tool ran.
+
+  After the fixes, every interface command ran in the last 3 sequences.
+- Destructive actions: the assistant has no delete tool, and every brain change stays undoable by voice, so
+  no extra spoken confirmation was needed yet.
+
+
 ## Loop 6c — Agent room on by default (2026-11-03)
 
 - The owner chose the agent room on by default. Codex ships official native binaries, so no Node.js is

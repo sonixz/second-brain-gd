@@ -189,10 +189,23 @@ class FakeChat:
             return {"message": {"role": "assistant", "content": json.dumps(out)}, "usage": usage, "model": model}
         if last["role"] == "tool":
             found = json.loads(last["content"])
+            if "shown_to_user" in found or "undone" in found:
+                return {"message": {"role": "assistant", "content": "C'est fait." if found.get("done") or found.get("undone")
+                                    else "Rien à annuler."}, "usage": usage, "model": model}
             titles = [f"[[{r['title']}]]" for r in found.get("results", [])[:3]]
             return {"message": {"role": "assistant", "content": "J'ai trouvé: " + ", ".join(titles)},
                     "usage": usage, "model": model}
         text = str(last.get("content", ""))
+        low = text.lower()
+        views = {"aujourd": "today", "today": "today", "projet": "projects", "agent": "agents", "graph": "graph"}
+        if low.startswith(("ouvre", "montre", "open", "show")) and tools:
+            view = next((v for k, v in views.items() if k in low), "graph")
+            call = {"id": "call_ui", "type": "function",
+                    "function": {"name": "ui_open_view", "arguments": json.dumps({"view": view})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith(("annule", "undo")) and tools:
+            call = {"id": "call_undo", "type": "function", "function": {"name": "undo_last_action", "arguments": "{}"}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if text.lower().startswith(("cherche", "search")) and tools:
             q = text.split(" ", 1)[1] if " " in text else text
             call = {"id": "call_fake", "type": "function",

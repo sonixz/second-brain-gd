@@ -88,6 +88,7 @@ func _ready() -> void:
 	_build_inspector()
 	_build_capture_bar()
 	_build_toast()
+	_build_listening_overlay()
 	get_window().files_dropped.connect(_on_files_dropped)
 	voice_capture = VoiceCapture.new()
 	add_child(voice_capture)
@@ -281,6 +282,7 @@ func _build_left_panel() -> void:
 	tab_assistant.button_pressed = true
 	assistant_panel = AssistantPanel.new().setup(app, self)
 	assistant_panel.note_requested.connect(_open_note_by_title)
+	assistant_panel.ui_requested.connect(run_ui_actions)
 	assistant_panel.brain_changed.connect(func() -> void:
 		await refresh_graph()
 		await refresh_spaces()
@@ -480,11 +482,118 @@ func refresh_sources() -> void:
 		sources_box.add_child(l)
 
 
+# ------------------------------------------------------------ hands-free (Loop 7a)
+const PTT_KEY := KEY_F8
+var ptt_active := false
+var listening_overlay: PanelContainer
+var listening_label: Label
+
+
+## Performs interface actions decided by the assistant. A theme change rebuilds this
+## screen, so it always runs last.
+func run_ui_actions(actions: Array) -> void:
+	var theme_choice := ""
+	for item in actions:
+		var a: Dictionary = item
+		match str(a.get("action", "")):
+			"open_view":
+				await set_view(str(a.get("view", "graph")))
+			"open_project":
+				await set_view("projects")
+				projects_view.show_card(str(a.get("space_id", "")))
+			"open_note":
+				await set_view("graph")
+				await open_note(str(a.get("note_id", "")), true)
+			"weekly_review":
+				tab_assistant.button_pressed = true
+				tab_assistant.pressed.emit()
+				assistant_panel.run_review()
+			"set_volume":
+				_change_volume(str(a.get("change", "")))
+			"refresh":
+				await refresh_graph()
+				await refresh_spaces()
+				_refresh_view()
+			"set_theme":
+				theme_choice = str(a.get("theme", ""))
+	if theme_choice != "":
+		app.set_theme_choice(theme_choice)
+
+
+func _change_volume(change: String) -> void:
+	match change:
+		"mute":
+			app.audio.set_muted(true)
+		"unmute":
+			app.audio.set_muted(false)
+		"up", "down":
+			app.audio.set_muted(false)
+			var f := 1.35 if change == "up" else 0.7
+			for bus in ["Music", "Ambience", "SFX", "Voice"]:
+				app.audio.set_volume(bus, clampf(app.audio.volume(bus) * f, 0.05, 1.0))
+
+
+## Hold F8 to talk to the assistant, release to send: the reply is spoken.
+## use_mic = false lets tests feed audio frames instead.
+func push_to_talk(pressed: bool, use_mic: bool = true) -> void:
+	if pressed and not ptt_active and voice_state == "idle":
+		ptt_active = true
+		tab_assistant.button_pressed = true
+		tab_assistant.pressed.emit()
+		voice_target = "chat"
+		var res := await app.backend.api.call_api("/voice/status")
+		var st: Dictionary = res["data"] if res["ok"] else {}
+		if not bool(st.get("configured", false)) and OS.get_environment("SBGD_VOICE_PROVIDER") != "fake":
+			ptt_active = false
+			_open_voice_settings()
+			return
+		_show_listening(true)
+		if not await start_voice(use_mic):
+			ptt_active = false
+			_show_listening(false)
+	elif not pressed and ptt_active:
+		ptt_active = false
+		# The key can be released while the connection is still opening: wait for it.
+		var deadline := Time.get_ticks_msec() + 10000
+		while voice_state == "connecting" and Time.get_ticks_msec() < deadline:
+			await get_tree().process_frame
+		listening_label.text = "Transcribing…"
+		await stop_voice()
+		_show_listening(false)
+
+
+func _build_listening_overlay() -> void:
+	listening_overlay = PanelContainer.new()
+	listening_overlay.theme_type_variation = "Glass"
+	listening_overlay.set_anchors_preset(Control.PRESET_CENTER_TOP)
+	listening_overlay.offset_top = 96
+	listening_overlay.offset_left = -170
+	listening_overlay.offset_right = 170
+	listening_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	listening_overlay.visible = false
+	add_child(listening_overlay)
+	listening_label = Label.new()
+	listening_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	listening_label.add_theme_color_override("font_color", SbTheme.WARM)
+	listening_label.add_theme_font_size_override("font_size", 18)
+	listening_overlay.add_child(listening_label)
+
+
+func _show_listening(on: bool) -> void:
+	listening_label.text = "●  Listening — release F8 to send"
+	listening_overlay.visible = on
+	if on:
+		listening_overlay.modulate.a = 0.0
+		create_tween().tween_property(listening_overlay, "modulate:a", 1.0, 0.15)
+
+
 func _refresh_view() -> void:
 	if view == "today":
 		today_view.refresh()
 	elif view == "projects":
 		projects_view.refresh()
+	elif view == "agents":
+		agents_view.refresh()
 
 
 func _open_note_by_title(title: String) -> void:
@@ -1049,7 +1158,13 @@ func _open_first_hit() -> void:
 
 func _unhandled_key_input(event: InputEvent) -> void:
 	var k := event as InputEventKey
-	if k == null or not k.pressed:
+	if k == null:
+		return
+	if k.keycode == PTT_KEY and not k.echo:
+		push_to_talk(k.pressed)
+		accept_event()
+		return
+	if not k.pressed:
 		return
 	if k.keycode == KEY_SPACE and k.ctrl_pressed:
 		capture_edit.grab_focus()
@@ -1109,7 +1224,7 @@ func start_voice(use_mic: bool) -> bool:
 	capture_edit.text = ""
 	capture_edit.editable = false
 	capture_edit.placeholder_text = "Listening…  speak, then click the microphone again"
-	capture_hint.text = "Listening for the assistant · click the mic to finish" if voice_target == "chat" \
+	capture_hint.text = ("Listening for the assistant · release F8 to send" if ptt_active else "Listening for the assistant · click the mic to finish") if voice_target == "chat" \
 		else "Listening · Ctrl+M or click the mic to finish"
 	return true
 
@@ -1140,7 +1255,7 @@ func stop_voice() -> void:
 	capture_edit.text = ""
 	if voice_target == "chat":
 		voice_target = "capture"
-		await assistant_panel.send(text)
+		await assistant_panel.send(text, true)
 	else:
 		await capture(text, "voice")
 

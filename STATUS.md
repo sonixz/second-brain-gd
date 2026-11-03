@@ -1,5 +1,21 @@
 # Status
 
+**Loop 7a — Hands-free: done (2026-11-03).** Hold **F8**, speak, release. The assistant hears you and answers
+aloud, and she drives the interface: views (graph, today, projects, agents), a project's card, a note, the
+theme, the volume, the weekly review, and « annule ça ». The engine validates every interface action, and
+Godot performs it. A visible indicator shows when the microphone listens. A guard catches replies that
+claim an action no tool performed, and asks the model once to act or correct itself.
+
+| Real API (gpt-4o, 7-command spoken-style sequence) | Result |
+|---|---|
+| Open a project, show Today, open a note by meaning, theme and volume in one sentence | executed in every run |
+| « Lance la revue », add a task, « annule ça » | executed in the last 3 runs. Once, the model asked which project the task belonged to (a fair question), then correctly said there was nothing to undo |
+
+| Suite | Platform | Result |
+|---|---|---|
+| Python (90) | Linux 3.12 / Windows Store 3.13 | OK |
+| Godot end-to-end (100, including « ouvre ma journée », F8 hold and release, listening indicator) | Linux and Windows native | 100 passed |
+
 **Loop 6c — Agent room, on by default: built; the real Codex binary is not yet verified (2026-11-03).**
 - **Setup:** a new step downloads the pinned official `codex-app-server` (about 95 MB). It checks the
   SHA-256 and installs it in the user data folder, with no admin rights. Offline, the step ends as "Not

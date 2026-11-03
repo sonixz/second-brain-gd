@@ -307,6 +307,24 @@ func _e2e() -> void:
 			heard = true
 	check(heard, "the transcript of 1.5 s of audio arrived intact")
 	check(int(brain.get("voice_notes")) == 1, "the note is recorded as a voice capture")
+	# Hands-free (Loop 7a): the assistant drives the interface, and F8 push-to-talk reaches her.
+	await ap.send("Ouvre ma journée d'aujourd'hui")
+	var opened := await wait_until(func() -> bool: return str(brain.get("view")) == "today", 10.0)
+	check(opened, "« ouvre ma journée » opens the Today view (%s)" % str(ap.last_ui_actions))
+	await brain.call("run_ui_actions", [{"action": "open_view", "view": "graph"}, {"action": "set_volume", "change": "down"}])
+	check(str(brain.get("view")) == "graph", "ui actions switch views back to the graph")
+	var replies_before := ap.messages_shown
+	brain.call("push_to_talk", true, false)
+	var ptt_open := await wait_until(func() -> bool: return str(brain.get("voice_state")) == "listening", 10.0)
+	check(ptt_open and (brain.get("listening_overlay") as Control).visible, "holding F8 opens the mic with a visible listening indicator")
+	var vc2: VoiceCapture = brain.get("voice_capture")
+	for c in range(0, tone.size(), 4800):
+		vc2.feed_frames(tone.slice(c, c + 4800), 48000.0)
+		await process_frame
+	await brain.call("push_to_talk", false, false)
+	var talked := await wait_until(func() -> bool: return ap.messages_shown >= replies_before + 2 and ap.last_reply.contains("fake transcript"), 20.0)
+	check(talked, "releasing F8 sends the speech to the assistant (%s)" % ap.last_reply.left(60))
+	check(not (brain.get("listening_overlay") as Control).visible, "the listening indicator hides after sending")
 	var notes_before_restart := graph.node_count("note")  # before leaving the brain screen (it is freed)
 	app.set_theme_choice("evening")
 	await process_frame

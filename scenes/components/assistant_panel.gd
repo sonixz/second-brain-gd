@@ -5,6 +5,8 @@ extends VBoxContainer
 
 signal note_requested(title: String)
 signal brain_changed
+## Interface actions the assistant asked for (open a view, a project, a note, theme, volume…).
+signal ui_requested(actions: Array)
 
 var app: SbApp
 var brain: Control
@@ -21,6 +23,8 @@ var messages_shown := 0
 var last_reply := ""
 var _dots_t := 0.0
 
+
+var last_ui_actions: Array = []
 
 func setup(a: SbApp, b: Control) -> AssistantPanel:
 	app = a
@@ -112,7 +116,8 @@ func start() -> void:
 			_add_bubble("assistant", "I could not prepare your briefing: %s" % _err(b), [], [])
 
 
-func send(text: String) -> void:
+## spoken = true when the message came by voice: the reply is read aloud even if reading is off.
+func send(text: String, spoken: bool = false) -> void:
 	var t := text.strip_edges()
 	if t == "" or busy:
 		return
@@ -142,7 +147,11 @@ func send(text: String) -> void:
 	if not actions.is_empty():
 		app.audio.play("note_create", 0.04)
 		brain_changed.emit()
-	say(last_reply)
+	var ui: Array = d.get("ui_actions", [])
+	last_ui_actions = ui
+	say(last_reply, spoken)
+	if not ui.is_empty():
+		ui_requested.emit(ui)
 
 
 ## Guided weekly review: generated from the week's facts, shown and read aloud.
@@ -163,8 +172,8 @@ func run_review() -> bool:
 	return true
 
 
-func say(text: String) -> void:
-	if not speak_toggle.button_pressed or app.audio.muted or text.strip_edges() == "":
+func say(text: String, force: bool = false) -> void:
+	if not (speak_toggle.button_pressed or force) or app.audio.muted or text.strip_edges() == "":
 		return
 	var res := await app.backend.api.call_api("/assistant/speak", true, HTTPClient.METHOD_POST,
 		JSON.stringify({"text": text, "theme": SbTheme.current}), true)

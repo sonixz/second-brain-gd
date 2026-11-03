@@ -31,6 +31,14 @@ DEFAULTS = {
 # When a user's OpenAI project lacks a configured model, the job falls back instead of failing.
 FALLBACK_MODELS = {"assistant_classify_model": "gpt-4o-mini", "assistant_review_model": "gpt-4o"}
 MAX_TOOL_ROUNDS = 8
+# A reply that claims an interface action or an undo, in a turn where no tool ran, gets one nudge
+# (measured 2026-11-03: gpt-4o sometimes said « j'annule » or « la revue est lancée » without the tool).
+CLAIM_RE = re.compile(r"\b(j'annule|c'est annulé|annulée?s?\b|je l'ouvre|j'ouvre|j'ai ouvert|ouverte?\b|"
+                      r"c'est affiché|j'affiche|affichée?\b|est lancée?|je lance|j'ai lancé|activée?\b|baissé|monté)",
+                      re.IGNORECASE)
+CLAIM_NUDGE = ("Tu viens d'affirmer une action sans appeler d'outil dans ce tour. Si l'utilisateur la demande, "
+               "appelle maintenant l'outil (ui_* ou undo_last_action). Sinon, corrige ta réponse sans prétendre "
+               "l'avoir faite.")
 HISTORY = 20
 
 VOICE_TONES = {
@@ -54,6 +62,14 @@ Règles:
   Une idée, une décision ou une info = create_note. Des articles d'épicerie ou de liste = add_to_checklist.
   Un nouveau projet = create_project sous le bon domaine. « C'est fait » = complete_task.
 - Pour « qu'est-ce que j'ai aujourd'hui / cette semaine », utilise get_today.
+- Tu pilotes aussi l'interface: l'utilisateur peut tout faire à la voix, sans cliquer. Dès qu'il dit
+  « montre, ouvre, affiche, va dans, lance, mets », APPELLE l'outil d'interface correspondant:
+  une vue (graphe, aujourd'hui, projets, agents) = ui_open_view; un projet = ui_open_project (id via
+  get_structure); une note = ui_open_note (trouve son id avec search_notes d'abord); thème = ui_set_theme;
+  son = ui_set_volume; la revue de la semaine = ui_start_weekly_review; « annule ça » = undo_last_action.
+  « Qu'est-ce que j'ai aujourd'hui? Affiche-le » = get_today ET ui_open_view(today).
+  INTERDIT: dire « je l'ouvre », « c'est affiché » ou « c'est lancé » sans avoir appelé l'outil ui_* dans ce
+  tour. Après une action d'interface, réponds en une phrase courte (elle est lue à voix haute).
 - Pour une question de fond, cherche dans les notes (search_notes) ET dans les documents importés (search_sources).
   Cite un document par le titre de sa fiche entre [[ ]].
 - Réponses courtes et parlées (2 à 5 phrases), sauf si on te demande du détail. Pas de listes à puces longues, pas d'emojis.
@@ -262,8 +278,74 @@ TOOLS = [
                        "required": ["note_id"]}}},
 ]
 
+# Interface tools: the engine validates them, Godot performs them (hands-free control, Loop 7a).
+UI_VIEWS = ["graph", "today", "projects", "agents"]
+UI_THEMES = ["morning", "focus", "evening", "forest", "auto"]
+UI_TOOLS = [
+    {"type": "function", "function": {"name": "ui_open_view", "description": "Show a view of the app: graph (the knowledge map), today (what to do now), projects, agents (the agent room).",
+     "parameters": {"type": "object", "properties": {"view": {"type": "string", "enum": UI_VIEWS}}, "required": ["view"]}}},
+    {"type": "function", "function": {"name": "ui_open_project", "description": "Open a project's card on screen.",
+     "parameters": {"type": "object", "properties": {"space_id": {"type": "string"}}, "required": ["space_id"]}}},
+    {"type": "function", "function": {"name": "ui_open_note", "description": "Open a note in the inspector and focus it in the graph.",
+     "parameters": {"type": "object", "properties": {"note_id": {"type": "string"}}, "required": ["note_id"]}}},
+    {"type": "function", "function": {"name": "ui_set_theme", "description": "Change the visual and music theme.",
+     "parameters": {"type": "object", "properties": {"theme": {"type": "string", "enum": UI_THEMES}}, "required": ["theme"]}}},
+    {"type": "function", "function": {"name": "ui_set_volume", "description": "Change the app's sound: louder, quieter, mute or unmute.",
+     "parameters": {"type": "object", "properties": {"change": {"type": "string", "enum": ["up", "down", "mute", "unmute"]}}, "required": ["change"]}}},
+    {"type": "function", "function": {"name": "ui_start_weekly_review", "description": "Start the guided weekly review on screen.",
+     "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {"name": "undo_last_action", "description": "Undo the most recent change the assistant made (a filed note, a task, a list item...).",
+     "parameters": {"type": "object", "properties": {}}}},
+]
+TOOLS = TOOLS + UI_TOOLS
+_UI: dict[str, list[dict[str, Any]]] = {"actions": []}  # interface actions requested during the current chat turn
+
+
+def _ui_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any]) -> dict[str, Any]:
+    if name == "ui_open_view":
+        view = str(args.get("view", ""))
+        if view not in UI_VIEWS:
+            return {"error": f"unknown view, use one of {UI_VIEWS}"}
+        act = {"action": "open_view", "view": view}
+    elif name == "ui_open_project":
+        sid = str(args.get("space_id", ""))
+        row = conn.execute("SELECT id, name, kind FROM spaces WHERE id = ?", (sid,)).fetchone()
+        if row is None:
+            return {"error": "unknown space_id: call get_structure to find the project's id"}
+        act = {"action": "open_project", "space_id": sid, "name": row["name"]}
+    elif name == "ui_open_note":
+        nid = str(args.get("note_id", ""))
+        row = conn.execute("SELECT id, title FROM notes WHERE id = ?", (nid,)).fetchone()
+        if row is None:
+            return {"error": "unknown note_id: search for the note first"}
+        act = {"action": "open_note", "note_id": nid, "title": row["title"]}
+    elif name == "ui_set_theme":
+        theme = str(args.get("theme", ""))
+        if theme not in UI_THEMES:
+            return {"error": f"unknown theme, use one of {UI_THEMES}"}
+        act = {"action": "set_theme", "theme": theme}
+    elif name == "ui_set_volume":
+        change = str(args.get("change", ""))
+        if change not in ("up", "down", "mute", "unmute"):
+            return {"error": "change must be up, down, mute or unmute"}
+        act = {"action": "set_volume", "change": change}
+    else:  # ui_start_weekly_review
+        act = {"action": "weekly_review"}
+    _UI["actions"].append(act)
+    return {"done": True, "shown_to_user": act}
+
 
 def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions: list[dict[str, Any]]) -> Any:
+    if name.startswith("ui_"):
+        return _ui_tool(conn, name, args)
+    if name == "undo_last_action":
+        row = conn.execute("SELECT id, kind FROM assistant_actions WHERE undone_at IS NULL ORDER BY id DESC LIMIT 1").fetchone()
+        if row is None:
+            return {"undone": False, "reason": "nothing to undo"}
+        out = undo(conn, int(row["id"]))
+        if out.get("undone"):
+            _UI["actions"].append({"action": "refresh"})
+        return out
     try:
         if name == "search_notes":
             from engine.brain.meaning import search_notes
@@ -404,12 +486,18 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
         acts = (m.get("meta") or {}).get("actions") or []
         if acts:  # so the model knows what it already did and never repeats it
             content += "\n(Actions déjà effectuées: " + "; ".join(f"{a['kind']} « {a['title']} »" for a in acts) + ")"
+        ui_done = (m.get("meta") or {}).get("ui_actions") or []
+        if ui_done:  # interface actions really performed, so the model sees the tools behind past replies
+            content += "\n(Interface: " + "; ".join(str(u.get("action")) + (f" {u.get('view') or u.get('name') or u.get('title') or u.get('theme') or u.get('change') or ''}") for u in ui_done) + ")"
         messages.append({"role": "assistant" if m["role"] in ("assistant", "briefing") else "user", "content": content})
     messages.append({"role": "user", "content": text})
     _save(conn, conversation, "user", text)
     actions: list[dict[str, Any]] = []
+    _UI["actions"] = []
     cost = 0.0
     reply = ""
+    tools_ran = False
+    nudged = False
     for _ in range(MAX_TOOL_ROUNDS):
         res = client.complete(s["assistant_chat_model"], messages, tools=TOOLS)
         cost += _usage_event(conn, "chat", res["model"], res["usage"], client.provider)
@@ -417,7 +505,14 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
         calls = msg.get("tool_calls") or []
         if not calls:
             reply = (msg.get("content") or "").strip()
+            if not tools_ran and not nudged and CLAIM_RE.search(reply):
+                nudged = True
+                messages.append({"role": "assistant", "content": reply})
+                messages.append({"role": "user", "content": CLAIM_NUDGE})
+                reply = ""
+                continue
             break
+        tools_ran = True
         messages.append({"role": "assistant", "content": msg.get("content"), "tool_calls": calls,
                          **({"_items": msg["_items"]} if msg.get("_items") else {})})
         for call in calls:
@@ -434,8 +529,10 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
         cost += _usage_event(conn, "chat", res["model"], res["usage"], client.provider)
         reply = (res["message"].get("content") or "").strip() or "C'est fait."
     cited = _cited(conn, reply)
-    _save(conn, conversation, "assistant", reply, {"actions": actions, "cited": cited, "estimated_cost_usd": round(cost, 6)})
-    return {"reply": reply, "actions": actions, "cited": cited, "estimated_cost_usd": round(cost, 6)}
+    _save(conn, conversation, "assistant", reply, {"actions": actions, "cited": cited, "estimated_cost_usd": round(cost, 6),
+                                                   "ui_actions": list(_UI["actions"])})
+    return {"reply": reply, "actions": actions, "cited": cited, "estimated_cost_usd": round(cost, 6),
+            "ui_actions": list(_UI["actions"])}
 
 
 def _cited(conn: sqlite3.Connection, text: str) -> list[dict[str, str]]:
