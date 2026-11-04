@@ -212,6 +212,17 @@ class HandsFreeTests(unittest.TestCase):
         self.assertEqual((out["ui_actions"][0]["action"], ctx["name"], ctx["kind"]), ("context", "Lancement", "project"))
         self.assertIn("Lancement", out["reply"])
 
+    def test_graph_filters_and_folding_by_voice(self):
+        out = core.chat(self.conn, self.client, "Montre seulement les articles sur l'IA")
+        self.assertEqual(out["ui_actions"], [{"action": "filter", "filter": {"types": ["article"], "text": "l'ia"}}])
+        out = core.chat(self.conn, self.client, "Enlève les filtres")
+        self.assertEqual(out["ui_actions"], [{"action": "filter", "filter": {}}])
+        out = core.chat(self.conn, self.client, "Replie Recettes")
+        self.assertEqual(out["ui_actions"], [{"action": "fold", "place": "Recettes", "fold": True}])
+        core._UI["actions"] = []
+        core.run_tool(self.conn, "ui_filter", {"types": ["article", "spaceship"], "origins": ["web"], "since_days": 7}, [])
+        self.assertEqual(core._UI["actions"][0]["filter"], {"types": ["article"], "origins": ["url"], "since_days": 7})
+
     def test_spoken_messages_ask_for_a_short_answer(self):
         core.chat(self.conn, self.client, "bonjour", spoken=True)
         self.assertIn("VOIX", FakeChat.last_messages[0]["content"])

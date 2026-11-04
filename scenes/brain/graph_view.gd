@@ -52,6 +52,12 @@ var details: Dictionary = {}     # id -> {summary, place, themes, body, item_typ
 var _asked: Dictionary = {}
 var _zoom_tween: Tween
 var show_minimap := true
+var anchors: Dictionary = {}         # space node id -> its zone's centre (Loop 13)
+var custom_anchors: Dictionary = {}  # zones the user moved by dragging a place
+var folded: Dictionary = {}          # space node id -> true when its items are folded in
+var filter: Dictionary = {}
+var filtered_out: Dictionary = {}          # node id -> true when filtered out or folded in
+var _note_tags: Dictionary = {}
 var page_tex: Dictionary = {}     # id -> {"w": int, "tex": Texture2D} (first page of a document)
 var _page_asked: Dictionary = {}  # id -> width asked
 var screen_offset := Vector2.ZERO  # centre of the free area (panels cover the left side)
@@ -113,6 +119,19 @@ func set_graph(data: Dictionary) -> Array[String]:
 			var hub: Dictionary = nodes[hub_id]
 			n["pos"] = (hub["pos"] as Vector2) + Vector2.from_angle(randf() * TAU) * 40.0
 	_rebuild_neighbors()
+	_layout_anchors()
+	# On first load, places and items start in their zones rather than in a random ring.
+	if first_load:
+		for id in nodes:
+			var n: Dictionary = nodes[id]
+			if anchors.has(id):
+				n["pos"] = anchors[id] as Vector2
+		for id in nodes:
+			var n: Dictionary = nodes[id]
+			var hub := "space:" + str(n.get("space_id", ""))
+			if str(n["type"]) == "note" and anchors.has(hub):
+				n["pos"] = (anchors[hub] as Vector2) + Vector2.from_angle(randf() * TAU) * (60.0 + randf() * 80.0)
+	_update_shown()
 	heat = 1.0
 	return born
 
@@ -251,6 +270,147 @@ func lod() -> String:
 	return "mid"
 
 
+# ------------------------------------------------------------ organisation (Loop 13)
+## Each place has a stable zone: the Inbox in the middle, the other places on rings around it,
+## grouped by kind (projects, areas, resources, archive). Items gravitate to their place.
+func _layout_anchors() -> void:
+	anchors.clear()
+	var order := {"project": 0, "area": 1, "resource": 2, "archive": 3}
+	var places: Array = []
+	for id in nodes:
+		var n: Dictionary = nodes[id]
+		if str(n["type"]) != "space":
+			continue
+		if str(n["kind"]) == "inbox":
+			anchors[id] = Vector2.ZERO
+		else:
+			places.append(n)
+	places.sort_custom(func(a: Dictionary, b: Dictionary) -> bool:
+		var ka: int = order.get(str(a["kind"]), 9)
+		var kb: int = order.get(str(b["kind"]), 9)
+		if ka != kb:
+			return ka < kb
+		return str(a["label"]).naturalnocasecmp_to(str(b["label"])) < 0)
+	var per_ring := 10
+	for i in places.size():
+		var ring := i / per_ring
+		var in_ring := mini(per_ring, places.size() - ring * per_ring)
+		var angle := TAU * float(i % per_ring) / float(in_ring) - PI / 2.0 + ring * 0.3
+		var radius := 420.0 + ring * 380.0
+		var n: Dictionary = places[i]
+		anchors[str(n["id"])] = custom_anchors.get(str(n["id"]), Vector2.from_angle(angle) * radius)
+
+
+## Filters: {"types": [...], "origins": [...], "since_days": int, "text": String, "layers": "all|mine|packs"}.
+func set_filter(f: Dictionary) -> void:
+	filter = f
+	_update_shown()
+	heat = maxf(heat, 0.5)
+	queue_redraw()
+
+
+func clear_filter() -> void:
+	set_filter({})
+
+
+func has_filter() -> bool:
+	return not filter.is_empty()
+
+
+func fold(space_id: String, on: bool) -> void:
+	var key := space_id if space_id.begins_with("space:") else "space:" + space_id
+	if on:
+		folded[key] = true
+	else:
+		folded.erase(key)
+	_update_shown()
+	heat = maxf(heat, 0.5)
+	queue_redraw()
+
+
+func is_shown(id: String) -> bool:
+	return not filtered_out.has(id)
+
+
+func _matches(n: Dictionary) -> bool:
+	if filter.is_empty():
+		return true
+	var types: Array = filter.get("types", [])
+	if not types.is_empty() and not types.has(str(n.get("item_type", n.get("kind", "")))):
+		return false
+	var origins: Array = filter.get("origins", [])
+	if not origins.is_empty():
+		var o := str(n.get("origin", ""))
+		var o2 := "pack" if n.get("layer") != null and str(n.get("layer")) != "" else o
+		if not (origins.has(o) or origins.has(o2)):
+			return false
+	var layers := str(filter.get("layers", "all"))
+	var in_pack := n.get("layer") != null and str(n.get("layer")) != ""
+	if (layers == "mine" and in_pack) or (layers == "packs" and not in_pack):
+		return false
+	var days := int(filter.get("since_days", 0))
+	if days > 0:
+		var created := str(n.get("created_at", "")).left(10)
+		var limit := Time.get_date_string_from_unix_time(int(Time.get_unix_time_from_system()) - days * 86400)
+		if created < limit:
+			return false
+	var text := str(filter.get("text", "")).strip_edges().to_lower()
+	if text != "":
+		var hay := str(n.get("label", "")).to_lower()
+		for t in _note_tags.get(str(n["id"]), []):
+			hay += " " + str(t)
+		var any_word := false
+		for w in text.split(" ", false):
+			if hay.contains(w.trim_prefix("#")):
+				any_word = true
+		if not any_word:
+			return false
+	return true
+
+
+func _update_shown() -> void:
+	filtered_out.clear()
+	_note_tags.clear()
+	for e in edges:
+		if str(e["type"]) == "tag":
+			var a := str(e["from"])
+			if not _note_tags.has(a):
+				_note_tags[a] = []
+			(_note_tags[a] as Array).append(str(e["to"]).trim_prefix("tag:").to_lower())
+	var shown_tags: Dictionary = {}
+	for id in nodes:
+		var n: Dictionary = nodes[id]
+		if str(n["type"]) != "note":
+			continue
+		if folded.has("space:" + str(n["space_id"])) or not _matches(n):
+			filtered_out[id] = true
+		else:
+			for t in _note_tags.get(str(id), []):
+				shown_tags["tag:" + str(t)] = true
+	for id in nodes:
+		if str((nodes[id] as Dictionary)["type"]) == "tag" and not shown_tags.has(id):
+			filtered_out[id] = true
+
+
+## Items of a place, shown or not (for the "+N" badge of a folded place).
+func place_count(space_node: String) -> int:
+	var sid := space_node.trim_prefix("space:")
+	var c := 0
+	for id in nodes:
+		var n: Dictionary = nodes[id]
+		if str(n["type"]) == "note" and str(n["space_id"]) == sid:
+			c += 1
+	return c
+
+
+func shown_note_count() -> int:
+	var c := 0
+	for id in nodes:
+		if str((nodes[id] as Dictionary)["type"]) == "note" and not filtered_out.has(id):
+			c += 1
+	return c
+
+
 # --------------------------------------------------------------- simulation
 func _process(delta: float) -> void:
 	_t += delta
@@ -263,7 +423,7 @@ func _process(delta: float) -> void:
 
 
 func _simulate(step: float) -> void:
-	var ids := nodes.keys()
+	var ids := nodes.keys().filter(func(i: Variant) -> bool: return not filtered_out.has(i))
 	var count := ids.size()
 	var forces: Dictionary = {}
 	for id in ids:
@@ -283,6 +443,8 @@ func _simulate(step: float) -> void:
 			forces[ids[a]] += f
 			forces[ids[b]] -= f
 	for e in edges:
+		if filtered_out.has(e["from"]) or filtered_out.has(e["to"]):
+			continue
 		var na: Dictionary = nodes[e["from"]]
 		var nb: Dictionary = nodes[e["to"]]
 		var d: Vector2 = (nb["pos"] as Vector2) - (na["pos"] as Vector2)
@@ -296,7 +458,11 @@ func _simulate(step: float) -> void:
 			n["vel"] = Vector2.ZERO
 			continue
 		var p: Vector2 = n["pos"]
-		var f: Vector2 = forces[id] - p * GRAVITY * (2.0 if str(n["type"]) == "space" else 1.0)
+		var f: Vector2
+		if anchors.has(id):  # a place stays in its zone
+			f = forces[id] * 0.25 + ((anchors[id] as Vector2) - p) * 0.06
+		else:
+			f = forces[id] - p * GRAVITY * 0.35
 		var v: Vector2 = ((n["vel"] as Vector2) + f * step * heat) * DAMPING
 		n["vel"] = v.limit_length(18.0)
 		n["pos"] = p + (n["vel"] as Vector2) * step
@@ -362,6 +528,8 @@ func _draw() -> void:
 		var pa := world_to_screen(a["pos"] as Vector2)
 		var pb := world_to_screen(b["pos"] as Vector2)
 		var grow := minf(_birth(a), _birth(b))
+		if filtered_out.has(e["from"]) or filtered_out.has(e["to"]):
+			continue
 		var dim := _is_dim(str(e["from"])) or _is_dim(str(e["to"]))
 		var type := str(e["type"])
 		var col := SbTheme.FOREST_LIGHT
@@ -399,6 +567,8 @@ func _draw() -> void:
 	# Nodes
 	var margin := 80.0 if level == "mid" or level == "far" else CARD.x * zoom
 	for id in nodes:
+		if filtered_out.has(id):
+			continue
 		var n: Dictionary = nodes[id]
 		var p := world_to_screen(n["pos"] as Vector2)
 		if p.x < -margin or p.y < -margin or p.x > size.x + margin or p.y > size.y + margin:
@@ -428,6 +598,12 @@ func _draw() -> void:
 				draw_circle(p, r, Color(SbTheme.PANEL_2, 0.92 * a))
 				draw_arc(p, r, 0, TAU, 64, Color(col, 0.95 * a), 2.5, true)
 				draw_arc(p, r + 6.0 * zoom, _t * 0.4, _t * 0.4 + PI * 0.6, 32, Color(col, 0.45 * a), 1.5, true)
+				if folded.has(id):
+					var badge := "+%d" % place_count(str(id))
+					var bw := _font.get_string_size(badge, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x + 12.0
+					var bp := p + Vector2(r * 0.7, -r * 0.9)
+					draw_rect(Rect2(bp, Vector2(bw, 20)), Color(col, 0.9 * a))
+					draw_string(_font, bp + Vector2(6, 15), badge, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, SbTheme.ON_ACCENT)
 			"tag":
 				draw_arc(p, r, 0, TAU, 24, Color(col, 0.8 * a), 1.5, true)
 			_:
@@ -450,7 +626,7 @@ func _draw_clusters() -> void:
 	var members: Dictionary = {}
 	for id in nodes:
 		var n: Dictionary = nodes[id]
-		if str(n["type"]) == "note":
+		if str(n["type"]) == "note" and not filtered_out.has(id):
 			var hub := "space:" + str(n["space_id"])
 			if not members.has(hub):
 				members[hub] = []
@@ -614,6 +790,8 @@ func node_at(screen_pos: Vector2) -> String:
 	var best_d := 1e9
 	var cards := zoom >= NEAR
 	for id in nodes:
+		if filtered_out.has(id):
+			continue
 		var n: Dictionary = nodes[id]
 		if cards and str(n["type"]) == "note":
 			var c := world_to_screen(n["pos"] as Vector2)
@@ -651,6 +829,8 @@ func _gui_input(event: InputEvent) -> void:
 				_panning = _dragging_node == ""
 				if mb.double_click and _dragging_node == "":
 					create_tween().tween_property(self, "cam", Vector2.ZERO, 0.6).set_trans(Tween.TRANS_CUBIC)
+				elif mb.double_click and _dragging_node.begins_with("space:"):
+					fold(_dragging_node, not folded.has(_dragging_node))
 				elif mb.double_click:
 					node_activated.emit(_dragging_node)
 			else:
@@ -673,6 +853,9 @@ func _gui_input(event: InputEvent) -> void:
 			if _dragging_node != "" and _moved:
 				var n: Dictionary = nodes[_dragging_node]
 				n["pos"] = screen_to_world(mm.position)
+				if anchors.has(_dragging_node):  # moving a place moves its zone
+					anchors[_dragging_node] = n["pos"]
+					custom_anchors[_dragging_node] = n["pos"]
 				heat = maxf(heat, 0.6)
 			elif _panning:
 				follow = ""

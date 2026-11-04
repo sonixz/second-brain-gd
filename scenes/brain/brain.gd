@@ -59,6 +59,7 @@ var classified := 0
 var last_receipt := ""
 var last_pack_export := ""
 var viewer: DocumentViewer
+var filters_bar: GraphFilters
 var _toast_timer: Timer
 # Views
 var view := "graph"   # graph | today | projects
@@ -86,6 +87,16 @@ func _ready() -> void:
 	graph.set_anchors_preset(Control.PRESET_FULL_RECT)
 	graph.node_selected.connect(_on_node_selected)
 	graph.details_needed.connect(_fetch_card)
+	filters_bar = GraphFilters.new()
+	filters_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	filters_bar.offset_left = 388
+	filters_bar.offset_right = -24
+	filters_bar.offset_top = 92
+	add_child(filters_bar)
+	filters_bar.changed.connect(func(f: Dictionary) -> void:
+		graph.set_filter(f)
+		app.state["graph_filter"] = f
+		_update_stats())
 	graph.page_needed.connect(_fetch_card_page)
 	graph.node_activated.connect(func(id: String) -> void: open_document_for(id))
 	graph.screen_offset = Vector2(182, 0)  # half the left panel: zoomed items centre in the free area
@@ -100,6 +111,7 @@ func _ready() -> void:
 	_build_capture_bar()
 	_build_toast()
 	_build_listening_overlay()
+	move_child(filters_bar, graph.get_index() + 1)  # above the graph (which paints its own background), below the panels
 	get_window().files_dropped.connect(_on_files_dropped)
 	voice_capture = VoiceCapture.new()
 	add_child(voice_capture)
@@ -276,6 +288,8 @@ func _build_views() -> void:
 func set_view(name: String) -> void:
 	view = name
 	captures_view.visible = name == "captures"
+	if filters_bar != null:
+		filters_bar.visible = name == "graph"
 	today_view.visible = name == "today"
 	projects_view.visible = name == "projects"
 	agents_view.visible = name == "agents"
@@ -569,6 +583,19 @@ func run_ui_actions(actions: Array) -> void:
 				_change_volume(str(a.get("change", "")))
 			"replay":
 				assistant_panel.replay(str(a.get("which", "last")))
+			"filter":
+				await set_view("graph")
+				var f: Dictionary = a.get("filter", {})
+				filters_bar.apply(f)
+			"fold":
+				await set_view("graph")
+				var place := str(a.get("place", ""))
+				if place == "*":
+					for nid in graph.nodes:
+						if str((graph.nodes[nid] as Dictionary)["type"]) == "space":
+							fold_place(str(nid), bool(a.get("fold", true)))
+				else:
+					fold_place(place, bool(a.get("fold", true)))
 			"open_document", "open_original":
 				var tid := ""
 				var tgt := str(a.get("target", ""))
@@ -920,11 +947,16 @@ func refresh_graph() -> Array[String]:
 	var res := await app.backend.api.call_api("/brain/graph")
 	if not res["ok"] or not is_inside_tree():
 		return []
+	var restore := graph.nodes.is_empty()
 	var born := graph.set_graph(res["data"])
+	if restore:  # filters and folded places survive a theme switch
+		for key in app.state.get("graph_folded", {}):
+			graph.fold(str(key), true)
+		if app.state.has("graph_filter") and not (app.state["graph_filter"] as Dictionary).is_empty():
+			filters_bar.apply(app.state["graph_filter"])
 	graph.details.clear()  # cards fetch their place, themes and text again when they are on screen
 	graph._asked.clear()
-	var notes := graph.node_count("note")
-	stats_label.text = "%d notes · %d spaces · %d tags" % [notes, graph.node_count("space"), graph.node_count("tag")]
+	_update_stats()
 	return born
 
 
@@ -968,6 +1000,38 @@ func open_document_for(note_id: String, at_page: int = 1) -> bool:
 	if not ok:
 		show_toast("No kept original for this item (added before originals were kept?).")
 	return ok
+
+
+func _update_stats() -> void:
+	var notes := graph.node_count("note")
+	var shown := graph.shown_note_count()
+	stats_label.text = ("%d notes" % notes if shown == notes else "%d of %d notes shown" % [shown, notes]) \
+		+ " · %d spaces · %d tags" % [graph.node_count("space"), graph.node_count("tag")]
+
+
+## Fold or unfold a place by name (voice) or node id.
+func fold_place(name_or_id: String, on: bool) -> bool:
+	var id := name_or_id if name_or_id.begins_with("space:") else ""
+	if id == "":
+		for nid in graph.nodes:
+			var n: Dictionary = graph.nodes[nid]
+			if str(n["type"]) == "space" and str(n["label"]).to_lower() == name_or_id.strip_edges().to_lower():
+				id = str(nid)
+		if id == "":
+			var hit := graph.find_node(name_or_id)
+			id = hit if hit.begins_with("space:") else ""
+	if id == "":
+		show_toast("No place called « %s »." % name_or_id)
+		return false
+	graph.fold(id, on)
+	var f: Dictionary = app.state.get("graph_folded", {})
+	if on:
+		f[id] = true
+	else:
+		f.erase(id)
+	app.state["graph_folded"] = f
+	_update_stats()
+	return true
 
 
 func refresh_spaces() -> void:

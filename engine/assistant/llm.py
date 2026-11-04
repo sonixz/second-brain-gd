@@ -233,6 +233,17 @@ class FakeChat:
         text = str(last.get("content", ""))
         low = text.lower()
         views = {"aujourd": "today", "today": "today", "projet": "projects", "agent": "agents", "graph": "graph"}
+        if low.startswith("montre seulement") and tools:
+            args = {"types": ["article"] if "article" in low else [], "text": low.split(" sur ", 1)[1].strip(" .!") if " sur " in low else ""}
+            call = {"id": "call_filter", "type": "function", "function": {"name": "ui_filter", "arguments": json.dumps(args)}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith("enlève les filtres") and tools:
+            call = {"id": "call_clear", "type": "function", "function": {"name": "ui_filter", "arguments": json.dumps({"clear": True})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith(("replie ", "déplie ")) and tools:
+            call = {"id": "call_fold", "type": "function", "function": {"name": "ui_fold", "arguments": json.dumps(
+                {"place": text.split(" ", 1)[1].strip(" .!"), "fold": low.startswith("replie")})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if low.startswith(("ouvre le document", "ouvre le pdf")) and tools:
             target = text.split(" ", 3)[3].strip(" .!") if len(text.split(" ", 3)) > 3 else ""
             call = {"id": "call_doc", "type": "function", "function": {"name": "ui_open_document", "arguments": json.dumps({"target": target})}}

@@ -1,5 +1,22 @@
 # Devlog
 
+## Loop 13 — An organised graph (2026-11-03)
+
+- **Stable zones.** The Inbox sits in the middle. The other places are on rings around it, grouped by kind
+  (projects, areas, resources, archive) and in alphabetical order. Each place is pulled to its zone and its
+  items gravitate around it. Dragging a place moves its zone.
+- **Folding.** Double-click a place, or say « replie / déplie <place> » (`*` for all). Its items gather
+  into it, with a « +N » badge.
+- **Filters.** A bar over the graph filters by type, origin (typed, spoken, web, file, pack), date, a word
+  or theme, and packs. It shows a summary of what is shown and has « ✕ Show all ».
+  - By voice: « montre seulement les articles sur l'IA », « enlève les filtres » (`ui_filter`).
+  - The stats say « N of M notes shown ».
+  - Filters and folded places survive a theme switch.
+- **Graph payload.** Each item now carries `item_type` and `origin`.
+- **Bug found in the screenshot.** The filter bar was invisible: it was added before the graph, which
+  paints its own background over it. It is now placed just above the graph.
+- **Tests.** Python 131 and Godot 144, on Linux and native Windows.
+
 ## Loop 12 — Originals and the document viewer (2026-11-03)
 
 - **Originals.** The owner asked that the Brain keep the files themselves. Every file and web page is now

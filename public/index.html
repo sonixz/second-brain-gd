@@ -104,6 +104,7 @@
           <figure><img src="assets/screens/hands-free.png" alt="A listening indicator at the top of the screen saying release F8 to send, while the assistant panel shows the conversation" loading="lazy" width="1280" height="800"><figcaption>Hands-free: hold F8 and speak</figcaption></figure>
           <figure><img src="assets/screens/captures.png" alt="The Captures view: everything added to the brain, newest first, each card showing where it was filed, its type and origin" loading="lazy" width="1280" height="800"><figcaption>Captures: everything you added, as the archivist filed it</figcaption></figure>
           <figure><img src="assets/screens/document-card.png" alt="The graph zoomed into a PDF: the card shows its title, its text and, on the right, the real first page of the document" loading="lazy" width="1280" height="800"><figcaption>A PDF inside the graph: its real page, sharper as you zoom</figcaption></figure>
+          <figure><img src="assets/screens/graph-filtered.png" alt="The graph with a zone per place, one place folded with a +2 badge, and a filter bar showing only items about atlas" loading="lazy" width="1280" height="800"><figcaption>A zone per place, places folded away, a filter: « montre seulement… »</figcaption></figure>
           <figure><img src="assets/screens/zoom-read.png" alt="The graph zoomed right into one item: a large card with its title, its place Projets › Client Atlas, and its full text" loading="lazy" width="1280" height="800"><figcaption>Zoom in until the scale disappears and the text is there</figcaption></figure>
         </div>
         <p class="caption-note">Screenshots captured from the real application with the real assistant (Loops 3 and 4), on demo data.</p>
@@ -144,6 +145,7 @@
               <li>Semantic zoom: from named clusters down to an item's full text, readable inside the graph</li>
               <li>Brain packs: export part of your brain as one file, import someone's as a layer you can switch off</li>
               <li>Every original kept: PDFs and images shown page by page, right inside the graph and full screen</li>
+              <li>An organised graph: a zone per place, places that fold away, filters by type, origin, date and theme</li>
               <li>Your real OpenAI costs and tokens on the dashboard, read live from OpenAI</li>
               <li>Real-time spoken conversation (F9), with interruptions and the same tools</li>
               <li>Assistant: spoken morning briefing, answers with citations, acts on your notes</li>
@@ -165,7 +167,6 @@
           <div class="road-col">
             <h3><span class="badge badge-wip">In development</span></h3>
             <ul>
-              <li>An organised graph: a zone per place, folding, filters by type, theme, origin and date</li>
               <li>Search and paths in the graph: results that light up, and how two ideas connect</li>
             </ul>
           </div>
@@ -199,6 +200,15 @@
       <div class="container narrow">
         <p class="overline">Development journal</p>
         <h2>Built in loops</h2>
+        <article class="entry">
+          <header><span class="badge badge-done">Loop 13</span> <time datetime="2026-11-03">November 3, 2026</time></header>
+          <h3>An organised graph</h3>
+          <p>Every place now has its own zone: the Inbox in the middle, projects, areas and resources around it,
+            each with its items gathered close. Double-click a place, or say « replie Recettes », and its items
+            fold into it. A filter bar shows only what you ask for: articles, things you spoke, what came in this
+            week, a word or a theme. « Montre seulement les articles sur l'IA » works by voice, and the graph tells
+            you how many items are showing.</p>
+        </article>
         <article class="entry">
           <header><span class="badge badge-done">Loop 12</span> <time datetime="2026-11-03">November 3, 2026</time></header>
           <h3>The originals, and a page you can zoom into</h3>

@@ -209,7 +209,8 @@ def graph(conn: sqlite3.Connection) -> dict[str, Any]:
     edges: list[dict[str, Any]] = []
     for s in list_spaces(conn):
         nodes.append({"id": f"space:{s['id']}", "type": "space", "label": s["name"], "kind": s["kind"],
-                      "color": s["color"], "weight": s["note_count"], "status": s.get("status"), "layer": s.get("layer_id")})
+                      "color": s["color"], "weight": s["note_count"], "status": s.get("status"), "layer": s.get("layer_id"),
+                      "area_id": s.get("area_id"), "position": s.get("position")})
         if s.get("area_id"):
             edges.append({"from": f"space:{s['id']}", "to": f"space:{s['area_id']}", "type": "area"})
     degree: dict[str, int] = {}
@@ -217,10 +218,18 @@ def graph(conn: sqlite3.Connection) -> dict[str, Any]:
         edges.append({"from": r["from_note"], "to": r["to_note"], "type": "link"})
         degree[r["from_note"]] = degree.get(r["from_note"], 0) + 1
         degree[r["to_note"]] = degree.get(r["to_note"], 0) + 1
-    for n in conn.execute("SELECT id, space_id, title, kind, source, pinned, created_at, updated_at, layer_id FROM notes"
-                          " WHERE status != 'archived'"):
+    for n in conn.execute(
+            "SELECT n.id, n.space_id, n.title, n.kind, n.source, n.pinned, n.created_at, n.updated_at, n.layer_id,"
+            " m.item_type, s.kind AS src_kind, s.mime AS src_mime FROM notes n"
+            " LEFT JOIN item_meta m ON m.note_id = n.id LEFT JOIN sources s ON s.note_id = n.id"
+            " WHERE n.status != 'archived'"):
+        origin = n["src_kind"] or n["source"]  # url | file | typed | voice | import | seed | agent
+        item_type = n["item_type"] or ("image" if (n["src_mime"] or "").startswith("image/") else
+                                       ("document" if n["src_kind"] == "file" else ("article" if n["src_kind"] == "url" else n["kind"])))
+        if (n["src_mime"] or "").startswith("image/"):
+            item_type = "image"
         nodes.append({"id": n["id"], "type": "note", "label": n["title"], "kind": n["kind"], "space_id": n["space_id"],
-                      "layer": n["layer_id"],
+                      "layer": n["layer_id"], "item_type": item_type, "origin": origin,
                       "source": n["source"], "pinned": bool(n["pinned"]), "created_at": n["created_at"],
                       "updated_at": n["updated_at"], "weight": degree.get(n["id"], 0)})
         edges.append({"from": n["id"], "to": f"space:{n['space_id']}", "type": "space"})

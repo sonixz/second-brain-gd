@@ -432,6 +432,34 @@ func _e2e() -> void:
 	var carded := await wait_until(func() -> bool: return graph.details.has(target_id), 10.0)
 	check(carded and str((graph.details[target_id] as Dictionary).get("body", "")).contains("double brackets"),
 		"up close, the card holds the item's full text")
+	# An organised graph (Loop 13): stable zones, folding, filters, by voice.
+	var inbox_anchor: Vector2 = graph.anchors.get("space:inbox", Vector2(999, 999))
+	var zone_ok := inbox_anchor == Vector2.ZERO and graph.anchors.size() >= 3
+	for k1 in graph.anchors:
+		for k2 in graph.anchors:
+			if k1 != k2 and (graph.anchors[k1] as Vector2).distance_to(graph.anchors[k2] as Vector2) < 250.0:
+				zone_ok = false
+	check(zone_ok, "each place has its own zone, the Inbox in the middle (%d zones)" % graph.anchors.size())
+	await ap.send("Replie Getting started", true)
+	var gs_id := ""
+	for nid in graph.nodes:
+		if str((graph.nodes[nid] as Dictionary)["label"]) == "Getting started" and str((graph.nodes[nid] as Dictionary)["type"]) == "space":
+			gs_id = str(nid)
+	var folded_ok := await wait_until(func() -> bool: return graph.folded.has(gs_id), 5.0)
+	var gs_note := graph.find_node("Links make constellations")
+	check(folded_ok and not graph.is_shown(gs_note) and graph.place_count(gs_id) > 0, "« replie Getting started » gathers its items into the place")
+	check(str(brain.get("stats_label").text).contains("of"), "the stats say how many items are shown (%s)" % brain.get("stats_label").text)
+	await ap.send("Déplie Getting started", true)
+	await wait_until(func() -> bool: return not graph.folded.has(gs_id), 5.0)
+	check(graph.is_shown(gs_note), "« déplie » brings them back")
+	await ap.send("Montre seulement les notes sur constellations", true)
+	var filtered := await wait_until(func() -> bool: return graph.has_filter(), 5.0)
+	var fb: GraphFilters = brain.get("filters_bar")
+	check(filtered and graph.is_shown(gs_note) and graph.shown_note_count() < graph.node_count("note") and fb.summary.text.contains("constellations"),
+		"« montre seulement… sur constellations » filters the graph (%d shown, %s)" % [graph.shown_note_count(), fb.summary.text])
+	await ap.send("Enlève les filtres", true)
+	await wait_until(func() -> bool: return not graph.has_filter(), 5.0)
+	check(graph.shown_note_count() == graph.node_count("note") and not fb.clear_button.visible, "« enlève les filtres » shows everything again")
 	await ap.send("Vue d'ensemble", true)
 	var overview := await wait_until(func() -> bool: return graph.lod() == "far", 5.0)
 	check(overview, "« vue d'ensemble » zooms back out to the places")
