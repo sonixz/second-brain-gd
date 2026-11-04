@@ -1,5 +1,37 @@
 # Devlog
 
+## Loop 9 — One intake and the archivist (2026-11-03)
+
+- **Refocus.** The Brain is about data: capture anything, file it, link it, find it again. The AI at the
+  intake is an **archivist**: data-oriented, no opinions, and it asks only what it needs to file an item.
+- **`engine/brain/archivist.py` replaces the classifier.** It produces a structured record (type,
+  language, summary, key points, entities, themes, confidence, receipt) in `item_meta` (migration 0007).
+  - **It can create places.** The old classifier could only pick an existing space, so a fresh Brain
+    would have sent everything to the Inbox.
+  - **With the real API on an empty Brain,** it created « Ressources › Recettes », « Projets › Projet de
+    pain » and « Ressources › Organisation de l'information », with confidence 0.88–0.99 and 2–4 s per
+    item.
+- **Fresh start.**
+  - The default areas and demo data are gone from real installs: the Inbox plus a French Getting started
+    guide only. The demo seed is still available with `SBGD_SEED=demo`.
+  - The owner's data was wiped as agreed, with no backup. The setup was re-run through Godot
+    `--autosetup`: all 8 steps OK in 45 s, Codex package included.
+  - Running the bootstrap directly with the Store Python put `.venv` in its private folder. Godot is the
+    supported way, as documented.
+- **Ways in.** One gesture each:
+  - the capture bar (text or links);
+  - files;
+  - voice, with the receipt spoken back;
+  - **Ctrl+Shift+V** or « ajoute ça au Brain » for the clipboard;
+  - the browser **« Envoyer au Brain »** bookmarklet: a page or a selection, with a dedicated capture key.
+- **Working context.** « Je veux structurer le projet X » files the next items into X.
+- **Godot.**
+  - A **Captures** view, next to the Graph.
+  - Receipt cards in the assistant panel.
+  - The assistant greets as the archivist.
+- **Tests.** Python 117 (7 archivist, plus capture and fresh-seed checks against a real engine) and Godot
+  121. Linux and native Windows.
+
 ## Loop 8b — Voice fixes (2026-11-03)
 
 - **Owner's feedback:** « il parle très lentement » and « je peux pas relire le weekly review ».

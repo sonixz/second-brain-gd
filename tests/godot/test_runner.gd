@@ -182,17 +182,26 @@ func _e2e() -> void:
 	var cv: CapturesView = brain.get("captures_view")
 	var fed := await wait_until(func() -> bool: return cv.items.size() >= 2 and cv.list.get_child_count() >= 2, 10.0)
 	check(fed and str((cv.items[0] as Dictionary).get("title", "")).begins_with("Photographie"), "the Captures view lists what came in, newest first")
+	brain.set("test_clipboard", "Le jeûne intermittent: fenêtre de 8 heures pour manger")
+	var before_clip := int(brain.get("classified"))
+	await brain.call("run_ui_actions", [{"action": "capture_clipboard"}])
+	var clipped := await wait_until(func() -> bool: return int(brain.get("classified")) == before_clip + 1, 20.0)
+	check(clipped, "« ajoute ça au Brain » / Ctrl+Shift+V files the clipboard (%s)" % str(brain.get("last_receipt")))
+	await cv.show_bookmarklet()
+	check(cv.bookmarklet.begins_with("javascript:") and cv.bookmarklet.contains("/capture?key="), "the browser bookmark is offered to copy")
+	for d in cv.find_children("*", "AcceptDialog", true, false):
+		d.queue_free()
 	await ap.send("Je veux structurer le projet Lancement")
 	check(str(brain.get("capture_hint").text).contains("Lancement"), "« je veux structurer le projet X » sets the working context")
 	await ap.send("Je veux structurer")  # clears it again for the rest of the flow
 	await brain.call("set_view", "graph")
 	await brain.call("_undo_toast")
 	check(toast_label.text.begins_with("Put back"), "the filing can be undone from the toast")
-	check(graph.node_count("note") == gs_before + 2, "undo keeps the note, only its place changes")
+	check(graph.node_count("note") == gs_before + 3, "undo keeps the note, only its place changes")
 	var spaces_res: Dictionary = await app.backend.api.call_api("/brain/spaces")
 	var still_there := false
 	for sp in (spaces_res["data"] as Dictionary).get("spaces", []):
-		still_there = still_there or str((sp as Dictionary).get("name", "")) == "Photographie"
+		still_there = still_there or str((sp as Dictionary).get("name", "")) == "Jeûne"
 	check(not still_there, "undoing removes the place the archivist had just created")
 	# Structure: Today view, checklists, Projects view, project card, next actions.
 	await brain.call("set_view", "today")

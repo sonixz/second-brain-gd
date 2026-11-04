@@ -36,6 +36,12 @@ func setup(a: SbApp) -> CapturesView:
 	context_label.theme_type_variation = "Muted"
 	context_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(context_label)
+	var browser := Button.new()
+	browser.text = "Send from browser…"
+	browser.tooltip_text = "A bookmark that sends the page you are reading (or your selection) to the Brain"
+	browser.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	browser.pressed.connect(show_bookmarklet)
+	head.add_child(browser)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -70,6 +76,60 @@ func refresh() -> void:
 		return
 	for it in items:
 		list.add_child(_card(it as Dictionary))
+
+
+var bookmarklet := ""
+
+
+## The « Envoyer au Brain » bookmark: copy it, then add it to the browser's bookmarks bar.
+func show_bookmarklet() -> void:
+	var res := await app.backend.api.call_api("/brain/capture-link")
+	if not res["ok"] or not is_inside_tree():
+		return
+	bookmarklet = str((res["data"] as Dictionary).get("bookmarklet", ""))
+	var dlg := AcceptDialog.new()
+	dlg.title = "Send to the Brain from your browser"
+	dlg.ok_button_text = "Close"
+	var box := VBoxContainer.new()
+	box.custom_minimum_size = Vector2(620, 0)
+	box.add_theme_constant_override("separation", 10)
+	dlg.add_child(box)
+	var how := Label.new()
+	how.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	how.text = ("1. Copy the link below.\n2. In your browser, add a bookmark named « Envoyer au Brain » and paste it as the address.\n"
+		+ "3. On any page, click it: the page (or the text you selected) goes to the archivist, and a small window shows the receipt.\n"
+		+ "The Brain must be open. The link holds a capture key that can only add pages; you can renew it here.")
+	box.add_child(how)
+	var code := TextEdit.new()
+	code.text = bookmarklet
+	code.editable = false
+	code.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	code.custom_minimum_size = Vector2(0, 90)
+	box.add_child(code)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	box.add_child(row)
+	var copy := Button.new()
+	copy.text = "Copy the link"
+	copy.theme_type_variation = "PrimaryButton"
+	copy.pressed.connect(func() -> void:
+		DisplayServer.clipboard_set(bookmarklet)
+		copy.text = "Copied ✓")
+	row.add_child(copy)
+	var renew := Button.new()
+	renew.text = "Renew the capture key"
+	renew.theme_type_variation = "GhostButton"
+	renew.pressed.connect(func() -> void:
+		var r := await app.backend.api.call_api("/brain/capture-link/rotate", true, HTTPClient.METHOD_POST)
+		if r["ok"]:
+			bookmarklet = str((r["data"] as Dictionary).get("bookmarklet", ""))
+			code.text = bookmarklet
+			copy.text = "Copy the link")
+	row.add_child(renew)
+	add_child(dlg)
+	dlg.popup_centered()
+	dlg.confirmed.connect(dlg.queue_free)
+	dlg.canceled.connect(dlg.queue_free)
 
 
 static func origin_label(it: Dictionary) -> String:

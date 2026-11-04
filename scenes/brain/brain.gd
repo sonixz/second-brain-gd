@@ -525,7 +525,7 @@ func run_ui_actions(actions: Array) -> void:
 			"replay":
 				assistant_panel.replay(str(a.get("which", "last")))
 			"capture_clipboard":
-				var clip := DisplayServer.clipboard_get().strip_edges()
+				var clip := clipboard_text().strip_edges()
 				if clip == "":
 					show_toast("The clipboard is empty: copy a link or a text first.")
 				else:
@@ -545,6 +545,14 @@ func run_ui_actions(actions: Array) -> void:
 				theme_choice = str(a.get("theme", ""))
 	if theme_choice != "":
 		app.set_theme_choice(theme_choice)
+
+
+## Headless runs have no clipboard: tests put their text in test_clipboard.
+var test_clipboard := ""
+
+
+func clipboard_text() -> String:
+	return test_clipboard if test_clipboard != "" else DisplayServer.clipboard_get()
 
 
 func _change_volume(change: String) -> void:
@@ -749,7 +757,7 @@ func _build_capture_bar() -> void:
 	col.add_child(row)
 	capture_edit = LineEdit.new()
 	capture_edit.theme_type_variation = "CaptureEdit"
-	capture_edit.placeholder_text = "Capture a thought…   (Enter to save · Ctrl+Space to focus)"
+	capture_edit.placeholder_text = "Type, paste a link…   (Enter · Ctrl+Shift+V adds the clipboard · F8 to speak)"
 	capture_edit.custom_minimum_size = Vector2(620, 54)
 	capture_edit.text_submitted.connect(func(t: String) -> void: capture(t))
 	capture_edit.focus_entered.connect(func() -> void: app.audio.play("capture_open", 0.0, -4.0))
@@ -1208,7 +1216,11 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	if not k.pressed:
 		return
-	if k.keycode == KEY_SPACE and k.ctrl_pressed:
+	if k.keycode == KEY_V and k.ctrl_pressed and k.shift_pressed:
+		# Ctrl+Shift+V: whatever is in the clipboard (a link, a text) goes straight to the archivist.
+		run_ui_actions([{"action": "capture_clipboard"}])
+		accept_event()
+	elif k.keycode == KEY_SPACE and k.ctrl_pressed:
 		capture_edit.grab_focus()
 		accept_event()
 	elif k.keycode == KEY_SLASH and not k.ctrl_pressed:
@@ -1290,7 +1302,7 @@ func stop_voice() -> void:
 		await get_tree().process_frame
 	voice_stream.stop()
 	capture_edit.editable = true
-	capture_edit.placeholder_text = "Capture a thought…   (Enter to save · Ctrl+Space to focus · Ctrl+M to speak)"
+	capture_edit.placeholder_text = "Type, paste a link…   (Enter · Ctrl+Shift+V adds the clipboard · F8 to speak)"
 	voice_state = "idle"
 	var text := _voice_final.strip_edges()
 	if text == "":

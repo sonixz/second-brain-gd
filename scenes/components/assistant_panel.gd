@@ -104,7 +104,7 @@ func start() -> void:
 	var data: Dictionary = st["data"] if st["ok"] else {}
 	configured = bool(data.get("configured", false))
 	if not configured:
-		_add_bubble("assistant", "Hi! I can summarise your day, answer from your notes and file every thought you capture. I need your OpenAI key first: click the microphone or open the engine room's Voice card.", [], [])
+		_add_bubble("assistant", "Hi! I'm your archivist. Give me anything (a thought, a link, a PDF, your voice): I file it, link it and find it again. I need your OpenAI key first: click the microphone or open the engine room's Voice card.", [], [])
 		return
 	var hist := await app.backend.api.call_api("/assistant/history?limit=40")
 	var had_briefing := false

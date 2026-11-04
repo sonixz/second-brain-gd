@@ -12,6 +12,7 @@ import tempfile
 import time
 import unittest
 import urllib.error
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -390,6 +391,28 @@ class BootstrapIntegration(unittest.TestCase):
         self.assertNotEqual(bad.returncode, 0, "a wrong token must not open a live conversation")
         code, st = get(base + "/status", tok)
         self.assertEqual(st["live"]["model"], "gpt-realtime-2.1-mini")
+        # « Envoyer au Brain » from a browser (Loop 9): a bookmarklet opens /capture with a capture key.
+        code, link = get(f"http://127.0.0.1:{port}/brain/capture-link", tok)
+        self.assertEqual(code, 200)
+        self.assertTrue(link["bookmarklet"].startswith("javascript:"))
+        ckey = link["bookmarklet"].split("key=", 1)[1].split("&", 1)[0]
+        def page(q):
+            try:
+                with urllib.request.urlopen(f"http://127.0.0.1:{port}/capture?" + urllib.parse.urlencode(q), timeout=30) as r:
+                    return r.status, r.read().decode("utf-8")
+            except urllib.error.HTTPError as e:
+                return e.code, e.read().decode("utf-8")
+        code, body = page({"key": "wrong", "url": "https://example.org/a"})
+        self.assertEqual(code, 400)
+        self.assertIn("invalide", body)
+        code, body = page({"key": ckey, "url": "https://example.org/sommeil", "title": "Dormir mieux",
+                           "text": "Une routine du soir régulière améliore le sommeil."})
+        self.assertEqual(code, 200, body[-400:])
+        self.assertIn("Ajouté à ton Brain", body)
+        code, feed = get(f"http://127.0.0.1:{port}/brain/feed?limit=5", tok)
+        top = feed["items"][0]
+        self.assertEqual((top["title"], top["origin"], top["origin_uri"]), ("Dormir mieux", "url", "https://example.org/sommeil"))
+        self.assertTrue(top["filed"])
         # Real costs: read live from OpenAI's shapes (fake pages here), never stored.
         bl = f"http://127.0.0.1:{port}/billing"
         self.assertEqual(get(bl)[0], 401)
