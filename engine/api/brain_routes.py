@@ -150,6 +150,22 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     def get_search(q: str = Query(min_length=1, max_length=200), limit: int = Query(30, ge=1, le=200)) -> dict[str, Any]:
         return {"results": run(meaning.search_notes, client_or_none(), q, limit)}
 
+    @r.get("/path")
+    def get_path(a: str = Query(alias="from", min_length=1, max_length=300), b: str = Query(alias="to", min_length=1, max_length=300)) -> dict[str, Any]:
+        from engine.brain import connect
+
+        def go(conn):
+            ia, ib = connect.resolve(conn, a, client_or_none()), connect.resolve(conn, b, client_or_none())
+            if not ia or not ib:
+                raise brain.NotFound("item")
+            return connect.path(conn, ia, ib)
+        return run(go)
+
+    @r.post("/related/{a}/{b}/{choice}")
+    def post_related(a: str, b: str, choice: Literal["keep", "dismiss"]) -> dict[str, Any]:
+        from engine.brain import connect
+        return run(connect.choose_related, a, b, "kept" if choice == "keep" else "dismissed")
+
     @r.get("/feed")
     def get_feed(limit: int = Query(50, ge=1, le=500)) -> dict[str, Any]:
         from engine.brain import archivist

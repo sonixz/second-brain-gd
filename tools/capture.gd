@@ -270,6 +270,19 @@ func _run() -> void:
 	await bz.call("fold_place", "Fête de Léa", false)
 	await bz.call("fold_place", "Santé", false)
 	await pause(0.5)
+	# Search and connect (Loop 14): hits with reasons, then the path between two items.
+	await bz.call("show_search", "atlas")
+	await pause(2.0)
+	await shot("19-graph-search")
+	bz.get("search_edit").text = ""
+	await bz.call("_on_search_changed", "")
+	var pres: Dictionary = await app.backend.api.call_api("/brain/path?from=" + "Morning routine".uri_encode() + "&to=" + "Atlas risks".uri_encode())
+	if pres["ok"] and bool((pres["data"] as Dictionary).get("found", false)):
+		gz.set_path((pres["data"] as Dictionary)["ids"], (pres["data"] as Dictionary)["steps"])
+		await pause(2.5)
+		await shot("20-graph-path")
+		gz.clear_path()
+	await pause(0.5)
 	# Originals and the document viewer (Loop 12): a PDF in its card, then full screen.
 	await bz.call("add_source_file", ProjectSettings.globalize_path("res://tests/fixtures/docs/sample.pdf"))
 	await pause(2.0)

@@ -1,5 +1,25 @@
 # Devlog
 
+## Loop 14 — Search and connect in the graph (2026-11-03)
+
+- **Search on screen.** Hits light up in the graph and are listed with **why** they matched: by meaning
+  (with a percentage) or by words. Click a hit to zoom into it. By voice: « cherche X » (`ui_search`).
+- **Paths.** « comment X est relié à Y ? » (`find_path`) finds the cheapest chain between two items, in
+  this order of strength: a link you made, then a related idea, then a shared theme, then the same place.
+  - In the graph, the chain is drawn bright with travelling dots, and the camera frames it. Esc clears it.
+  - The archivist says the chain in one sentence, e.g. « … rejoint … en 3 étapes : le thème #habits,
+    puis … ».
+  - API: `GET /brain/path?from=&to=`, which takes titles or ids.
+- **Related ideas.** Each suggestion in the inspector has ✓ (keep: it becomes a real link) and ✕
+  (dismiss: never suggested again). The choices are stored in the `related_choices` table (migration
+  0010).
+  - By voice: « garde le lien avec X », « enlève l'idée liée avec X ».
+  - The item open on screen is now sent to the assistant as context.
+- **Edit in the card.** Double-click an item that has no document to edit its title and text right on its
+  card, with Ctrl+Enter to save. Items with a document still open the viewer.
+- **Polish.** The path's steps showed their names twice, and that is fixed.
+- **Tests.** Python 137 (6 connect tests) and Godot 150, on Linux and native Windows.
+
 ## Loop 13 — An organised graph (2026-11-03)
 
 - **Stable zones.** The Inbox sits in the middle. The other places are on rings around it, grouped by kind

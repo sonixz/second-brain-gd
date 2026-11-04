@@ -167,7 +167,9 @@ def _pairs(conn: sqlite3.Connection, where: str = "", args: tuple = ()) -> list[
                           " JOIN notes y ON y.id = r.other AND y.status != 'archived'" + where, args):
         key = tuple(sorted((r["owner"], r["other"])))
         seen[key] = max(seen.get(key, 0.0), r["score"])
-    return [(a, b, sc) for (a, b), sc in seen.items()]
+    # pairs the user already answered (kept as a link, or dismissed) are no longer suggestions
+    answered = {(r["a"], r["b"]) for r in conn.execute("SELECT a, b FROM related_choices")}
+    return [(a, b, sc) for (a, b), sc in seen.items() if (a, b) not in answered]
 
 
 def related(conn: sqlite3.Connection, note_id: str, limit: int = RELATED_PER_NOTE) -> list[dict[str, Any]]:

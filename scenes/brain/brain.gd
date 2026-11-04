@@ -60,6 +60,10 @@ var last_receipt := ""
 var last_pack_export := ""
 var viewer: DocumentViewer
 var filters_bar: GraphFilters
+var card_editor: PanelContainer
+var path_active := false
+var results_box: VBoxContainer
+var last_hits: Array = []
 var _toast_timer: Timer
 # Views
 var view := "graph"   # graph | today | projects
@@ -98,7 +102,13 @@ func _ready() -> void:
 		app.state["graph_filter"] = f
 		_update_stats())
 	graph.page_needed.connect(_fetch_card_page)
-	graph.node_activated.connect(func(id: String) -> void: open_document_for(id))
+	graph.node_activated.connect(func(id: String) -> void:
+		var it := await app.backend.api.call_api("/brain/items/" + id)
+		var src: Variant = (it["data"] as Dictionary).get("source") if it["ok"] else null
+		if src is Dictionary and (src as Dictionary).get("original") != null:
+			open_document_for(id)
+		else:
+			edit_in_card(id))
 	graph.screen_offset = Vector2(182, 0)  # half the left panel: zoomed items centre in the free area
 	graph.background_clicked.connect(func() -> void:
 		graph.select("")
@@ -290,6 +300,8 @@ func set_view(name: String) -> void:
 	captures_view.visible = name == "captures"
 	if filters_bar != null:
 		filters_bar.visible = name == "graph"
+	if results_box != null:
+		(results_box.get_parent() as Control).visible = name == "graph" and search_edit.text.strip_edges() != ""
 	today_view.visible = name == "today"
 	projects_view.visible = name == "projects"
 	agents_view.visible = name == "agents"
@@ -583,6 +595,13 @@ func run_ui_actions(actions: Array) -> void:
 				_change_volume(str(a.get("change", "")))
 			"replay":
 				assistant_panel.replay(str(a.get("which", "last")))
+			"search":
+				await show_search(str(a.get("query", "")))
+			"path":
+				await set_view("graph")
+				await refresh_graph()
+				graph.set_path(a.get("ids", []), a.get("steps", []))
+				path_active = true
 			"filter":
 				await set_view("graph")
 				var f: Dictionary = a.get("filter", {})
@@ -1324,7 +1343,98 @@ func _load_related(id: String) -> void:
 		b.tooltip_text = "Similarity %d%%" % int(round(float(n.get("score", 0.0)) * 100.0))
 		var nid := str(n["id"])
 		b.pressed.connect(func() -> void: open_note(nid, true))
-		related_box.add_child(b)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		var row := HBoxContainer.new()
+		related_box.add_child(row)
+		row.add_child(b)
+		for spec in [["✓", "keep", "Keep: make it a real link"], ["✕", "dismiss", "Dismiss: never suggest it again"]]:
+			var c := Button.new()
+			c.text = str(spec[0])
+			c.tooltip_text = str(spec[2])
+			c.theme_type_variation = "GhostButton"
+			var choice := str(spec[1])
+			c.pressed.connect(func() -> void: answer_related(id, nid, choice))
+			row.add_child(c)
+
+
+## « garde ce lien » / « enlève cette idée liée »: the suggestion becomes a link, or disappears for good.
+func answer_related(a: String, b: String, choice: String) -> void:
+	var res := await app.backend.api.call_api("/brain/related/%s/%s/%s" % [a, b, choice], true, HTTPClient.METHOD_POST)
+	if res["ok"] and is_inside_tree():
+		show_toast("Kept as a link." if choice == "keep" else "Suggestion dismissed.")
+		await refresh_graph()
+		if not current_note.is_empty() and str(current_note["id"]) == a:
+			open_note(a)
+
+
+## Search on screen: hits light up in the graph and are listed with why they matched.
+func show_search(query: String) -> void:
+	await set_view("graph")
+	search_edit.text = query
+	await _on_search_changed(query)
+
+
+## Double-click an item without a document: edit its title and text right on its card.
+func edit_in_card(id: String) -> void:
+	if not graph.nodes.has(id) or str((graph.nodes[id] as Dictionary)["type"]) != "note":
+		return
+	if graph.zoom < GraphView.NEAR:
+		graph.zoom_level("read", id)
+		await get_tree().create_timer(0.85).timeout
+	var res := await app.backend.api.call_api("/brain/notes/" + id)
+	if not res["ok"]:
+		return
+	var n: Dictionary = res["data"]
+	if card_editor != null:
+		card_editor.queue_free()
+	card_editor = PanelContainer.new()
+	card_editor.theme_type_variation = "Glass"
+	var center := graph.world_to_screen(graph.nodes[id]["pos"] as Vector2)
+	var sz := (GraphView.CARD * graph.zoom).clamp(Vector2(420, 280), Vector2(760, 560))
+	card_editor.position = (center - sz * 0.5).clamp(Vector2(380, 90), size - sz - Vector2(24, 110))
+	card_editor.size = sz
+	add_child(card_editor)
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override("separation", 8)
+	card_editor.add_child(col)
+	var t := LineEdit.new()
+	t.text = str(n.get("title", ""))
+	col.add_child(t)
+	var body := TextEdit.new()
+	body.text = str(n.get("body", ""))
+	body.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	body.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	col.add_child(body)
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_END
+	col.add_child(row)
+	var cancel := Button.new()
+	cancel.text = "Cancel"
+	cancel.theme_type_variation = "GhostButton"
+	cancel.pressed.connect(func() -> void:
+		card_editor.queue_free()
+		card_editor = null)
+	row.add_child(cancel)
+	var save := Button.new()
+	save.text = "Save (Ctrl+Enter)"
+	save.theme_type_variation = "PrimaryButton"
+	var do_save := func() -> void:
+		var r := await _post("/brain/notes/" + id, {"title": t.text.strip_edges(), "body": body.text}, HTTPClient.METHOD_PATCH)
+		if r["ok"]:
+			show_toast("Saved in its card.")
+			if card_editor != null:
+				card_editor.queue_free()
+				card_editor = null
+			await refresh_graph()
+	save.pressed.connect(do_save)
+	row.add_child(save)
+	body.gui_input.connect(func(e: InputEvent) -> void:
+		if e is InputEventKey and (e as InputEventKey).pressed and (e as InputEventKey).keycode == KEY_ENTER and (e as InputEventKey).ctrl_pressed:
+			do_save.call()
+			body.accept_event()
+		elif e is InputEventKey and (e as InputEventKey).pressed and (e as InputEventKey).keycode == KEY_ESCAPE:
+			cancel.pressed.emit())
+	body.grab_focus()
 
 
 func _rebuild_space_option() -> void:
@@ -1403,16 +1513,56 @@ func _close_inspector() -> void:
 
 
 # ----------------------------------------------------------------- search
+func _render_results(query: String, hits: Array) -> void:
+	if results_box == null:
+		var panel := PanelContainer.new()
+		panel.theme_type_variation = "Glass"
+		panel.set_anchors_preset(Control.PRESET_TOP_LEFT)
+		panel.position = Vector2(388, 140)
+		panel.custom_minimum_size = Vector2(330, 0)
+		add_child(panel)
+		results_box = VBoxContainer.new()
+		results_box.add_theme_constant_override("separation", 2)
+		panel.add_child(results_box)
+	for c in results_box.get_children():
+		c.queue_free()
+	var panel_node := results_box.get_parent() as Control
+	panel_node.visible = query != "" and view == "graph"
+	var head := Label.new()
+	head.theme_type_variation = "Overline"
+	head.text = "%d RESULT%s FOR « %s »" % [hits.size(), "" if hits.size() == 1 else "S", query.to_upper()]
+	results_box.add_child(head)
+	for h in hits.slice(0, 8):
+		var hd: Dictionary = h
+		var b := Button.new()
+		b.theme_type_variation = "GhostButton"
+		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		var why := ("by meaning · %d%%" % int(round(float(hd.get("score", 0.0)) * 100.0))) if str(hd.get("match", "")) == "meaning" else "by words"
+		b.text = "%s   —  %s" % [str(hd.get("title", "")), why]
+		b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		b.custom_minimum_size = Vector2(320, 0)
+		var hid := str(hd.get("id", ""))
+		b.pressed.connect(func() -> void:
+			graph.zoom_level("read", hid)
+			graph.select(hid))
+		results_box.add_child(b)
+
+
 func _on_search_changed(q: String) -> void:
 	var query := q.strip_edges()
 	if query == "":
 		graph.set_highlight([])
+		last_hits = []
+		if results_box != null:
+			(results_box.get_parent() as Control).visible = false
 		return
 	var res := await app.backend.api.call_api("/brain/search?q=" + query.uri_encode())
 	if not res["ok"] or search_edit.text.strip_edges() != query:
 		return
 	var data: Dictionary = res["data"]
 	var hits: Array = data.get("results", [])
+	last_hits = hits
+	_render_results(query, hits)
 	var ids: Array = hits.map(func(h: Variant) -> String: return str((h as Dictionary)["id"]))
 	if query.begins_with("#") or graph.nodes.has("tag:" + query.to_lower()):
 		ids.append("tag:" + query.trim_prefix("#").to_lower())
@@ -1460,6 +1610,9 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		accept_event()
 	elif k.keycode == KEY_ESCAPE:
 		graph.select("")
+		if path_active:
+			graph.clear_path()
+			path_active = false
 		_close_inspector()
 		accept_event()
 

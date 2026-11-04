@@ -141,6 +141,9 @@ func send(text: String, spoken: bool = false) -> void:
 	_add_bubble("user", t, [], [])
 	_set_busy(true)
 	var payload := {"text": t, "spoken": spoken}
+	var open_note: Dictionary = brain.get("current_note")
+	if not open_note.is_empty() and (brain.get("inspector") as Control).visible:
+		payload["open_note"] = str(open_note.get("id", ""))
 	var focus := str(brain.get("current_space"))
 	if focus != "":
 		payload["space_id"] = focus

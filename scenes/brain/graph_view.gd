@@ -58,6 +58,8 @@ var folded: Dictionary = {}          # space node id -> true when its items are 
 var filter: Dictionary = {}
 var filtered_out: Dictionary = {}          # node id -> true when filtered out or folded in
 var _note_tags: Dictionary = {}
+var path_ids: Array = []
+var path_steps: Array = []
 var page_tex: Dictionary = {}     # id -> {"w": int, "tex": Texture2D} (first page of a document)
 var _page_asked: Dictionary = {}  # id -> width asked
 var screen_offset := Vector2.ZERO  # centre of the free area (panels cover the left side)
@@ -411,6 +413,47 @@ func shown_note_count() -> int:
 	return c
 
 
+## The chain between two items (Loop 14), drawn bright with travelling dots.
+func set_path(ids: Array, steps: Array) -> void:
+	path_ids = ids.map(func(i: Variant) -> String: return str(i))
+	path_steps = steps
+	set_highlight(path_ids)
+	if path_ids.is_empty():
+		return
+	var lo := Vector2(1e9, 1e9)
+	var hi := Vector2(-1e9, -1e9)
+	for id in path_ids:
+		if nodes.has(id):
+			var p: Vector2 = nodes[id]["pos"]
+			lo = Vector2(minf(lo.x, p.x), minf(lo.y, p.y))
+			hi = Vector2(maxf(hi.x, p.x), maxf(hi.y, p.y))
+	var span := (hi - lo).max(Vector2(200, 200))
+	var free := size - Vector2(screen_offset.x * 2.0 + 120.0, 260.0)
+	follow = ""
+	zoom_to(clampf(minf(free.x / span.x, free.y / span.y), ZOOM_MIN, 2.0), (lo + hi) * 0.5)
+
+
+func clear_path() -> void:
+	path_ids = []
+	path_steps = []
+	set_highlight([])
+
+
+func _draw_path() -> void:
+	for i in range(path_ids.size() - 1):
+		var a := str(path_ids[i])
+		var b := str(path_ids[i + 1])
+		if not nodes.has(a) or not nodes.has(b):
+			continue
+		var pa := world_to_screen(nodes[a]["pos"] as Vector2)
+		var pb := world_to_screen(nodes[b]["pos"] as Vector2)
+		draw_line(pa, pb, Color(SbTheme.WARM, 0.25), 9.0, true)
+		draw_line(pa, pb, Color(SbTheme.WARM, 0.95), 3.0, true)
+		for k in 3:
+			var t := fmod(_t * 0.6 + float(k) / 3.0, 1.0)
+			draw_circle(pa.lerp(pb, t), 3.5, SbTheme.MINT_SOFT)
+
+
 # --------------------------------------------------------------- simulation
 func _process(delta: float) -> void:
 	_t += delta
@@ -560,6 +603,8 @@ func _draw() -> void:
 			var k := fmod(_t * 0.35 + float(hash(str(e["from"])) % 97) / 97.0, 1.0)
 			draw_circle(pa.lerp(pb, k), 2.2, Color(SbTheme.MINT_SOFT, 0.75))
 
+	if path_ids.size() > 1:
+		_draw_path()
 	# Far: each place becomes a named cluster around its items.
 	var level := lod()
 	if level == "far":

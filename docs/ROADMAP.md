@@ -111,7 +111,7 @@ Principles:
 |---|---|
 | **12 — Originals and the document viewer** ✅ 2026-11-03 | `originals/` keeps every file and page. PDF pages render as images, sharper as you zoom, in the graph's cards and in a full-screen viewer. Images are inputs. Voice commands. Packs can carry originals. See docs/architecture/originals.md |
 | **13 — An organised graph** ✅ 2026-11-03 | Each place gets a stable zone, and places can be folded and unfolded. Filters by type, theme, origin, date and pack. By voice: « replie Recettes », « montre seulement les articles sur l'IA » |
-| **14 — Search and connect in the graph** | Results light up in the graph with the reason. The path between two items. Accept or dismiss a related idea. Edit text in the card |
+| **14 — Search and connect in the graph** ✅ 2026-11-03 | Results light up in the graph with the reason. The path between two items. Accept or dismiss a related idea. Edit text in the card |
 | **15 — Large volume and timeline** | Thousands of items stay fluid (faster layout, only visible items drawn). A timeline view of captures |
 
 ## Model cadence (owner's OpenAI project, 2026-11-02)

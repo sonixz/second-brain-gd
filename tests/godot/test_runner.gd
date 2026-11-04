@@ -460,6 +460,37 @@ func _e2e() -> void:
 	await ap.send("Enlève les filtres", true)
 	await wait_until(func() -> bool: return not graph.has_filter(), 5.0)
 	check(graph.shown_note_count() == graph.node_count("note") and not fb.clear_button.visible, "« enlève les filtres » shows everything again")
+	# Search and connect in the graph (Loop 14).
+	await ap.send("Cherche à l'écran constellations", true)
+	var l14_listed := await wait_until(func() -> bool: return (brain.get("last_hits") as Array).size() > 0, 10.0)
+	var l14_rb: VBoxContainer = brain.get("results_box")
+	check(l14_listed and l14_rb != null and l14_rb.get_child_count() >= 2 and graph.highlight.has(gs_note),
+		"« cherche… » lights up the hits and lists them with why they matched")
+	check(str((l14_rb.get_child(1) as Button).text).contains("by "), "each hit says how it matched (%s)" % (l14_rb.get_child(1) as Button).text)
+	brain.get("search_edit").text = ""
+	await brain.call("_on_search_changed", "")
+	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
+	var l14_welcome := graph.find_node("Welcome to your Second Brain")
+	var l14_pathed := await wait_until(func() -> bool: return graph.path_ids.size() >= 2, 10.0)
+	check(l14_pathed and str(graph.path_ids[0]) == l14_welcome and ap.last_reply.contains("étape"),
+		"« comment X est relié à Y » draws the path and says it (%s)" % ap.last_reply.left(80))
+	graph.clear_path()
+	var l14_engine_room := graph.find_node("Engine room")
+	await brain.call("answer_related", l14_welcome, l14_engine_room, "keep")
+	var l14_wn: Dictionary = await app.backend.api.call_api("/brain/notes/" + l14_welcome)
+	var l14_linked := false
+	for lk in (l14_wn["data"] as Dictionary).get("links_out", []):
+		l14_linked = l14_linked or str((lk as Dictionary).get("id", "")) == l14_engine_room
+	check(l14_linked, "keeping a related idea turns it into a real link")
+	await brain.call("edit_in_card", l14_engine_room)
+	var l14_ed: PanelContainer = brain.get("card_editor")
+	check(l14_ed != null and l14_ed.visible, "double-clicking an item opens an editor right on its card")
+	var l14_te: TextEdit = l14_ed.find_children("*", "TextEdit", true, false)[0]
+	l14_te.text = l14_te.text + "\nEdited in the graph."
+	(l14_ed.find_children("*", "Button", true, false).filter(func(x: Variant) -> bool: return (x as Button).text.begins_with("Save"))[0] as Button).pressed.emit()
+	var l14_saved := await wait_until(func() -> bool: return brain.get("card_editor") == null, 10.0)
+	var l14_en: Dictionary = await app.backend.api.call_api("/brain/notes/" + l14_engine_room)
+	check(l14_saved and str((l14_en["data"] as Dictionary).get("body", "")).contains("Edited in the graph."), "the card's edit is l14_saved")
 	await ap.send("Vue d'ensemble", true)
 	var overview := await wait_until(func() -> bool: return graph.lod() == "far", 5.0)
 	check(overview, "« vue d'ensemble » zooms back out to the places")

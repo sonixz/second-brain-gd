@@ -221,6 +221,8 @@ class FakeChat:
                 ctx = found.get("context") or {}
                 return {"message": {"role": "assistant", "content": f"Contexte: {ctx.get('name', 'aucun')}."},
                         "usage": usage, "model": model}
+            if "explanation" in found:
+                return {"message": {"role": "assistant", "content": found["explanation"]}, "usage": usage, "model": model}
             if found.get("file"):
                 return {"message": {"role": "assistant", "content": f"Exporté: {found['file']} ({found['items']} éléments)."},
                         "usage": usage, "model": model}
@@ -233,6 +235,20 @@ class FakeChat:
         text = str(last.get("content", ""))
         low = text.lower()
         views = {"aujourd": "today", "today": "today", "projet": "projects", "agent": "agents", "graph": "graph"}
+        if low.startswith("comment ") and " relié à " in low and tools:
+            a, b = text[len("comment "):].split(" est relié à " if " est relié à " in text else " relié à ", 1)
+            call = {"id": "call_path", "type": "function", "function": {"name": "find_path", "arguments": json.dumps(
+                {"from": a.strip(" ?.!"), "to": b.strip(" ?.!")})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith(("garde le lien avec", "enlève l'idée liée")) and tools:
+            other = text.split(" avec ", 1)[1].strip(" .!") if " avec " in text else ""
+            call = {"id": "call_rel", "type": "function", "function": {"name": "related_idea", "arguments": json.dumps(
+                {"action": "keep" if low.startswith("garde") else "dismiss", "other": other})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith("cherche à l'écran") and tools:
+            call = {"id": "call_srch", "type": "function", "function": {"name": "ui_search", "arguments": json.dumps(
+                {"query": text.split("écran", 1)[1].strip(" .!")})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if low.startswith("montre seulement") and tools:
             args = {"types": ["article"] if "article" in low else [], "text": low.split(" sur ", 1)[1].strip(" .!") if " sur " in low else ""}
             call = {"id": "call_filter", "type": "function", "function": {"name": "ui_filter", "arguments": json.dumps(args)}}
