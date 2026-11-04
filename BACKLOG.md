@@ -4,6 +4,10 @@ Ordered by priority. ✅ = done.
 
 ## Next
 
+- Graph scale: spatial grid or Barnes–Hut for the force layout beyond ~1,000 items (it is O(n²) today).
+- Archivist: detect the language from the original text, not the French summary note.
+- Browser capture: optional small extension (one click, no popup window) after the bookmarklet.
+
 The agreed plan for Loops 4–7 (structure, sources & semantic memory, project agents, real conversation)
 and the model cadence live in [docs/ROADMAP.md](docs/ROADMAP.md).
 

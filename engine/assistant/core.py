@@ -68,7 +68,9 @@ Règles:
   une vue (graph, captures, today, projects, agents) = ui_open_view; un projet ou une place = ui_open_project (id via
   get_structure); un élément = ui_open_note (trouve son id avec search_notes d'abord); thème = ui_set_theme;
   son = ui_set_volume; « annule ça » = undo_last_action;
-  « relis-moi ça / répète » = ui_replay (rien d'autre à dire); « parle plus vite / moins vite » = ui_set_voice_speed.
+  « relis-moi ça / répète » = ui_replay (rien d'autre à dire); « parle plus vite / moins vite » = ui_set_voice_speed;
+  « zoome sur X / montre-moi X de près / lis X dans le graphe » = ui_zoom (read sur un élément, closer sur une place);
+  « vue d'ensemble / montre les thèmes / recule » = ui_zoom (overview ou out).
   INTERDIT: dire « je l'ouvre », « c'est affiché » ou « c'est lancé » sans avoir appelé l'outil ui_* dans ce
   tour. Après une action d'interface, réponds en une phrase courte (elle est lue à voix haute).
 - Réponses courtes, factuelles et directes (1 à 3 phrases), sauf si on te demande du détail. Pas d'emojis.
@@ -301,6 +303,8 @@ UI_TOOLS = [
      "parameters": {"type": "object", "properties": {}}}},
     {"type": "function", "function": {"name": "set_working_context", "description": "Set the subject or project the next items are filed into (created as a project if it does not exist). No name clears it.",
      "parameters": {"type": "object", "properties": {"name": {"type": "string"}, "kind": {"type": "string", "enum": ["project", "area", "resource"]}}}}},
+    {"type": "function", "function": {"name": "ui_zoom", "description": "Move the graph camera: overview (see all places), closer, out, or read (zoom right into one item so its text is readable). Optional target: the title of an item or place to zoom on.",
+     "parameters": {"type": "object", "properties": {"level": {"type": "string", "enum": ["overview", "closer", "out", "read"]}, "target": {"type": "string"}}, "required": ["level"]}}},
     {"type": "function", "function": {"name": "ui_replay", "description": "Read aloud again a previous answer: the last one (default) or the last weekly review.",
      "parameters": {"type": "object", "properties": {"which": {"type": "string", "enum": ["last", "review"]}}}}},
     {"type": "function", "function": {"name": "ui_set_voice_speed", "description": "Make the spoken voice faster, slower, or back to normal.",
@@ -340,6 +344,11 @@ def _ui_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any]) -> dict[
         if change not in ("up", "down", "mute", "unmute"):
             return {"error": "change must be up, down, mute or unmute"}
         act = {"action": "set_volume", "change": change}
+    elif name == "ui_zoom":
+        level = str(args.get("level", ""))
+        if level not in ("overview", "closer", "out", "read"):
+            return {"error": "level must be overview, closer, out or read"}
+        act = {"action": "zoom", "level": level, "target": str(args.get("target") or "")[:120]}
     elif name == "ui_capture_clipboard":
         act = {"action": "capture_clipboard"}
     elif name == "ui_replay":

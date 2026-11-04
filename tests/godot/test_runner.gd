@@ -370,6 +370,25 @@ func _e2e() -> void:
 		if (b2 as Button).text == "▶ Replay":
 			replay_buttons += 1
 	check(replay_buttons >= 3, "every answer has a replay button (%d)" % replay_buttons)
+	# Graph first, semantic zoom (Loop 10).
+	await brain.call("set_view", "graph")
+	var vb: Dictionary = brain.get("view_buttons")
+	check(not (vb["today"] as Button).visible and (vb["captures"] as Button).visible, "modules (Today, Projects, Agents) are hidden; Graph and Captures stay")
+	graph.zoom = 0.3
+	check(graph.lod() == "far", "zoomed out, places become named clusters")
+	var target_id := graph.find_node("Links make constellations")
+	check(target_id != "", "items can be found in the graph by title")
+	await ap.send("Zoome sur Links make constellations", true)
+	var zoomed := await wait_until(func() -> bool: return graph.lod() == "read" and graph.selected == target_id, 5.0)
+	check(zoomed, "« zoome sur Links make constellations » flies into that item (%s, zoom %.1f)" % [graph.lod(), graph.zoom])
+	var carded := await wait_until(func() -> bool: return graph.details.has(target_id), 10.0)
+	check(carded and str((graph.details[target_id] as Dictionary).get("body", "")).contains("double brackets"),
+		"up close, the card holds the item's full text")
+	await ap.send("Vue d'ensemble", true)
+	var overview := await wait_until(func() -> bool: return graph.lod() == "far", 5.0)
+	check(overview, "« vue d'ensemble » zooms back out to the places")
+	graph.zoom_to(1.0, Vector2.ZERO, 0.01)
+	await create_timer(0.1).timeout
 	# Live conversation (Loop 7b): speech to speech through the engine (fake Realtime upstream).
 	SbSettings.set_value("voice", "headphones", true)  # the dummy audio driver never drains playback
 	await brain.call("set_view", "graph")
@@ -429,7 +448,9 @@ func _e2e() -> void:
 	check(int(db.get("schema_version", 0)) >= 1, "database schema is migrated")
 	check(int(proc.get("pid", 0)) == app.backend.server_pid(), "status pid matches runtime/server.json")
 	check(proc.get("rss_bytes") != null, "API memory is measured")
-	var events: Array = console.get("last_events")
+	# The console shows the latest 40 operations; the setup may be older than that by now, so ask for more.
+	var all_events: Dictionary = await app.backend.api.call_api("/system/events?limit=500")
+	var events: Array = (all_events["data"] as Dictionary).get("events", []) if all_events["ok"] else []
 	var has_ready := false
 	for e in events:
 		var ev: Dictionary = e

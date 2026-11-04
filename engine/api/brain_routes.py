@@ -158,7 +158,7 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     @r.get("/items/{note_id}")
     def get_item(note_id: str) -> dict[str, Any]:
         from engine.brain import archivist
-        return run(archivist.item, note_id)
+        return run(archivist.item, note_id, True)
 
     @r.get("/context")
     def get_context() -> dict[str, Any]:

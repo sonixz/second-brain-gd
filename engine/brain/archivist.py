@@ -262,8 +262,8 @@ def file_item(conn: sqlite3.Connection, client: Any, note_id: str, min_confidenc
             "created_space": created_space, "item": item(conn, note_id)}
 
 
-def item(conn: sqlite3.Connection, note_id: str) -> dict[str, Any]:
-    """One item as the feed and the inspector show it."""
+def item(conn: sqlite3.Connection, note_id: str, with_body: bool = False) -> dict[str, Any]:
+    """One item as the feed, the inspector and the graph's cards show it."""
     n = brain.get_note(conn, note_id)
     m = get_meta(conn, note_id) or {}
     src = conn.execute("SELECT id, kind, uri, chunks FROM sources WHERE note_id = ?", (note_id,)).fetchone()
@@ -274,7 +274,7 @@ def item(conn: sqlite3.Connection, note_id: str) -> dict[str, Any]:
             "key_points": m.get("key_points", []), "entities": m.get("entities", {}), "themes": m.get("themes", []),
             "language": m.get("language"), "confidence": m.get("confidence"), "filed": bool(m.get("filed", 0)),
             "question": m.get("question"), "receipt": m.get("receipt"),
-            "source": dict(src) if src else None}
+            "source": dict(src) if src else None, **({"body": n["body"]} if with_body else {})}
 
 
 def feed(conn: sqlite3.Connection, limit: int = 50) -> list[dict[str, Any]]:

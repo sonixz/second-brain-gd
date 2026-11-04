@@ -60,6 +60,8 @@ var _toast_timer: Timer
 # Views
 var view := "graph"   # graph | today | projects
 var captures_view: CapturesView
+var modules_button: Button
+const MODULE_VIEWS := ["today", "projects", "agents"]
 var today_view: TodayView
 var projects_view: ProjectsView
 var agents_view: AgentsView
@@ -80,6 +82,8 @@ func _ready() -> void:
 	graph = GraphView.new()
 	graph.set_anchors_preset(Control.PRESET_FULL_RECT)
 	graph.node_selected.connect(_on_node_selected)
+	graph.details_needed.connect(_fetch_card)
+	graph.screen_offset = Vector2(182, 0)  # half the left panel: zoomed items centre in the free area
 	graph.background_clicked.connect(func() -> void:
 		graph.select("")
 		_close_inspector())
@@ -176,6 +180,18 @@ func _build_top_bar() -> void:
 		b.pressed.connect(func() -> void: set_view(key))
 		seg.add_child(b)
 		view_buttons[key] = b
+	# The Brain comes first: Today, Projects and Agents are modules, hidden until switched on.
+	modules_button = Button.new()
+	modules_button.text = "Modules"
+	modules_button.toggle_mode = true
+	modules_button.theme_type_variation = "GhostButton"
+	modules_button.tooltip_text = "Show the optional modules: Today, Projects, Agents"
+	modules_button.button_pressed = bool(SbSettings.get_value("ui", "modules", false))
+	modules_button.toggled.connect(func(on: bool) -> void:
+		SbSettings.set_value("ui", "modules", on)
+		_show_modules(on))
+	seg.add_child(modules_button)
+	_show_modules(modules_button.button_pressed)
 	search_edit = LineEdit.new()
 	search_edit.theme_type_variation = "SearchEdit"
 	search_edit.placeholder_text = "Search your brain   ( / )"
@@ -205,6 +221,11 @@ func _build_top_bar() -> void:
 	status_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	prow.add_child(status_label)
 	pill.custom_minimum_size = Vector2(196, 40)
+
+
+func _show_modules(on: bool) -> void:
+	for key in MODULE_VIEWS:
+		(view_buttons[key] as Button).visible = on or view == key
 
 
 func _build_views() -> void:
@@ -255,6 +276,8 @@ func set_view(name: String) -> void:
 	graph.mouse_filter = Control.MOUSE_FILTER_STOP if name == "graph" else Control.MOUSE_FILTER_IGNORE
 	for key in view_buttons:
 		(view_buttons[key] as Button).button_pressed = key == name
+	if modules_button != null:
+		_show_modules(modules_button.button_pressed)  # a module opened by voice shows its tab while open
 	if name == "captures":
 		await captures_view.refresh()
 	elif name == "today":
@@ -524,6 +547,15 @@ func run_ui_actions(actions: Array) -> void:
 				_change_volume(str(a.get("change", "")))
 			"replay":
 				assistant_panel.replay(str(a.get("which", "last")))
+			"zoom":
+				await set_view("graph")
+				var target := str(a.get("target", ""))
+				var hit := graph.find_node(target) if target != "" else ""
+				if target != "" and hit == "":
+					show_toast("Nothing called « %s » in the graph." % target)
+				graph.zoom_level(str(a.get("level", "closer")), hit)
+				if hit != "" and str(a.get("level", "")) == "read":
+					graph.select(hit)
 			"capture_clipboard":
 				var clip := clipboard_text().strip_edges()
 				if clip == "":
@@ -814,9 +846,21 @@ func refresh_graph() -> Array[String]:
 	if not res["ok"] or not is_inside_tree():
 		return []
 	var born := graph.set_graph(res["data"])
+	graph.details.clear()  # cards fetch their place, themes and text again when they are on screen
+	graph._asked.clear()
 	var notes := graph.node_count("note")
 	stats_label.text = "%d notes · %d spaces · %d tags" % [notes, graph.node_count("space"), graph.node_count("tag")]
 	return born
+
+
+## A card in the zoomed graph needs its item: summary, place, themes and full text.
+func _fetch_card(id: String) -> void:
+	if not id.begins_with("note:") and not graph.nodes.has(id):
+		return
+	var nid := id.trim_prefix("note:")
+	var res := await app.backend.api.call_api("/brain/items/" + nid)
+	if res["ok"] and is_inside_tree():
+		graph.set_details(id, res["data"])
 
 
 func refresh_spaces() -> void:
@@ -1216,7 +1260,12 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		return
 	if not k.pressed:
 		return
-	if k.keycode == KEY_V and k.ctrl_pressed and k.shift_pressed:
+	if view == "graph" and not k.ctrl_pressed and (k.keycode in [KEY_EQUAL, KEY_PLUS, KEY_KP_ADD, KEY_MINUS, KEY_KP_SUBTRACT, KEY_0, KEY_KP_0]) \
+			and not (get_viewport().gui_get_focus_owner() is LineEdit or get_viewport().gui_get_focus_owner() is TextEdit):
+		var lvl: String = str({KEY_EQUAL: "closer", KEY_PLUS: "closer", KEY_KP_ADD: "closer", KEY_MINUS: "out", KEY_KP_SUBTRACT: "out"}.get(k.keycode, "overview"))
+		graph.zoom_level(lvl, graph.selected if lvl == "closer" else "")
+		accept_event()
+	elif k.keycode == KEY_V and k.ctrl_pressed and k.shift_pressed:
 		# Ctrl+Shift+V: whatever is in the clipboard (a link, a text) goes straight to the archivist.
 		run_ui_actions([{"action": "capture_clipboard"}])
 		accept_event()

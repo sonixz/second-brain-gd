@@ -243,6 +243,15 @@ class FakeChat:
         if low.startswith(("relis", "répète", "repete")) and tools:
             call = {"id": "call_replay", "type": "function", "function": {"name": "ui_replay", "arguments": "{}"}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith(("zoome", "zoom")) and tools:
+            target = text.split(" sur ", 1)[1].strip(" .!") if " sur " in text else ""
+            call = {"id": "call_zoom", "type": "function",
+                    "function": {"name": "ui_zoom", "arguments": json.dumps({"level": "read" if target else "closer", "target": target})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith(("vue d'ensemble", "recule")) and tools:
+            call = {"id": "call_over", "type": "function",
+                    "function": {"name": "ui_zoom", "arguments": json.dumps({"level": "overview"})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if "plus vite" in low and tools:
             call = {"id": "call_speed", "type": "function",
                     "function": {"name": "ui_set_voice_speed", "arguments": json.dumps({"change": "faster"})}}

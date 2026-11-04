@@ -1,5 +1,31 @@
 # Devlog
 
+## Loop 10 — The Graph first, semantic zoom (2026-11-03)
+
+- **The Brain comes first.** The top bar shows Graph and Captures. Today, Projects and Agents are
+  **modules**, hidden behind a Modules switch. A module opened by voice still shows its tab while it is
+  open. Nothing was removed.
+- **Semantic zoom**, from 0.15× to 40× (it was 0.35×–2.6×). The point under the cursor stays put.
+  - **Far (< 0.55×).** Each place is a named cluster with its item count, and the items are points.
+    Places now push each other apart more strongly, so the clusters separate.
+  - **Mid.** The classic graph, with circles and titles.
+  - **Near (≥ 2.2×).** Items become **cards** showing title, place, themes and summary. Each card fetches
+    its item through `/brain/items/{id}` when it first appears on screen.
+  - **Read (≥ 6×).** The card shows the item's **full text** at a readable size. The scale fades away.
+- **Minimap**, above the music button: the whole graph with the visible area. Click it to jump.
+- **Camera.** « Zoome sur X » follows the item until you pan, and centres it in the free area right of
+  the panel.
+- **Voice.**
+  - « zoome sur X » flies into the item (`ui_zoom`, level read; places get closer).
+  - « vue d'ensemble » / « recule » zoom out.
+  - Keys: + / − / 0.
+- **Screenshots** of the overview, cards and reading levels are in docs/screenshots/loop-10.
+  - The first take showed the Today view over the graph, the reading card off-centre under the panel,
+    and the minimap over the music button. All three are fixed.
+- **Tests.** Python 117 and Godot 127, on Linux and native Windows.
+- **Known limit.** The force layout is O(n²): fine for hundreds of items. Thousands will need a spatial
+  grid or Barnes–Hut (backlog).
+
 ## Loop 9 — One intake and the archivist (2026-11-03)
 
 - **Refocus.** The Brain is about data: capture anything, file it, link it, find it again. The AI at the
