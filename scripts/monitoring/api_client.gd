@@ -11,12 +11,23 @@ func base_url() -> String:
 	return "http://127.0.0.1:%d" % port
 
 
+## Reading a document (local OCR of many pages, then a summary) can take minutes; AI calls up to 90 s;
+## everything else answers at once.
+func timeout_for(path: String, method: int) -> float:
+	if method == HTTPClient.METHOD_POST and (path.begins_with("/sources/file") or path.begins_with("/sources/url")
+			or path.ends_with("/reread")):
+		return 600.0
+	if path.begins_with("/assistant") or path.begins_with("/agents") or path.begins_with("/billing") or path.begins_with("/packs"):
+		return 90.0
+	return timeout_s
+
+
 func call_api(path: String, auth: bool = true, method: int = HTTPClient.METHOD_GET, body: String = "",
 		raw: bool = false) -> Dictionary:
 	if port <= 0:
 		return {"ok": false, "code": 0, "error": "API port unknown", "data": {}, "ms": 0}
 	var req := HTTPRequest.new()
-	req.timeout = 90.0 if path.begins_with("/assistant") or path.begins_with("/agents") or path.begins_with("/billing") else timeout_s
+	req.timeout = timeout_for(path, method)
 	add_child(req)
 	var headers := PackedStringArray(["Accept: application/json"])
 	if auth:
