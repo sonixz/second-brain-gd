@@ -56,6 +56,7 @@ func _run() -> void:
 	print("Unit checks")
 	_unit()
 	await _perf_check()
+	await _drop_check()
 	print("End-to-end through the UI (data folder: %s)" % SbPaths.data_dir())
 	await _e2e()
 	print("\n%d passed, %d failed" % [passed, failed])
@@ -664,6 +665,30 @@ func _perf_check() -> void:
 	await process_frame
 	check(sim_ms < 60.0, "2,000 items: one layout step takes %.1f ms" % sim_ms)
 	check(g.draw_ms < 120.0, "2,000 items: one frame draws in %.1f ms" % g.draw_ms)
+	g.queue_free()
+
+
+## An item let go in another place's zone asks to move there; let go elsewhere, it stays put.
+func _drop_check() -> void:
+	var g := GraphView.new()
+	g.size = Vector2(1280, 800)
+	root.add_child(g)
+	await process_frame
+	g.set_graph({"nodes": [
+		{"id": "space:a", "type": "space", "label": "A", "kind": "project"},
+		{"id": "space:b", "type": "space", "label": "B", "kind": "project"},
+		{"id": "n1", "type": "note", "label": "Item", "kind": "note", "space_id": "a"}],
+		"edges": [{"from": "n1", "to": "space:a", "type": "space"}]})
+	g.queue_redraw()
+	await process_frame
+	var moved: Array = []
+	g.item_dropped_on_place.connect(func(id: String, sid: String) -> void: moved.append([id, sid]))
+	var b_pos: Vector2 = (g.nodes["space:b"] as Dictionary)["pos"]
+	g.zone_reach["space:b"] = 120.0
+	g.drop_item("n1", b_pos + Vector2(20, 0))
+	check(moved == [["n1", "b"]], "an item dropped in another place's zone asks to move there")
+	g.drop_item("n1", Vector2(5000, 5000))
+	check(moved.size() == 1 and bool((g.nodes["n1"] as Dictionary)["pinned"]), "an item dropped outside any zone stays where it was put")
 	g.queue_free()
 
 

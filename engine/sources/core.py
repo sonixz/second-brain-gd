@@ -196,6 +196,36 @@ def describe_image(conn: sqlite3.Connection, client: Any, data: bytes, mime: str
     return (res["message"].get("content") or "").strip()
 
 
+OCR_PROMPT = ("Cette image est une page d'un document PDF numérisé. Transcris fidèlement tout le texte visible, "
+              "dans sa langue d'origine, en gardant l'ordre de lecture, les titres et les listes. N'ajoute aucun "
+              "commentaire. Si la page ne contient pas de texte, décris-la en une phrase entre crochets.")
+OCR_MAX_PAGES = 15
+
+
+def read_scanned_pdf(conn: sqlite3.Connection, client: Any, path: Path, pages: int) -> str:
+    """A PDF made of page images (scanned, or exported as pictures): the vision model reads each page."""
+    import base64
+    import tempfile
+
+    from engine.assistant.core import _usage_event
+    from engine.sources import render
+
+    model = database.get_setting(conn, "assistant_vision_model", "gpt-4o-mini")
+    out = []
+    with tempfile.TemporaryDirectory(prefix="sbgd-ocr-") as tmp:
+        for page in range(1, min(pages, OCR_MAX_PAGES) + 1):
+            data = render.render_page(path, page, 1400, Path(tmp))
+            res = client.complete(model, [{"role": "user", "content": [
+                {"type": "text", "text": OCR_PROMPT},
+                {"type": "image_url", "image_url": {"url": "data:image/png;base64," + base64.b64encode(data).decode("ascii")}}]}],
+                temperature=0.0)
+            _usage_event(conn, "read_scanned_page", res["model"], res["usage"], client.provider)
+            out.append((res["message"].get("content") or "").strip())
+    if pages > OCR_MAX_PAGES:
+        out.append(f"[Pages {OCR_MAX_PAGES + 1} à {pages} non lues: document trop long pour la lecture d'images.]")
+    return "\n\n".join(t for t in out if t)
+
+
 def ingest_file(conn: sqlite3.Connection, client: Any | None, path: str, space_id: str | None = None) -> dict[str, Any]:
     from engine.sources import originals, render
 
@@ -209,6 +239,11 @@ def ingest_file(conn: sqlite3.Connection, client: Any | None, path: str, space_i
             pages = render.page_count(p)
         except render.RenderError:
             pages = None
+        if len(text.strip()) < 20 and pages:  # no text layer: every page is a picture
+            if client is None:
+                raise extract.ExtractError("this PDF has no text, only page images (scanned or exported as pictures); "
+                                           "add your OpenAI key so its pages can be read")
+            text = read_scanned_pdf(conn, client, p, pages)
     elif mime.startswith("image/"):
         pages = 1
         data = p.read_bytes()

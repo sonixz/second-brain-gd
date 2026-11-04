@@ -90,6 +90,7 @@ func _ready() -> void:
 	graph = GraphView.new()
 	graph.set_anchors_preset(Control.PRESET_FULL_RECT)
 	graph.node_selected.connect(_on_node_selected)
+	graph.item_dropped_on_place.connect(move_to_place)
 	graph.details_needed.connect(_fetch_card)
 	filters_bar = GraphFilters.new()
 	filters_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
@@ -502,7 +503,7 @@ func _pick_file() -> void:
 func add_source_file(path: String) -> bool:
 	show_toast("Reading %s…" % path.get_file())
 	var payload := {"path": path}
-	if current_space != "":
+	if not _auto_file():
 		payload["space_id"] = current_space
 	return await _ingest("/sources/file", payload)
 
@@ -510,7 +511,7 @@ func add_source_file(path: String) -> bool:
 func add_source_url(url: String) -> bool:
 	show_toast("Reading %s…" % url.left(60))
 	var payload := {"url": url}
-	if current_space != "":
+	if not _auto_file():
 		payload["space_id"] = current_space
 	return await _ingest("/sources/url", payload)
 
@@ -537,7 +538,7 @@ func _ingest(path: String, payload: Dictionary) -> bool:
 		graph.focus_on(born[0])
 	await refresh_spaces()
 	await refresh_sources()
-	if current_space == "" and src.get("note_id") != null:
+	if _auto_file() and src.get("note_id") != null:
 		_classify(str(src["note_id"]))
 	return true
 
@@ -788,11 +789,39 @@ func _open_note_by_title(title: String) -> void:
 
 
 ## The archivist files the item and answers with a receipt (spoken when the input was spoken).
+## An item dragged into another zone (or « déplace X dans Y »): it now belongs to that place.
+func move_to_place(note_id: String, space_id: String) -> bool:
+	var res := await _post("/brain/notes/" + note_id, {"space_id": space_id}, HTTPClient.METHOD_PATCH)
+	if not is_inside_tree():
+		return false
+	if not res["ok"]:
+		show_toast("Could not move it: %s" % str(res["error"]))
+		await refresh_graph()
+		return false
+	app.audio.play("node_link", 0.05)
+	show_toast("Moved to %s." % _space_name(space_id))
+	await refresh_graph()
+	await refresh_spaces()
+	if not current_note.is_empty() and str(current_note["id"]) == note_id:
+		open_note(note_id)
+	return true
+
+
+## No place chosen (or only the Inbox selected): the archivist decides where a new item goes.
+func _auto_file() -> bool:
+	return current_space == "" or current_space == "inbox"
+
+
 func _classify(note_id: String, spoken: bool = false) -> void:
 	if not assistant_panel.configured:
 		return
 	var res := await app.backend.api.call_api("/assistant/classify/" + note_id, true, HTTPClient.METHOD_POST)
-	if not res["ok"] or not is_inside_tree():
+	if not is_inside_tree():
+		return
+	if not res["ok"]:
+		var d0: Variant = res["data"]
+		var why := str((d0 as Dictionary).get("detail", res["error"])) if d0 is Dictionary else str(res["error"])
+		show_toast("The archivist could not file it (%s). It stays in the Inbox." % why.left(120))
 		return
 	var d: Dictionary = res["data"]
 	var item: Dictionary = d.get("item", {})
@@ -820,6 +849,7 @@ func _build_inspector() -> void:
 	inspector.offset_right = -24
 	inspector.offset_top = 92
 	inspector.offset_bottom = -110
+	inspector.grow_horizontal = Control.GROW_DIRECTION_BEGIN
 	inspector.visible = false
 	add_child(inspector)
 	var col := VBoxContainer.new()
@@ -854,6 +884,8 @@ func _build_inspector() -> void:
 	col.add_child(meta)
 	space_option = OptionButton.new()
 	space_option.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	space_option.clip_text = true
+	space_option.custom_minimum_size.x = 120
 	space_option.item_selected.connect(func(_i: int) -> void: _queue_save(true))
 	meta.add_child(space_option)
 	kind_option = OptionButton.new()
@@ -1197,7 +1229,7 @@ func capture(text: String, source: String = "typed") -> void:
 		graph.focus_on(born[0])
 	await refresh_spaces()
 	capture_hint.text = "Saved to %s. Keep going." % _space_name(str(note["space_id"]))
-	if current_space == "":
+	if _auto_file():
 		await _classify(str(note["id"]), source == "voice")
 	_refresh_view()
 
@@ -1321,6 +1353,8 @@ func _render_links() -> void:
 			b.theme_type_variation = "GhostButton"
 			b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 			b.text = str(pair[1]) + str(n["title"])
+			b.tooltip_text = str(n["title"])
+			_trim_button(b)
 			var nid := str(n["id"])
 			b.pressed.connect(func() -> void: open_note(nid, true))
 			links_box.add_child(b)
@@ -1329,6 +1363,14 @@ func _render_links() -> void:
 		t.theme_type_variation = "Muted"
 		t.text = "  ".join(tags.map(func(x: Variant) -> String: return "#" + str(x)))
 		links_box.add_child(t)
+
+
+## A button whose long label would widen the inspector past the screen edge: one line, trimmed with « … ».
+func _trim_button(b: Button) -> void:
+	b.clip_text = true
+	b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.custom_minimum_size.x = 40
 
 
 ## Related ideas come from the meaning index; the section stays hidden when there are none
@@ -1348,7 +1390,8 @@ func _load_related(id: String) -> void:
 		b.theme_type_variation = "GhostButton"
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.text = "≈ " + str(n["title"])
-		b.tooltip_text = "Similarity %d%%" % int(round(float(n.get("score", 0.0)) * 100.0))
+		b.tooltip_text = "%s · similarity %d%%" % [str(n["title"]), int(round(float(n.get("score", 0.0)) * 100.0))]
+		_trim_button(b)
 		var nid := str(n["id"])
 		b.pressed.connect(func() -> void: open_note(nid, true))
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL

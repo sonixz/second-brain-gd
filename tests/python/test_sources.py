@@ -11,6 +11,12 @@ from engine.brain.seed import seed_all
 from engine.sources import core, extract
 from engine.sources.core import search_any
 
+try:  # the PDF libraries live in the engine's venv; a bare system Python skips these tests
+    import pypdf, pypdfium2  # noqa: F401
+    HAS_PDF = True
+except ImportError:
+    HAS_PDF = False
+
 DOC = ("La migration de données du client Atlas doit se faire en deux phases.\n\n"
        "Phase 1: inventaire des tables. Phase 2: bascule un dimanche.\n\n" + "Détail technique. " * 200)
 
@@ -160,6 +166,49 @@ class OriginalTests(unittest.TestCase):
         self.assertIn("schéma", note["body"])  # the vision description is searchable text
         hits = brain.search(self.conn, "schéma", 5)
         self.assertIn(row["note_id"], [h["id"] for h in hits])
+
+    def _picture_pdf(self, pages=2):
+        """A PDF whose pages are drawings only (no text layer), like a scan or a pdf-lib image export."""
+        objs = []
+        def add(b):
+            objs.append(b)
+            return len(objs)
+        pages_id = 1 + 2 * pages
+        kids = []
+        for i in range(pages):
+            draw = b"0.2 0.4 0.8 rg 72 600 %d 120 re f" % (200 + 40 * i)
+            c = add(b"<< /Length %d >>\nstream\n" % len(draw) + draw + b"\nendstream")
+            kids.append(add(b"<< /Type /Page /Parent %d 0 R /MediaBox [0 0 595 842] /Contents %d 0 R >>" % (pages_id, c)))
+        add(b"<< /Type /Pages /Kids [" + b" ".join(b"%d 0 R" % k for k in kids) + b"] /Count %d >>" % pages)
+        cat = add(b"<< /Type /Catalog /Pages %d 0 R >>" % pages_id)
+        out, offs = bytearray(b"%PDF-1.4\n"), []
+        for i, body in enumerate(objs, 1):
+            offs.append(len(out))
+            out += b"%d 0 obj\n" % i + body + b"\nendobj\n"
+        x = len(out)
+        out += b"xref\n0 %d\n0000000000 65535 f \n" % (len(objs) + 1) + b"".join(b"%010d 00000 n \n" % o for o in offs)
+        out += b"trailer\n<< /Size %d /Root %d 0 R >>\nstartxref\n%d\n%%%%EOF\n" % (len(objs) + 1, cat, x)
+        f = self.root / "scan.pdf"
+        f.write_bytes(bytes(out))
+        return f
+
+    @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
+    def test_a_pdf_of_page_images_is_read_by_the_vision_model(self):
+        f = self._picture_pdf(2)
+        src = core.ingest_file(self.conn, self.client, str(f))
+        row = core.get_source(self.conn, src["id"])
+        self.assertEqual((row["mime"], row["pages"]), ("application/pdf", 2))
+        reads = self.conn.execute("SELECT COUNT(*) FROM system_events WHERE stage = 'read_scanned_page'").fetchone()[0]
+        self.assertEqual(reads, 2)  # one vision call per page
+        chunks = " ".join(r[0] for r in self.conn.execute(
+            "SELECT text FROM source_chunks WHERE source_id = ?", (src["id"],)))
+        self.assertIn("schéma", chunks)  # what the model read is searchable
+
+    @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
+    def test_a_pdf_of_page_images_without_a_key_says_why(self):
+        with self.assertRaises(extract.ExtractError) as ctx:
+            core.ingest_file(self.conn, None, str(self._picture_pdf(1)))
+        self.assertIn("only page images", str(ctx.exception))
 
     def test_a_web_page_keeps_its_raw_copy(self):
         html = b"<html><head><title>Compost</title></head><body><p>" + ("Le compost aime l'air. " * 20).encode() + b"</p></body></html>"

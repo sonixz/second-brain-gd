@@ -18,6 +18,7 @@ signal background_clicked
 signal details_needed(id: String)
 signal page_needed(id: String, source_id: String, width: int)
 signal node_activated(id: String)
+signal item_dropped_on_place(id: String, space_id: String)  # an item dragged into another place's zone
 
 const REPULSION := 5200.0
 const SPRING := 0.035
@@ -57,6 +58,7 @@ var _zoom_tween: Tween
 var show_minimap := true
 var anchors: Dictionary = {}         # space node id -> its zone's centre (Loop 13)
 var custom_anchors: Dictionary = {}  # zones the user moved by dragging a place
+var zone_reach: Dictionary = {}      # space node id -> its zone's radius in world units, as last drawn
 var folded: Dictionary = {}          # space node id -> true when its items are folded in
 var filter: Dictionary = {}
 var filtered_out: Dictionary = {}          # node id -> true when filtered out or folded in
@@ -1087,6 +1089,7 @@ func _draw_clusters() -> void:
 			dists.append(center.distance_to(q as Vector2))
 		dists.sort()
 		var reach := maxf(60.0, dists[mini(dists.size() - 1, int(dists.size() * 0.6))] + 40.0)
+		zone_reach[hub] = reach
 		var col := _color(h)
 		var sp := world_to_screen(center)
 		draw_circle(sp, reach * zoom, Color(col, 0.07))
@@ -1254,6 +1257,36 @@ static func _ease_out_back(x: float) -> float:
 
 
 # -------------------------------------------------------------------- input
+## The place whose zone contains a world point ("" when none). Closest centre wins where zones overlap.
+func zone_at(world: Vector2) -> String:
+	var best := ""
+	var best_d := 1e9
+	for hub in zone_reach:
+		if not nodes.has(hub):
+			continue
+		var d := ((nodes[hub] as Dictionary)["pos"] as Vector2).distance_to(world)
+		if d <= float(zone_reach[hub]) and d < best_d:
+			best = str(hub)
+			best_d = d
+	return best
+
+
+## End of a drag: an item let go inside another place's zone asks to be refiled there;
+## anywhere else it stays where it was put instead of drifting back.
+func drop_item(id: String, world: Vector2) -> void:
+	if not nodes.has(id):
+		return
+	var n: Dictionary = nodes[id]
+	if str(n["type"]) != "note":
+		return
+	var hub := zone_at(world)
+	if hub != "" and hub != "space:" + str(n["space_id"]) and not folded.has(hub):
+		n["pinned"] = false
+		item_dropped_on_place.emit(id, hub.trim_prefix("space:"))
+	else:
+		n["pinned"] = true
+
+
 func node_at(screen_pos: Vector2) -> String:
 	var best := ""
 	var best_d := 1e9
@@ -1303,6 +1336,8 @@ func _gui_input(event: InputEvent) -> void:
 				elif mb.double_click:
 					node_activated.emit(_dragging_node)
 			else:
+				if _moved and _dragging_node != "":
+					drop_item(_dragging_node, screen_to_world(mb.position))
 				if not _moved:
 					var hit := node_at(mb.position)
 					if hit != "":
