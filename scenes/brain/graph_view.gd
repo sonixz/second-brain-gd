@@ -59,6 +59,31 @@ var filter: Dictionary = {}
 var filtered_out: Dictionary = {}          # node id -> true when filtered out or folded in
 var _note_tags: Dictionary = {}
 var path_ids: Array = []
+const CELL := 260.0
+const DENSE := 350                # beyond this many items on screen, draw lighter (no halos, fewer labels)
+var _dense := false
+var _mini_at := -1.0
+var _mini_pts := PackedVector2Array()
+var _mini_col := PackedColorArray()
+var _mini_tr: Array = []
+var _mini_tr_at := -1.0
+var graph_layout := "zones"
+var _tl_lanes: Dictionary = {}   # place id -> lane y
+var _tl_t0 := 0.0
+var _tl_t1 := 1.0
+var _tl_width := 1400.0               # repulsion only reaches the 3×3 cells around an item
+var _sim_ids: Array[String] = []
+var _sim_index: Dictionary = {}
+var _sim_space := PackedByteArray()
+var _sim_spaces := PackedInt32Array()
+var _edge_a := PackedInt32Array()
+var _edge_b := PackedInt32Array()
+var _edge_rest := PackedFloat32Array()
+var _edge_src := PackedInt32Array()     # index into `edges`
+var _edge_kind := PackedByteArray()   # 0 structural (place, area, tag), 1 link, 2 related idea
+var _sim_pos := PackedVector2Array()
+var _sim_col := PackedColorArray()
+var _sim_born := PackedFloat32Array()
 var path_steps: Array = []
 var page_tex: Dictionary = {}     # id -> {"w": int, "tex": Texture2D} (first page of a document)
 var _page_asked: Dictionary = {}  # id -> width asked
@@ -121,6 +146,8 @@ func set_graph(data: Dictionary) -> Array[String]:
 			var hub: Dictionary = nodes[hub_id]
 			n["pos"] = (hub["pos"] as Vector2) + Vector2.from_angle(randf() * TAU) * 40.0
 	_rebuild_neighbors()
+	for id in nodes:
+		(nodes[id] as Dictionary)["_col"] = _color(nodes[id])
 	_layout_anchors()
 	# On first load, places and items start in their zones rather than in a random ring.
 	if first_load:
@@ -134,6 +161,8 @@ func set_graph(data: Dictionary) -> Array[String]:
 			if str(n["type"]) == "note" and anchors.has(hub):
 				n["pos"] = (anchors[hub] as Vector2) + Vector2.from_angle(randf() * TAU) * (60.0 + randf() * 80.0)
 	_update_shown()
+	if graph_layout == "timeline":
+		_timeline_targets()
 	heat = 1.0
 	return born
 
@@ -390,8 +419,9 @@ func _update_shown() -> void:
 			for t in _note_tags.get(str(id), []):
 				shown_tags["tag:" + str(t)] = true
 	for id in nodes:
-		if str((nodes[id] as Dictionary)["type"]) == "tag" and not shown_tags.has(id):
+		if str((nodes[id] as Dictionary)["type"]) == "tag" and (not shown_tags.has(id) or graph_layout == "timeline"):
 			filtered_out[id] = true
+	_rebuild_sim()
 
 
 ## Items of a place, shown or not (for the "+N" badge of a folded place).
@@ -454,61 +484,341 @@ func _draw_path() -> void:
 			draw_circle(pa.lerp(pb, t), 3.5, SbTheme.MINT_SOFT)
 
 
+# ------------------------------------------------------------ timeline (Loop 15)
+## "zones" (the organised graph) or "timeline": items slide onto a time axis, one lane per place.
+func set_layout(mode: String) -> void:
+	if mode == graph_layout or not mode in ["zones", "timeline"]:
+		return
+	if mode == "timeline":
+		for id in nodes:
+			(nodes[id] as Dictionary)["zone_pos"] = (nodes[id] as Dictionary)["pos"]
+	graph_layout = mode
+	_update_shown()
+	if mode == "timeline":
+		_timeline_targets()
+		follow = ""
+		var free_w := maxf(400.0, size.x - screen_offset.x * 2.0 - 80.0)
+		zoom_to(clampf(free_w / (_tl_width + 420.0), ZOOM_MIN, 1.2), Vector2(-110.0, 0))
+	else:
+		for id in nodes:
+			var n: Dictionary = nodes[id]
+			if n.has("zone_pos"):
+				n["pos"] = n["zone_pos"]
+		_rebuild_sim()
+		heat = 0.4
+		zoom_to(0.6, Vector2.ZERO)
+	queue_redraw()
+
+
+static func _unix(iso: String) -> float:
+	if iso.length() < 10:
+		return 0.0
+	return float(Time.get_unix_time_from_datetime_string(iso.left(19)))  # "YYYY-MM-DDTHH:MM:SS", UTC
+
+
+func _timeline_targets() -> void:
+	_tl_lanes.clear()
+	var times: Array = []
+	for id in _sim_ids:
+		var n: Dictionary = nodes[id]
+		if str(n["type"]) == "note":
+			times.append(_unix(str(n.get("created_at", ""))))
+	if times.is_empty():
+		return
+	_tl_t0 = times.min()
+	_tl_t1 = maxf(times.max(), _tl_t0 + 600.0)  # at least ten minutes, so recent items still spread out
+	var pad := (_tl_t1 - _tl_t0) * 0.04
+	_tl_t0 -= pad
+	_tl_t1 += pad
+	_tl_width = clampf(times.size() * 22.0, 1400.0, 9000.0)
+	var lanes: Array = []
+	for id in _sim_ids:
+		if str((nodes[id] as Dictionary)["type"]) == "space":
+			lanes.append(id)
+	lanes.sort_custom(func(a: Variant, b: Variant) -> bool:
+		return str((nodes[a] as Dictionary)["label"]).naturalnocasecmp_to(str((nodes[b] as Dictionary)["label"])) < 0)
+	var lane_h := 110.0
+	var top := -lane_h * lanes.size() * 0.5
+	for i in lanes.size():
+		_tl_lanes[str(lanes[i]).trim_prefix("space:")] = top + i * lane_h
+		(nodes[lanes[i]] as Dictionary)["tl"] = Vector2(-_tl_width * 0.5 - 170.0, top + i * lane_h)
+	var jitter: Dictionary = {}
+	for id in _sim_ids:
+		var n: Dictionary = nodes[id]
+		if str(n["type"]) != "note":
+			continue
+		var x := -_tl_width * 0.5 + (_unix(str(n.get("created_at", ""))) - _tl_t0) / (_tl_t1 - _tl_t0) * _tl_width
+		var y: float = _tl_lanes.get(str(n["space_id"]), 0.0)
+		var slot := "%d:%d" % [int(x / 18.0), int(y)]
+		var k: int = jitter.get(slot, 0)  # items added at the same moment stack in their lane
+		jitter[slot] = k + 1
+		n["tl"] = Vector2(x, y + (k % 3 - 1) * 26.0 + (k / 3) * 8.0)
+
+
+func _timeline_step(delta: float) -> void:
+	var w := minf(1.0, delta * 6.0)
+	for i in _sim_ids.size():
+		var n: Dictionary = nodes[_sim_ids[i]]
+		if n.has("tl"):
+			n["pos"] = (n["pos"] as Vector2).lerp(n["tl"] as Vector2, w)
+			_sim_pos[i] = n["pos"]
+
+
+func _draw_timeline_axis() -> void:
+	if _tl_lanes.is_empty():
+		return
+	var span := _tl_t1 - _tl_t0
+	var step := 86400.0
+	var fmt := "day"
+	if span > 86400.0 * 60:
+		step = 86400.0 * 30
+		fmt = "month"
+	elif span > 86400.0 * 14:
+		step = 86400.0 * 7
+		fmt = "week"
+	elif span < 3600.0 * 3:
+		step = 600.0 if span > 3600.0 else 120.0
+		fmt = "time"
+	elif span < 86400.0 * 2:
+		step = 3600.0 * (1 if span < 86400.0 * 0.5 else 3)
+		fmt = "time"
+	var tops: Array = _tl_lanes.values()
+	var y0: float = tops.min() - 70.0
+	var y1: float = tops.max() + 70.0
+	var t := ceilf(_tl_t0 / step) * step
+	var font := _font
+	while t <= _tl_t1 + 1.0:
+		var x := -_tl_width * 0.5 + (t - _tl_t0) / span * _tl_width
+		var a := world_to_screen(Vector2(x, y0))
+		var b := world_to_screen(Vector2(x, y1))
+		draw_line(a, b, Color(SbTheme.BORDER, 0.55), 1.0)
+		var d := Time.get_datetime_dict_from_unix_time(int(t) + int(Time.get_time_zone_from_system().get("bias", 0)) * 60)
+		var label := "%04d-%02d" % [d["year"], d["month"]] if fmt == "month" else (
+			"%02d:%02d" % [d["hour"], d["minute"]] if fmt == "time" else "%02d/%02d" % [d["day"], d["month"]])
+		draw_string(font, b + Vector2(-18, 18), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 12, SbTheme.MUTED)
+		t += step
+	for sid in _tl_lanes:
+		var y: float = _tl_lanes[sid]
+		draw_line(world_to_screen(Vector2(-_tl_width * 0.5 - 60.0, y)), world_to_screen(Vector2(_tl_width * 0.5 + 40.0, y)),
+			Color(SbTheme.BORDER, 0.35), 1.0)
+
+
 # --------------------------------------------------------------- simulation
 func _process(delta: float) -> void:
 	_t += delta
 	if follow != "" and nodes.has(follow) and not (_zoom_tween != null and _zoom_tween.is_running()):
 		cam = cam.lerp((nodes[follow]["pos"] as Vector2) - screen_offset / zoom, minf(1.0, delta * 8.0))
-	if heat > 0.02:
+	if graph_layout == "timeline":
+		_timeline_step(delta)
+	elif heat > 0.02:
 		_simulate(minf(delta, 0.05) * 60.0)
-		heat *= 0.995
+		heat *= 0.995 if _sim_ids.size() < 600 else (0.985 if _sim_ids.size() < 2000 else 0.97)
 	queue_redraw()
 
 
+## Packed arrays for the layout (Loop 15): rebuilt when the graph, the filters or the folds change.
+func _rebuild_sim() -> void:
+	_sim_ids = []
+	for id in nodes:
+		if not filtered_out.has(id):
+			_sim_ids.append(str(id))
+	_sim_index.clear()
+	var n := _sim_ids.size()
+	_sim_space = PackedByteArray()
+	_sim_space.resize(n)
+	_sim_spaces = PackedInt32Array()
+	_sim_pos = PackedVector2Array()
+	_sim_pos.resize(n)
+	_sim_col = PackedColorArray()
+	_sim_col.resize(n)
+	_sim_born = PackedFloat32Array()
+	_sim_born.resize(n)
+	for i in n:
+		var nd: Dictionary = nodes[_sim_ids[i]]
+		_sim_pos[i] = nd["pos"]
+		_sim_col[i] = nd.get("_col", Color.WHITE)
+		_sim_born[i] = float(nd["born"])
+		_sim_index[_sim_ids[i]] = i
+		var is_space := str((nodes[_sim_ids[i]] as Dictionary)["type"]) == "space"
+		_sim_space[i] = 1 if is_space else 0
+		if is_space:
+			_sim_spaces.append(i)
+	_edge_a = PackedInt32Array()
+	_edge_b = PackedInt32Array()
+	_edge_rest = PackedFloat32Array()
+	_edge_kind = PackedByteArray()
+	_edge_src = PackedInt32Array()
+	for ei in edges.size():
+		var e: Dictionary = edges[ei]
+		if _sim_index.has(e["from"]) and _sim_index.has(e["to"]):
+			_edge_src.append(ei)
+			_edge_a.append(int(_sim_index[e["from"]]))
+			_edge_b.append(int(_sim_index[e["to"]]))
+			_edge_rest.append(float(REST.get(str(e["type"]), 120.0)))
+			_edge_kind.append(1 if str(e["type"]) == "link" else (2 if str(e["type"]) == "related" else 0))
+
+
 func _simulate(step: float) -> void:
-	var ids := nodes.keys().filter(func(i: Variant) -> bool: return not filtered_out.has(i))
-	var count := ids.size()
-	var forces: Dictionary = {}
-	for id in ids:
-		forces[id] = Vector2.ZERO
-	for a in count:
-		var na: Dictionary = nodes[ids[a]]
-		var pa: Vector2 = na["pos"]
-		for b in range(a + 1, count):
-			var nb: Dictionary = nodes[ids[b]]
-			var d: Vector2 = pa - (nb["pos"] as Vector2)
-			var dist2 := maxf(d.length_squared(), 100.0)
-			if dist2 > 640000.0 and not (str(na["type"]) == "space" and str(nb["type"]) == "space"):
-				continue
-			var both := str(na["type"]) == "space" and str(nb["type"]) == "space"
-			var mult := 9.0 if both else (2.2 if str(na["type"]) == "space" or str(nb["type"]) == "space" else 1.0)
-			var f := d.normalized() * REPULSION * mult / dist2
-			forces[ids[a]] += f
-			forces[ids[b]] -= f
-	for e in edges:
-		if filtered_out.has(e["from"]) or filtered_out.has(e["to"]):
-			continue
-		var na: Dictionary = nodes[e["from"]]
-		var nb: Dictionary = nodes[e["to"]]
-		var d: Vector2 = (nb["pos"] as Vector2) - (na["pos"] as Vector2)
-		var rest: float = REST.get(str(e["type"]), 120.0)
-		var f := d.normalized() * (d.length() - rest) * SPRING
-		forces[e["from"]] += f
-		forces[e["to"]] -= f
-	for id in ids:
-		var n: Dictionary = nodes[id]
-		if bool(n["pinned"]) or id == _dragging_node:
-			n["vel"] = Vector2.ZERO
-			continue
-		var p: Vector2 = n["pos"]
-		var f: Vector2
-		if anchors.has(id):  # a place stays in its zone
-			f = forces[id] * 0.25 + ((anchors[id] as Vector2) - p) * 0.06
+	var n := _sim_ids.size()
+	if n == 0:
+		return
+	var pos := PackedVector2Array()
+	pos.resize(n)
+	for i in n:
+		pos[i] = (nodes[_sim_ids[i]] as Dictionary)["pos"]
+	var force := PackedVector2Array()
+	force.resize(n)
+	# Repulsion between neighbours only: a grid of CELL-sized cells, each item against the 3×3 cells around it.
+	var grid: Dictionary = {}
+	for i in n:
+		var key := Vector2i(floori(pos[i].x / CELL), floori(pos[i].y / CELL))
+		if grid.has(key):
+			(grid[key] as PackedInt32Array).append(i)
 		else:
-			f = forces[id] - p * GRAVITY * 0.35
-		var v: Vector2 = ((n["vel"] as Vector2) + f * step * heat) * DAMPING
-		n["vel"] = v.limit_length(18.0)
-		n["pos"] = p + (n["vel"] as Vector2) * step
+			grid[key] = PackedInt32Array([i])
+	for key in grid:
+		var here: PackedInt32Array = grid[key]
+		for dx in range(-1, 2):
+			for dy in range(-1, 2):
+				var other_key := Vector2i(key.x + dx, key.y + dy)
+				if not grid.has(other_key):
+					continue
+				var there: PackedInt32Array = grid[other_key]
+				for i in here:
+					var pi := pos[i]
+					var si := _sim_space[i]
+					for j in there:
+						if j <= i or (si == 1 and _sim_space[j] == 1):
+							continue
+						var d := pi - pos[j]
+						var dist2 := maxf(d.length_squared(), 100.0)
+						var f := d * (REPULSION * (2.2 if si == 1 or _sim_space[j] == 1 else 1.0) / (dist2 * sqrt(dist2)))
+						force[i] += f
+						force[j] -= f
+	# Places push each other apart at any distance (there are few of them).
+	for a in _sim_spaces.size():
+		var i := _sim_spaces[a]
+		for b in range(a + 1, _sim_spaces.size()):
+			var j := _sim_spaces[b]
+			var d := pos[i] - pos[j]
+			var dist2 := maxf(d.length_squared(), 100.0)
+			var f := d * (REPULSION * 9.0 / (dist2 * sqrt(dist2)))
+			force[i] += f
+			force[j] -= f
+	for k in _edge_a.size():
+		var i := _edge_a[k]
+		var j := _edge_b[k]
+		var d := pos[j] - pos[i]
+		var len := d.length()
+		if len < 0.001:
+			continue
+		var f := d * ((len - _edge_rest[k]) * SPRING / len)
+		force[i] += f
+		force[j] -= f
+	for i in n:
+		var id: String = _sim_ids[i]
+		var node: Dictionary = nodes[id]
+		if bool(node["pinned"]) or id == _dragging_node:
+			node["vel"] = Vector2.ZERO
+			continue
+		var p := pos[i]
+		var f: Vector2
+		if _sim_space[i] == 1 and anchors.has(id):  # a place stays in its zone
+			f = force[i] * 0.25 + ((anchors[id] as Vector2) - p) * 0.06
+		else:
+			f = force[i] - p * GRAVITY * 0.35
+		var v: Vector2 = ((node["vel"] as Vector2) + f * step * heat) * DAMPING
+		v = v.limit_length(18.0)
+		node["vel"] = v
+		node["pos"] = p + v * step
+		_sim_pos[i] = node["pos"]
+
+
+## Dense or far views (Loop 15): everything ordinary comes from the packed layout arrays,
+## in a handful of batched draw calls. Returns the items that still need the full rendering.
+func _draw_fast_layer(level: String) -> Array:
+	var half := size * 0.5
+	var view := Rect2(Vector2(-40, -40), size + Vector2(80, 80))
+	var links := PackedVector2Array()
+	var link_col := PackedColorArray()
+	var ideas := PackedVector2Array()
+	var idea_col := PackedColorArray()
+	var focus := not highlight.is_empty() or hovered != "" or selected != ""
+	for k in _edge_a.size():
+		var kind := _edge_kind[k]
+		if kind == 0:
+			continue
+		var pa := (_sim_pos[_edge_a[k]] - cam) * zoom + half
+		var pb := (_sim_pos[_edge_b[k]] - cam) * zoom + half
+		if not view.has_point(pa) and not view.has_point(pb):
+			continue
+		var dim := focus and (_is_dim(_sim_ids[_edge_a[k]]) or _is_dim(_sim_ids[_edge_b[k]]))
+		if kind == 1:
+			links.append(pa)
+			links.append(pb)
+			link_col.append(Color(SbTheme.MINT, 0.12 if dim else 0.45))
+		else:
+			ideas.append(pa)
+			ideas.append(pb)
+			idea_col.append(Color(SbTheme.WARM, 0.1 if dim else 0.35))
+	if links.size() > 0:
+		draw_multiline_colors(links, link_col, 1.2)
+	if ideas.size() > 0:
+		draw_multiline_colors(ideas, idea_col, 1.0)
+	var dot := clampf(7.0 * zoom, 1.6, 5.0)
+	var dots := PackedVector2Array()
+	var dot_col := PackedColorArray()
+	var special: Array = []
+	var fresh := _t - BIRTH_S
+	for i in _sim_ids.size():
+		var id: String = _sim_ids[i]
+		if _sim_space[i] == 1 or id == selected or id == hovered or _sim_born[i] > fresh or (focus and highlight.has(id)):
+			special.append(id)
+			continue
+		var p := (_sim_pos[i] - cam) * zoom + half
+		if not view.has_point(p):
+			continue
+		dots.append(p - Vector2(dot, 0))
+		dots.append(p + Vector2(dot, 0))
+		dot_col.append(Color(_sim_col[i], 0.25 if focus and _is_dim(id) else 0.9))
+	if dots.size() > 0:
+		draw_multiline_colors(dots, dot_col, dot * 2.0)
+	return special
+
+
+## Classic views draw only what is on screen (plus the special items), chosen from the packed arrays.
+func _on_screen_ids(level: String) -> Array:
+	var out: Array = []
+	var margin := 80.0 if level == "mid" or level == "far" else CARD.x * zoom
+	var half := size * 0.5
+	var r := Rect2(Vector2(-margin, -margin), size + Vector2(margin, margin) * 2.0)
+	for i in _sim_ids.size():
+		if r.has_point((_sim_pos[i] - cam) * zoom + half) or _sim_space[i] == 1:
+			out.append(_sim_ids[i])
+	return out
+
+
+func _on_screen_edges(ids: Array) -> Array:
+	var shown := PackedByteArray()
+	shown.resize(_sim_ids.size())
+	for id in ids:
+		if _sim_index.has(id):
+			shown[int(_sim_index[id])] = 1
+	var out: Array = []
+	for k in _edge_a.size():
+		if shown[_edge_a[k]] == 1 or shown[_edge_b[k]] == 1:
+			out.append(edges[_edge_src[k]])
+	return out
+
+
+func _count_on_screen() -> int:
+	var c := 0
+	var lo := screen_to_world(Vector2.ZERO)
+	var r := Rect2(lo, screen_to_world(size) - lo)
+	for i in _sim_pos.size():
+		if r.has_point(_sim_pos[i]):
+			c += 1
+	return c
 
 
 # ------------------------------------------------------------------ drawing
@@ -550,7 +860,16 @@ func _is_dim(id: String) -> bool:
 	return id != focus and not (_neighbors.get(focus, {}) as Dictionary).has(id)
 
 
+var draw_ms := 0.0   # last _draw duration (perf checks)
+
+
 func _draw() -> void:
+	var t0 := Time.get_ticks_usec()
+	_draw_all()
+	draw_ms = (Time.get_ticks_usec() - t0) / 1000.0
+
+
+func _draw_all() -> void:
 	# Background: soft vignette glow and slow parallax stars.
 	draw_rect(Rect2(Vector2.ZERO, size), SbTheme.BG)
 	var c := size * 0.5
@@ -564,17 +883,40 @@ func _draw() -> void:
 		var tw := 0.5 + 0.5 * sin(_t * (0.6 + s.z) + s.x * 40.0)
 		draw_circle(sp, 0.8 + s.z * 1.3, Color(SbTheme.MINT_SOFT, 0.10 + 0.18 * tw * s.z))
 
-	# Edges
-	for e in edges:
-		var a: Dictionary = nodes[e["from"]]
-		var b: Dictionary = nodes[e["to"]]
-		var pa := world_to_screen(a["pos"] as Vector2)
-		var pb := world_to_screen(b["pos"] as Vector2)
-		var grow := minf(_birth(a), _birth(b))
+	var level := lod()
+	if graph_layout == "timeline":
+		_draw_timeline_axis()
+		if level == "far":
+			level = "mid"  # no place clusters on a time axis
+	_dense = _count_on_screen() > DENSE
+	var fast := level == "far" or (_dense and level == "mid")
+	if level == "far" and graph_layout == "zones":
+		_draw_clusters()
+	var special: Array = _draw_fast_layer(level) if fast else _on_screen_ids(level)
+	# Edges (classic view): faint structural ones in one batch, links and ideas one by one.
+	var faint := PackedVector2Array()
+	var faint_col := PackedColorArray()
+	var view := Rect2(Vector2(-40, -40), size + Vector2(80, 80))
+	for e in (_on_screen_edges(special) if not fast else []):
+		var type: String = e["type"]
 		if filtered_out.has(e["from"]) or filtered_out.has(e["to"]):
 			continue
+		var a0: Dictionary = nodes[e["from"]]
+		var b0: Dictionary = nodes[e["to"]]
+		var sa := world_to_screen(a0["pos"] as Vector2)
+		var sb := world_to_screen(b0["pos"] as Vector2)
+		if not view.has_point(sa) and not view.has_point(sb) and not view.intersects(Rect2(sa, Vector2.ZERO).expand(sb)):
+			continue
+		var pa := sa
+		var pb := sb
+		var grow := minf(_birth(a0), _birth(b0))
 		var dim := _is_dim(str(e["from"])) or _is_dim(str(e["to"]))
-		var type := str(e["type"])
+		if type in ["space", "area", "tag"] and minf(_birth(a0), _birth(b0)) >= 1.0:
+			var fc := Color(SbTheme.FOREST_LIGHT if type != "tag" else SbTheme.MUTED, (0.22 if type != "tag" else 0.16) * (0.25 if dim else 1.0))
+			faint.append(sa)
+			faint.append(sb)
+			faint_col.append(fc)
+			continue
 		var col := SbTheme.FOREST_LIGHT
 		var alpha := 0.22
 		var width := 1.2
@@ -603,25 +945,24 @@ func _draw() -> void:
 			var k := fmod(_t * 0.35 + float(hash(str(e["from"])) % 97) / 97.0, 1.0)
 			draw_circle(pa.lerp(pb, k), 2.2, Color(SbTheme.MINT_SOFT, 0.75))
 
+	if faint.size() > 0:
+		draw_multiline_colors(faint, faint_col, 1.0)
 	if path_ids.size() > 1:
 		_draw_path()
-	# Far: each place becomes a named cluster around its items.
-	var level := lod()
-	if level == "far":
-		_draw_clusters()
-	# Nodes
+	# Nodes: in fast views only the special ones (places, selection, hover, hits, newborns) are drawn here.
 	var margin := 80.0 if level == "mid" or level == "far" else CARD.x * zoom
-	for id in nodes:
+	for id in special:
 		if filtered_out.has(id):
 			continue
 		var n: Dictionary = nodes[id]
 		var p := world_to_screen(n["pos"] as Vector2)
 		if p.x < -margin or p.y < -margin or p.x > size.x + margin or p.y > size.y + margin:
 			continue
-		if (level == "near" or level == "read") and str(n["type"]) == "note":
+		var ntype: String = n["type"]
+		if (level == "near" or level == "read") and ntype == "note":
 			_draw_card(n, p, level == "read")
 			continue
-		if level == "far" and str(n["type"]) != "space":
+		if level == "far" and ntype != "space":
 			draw_circle(p, maxf(1.5, _radius(n) * zoom), Color(_color(n), 0.25 if _is_dim(str(id)) else 0.85))
 			continue
 		var g := _birth(n)
@@ -637,7 +978,8 @@ func _draw() -> void:
 			for k in 6:
 				var ang := TAU * float(k) / 6.0 + g * 2.0
 				draw_circle(p + Vector2.from_angle(ang) * r * (1.6 + g * 2.2), 2.0 * (1.0 - g), Color(SbTheme.MINT_SOFT, 1.0 - g))
-		draw_circle(p, r * 2.2, Color(col, (0.05 + 0.06 * breathe) * a))
+		if not _dense:
+			draw_circle(p, r * 2.2, Color(col, (0.05 + 0.06 * breathe) * a))
 		match str(n["type"]):
 			"space":
 				draw_circle(p, r, Color(SbTheme.PANEL_2, 0.92 * a))
@@ -653,7 +995,8 @@ func _draw() -> void:
 				draw_arc(p, r, 0, TAU, 24, Color(col, 0.8 * a), 1.5, true)
 			_:
 				draw_circle(p, r, Color(col, 0.95 * a))
-				draw_circle(p + Vector2(-r * 0.3, -r * 0.3), r * 0.35, Color(1, 1, 1, 0.25 * a))
+				if not _dense:
+					draw_circle(p + Vector2(-r * 0.3, -r * 0.3), r * 0.35, Color(1, 1, 1, 0.25 * a))
 		if n.get("layer") != null and str(n.get("layer")) != "":
 			# from an imported pack: a dotted ring, so a layer reads apart from your own items
 			for k in 12:
@@ -766,6 +1109,14 @@ func minimap_rect() -> Rect2:
 
 
 func _minimap_transform() -> Array:
+	if _t - _mini_tr_at < 0.4 and not _mini_tr.is_empty():
+		return _mini_tr
+	_mini_tr_at = _t
+	_mini_tr = _minimap_transform_now()
+	return _mini_tr
+
+
+func _minimap_transform_now() -> Array:
 	var box := minimap_rect()
 	var lo := Vector2(1e9, 1e9)
 	var hi := Vector2(-1e9, -1e9)
@@ -785,9 +1136,21 @@ func _draw_minimap() -> void:
 	var k: float = tr[1]
 	draw_rect(box, Color(SbTheme.PANEL, 0.72))
 	draw_rect(box, Color(SbTheme.BORDER, 0.9), false, 1.0)
-	for id in nodes:
-		var n: Dictionary = nodes[id]
-		draw_circle(origin + (n["pos"] as Vector2) * k, 2.4 if str(n["type"]) == "space" else 1.2, Color(_color(n), 0.9))
+	if _t - _mini_at > 0.4 or _mini_pts.is_empty():
+		_mini_at = _t
+		_mini_pts = PackedVector2Array()
+		_mini_col = PackedColorArray()
+		for id in nodes:
+			if filtered_out.has(id):
+				continue
+			var n: Dictionary = nodes[id]
+			var q := origin + (n["pos"] as Vector2) * k
+			var w := 2.4 if str(n["type"]) == "space" else 1.3
+			_mini_pts.append(q - Vector2(w * 0.5, 0))
+			_mini_pts.append(q + Vector2(w * 0.5, 0))
+			_mini_col.append(Color(_color(n), 0.9))
+	if _mini_pts.size() > 0:
+		draw_multiline_colors(_mini_pts, _mini_col, 2.0)
 	var lo := origin + screen_to_world(Vector2.ZERO) * k
 	var hi := origin + screen_to_world(size) * k
 	draw_rect(Rect2(lo, hi - lo).intersection(box), Color(SbTheme.MINT_SOFT, 0.85), false, 1.2)
@@ -801,11 +1164,11 @@ func _jump_minimap(pos: Vector2) -> void:
 func _draw_label(n: Dictionary, p: Vector2, r: float, dim: bool) -> void:
 	var id := str(n["id"])
 	var type := str(n["type"])
-	if type == "space" and zoom < FAR:
+	if type == "space" and zoom < FAR and graph_layout == "zones":
 		return  # the cluster already carries the place's name
 	var important := type == "space" or id == hovered or id == selected or highlight.has(id)
 	var neighbor := hovered != "" and (_neighbors.get(hovered, {}) as Dictionary).has(id)
-	if not (important or neighbor or (zoom >= 0.85 and type == "note")):
+	if not (important or neighbor or (zoom >= 0.85 and type == "note" and not _dense)):
 		return
 	var text := str(n["label"])
 	if text.length() > 34:
@@ -814,7 +1177,8 @@ func _draw_label(n: Dictionary, p: Vector2, r: float, dim: bool) -> void:
 	var w := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
 	var pos := p + Vector2(-w * 0.5, r + 16.0)
 	var a := 0.35 if dim else (1.0 if important else 0.8)
-	draw_string(_font, pos + Vector2(0, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(SbTheme.BG, 0.8 * a))
+	if not _dense:
+		draw_string(_font, pos + Vector2(0, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(SbTheme.BG, 0.8 * a))
 	draw_string(_font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs,
 		Color(SbTheme.TEXT if type != "tag" else SbTheme.MUTED, a))
 
@@ -898,6 +1262,8 @@ func _gui_input(event: InputEvent) -> void:
 			if _dragging_node != "" and _moved:
 				var n: Dictionary = nodes[_dragging_node]
 				n["pos"] = screen_to_world(mm.position)
+				if _sim_index.has(_dragging_node):
+					_sim_pos[int(_sim_index[_dragging_node])] = n["pos"]
 				if anchors.has(_dragging_node):  # moving a place moves its zone
 					anchors[_dragging_node] = n["pos"]
 					custom_anchors[_dragging_node] = n["pos"]

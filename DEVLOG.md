@@ -1,5 +1,40 @@
 # Devlog
 
+## Loop 15 — Large volume and timeline (2026-11-03)
+
+- **Measured first** with `tools/graph_bench.gd`: synthetic brains, headless, on the Linux dev machine.
+
+  | Items | Layout step before → after | Full frame before → after | Worst draw after |
+  |---|---|---|---|
+  | 500 | 138 → 0.6 ms | 167 → 26 ms | ~13 ms |
+  | 2,000 | 2,403 → 5 ms | 2,314 → 86 ms | ~30 ms |
+  | 5,000 | 13,706 → 14 ms | 12,622 → 125 ms | ~40 ms |
+
+- **Layout.** Packed arrays instead of dictionaries, and a spatial grid: an item only pushes the items in
+  the 3×3 cells around it (260 px). Places push each other at any distance, since there are few. Large
+  graphs cool down faster.
+- **Drawing.**
+  - Edges off screen are skipped. Faint structural edges, links and ideas are drawn in batches.
+  - The minimap is one batched call, refreshed a few times per second.
+  - In dense views (over 350 items on screen) or far views, ordinary items are drawn from the packed
+    arrays as one batch of dots. Only places, the selection, hover, search hits and newborn items get the
+    full rendering.
+  - Classic views draw only what is on screen.
+- **Timeline.** A Timeline toggle, or « montre la chronologie »: items slide onto a time axis, one lane per
+  place.
+  - The ticks adapt (minutes, hours, days, weeks, months, in local time), and the camera frames the axis
+    in the free area. « retour aux zones » goes back.
+  - It combines with filters: « ce que j'ai ajouté cette semaine ».
+- **Bugs found in the screenshots.**
+  - The timeline sat under the left panel, at a single instant, with no ticks: the demo items are seconds
+    apart, and the date parser got « YYYY-MM-DD HH:MM:SS » instead of the « T » form, so every date was 0.
+  - The ticks were in UTC.
+  - Lane names were hidden at far zoom.
+- **Performance guard in the Godot tests.** For 2,000 items: a layout step under 60 ms and a draw under
+  120 ms. Measured 6 ms / 34 ms on Linux, and 11 ms / 72 ms on Windows (headless; a real GPU is faster
+  for drawing).
+- **Tests.** Python 138 and Godot 154, on Linux and native Windows.
+
 ## Loop 14 — Search and connect in the graph (2026-11-03)
 
 - **Search on screen.** Hits light up in the graph and are listed with **why** they matched: by meaning

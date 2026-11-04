@@ -223,6 +223,13 @@ class HandsFreeTests(unittest.TestCase):
         core.run_tool(self.conn, "ui_filter", {"types": ["article", "spaceship"], "origins": ["web"], "since_days": 7}, [])
         self.assertEqual(core._UI["actions"][0]["filter"], {"types": ["article"], "origins": ["url"], "since_days": 7})
 
+    def test_timeline_by_voice(self):
+        out = core.chat(self.conn, self.client, "Montre la chronologie")
+        self.assertEqual(out["ui_actions"], [{"action": "layout", "mode": "timeline"}])
+        out = core.chat(self.conn, self.client, "Retour aux zones")
+        self.assertEqual(out["ui_actions"], [{"action": "layout", "mode": "zones"}])
+        self.assertIn("error", core.run_tool(self.conn, "ui_layout", {"mode": "spiral"}, []))
+
     def test_spoken_messages_ask_for_a_short_answer(self):
         core.chat(self.conn, self.client, "bonjour", spoken=True)
         self.assertIn("VOIX", FakeChat.last_messages[0]["content"])

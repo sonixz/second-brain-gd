@@ -55,6 +55,7 @@ func _run() -> void:
 		return
 	print("Unit checks")
 	_unit()
+	await _perf_check()
 	print("End-to-end through the UI (data folder: %s)" % SbPaths.data_dir())
 	await _e2e()
 	print("\n%d passed, %d failed" % [passed, failed])
@@ -491,6 +492,25 @@ func _e2e() -> void:
 	var l14_saved := await wait_until(func() -> bool: return brain.get("card_editor") == null, 10.0)
 	var l14_en: Dictionary = await app.backend.api.call_api("/brain/notes/" + l14_engine_room)
 	check(l14_saved and str((l14_en["data"] as Dictionary).get("body", "")).contains("Edited in the graph."), "the card's edit is l14_saved")
+	# Timeline (Loop 15): items on a time axis, one lane per place, and back.
+	await ap.send("Montre la chronologie", true)
+	var tl_on := await wait_until(func() -> bool: return graph.graph_layout == "timeline", 5.0)
+	await create_timer(1.2).timeout
+	var ordered := true
+	var by_time: Array = []
+	for nid in graph.nodes:
+		var nd: Dictionary = graph.nodes[nid]
+		if str(nd["type"]) == "note" and graph.is_shown(str(nid)):
+			by_time.append([str(nd.get("created_at", "")), (nd["pos"] as Vector2).x])
+	by_time.sort_custom(func(x: Array, y: Array) -> bool: return str(x[0]) < str(y[0]))
+	for i in range(1, by_time.size()):
+		if str(by_time[i][0]).left(16) > str(by_time[i - 1][0]).left(16) and float(by_time[i][1]) + 30.0 < float(by_time[i - 1][1]):
+			ordered = false
+	var fbar: GraphFilters = brain.get("filters_bar")
+	check(tl_on and ordered and fbar.timeline_button.button_pressed, "« montre la chronologie » lays items out in time order (%d items)" % by_time.size())
+	await ap.send("Retour aux zones", true)
+	var back := await wait_until(func() -> bool: return graph.graph_layout == "zones", 5.0)
+	check(back and not fbar.timeline_button.button_pressed, "« retour aux zones » brings the organised graph back")
 	await ap.send("Vue d'ensemble", true)
 	var overview := await wait_until(func() -> bool: return graph.lod() == "far", 5.0)
 	check(overview, "« vue d'ensemble » zooms back out to the places")
@@ -616,6 +636,35 @@ func _e2e() -> void:
 	await process_frame
 	app2.queue_free()
 	await process_frame
+
+
+## Loop 15: a big synthetic brain stays workable (generous limits: headless CPU timing).
+func _perf_check() -> void:
+	var g := GraphView.new()
+	g.size = Vector2(1280, 800)
+	root.add_child(g)
+	await process_frame
+	var nodes: Array = []
+	var edges: Array = []
+	for p in 13:
+		nodes.append({"id": "space:p%d" % p, "type": "space", "label": "Place %d" % p, "kind": "resource", "weight": 150})
+	for i in 2000:
+		nodes.append({"id": "n%d" % i, "type": "note", "label": "Item %d" % i, "kind": "note", "space_id": "p%d" % (i % 13)})
+		edges.append({"from": "n%d" % i, "to": "space:p%d" % (i % 13), "type": "space"})
+		if i % 3 == 0 and i > 0:
+			edges.append({"from": "n%d" % i, "to": "n%d" % (i - 1), "type": "link"})
+	g.set_graph({"nodes": nodes, "edges": edges})
+	var t := Time.get_ticks_usec()
+	g._simulate(1.0)
+	var sim_ms := (Time.get_ticks_usec() - t) / 1000.0
+	g.heat = 0.0
+	g.queue_redraw()
+	await process_frame
+	g.queue_redraw()
+	await process_frame
+	check(sim_ms < 60.0, "2,000 items: one layout step takes %.1f ms" % sim_ms)
+	check(g.draw_ms < 120.0, "2,000 items: one frame draws in %.1f ms" % g.draw_ms)
+	g.queue_free()
 
 
 func refresh_and_wait(brain: Control) -> void:

@@ -13,8 +13,8 @@ claim an action no tool performed, and asks the model once to act or correct its
 
 | Suite | Platform | Result |
 |---|---|---|
-| Python (137) | Linux 3.12 / Windows Store 3.13 | OK |
-| Godot end-to-end (150, including search with reasons, paths by voice, kept related ideas, card editing, zones, folding and filters by voice, the PDF viewer by voice, sharper pages on zoom, document cards, pack export by voice, import by drop, layer removal, semantic zoom by voice, cards with full text, hidden modules, archivist receipts, new places, Captures view, clipboard capture, replay and voice speed by voice, « ouvre ma journée », F8 hold and release, listening indicator, real-costs panel, live conversation across a theme change) | Linux and Windows native | 150 passed |
+| Python (138) | Linux 3.12 / Windows Store 3.13 | OK |
+| Godot end-to-end (154, including the timeline by voice, a 2,000-item performance guard, search with reasons, paths by voice, kept related ideas, card editing, zones, folding and filters by voice, the PDF viewer by voice, sharper pages on zoom, document cards, pack export by voice, import by drop, layer removal, semantic zoom by voice, cards with full text, hidden modules, archivist receipts, new places, Captures view, clipboard capture, replay and voice speed by voice, « ouvre ma journée », F8 hold and release, listening indicator, real-costs panel, live conversation across a theme change) | Linux and Windows native | 154 passed |
 
 **Loop 6c — Agent room, on by default: built and verified with the real Codex on Linux and Windows (2026-11-03).**
 - **Setup:** a new step downloads the pinned official Codex app-server package (about 160 MB, about 0.4 to

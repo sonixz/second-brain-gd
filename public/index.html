@@ -106,6 +106,7 @@
           <figure><img src="assets/screens/document-card.png" alt="The graph zoomed into a PDF: the card shows its title, its text and, on the right, the real first page of the document" loading="lazy" width="1280" height="800"><figcaption>A PDF inside the graph: its real page, sharper as you zoom</figcaption></figure>
           <figure><img src="assets/screens/graph-filtered.png" alt="The graph with a zone per place, one place folded with a +2 badge, and a filter bar showing only items about atlas" loading="lazy" width="1280" height="800"><figcaption>A zone per place, places folded away, a filter: « montre seulement… »</figcaption></figure>
           <figure><img src="assets/screens/graph-path.png" alt="The graph showing a bright path from Morning routine through the theme habits and Weekly review to Atlas risks" loading="lazy" width="1280" height="800"><figcaption>« Comment X est relié à Y ? »: the path, drawn</figcaption></figure>
+          <figure><img src="assets/screens/timeline.png" alt="The graph as a timeline: one lane per place on the left, items placed along a time axis with time ticks at the bottom" loading="lazy" width="1280" height="800"><figcaption>The timeline: what came in, when, and where it went</figcaption></figure>
           <figure><img src="assets/screens/zoom-read.png" alt="The graph zoomed right into one item: a large card with its title, its place Projets › Client Atlas, and its full text" loading="lazy" width="1280" height="800"><figcaption>Zoom in until the scale disappears and the text is there</figcaption></figure>
         </div>
         <p class="caption-note">Screenshots captured from the real application with the real assistant (Loops 3 and 4), on demo data.</p>
@@ -148,6 +149,7 @@
               <li>Every original kept: PDFs and images shown page by page, right inside the graph and full screen</li>
               <li>An organised graph: a zone per place, places that fold away, filters by type, origin, date and theme</li>
               <li>Search that lights up the graph and says why, and « how is X connected to Y? » drawn as a path</li>
+              <li>Thousands of items stay workable, and a timeline shows what came in, place by place</li>
               <li>Your real OpenAI costs and tokens on the dashboard, read live from OpenAI</li>
               <li>Real-time spoken conversation (F9), with interruptions and the same tools</li>
               <li>Assistant: spoken morning briefing, answers with citations, acts on your notes</li>
@@ -169,7 +171,6 @@
           <div class="road-col">
             <h3><span class="badge badge-wip">In development</span></h3>
             <ul>
-              <li>A graph that stays fluid with thousands of items, and a timeline of what came in</li>
             </ul>
           </div>
           <div class="road-col">
@@ -202,6 +203,15 @@
       <div class="container narrow">
         <p class="overline">Development journal</p>
         <h2>Built in loops</h2>
+        <article class="entry">
+          <header><span class="badge badge-done">Loop 15</span> <time datetime="2026-11-03">November 3, 2026</time></header>
+          <h3>Thousands of items, and a timeline</h3>
+          <p>We measured before touching anything: with 2,000 items, one layout step took 2.4 seconds. It now
+            takes about 5 milliseconds, and a frame draws in around 30, because items only push their close
+            neighbours and dense views are drawn in a handful of batched calls. A guard in the tests keeps it that
+            way. And a new Timeline toggle, or « montre la chronologie », lays your items along a time axis, one
+            lane per place, from minutes to months.</p>
+        </article>
         <article class="entry">
           <header><span class="badge badge-done">Loop 14</span> <time datetime="2026-11-03">November 3, 2026</time></header>
           <h3>Search and connect</h3>

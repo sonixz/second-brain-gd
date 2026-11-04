@@ -4,6 +4,7 @@ extends HBoxContainer
 ## The summary says what is shown; ✕ clears everything.
 
 signal changed(filter: Dictionary)
+signal layout_changed(mode: String)
 
 const TYPES := [["note", "Notes"], ["idea", "Ideas"], ["article", "Articles"], ["document", "Documents"],
 	["image", "Images"], ["reference", "References"], ["quote", "Quotes"], ["list", "Lists"], ["journal", "Journal"]]
@@ -13,6 +14,7 @@ const DAYS := [[0, "Any time"], [1, "Today"], [7, "Last 7 days"], [30, "Last 30 
 var filter: Dictionary = {}
 var summary: Label
 var clear_button: Button
+var timeline_button: Button
 var popup: PopupPanel
 var _checks: Dictionary = {}
 var _days: OptionButton
@@ -37,6 +39,12 @@ func _ready() -> void:
 	clear_button.visible = false
 	clear_button.pressed.connect(func() -> void: apply({}))
 	add_child(clear_button)
+	timeline_button = Button.new()
+	timeline_button.text = "Timeline"
+	timeline_button.toggle_mode = true
+	timeline_button.tooltip_text = "Show items on a time axis, one lane per place"
+	timeline_button.toggled.connect(func(on: bool) -> void: layout_changed.emit("timeline" if on else "zones"))
+	add_child(timeline_button)
 	popup = PopupPanel.new()
 	add_child(popup)
 	var col := VBoxContainer.new()

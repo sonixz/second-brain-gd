@@ -249,6 +249,10 @@ class FakeChat:
             call = {"id": "call_srch", "type": "function", "function": {"name": "ui_search", "arguments": json.dumps(
                 {"query": text.split("écran", 1)[1].strip(" .!")})}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if ("chronologi" in low or "retour aux zones" in low) and tools:
+            call = {"id": "call_layout", "type": "function", "function": {"name": "ui_layout", "arguments": json.dumps(
+                {"mode": "zones" if "retour aux zones" in low else "timeline"})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if low.startswith("montre seulement") and tools:
             args = {"types": ["article"] if "article" in low else [], "text": low.split(" sur ", 1)[1].strip(" .!") if " sur " in low else ""}
             call = {"id": "call_filter", "type": "function", "function": {"name": "ui_filter", "arguments": json.dumps(args)}}

@@ -4,7 +4,7 @@ Ordered by priority. ✅ = done.
 
 ## Next
 
-- Graph scale: spatial grid or Barnes–Hut for the force layout beyond ~1,000 items (it is O(n²) today).
+- Graph scale beyond ~5,000 items: draw items with a MultiMesh (GPU instancing) and move the layout to a thread.
 - Archivist: detect the language from the original text, not the French summary note.
 - Browser capture: optional small extension (one click, no popup window) after the bookmarklet.
 
