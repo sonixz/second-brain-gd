@@ -61,6 +61,10 @@ func _run() -> void:
 	check(apic.timeout_for("/sources/file", HTTPClient.METHOD_POST) >= 300.0, "reading a document may take minutes (OCR of many pages)")
 	check(apic.timeout_for("/sources", HTTPClient.METHOD_GET) <= 5.0, "a plain request still fails fast")
 	apic.free()
+	var brain_script: GDScript = load("res://scenes/brain/brain.gd")
+	check(brain_script.progress_text({"stage": "ocr", "done": 3, "total": 9}) == "page 3 / 9 read (local OCR)"
+		and brain_script.progress_text({"stage": "summary"}) == "writing the summary"
+		and brain_script.progress_text({"stage": "reading"}) == "", "reading progress reads « page 3 / 9 read (local OCR) »")
 	print("End-to-end through the UI (data folder: %s)" % SbPaths.data_dir())
 	await _e2e()
 	print("\n%d passed, %d failed" % [passed, failed])

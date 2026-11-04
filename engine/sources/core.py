@@ -13,7 +13,7 @@ from typing import Any
 
 from engine import brain, database
 from engine.events import utc_now
-from engine.sources import extract, ocr
+from engine.sources import extract, ocr, progress
 
 EMBED_MODEL_DEFAULT = "text-embedding-3-small"
 # Cosine floor for text-embedding-3-small: relevant FR->EN hits scored 0.41-0.47,
@@ -84,6 +84,7 @@ def ingest(conn: sqlite3.Connection, client: Any | None, kind: str, uri: str, ti
     cost_note = ""
     if client is not None and not mime.startswith("image/"):  # an image's description is already its summary
         try:
+            progress.report("summary")
             s = _summarise(client, summary_model, title, text)
             summary = s["out"]
             from engine.assistant.core import _usage_event  # late import: assistant depends on brain only
@@ -214,7 +215,9 @@ def read_scanned_pdf(conn: sqlite3.Connection, client: Any, path: Path, pages: i
     model = database.get_setting(conn, "assistant_vision_model", "gpt-4o-mini")
     out = []
     with tempfile.TemporaryDirectory(prefix="sbgd-ocr-") as tmp:
-        for page in range(1, min(pages, OCR_MAX_PAGES) + 1):
+        n = min(pages, OCR_MAX_PAGES)
+        for page in range(1, n + 1):
+            progress.report("ai", page - 1, n)
             data = render.render_page(path, page, 1400, Path(tmp))
             res = client.complete(model, [{"role": "user", "content": [
                 {"type": "text", "text": OCR_PROMPT},
@@ -286,7 +289,7 @@ def read_pdf_images(conn: sqlite3.Connection, client: Any | None, path: Path, pa
     problem = ""
     if local and ocr_mode(conn) == "local":
         try:
-            text = ocr.read_pdf(path, pages)
+            text = ocr.read_pdf(path, pages, on_progress=progress.report)
             _record(conn, "ok", f"Read {pages} scanned page(s) locally ({local} OCR)", engine=local, pages=pages)
             if len(text.strip()) >= 20:
                 return text, "ocr-" + local

@@ -1,6 +1,6 @@
 # Local OCR with the engine built into Windows 10/11 (Windows.Media.Ocr). Nothing leaves the machine.
 # Usage: powershell -NoProfile -ExecutionPolicy Bypass -File ocr_windows.ps1 -List <file with one PNG path per line> [-Lang fr-CA]
-# Prints one JSON object: {"language": "fr-CA", "pages": ["text of image 1", ...]} (UTF-8).
+# Prints one JSON line per image as soon as it is read: {"i": 1, "text": "..."}, then {"language": "fr-CA"} (UTF-8).
 param([Parameter(Mandatory = $true)][string]$List, [string]$Lang = "")
 $ErrorActionPreference = "Stop"
 [Console]::OutputEncoding = [Text.Encoding]::UTF8
@@ -23,15 +23,18 @@ foreach ($tag in $wanted) {
 if ($engine -eq $null) { $engine = [Windows.Media.Ocr.OcrEngine]::TryCreateFromUserProfileLanguages() }
 if ($engine -eq $null) { throw "no OCR language installed in Windows (Settings > Time & language > Language)" }
 
-$pages = @()
+$i = 0
 foreach ($path in (Get-Content -LiteralPath $List -Encoding UTF8 | Where-Object { $_.Trim() })) {
+    $i += 1
     $file = Await ([Windows.Storage.StorageFile]::GetFileFromPathAsync($path)) ([Windows.Storage.StorageFile])
     $stream = Await ($file.OpenAsync([Windows.Storage.FileAccessMode]::Read)) ([Windows.Storage.Streams.IRandomAccessStream])
     try {
         $decoder = Await ([Windows.Graphics.Imaging.BitmapDecoder]::CreateAsync($stream)) ([Windows.Graphics.Imaging.BitmapDecoder])
         $bitmap = Await ($decoder.GetSoftwareBitmapAsync()) ([Windows.Graphics.Imaging.SoftwareBitmap])
         $result = Await ($engine.RecognizeAsync($bitmap)) ([Windows.Media.Ocr.OcrResult])
-        $pages += , ((($result.Lines | ForEach-Object { $_.Text }) -join "`n"))
+        $text = (($result.Lines | ForEach-Object { $_.Text }) -join "`n")
+        [Console]::Out.WriteLine((@{ i = $i; text = $text } | ConvertTo-Json -Compress))
+        [Console]::Out.Flush()
     } finally { $stream.Dispose() }
 }
-@{ language = $engine.RecognizerLanguage.LanguageTag; pages = $pages } | ConvertTo-Json -Compress -Depth 3
+[Console]::Out.WriteLine((@{ language = $engine.RecognizerLanguage.LanguageTag } | ConvertTo-Json -Compress))

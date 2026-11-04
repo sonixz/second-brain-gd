@@ -517,7 +517,13 @@ func add_source_url(url: String) -> bool:
 
 
 func _ingest(path: String, payload: Dictionary) -> bool:
+	var job := "%d-%d" % [Time.get_ticks_usec(), randi()]
+	payload["job"] = job
+	var what := str(payload.get("path", payload.get("url", ""))).get_file().left(48)
+	var state := {"busy": true}
+	_follow_progress(job, what, state)
 	var res := await app.backend.api.call_api(path, true, HTTPClient.METHOD_POST, JSON.stringify(payload))
+	state["busy"] = false
 	if not is_inside_tree():
 		return false
 	if not res["ok"]:
@@ -541,6 +547,37 @@ func _ingest(path: String, payload: Dictionary) -> bool:
 	if _auto_file() and src.get("note_id") != null:
 		_classify(str(src["note_id"]))
 	return true
+
+
+## While a document is being read: « Reading CV.pdf · page 3 / 9 (local OCR) », every half second.
+func _follow_progress(job: String, what: String, state: Dictionary) -> void:
+	await get_tree().create_timer(0.6).timeout
+	while bool(state["busy"]) and is_inside_tree():
+		var res := await app.backend.api.call_api("/sources/progress/" + job)
+		if not bool(state["busy"]) or not is_inside_tree():
+			return
+		if res["ok"]:
+			var line := progress_text(res["data"])
+			if line != "":
+				show_toast("Reading %s · %s" % [what, line])
+		await get_tree().create_timer(0.5).timeout
+
+
+static func progress_text(p: Dictionary) -> String:
+	var done := int(p.get("done", 0))
+	var total := int(p.get("total", 0))
+	match str(p.get("stage", "")):
+		"render":
+			return "preparing page %d / %d" % [done, total]
+		"ocr":
+			return "page %d / %d read (local OCR)" % [done, total]
+		"ai":
+			return "page %d / %d (AI)" % [mini(done + 1, total), total]
+		"summary":
+			return "writing the summary"
+		"indexing":
+			return "indexing by meaning"
+	return ""
 
 
 func refresh_sources() -> void:

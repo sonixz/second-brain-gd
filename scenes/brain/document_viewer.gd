@@ -175,7 +175,11 @@ func _update_read_by() -> void:
 func reread_with_ai() -> bool:
 	reread_button.disabled = true
 	reread_button.text = "Reading…"
-	var res := await app.backend.api.call_api("/sources/%s/reread" % str(doc.get("id", "")), true, HTTPClient.METHOD_POST)
+	var job := "%d-%d" % [Time.get_ticks_usec(), randi()]
+	var state := {"busy": true}
+	_follow_reread(job, state)
+	var res := await app.backend.api.call_api("/sources/%s/reread?job=%s" % [str(doc.get("id", "")), job], true, HTTPClient.METHOD_POST)
+	state["busy"] = false
 	reread_button.disabled = false
 	reread_button.text = "Re-read with AI"
 	if not res["ok"]:
@@ -185,6 +189,21 @@ func reread_with_ai() -> bool:
 	doc["text_engine"] = "ocr-ai"
 	_update_read_by()
 	return true
+
+
+func _follow_reread(job: String, state: Dictionary) -> void:
+	while bool(state["busy"]) and is_inside_tree():
+		await get_tree().create_timer(0.5).timeout
+		var res := await app.backend.api.call_api("/sources/progress/" + job)
+		if bool(state["busy"]) and res["ok"]:
+			var line := ""
+			var p: Dictionary = res["data"]
+			if str(p.get("stage", "")) == "ai":
+				line = "page %d / %d" % [mini(int(p.get("done", 0)) + 1, int(p.get("total", 0))), int(p.get("total", 0))]
+			elif str(p.get("stage", "")) == "summary":
+				line = "summary"
+			if line != "":
+				reread_button.text = "Reading… " + line
 
 
 func hide_viewer() -> void:

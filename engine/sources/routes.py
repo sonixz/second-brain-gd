@@ -18,11 +18,13 @@ from engine.voice import secrets
 class FileIn(BaseModel):
     path: str = Field(min_length=1, max_length=2000)
     space_id: str | None = None
+    job: str | None = Field(default=None, max_length=64)  # poll GET /sources/progress/{job} meanwhile
 
 
 class UrlIn(BaseModel):
     url: str = Field(min_length=8, max_length=2000)
     space_id: str | None = None
+    job: str | None = Field(default=None, max_length=64)
 
 
 def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
@@ -35,7 +37,18 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         except PermissionError:
             return None
 
-    def add(fn: Callable[..., Any], *args: Any) -> dict[str, Any]:
+    def add(fn: Callable[..., Any], *args: Any, job: str | None = None) -> dict[str, Any]:
+        from engine.sources import progress
+
+        token = progress.start(job)
+        try:
+            return _add(fn, *args)
+        finally:
+            progress.finish(token)
+
+    def _add(fn: Callable[..., Any], *args: Any) -> dict[str, Any]:
+        from engine.sources import progress
+
         client = client_or_none()
         try:
             with database.session(layout.database) as conn:
@@ -43,6 +56,7 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
             if client is not None and not src.get("duplicate"):
                 with database.session(layout.database) as conn:
                     if should_try_embeddings(conn):
+                        progress.report("indexing")
                         src["embeddings"] = core.embed_pending(conn, client, embeddings_model(conn))
         except extract.ExtractError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
@@ -54,11 +68,11 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
 
     @r.post("/file", status_code=201)
     def post_file(body: FileIn) -> dict[str, Any]:
-        return add(core.ingest_file, body.path, body.space_id)
+        return add(core.ingest_file, body.path, body.space_id, job=body.job)
 
     @r.post("/url", status_code=201)
     def post_url(body: UrlIn) -> dict[str, Any]:
-        return add(core.ingest_url, body.url, body.space_id)
+        return add(core.ingest_url, body.url, body.space_id, job=body.job)
 
     @r.get("")
     def get_sources() -> dict[str, Any]:
@@ -100,12 +114,21 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     def get_document(source_id: str) -> dict[str, Any]:
         return document(source_id)
 
+    @r.get("/progress/{job}")
+    def get_progress(job: str) -> dict[str, Any]:
+        from engine.sources import progress
+
+        state = progress.get(job)
+        if state is None:
+            raise HTTPException(status_code=404, detail="unknown job")
+        return state
+
     @r.post("/{source_id}/reread")
-    def post_reread(source_id: str) -> dict[str, Any]:
+    def post_reread(source_id: str, job: str | None = Query(None, max_length=64)) -> dict[str, Any]:
         """« Relire avec l'IA »: a scanned PDF read again by the vision model (needs the OpenAI key)."""
         if client_or_none() is None:
             raise HTTPException(status_code=409, detail="Re-reading with AI needs your OpenAI key.")
-        return add(core.reread_with_ai, source_id)
+        return add(core.reread_with_ai, source_id, job=job)
 
     @r.get("/ocr")
     def get_ocr() -> dict[str, Any]:

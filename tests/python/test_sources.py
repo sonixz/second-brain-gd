@@ -242,6 +242,25 @@ class OriginalTests(unittest.TestCase):
         self.assertIn("schéma", text)
         self.assertNotIn("Guide du compost", text)  # the local reading is replaced, not doubled
 
+    @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
+    def test_progress_follows_every_page_then_the_summary(self):
+        from engine.sources import progress
+        seen = []
+        real = progress.report
+        def spy(stage, done=0, total=0):
+            seen.append((stage, done, total))
+            real(stage, done, total)
+        token = progress.start("job-1")
+        with mock.patch.object(progress, "report", side_effect=spy):
+            core.ingest_file(self.conn, self.client, str(self._picture_pdf(3)))
+        self.assertEqual(progress.get("job-1")["stage"], "summary")
+        progress.finish(token)
+        self.assertTrue(progress.get("job-1")["finished"])
+        self.assertIn(("ocr", 3, 3), seen)
+        self.assertEqual([x for x in seen if x[0] == "render"], [("render", i, 3) for i in (1, 2, 3)])
+        self.assertEqual(seen[-1][0], "summary")
+        self.assertIsNone(progress.get("unknown"))
+
     def test_text_inside_an_image_is_read_locally(self):
         src = core.ingest_file(self.conn, None, str(self.fixtures / "sample.png"))  # no key: still searchable
         note = brain.get_note(self.conn, core.get_source(self.conn, src["id"])["note_id"])
