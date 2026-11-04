@@ -48,7 +48,7 @@
           <a class="btn btn-primary" href="#how">See how it works</a>
           <a class="btn" href="#roadmap">What works today</a>
         </div>
-        <p class="hero-note"><span class="badge badge-done">Implemented</span> Living graph, voice capture and an assistant who talks back.</p>
+        <p class="hero-note"><span class="badge badge-done">Implemented</span> Give it anything: an archivist files it, links it, and you zoom into it, by voice.</p>
       </div>
     </section>
 
@@ -102,7 +102,8 @@
           <figure><img src="assets/screens/assistant-answer.png" alt="The assistant answering from the user's notes with clickable citations, and a toast saying a new thought was filed in Client Atlas with an Undo button" loading="lazy" width="1280" height="800"><figcaption>Answers with citations, auto-filing with undo</figcaption></figure>
           <figure><img src="assets/screens/related-ideas.png" alt="A note open in the inspector with a Related ideas section, and warm dashed lines in the graph joining notes about the same idea" loading="lazy" width="1280" height="800"><figcaption>Related ideas, found by meaning</figcaption></figure>
           <figure><img src="assets/screens/hands-free.png" alt="A listening indicator at the top of the screen saying release F8 to send, while the assistant panel shows the conversation" loading="lazy" width="1280" height="800"><figcaption>Hands-free: hold F8 and speak</figcaption></figure>
-          <figure><img src="assets/screens/today.png" alt="The Today view: tasks due today and this week with their projects, the next action per project, a project without a next step, and the grocery list" loading="lazy" width="1280" height="800"><figcaption>Today: next actions and lists</figcaption></figure>
+          <figure><img src="assets/screens/captures.png" alt="The Captures view: everything added to the brain, newest first, each card showing where it was filed, its type and origin" loading="lazy" width="1280" height="800"><figcaption>Captures: everything you added, as the archivist filed it</figcaption></figure>
+          <figure><img src="assets/screens/zoom-read.png" alt="The graph zoomed right into one item: a large card with its title, its place Projets › Client Atlas, and its full text" loading="lazy" width="1280" height="800"><figcaption>Zoom in until the scale disappears and the text is there</figcaption></figure>
         </div>
         <p class="caption-note">Screenshots captured from the real application with the real assistant (Loops 3 and 4), on demo data.</p>
       </div>
@@ -137,6 +138,11 @@
           <div class="road-col">
             <h3><span class="badge badge-done">Implemented</span></h3>
             <ul>
+              <li>One intake for everything: text, voice, files, web pages, a browser bookmark, the clipboard</li>
+              <li>An archivist that understands each input, files it in PARA and builds your structure from your data</li>
+              <li>Semantic zoom: from named clusters down to an item's full text, readable inside the graph</li>
+              <li>Brain packs: export part of your brain as one file, import someone's as a layer you can switch off</li>
+              <li>Your real OpenAI costs and tokens on the dashboard, read live from OpenAI</li>
               <li>Assistant: spoken morning briefing, answers with citations, acts on your notes</li>
               <li>Every capture filed automatically, with undo</li>
               <li>Areas, projects and next actions, a Today view, checklists</li>
@@ -156,7 +162,9 @@
           <div class="road-col">
             <h3><span class="badge badge-wip">In development</span></h3>
             <ul>
-              <li>Real-time voice conversation</li>
+              <li>Real-time voice conversation (built and tested; the first live run waits for model access)</li>
+              <li>Working conversations: brainstorm and structure ideas from your brain, results filed back</li>
+              <li>Modules: today, projects and agents become optional modules around the brain</li>
             </ul>
           </div>
           <div class="road-col">
@@ -189,6 +197,49 @@
       <div class="container narrow">
         <p class="overline">Development journal</p>
         <h2>Built in loops</h2>
+        <article class="entry">
+          <header><span class="badge badge-done">Loop 11</span> <time datetime="2026-11-03">November 3, 2026</time></header>
+          <h3>Brain packs</h3>
+          <p>Say « exporte le projet Atlas » and the project leaves as one <code>.brain</code> file: its items,
+            places, themes, links, summaries and meaning vectors, never your keys, settings or conversations.
+            Drop someone's pack on the window and it arrives as a layer, marked with a dotted ring in the graph.
+            Switch the layer off, merge it into your own brain, or remove it, by voice too. Identical items are
+            skipped, and imported text is treated as data, never as instructions.</p>
+        </article>
+        <article class="entry">
+          <header><span class="badge badge-done">Loop 10</span> <time datetime="2026-11-03">November 3, 2026</time></header>
+          <h3>The graph first, and a zoom with no bottom</h3>
+          <p>The brain is the home screen again. Today, Projects and Agents step aside as optional modules. Zoom
+            out and each place becomes a named cluster. Zoom in and items turn into cards with their place, themes
+            and summary. Keep going and the full text is right there, readable inside the item. A minimap keeps you
+            oriented, and « zoome sur… » or « vue d'ensemble » does it all by voice.</p>
+        </article>
+        <article class="entry">
+          <header><span class="badge badge-done">Loop 9</span> <time datetime="2026-11-03">November 3, 2026</time></header>
+          <h3>One intake, and an archivist</h3>
+          <p>Type a thought, paste a link, drop a PDF, speak, press Ctrl+Shift+V, or click « Envoyer au Brain » in
+            your browser: everything goes through the same funnel. The archivist reads it, notes the people, ideas
+            and dates, writes a summary for long pieces, and files it. On an empty brain, it creates the places it
+            needs: a sourdough recipe started « Resources › Recettes », a real article on PARA started « Resources ›
+            Organisation de l'information ». It gives no opinions, asks only when it must, and every filing can be
+            undone. A new install now starts almost empty, with a short guide.</p>
+        </article>
+        <article class="entry">
+          <header><span class="badge badge-done">Loop 8</span> <time datetime="2026-11-03">November 3, 2026</time></header>
+          <h3>Real costs, and a livelier voice</h3>
+          <p>The dashboard shows what OpenAI actually bills: this month, today, a 30-day chart by model, tokens and
+            line items, read live from OpenAI with a read-only key and stored nowhere. The spoken voice is faster
+            (adjustable, without turning squeaky), answers given by voice are shorter, and every answer has a replay
+            button: « relis-moi ça » reads it again.</p>
+        </article>
+        <article class="entry">
+          <header><span class="badge badge-wip">Loop 7b</span> <time datetime="2026-11-03">November 3, 2026</time></header>
+          <h3>A real conversation, almost</h3>
+          <p>Press F9 and talk: speech in, speech out, with the same tools as the text assistant, and a small pill
+            showing what this conversation costs so far. It is built and tested end to end against a faithful
+            simulation; the first conversation with OpenAI's live voice model waits for that model to be enabled
+            on the account.</p>
+        </article>
         <article class="entry">
           <header><span class="badge badge-done">Loop 7a</span> <time datetime="2026-11-03">November 3, 2026</time></header>
           <h3>Hands-free</h3>
