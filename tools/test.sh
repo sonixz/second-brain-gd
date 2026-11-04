@@ -28,5 +28,5 @@ echo "project loads without script errors"
 echo "== Godot end-to-end"
 TMP_HOME="$(mktemp -d -t sbgd-godot-XXXX)"
 trap 'rm -rf "$TMP_HOME"' EXIT
-SBGD_HOME="$TMP_HOME" SBGD_PORT="${SBGD_TEST_PORT:-18765}" SBGD_PYTHON="${SBGD_PYTHON:-$PY}" \
+SBGD_OCR=fake SBGD_HOME="$TMP_HOME" SBGD_PORT="${SBGD_TEST_PORT:-18765}" SBGD_PYTHON="${SBGD_PYTHON:-$PY}" \
   "$GODOT" --headless --path . --script res://tests/godot/test_runner.gd

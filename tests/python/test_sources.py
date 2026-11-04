@@ -192,23 +192,61 @@ class OriginalTests(unittest.TestCase):
         f.write_bytes(bytes(out))
         return f
 
-    @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
-    def test_a_pdf_of_page_images_is_read_by_the_vision_model(self):
-        f = self._picture_pdf(2)
-        src = core.ingest_file(self.conn, self.client, str(f))
-        row = core.get_source(self.conn, src["id"])
-        self.assertEqual((row["mime"], row["pages"]), ("application/pdf", 2))
-        reads = self.conn.execute("SELECT COUNT(*) FROM system_events WHERE stage = 'read_scanned_page'").fetchone()[0]
-        self.assertEqual(reads, 2)  # one vision call per page
-        chunks = " ".join(r[0] for r in self.conn.execute(
-            "SELECT text FROM source_chunks WHERE source_id = ?", (src["id"],)))
-        self.assertIn("schéma", chunks)  # what the model read is searchable
+    def _events(self, stage):
+        return self.conn.execute("SELECT COUNT(*) FROM system_events WHERE stage = ?", (stage,)).fetchone()[0]
+
+    def _chunks(self, sid):
+        return " ".join(r[0] for r in self.conn.execute("SELECT text FROM source_chunks WHERE source_id = ?", (sid,)))
 
     @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
-    def test_a_pdf_of_page_images_without_a_key_says_why(self):
-        with self.assertRaises(extract.ExtractError) as ctx:
-            core.ingest_file(self.conn, None, str(self._picture_pdf(1)))
-        self.assertIn("only page images", str(ctx.exception))
+    def test_a_pdf_of_page_images_is_read_locally_first(self):
+        src = core.ingest_file(self.conn, self.client, str(self._picture_pdf(2)))
+        row = core.get_source(self.conn, src["id"])
+        self.assertEqual((row["mime"], row["pages"], row["text_engine"]), ("application/pdf", 2, "ocr-fake"))
+        self.assertEqual(self._events("read_scanned_page"), 0)  # nothing sent to the vision model
+        self.assertIn("Guide du compost", self._chunks(src["id"]))  # what the OCR read is searchable
+
+    @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
+    def test_ai_mode_sends_the_pages_to_the_vision_model(self):
+        database.set_setting(self.conn, "ocr_mode", "ai")
+        src = core.ingest_file(self.conn, self.client, str(self._picture_pdf(2)))
+        self.assertEqual(core.get_source(self.conn, src["id"])["text_engine"], "ocr-ai")
+        self.assertEqual(self._events("read_scanned_page"), 2)  # one vision call per page
+        self.assertIn("schéma", self._chunks(src["id"]))
+
+    @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
+    def test_without_local_ocr_the_key_is_the_fallback(self):
+        with mock.patch.dict("os.environ", {"SBGD_OCR": "off"}):
+            src = core.ingest_file(self.conn, self.client, str(self._picture_pdf(1)))
+            self.assertEqual(core.get_source(self.conn, src["id"])["text_engine"], "ocr-ai")
+            with self.assertRaises(extract.ExtractError) as ctx:
+                core.ingest_file(self.conn, None, str(self._picture_pdf(2)))
+        self.assertIn("tesseract", str(ctx.exception))  # says how to get a local OCR
+
+    @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
+    def test_failed_local_ocr_falls_back_or_says_why(self):
+        from engine.sources import ocr
+        with mock.patch.object(ocr, "read_images", side_effect=ocr.OcrError("boom")):
+            src = core.ingest_file(self.conn, self.client, str(self._picture_pdf(1)))
+            self.assertEqual(core.get_source(self.conn, src["id"])["text_engine"], "ocr-ai")
+            with self.assertRaises(extract.ExtractError) as ctx:
+                core.ingest_file(self.conn, None, str(self._picture_pdf(2)))
+        self.assertIn("boom", str(ctx.exception))
+
+    @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
+    def test_reread_with_ai_replaces_the_local_reading(self):
+        src = core.ingest_file(self.conn, self.client, str(self._picture_pdf(2)))
+        out = core.reread_with_ai(self.conn, self.client, src["id"])
+        self.assertEqual(out["text_engine"], "ocr-ai")
+        text = self._chunks(src["id"])
+        self.assertIn("schéma", text)
+        self.assertNotIn("Guide du compost", text)  # the local reading is replaced, not doubled
+
+    def test_text_inside_an_image_is_read_locally(self):
+        src = core.ingest_file(self.conn, None, str(self.fixtures / "sample.png"))  # no key: still searchable
+        note = brain.get_note(self.conn, core.get_source(self.conn, src["id"])["note_id"])
+        self.assertIn("Texte dans l'image", note["body"])
+        self.assertIn("compost", note["body"])
 
     def test_a_web_page_keeps_its_raw_copy(self):
         html = b"<html><head><title>Compost</title></head><body><p>" + ("Le compost aime l'air. " * 20).encode() + b"</p></body></html>"

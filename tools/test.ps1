@@ -15,11 +15,12 @@ Write-Host "== Godot end-to-end (headless, temporary data folder)"
 $tmp = Join-Path $env:LOCALAPPDATA ("SecondBrainGD-test-" + [guid]::NewGuid().ToString("N").Substring(0, 8))
 $env:SBGD_HOME = $tmp
 $env:SBGD_PORT = "18765"
+$env:SBGD_OCR = "fake"
 try {
   & $Godot --headless --path . --script res://tests/godot/test_runner.gd
   $code = $LASTEXITCODE
 } finally {
   Remove-Item -Recurse -Force $tmp -ErrorAction SilentlyContinue
-  Remove-Item Env:SBGD_HOME, Env:SBGD_PORT
+  Remove-Item Env:SBGD_HOME, Env:SBGD_PORT, Env:SBGD_OCR
 }
 exit $code

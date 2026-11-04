@@ -13,7 +13,7 @@ from typing import Any
 
 from engine import brain, database
 from engine.events import utc_now
-from engine.sources import extract
+from engine.sources import extract, ocr
 
 EMBED_MODEL_DEFAULT = "text-embedding-3-small"
 # Cosine floor for text-embedding-3-small: relevant FR->EN hits scored 0.41-0.47,
@@ -64,7 +64,8 @@ def _summarise(client: Any, model: str, title: str, text: str) -> dict[str, Any]
 
 def ingest(conn: sqlite3.Connection, client: Any | None, kind: str, uri: str, title: str, text: str, mime: str,
            size: int | None, space_id: str | None = None, summary_model: str = "gpt-4o",
-           original: tuple[str, int] | None = None, pages: int | None = None) -> dict[str, Any]:
+           original: tuple[str, int] | None = None, pages: int | None = None,
+           text_engine: str | None = None) -> dict[str, Any]:
     text = (text or "").strip()
     if len(text) < 20:
         raise extract.ExtractError("no readable text found (scanned PDF or empty page?)")
@@ -105,9 +106,9 @@ def ingest(conn: sqlite3.Connection, client: Any | None, kind: str, uri: str, ti
         lines.append(" ".join("#" + t for t in tags if t))
     note = brain.create_note(conn, note_title, "\n\n".join(lines), space_id, kind="reference", source="import")
     conn.execute("UPDATE sources SET status = 'ready', note_id = ?, chunks = ?, title = ?, updated_at = ?,"
-                 " original = ?, original_bytes = ?, pages = ? WHERE id = ?",
+                 " original = ?, original_bytes = ?, pages = ?, text_engine = ? WHERE id = ?",
                  (note["id"], len(pieces), note_title, utc_now(), original[0] if original else None,
-                  original[1] if original else None, pages, sid))
+                  original[1] if original else None, pages, text_engine, sid))
     _record(conn, "ok", f"Source added: {note_title} ({len(pieces)} chunks){cost_note}", source_id=sid, kind=kind)
     return {**get_source(conn, sid), "duplicate": False, "summary": summary}
 
@@ -231,6 +232,7 @@ def ingest_file(conn: sqlite3.Connection, client: Any | None, path: str, space_i
 
     p = Path(path).expanduser()
     title, text, mime = extract.from_file(p)
+    text_engine = None
     root = originals.data_root(conn)
     kept = originals.keep_file(root, p)
     pages = None
@@ -240,10 +242,7 @@ def ingest_file(conn: sqlite3.Connection, client: Any | None, path: str, space_i
         except render.RenderError:
             pages = None
         if len(text.strip()) < 20 and pages:  # no text layer: every page is a picture
-            if client is None:
-                raise extract.ExtractError("this PDF has no text, only page images (scanned or exported as pictures); "
-                                           "add your OpenAI key so its pages can be read")
-            text = read_scanned_pdf(conn, client, p, pages)
+            text, text_engine = read_pdf_images(conn, client, p, pages)
     elif mime.startswith("image/"):
         pages = 1
         data = p.read_bytes()
@@ -253,8 +252,88 @@ def ingest_file(conn: sqlite3.Connection, client: Any | None, path: str, space_i
                 desc = describe_image(conn, client, data, mime)
             except Exception as exc:  # the image is still kept and shown
                 desc = f"(description indisponible: {exc.__class__.__name__})"
+        seen = _local_ocr_image(p)  # the text inside the image, read on this machine (no key needed)
         text = f"Image: {p.name}\n\n{desc or 'Pas encore de description (ajoute ta clé OpenAI).'}"
-    return ingest(conn, client, "file", str(p), title, text, mime, p.stat().st_size, space_id, original=kept, pages=pages)
+        if seen:
+            text += "\n\nTexte dans l'image :\n" + seen
+            text_engine = "ocr-" + str(ocr.engine_name())
+    return ingest(conn, client, "file", str(p), title, text, mime, p.stat().st_size, space_id, original=kept, pages=pages,
+                  text_engine=text_engine)
+
+
+def _local_ocr_image(p: Path) -> str:
+    from engine.sources import ocr
+
+    if ocr.engine_name() is None:
+        return ""
+    try:
+        return "\n".join(ocr.read_images([p])).strip()
+    except ocr.OcrError:
+        return ""
+
+
+def ocr_mode(conn: sqlite3.Connection) -> str:
+    """'local' (default: scanned pages are read on this machine) or 'ai' (always the vision model)."""
+    return "ai" if database.get_setting(conn, "ocr_mode", "local") == "ai" else "local"
+
+
+def read_pdf_images(conn: sqlite3.Connection, client: Any | None, path: Path, pages: int) -> tuple[str, str]:
+    """A PDF with no text layer: local OCR first, the vision model only when asked or when nothing local works.
+    Returns (text, engine)."""
+    from engine.sources import ocr
+
+    local = ocr.engine_name()
+    problem = ""
+    if local and ocr_mode(conn) == "local":
+        try:
+            text = ocr.read_pdf(path, pages)
+            _record(conn, "ok", f"Read {pages} scanned page(s) locally ({local} OCR)", engine=local, pages=pages)
+            if len(text.strip()) >= 20:
+                return text, "ocr-" + local
+            problem = "local OCR found no text"
+        except (ocr.OcrError, OSError) as exc:
+            problem = str(exc)
+            _record(conn, "error", f"Local OCR failed: {exc}", engine=local)
+    if client is not None:
+        return read_scanned_pdf(conn, client, path, pages), "ocr-ai"
+    if local is None:
+        raise extract.ExtractError("this PDF has no text, only page images; no local OCR here "
+                                   "(Windows has one built in; on Linux install tesseract-ocr and tesseract-ocr-fra) "
+                                   "and no OpenAI key to read it")
+    raise extract.ExtractError(f"this PDF has no text, only page images, and they could not be read ({problem})")
+
+
+def reread_with_ai(conn: sqlite3.Connection, client: Any, source_id: str) -> dict[str, Any]:
+    """« Relire avec l'IA »: a scanned PDF's pages are read again by the vision model; passages and summary follow."""
+    from engine.sources import originals
+
+    src = get_source(conn, source_id)
+    path = originals.resolve(originals.data_root(conn), src.get("original"))
+    if path is None or src.get("mime") != "application/pdf" or not src.get("pages"):
+        raise extract.ExtractError("only a kept PDF can be re-read")
+    text = read_scanned_pdf(conn, client, path, int(src["pages"]))
+    if len(text.strip()) < 20:
+        raise extract.ExtractError("the vision model found no text")
+    conn.execute("DELETE FROM source_chunks WHERE source_id = ?", (source_id,))
+    pieces = extract.chunk(text)
+    for i, piece in enumerate(pieces):
+        conn.execute("INSERT INTO source_chunks (source_id, idx, text) VALUES (?, ?, ?)", (source_id, i, piece))
+    conn.execute("UPDATE sources SET chunks = ?, text_engine = 'ocr-ai', content_hash = ?, updated_at = ? WHERE id = ?",
+                 (len(pieces), hashlib.sha256(text.encode("utf-8")).hexdigest(), utc_now(), source_id))
+    if src.get("note_id"):
+        try:
+            s = _summarise(client, database.get_setting(conn, "assistant_chat_model", "gpt-4o"), str(src["title"]), text)
+            out = s["out"]
+            lines = [str(out["summary"])] if out.get("summary") else []
+            if out.get("key_points"):
+                lines.append("\n".join(f"- {k}" for k in out["key_points"][:6]))
+            if lines:
+                lines.append(f"Source: {src['uri']}")
+                brain.update_note(conn, src["note_id"], body="\n\n".join(lines))
+        except Exception:  # the new passages are what matters; the old summary stays
+            pass
+    _record(conn, "ok", f"Re-read with AI: {src['title']} ({len(pieces)} chunks)", source_id=source_id)
+    return {**get_source(conn, source_id), "duplicate": False}
 
 
 def ingest_url(conn: sqlite3.Connection, client: Any | None, url: str, space_id: str | None = None) -> dict[str, Any]:

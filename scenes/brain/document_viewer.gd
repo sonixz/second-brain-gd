@@ -23,6 +23,8 @@ var page_controls: Array[Control] = []  # hidden in the reading view
 var reader: ScrollContainer        # the reading view (mode "text")
 var reader_text: RichTextLabel
 var font_size := 18
+var reread_button: Button          # « Re-read with AI »: only on pages read by the local OCR
+var read_by_label: Label           # how the text was obtained (local OCR, AI)
 
 
 func _ready() -> void:
@@ -70,6 +72,15 @@ func setup(a: SbApp) -> DocumentViewer:
 		b.theme_type_variation = "GhostButton"
 		b.pressed.connect(spec[2] as Callable)
 		row.add_child(b)
+	read_by_label = Label.new()
+	read_by_label.theme_type_variation = "Muted"
+	row.add_child(read_by_label)
+	reread_button = Button.new()
+	reread_button.text = "Re-read with AI"
+	reread_button.tooltip_text = "These pages were read on your computer (local OCR). The vision model can read them\nagain, more accurately: the pages are sent to OpenAI with your key (a few cents)."
+	reread_button.theme_type_variation = "GhostButton"
+	reread_button.pressed.connect(reread_with_ai)
+	row.add_child(reread_button)
 	var orig := Button.new()
 	orig.text = "Open original"
 	orig.tooltip_text = "Open the kept file in your usual app (PDF reader, image viewer, browser)"
@@ -132,6 +143,7 @@ func open(source_id: String, at_page: int = 1) -> bool:
 			return false
 		reader_text.text = str((t["data"] as Dictionary).get("text", ""))
 		reader.scroll_vertical = 0
+	_update_read_by()
 	reader.visible = is_text()
 	for c in page_controls:
 		c.visible = not is_text()
@@ -149,6 +161,29 @@ func open(source_id: String, at_page: int = 1) -> bool:
 	grab_focus()
 	fit()
 	_update_label()
+	return true
+
+
+func _update_read_by() -> void:
+	var how := str(doc.get("text_engine", ""))
+	read_by_label.text = {"ocr-windows": "Read by Windows OCR", "ocr-tesseract": "Read by Tesseract OCR",
+		"ocr-fake": "Read by local OCR", "ocr-ai": "Read by AI"}.get(how, "")
+	reread_button.visible = how.begins_with("ocr-") and how != "ocr-ai" and str(doc.get("kind", "")) == "pdf"
+
+
+## The local OCR's reading is replaced by the vision model's (passages, search and summary follow).
+func reread_with_ai() -> bool:
+	reread_button.disabled = true
+	reread_button.text = "Reading…"
+	var res := await app.backend.api.call_api("/sources/%s/reread" % str(doc.get("id", "")), true, HTTPClient.METHOD_POST)
+	reread_button.disabled = false
+	reread_button.text = "Re-read with AI"
+	if not res["ok"]:
+		var d: Variant = res["data"]
+		read_by_label.text = "Could not re-read: " + (str((d as Dictionary).get("detail", res["error"])) if d is Dictionary else str(res["error"])).left(80)
+		return false
+	doc["text_engine"] = "ocr-ai"
+	_update_read_by()
 	return true
 
 

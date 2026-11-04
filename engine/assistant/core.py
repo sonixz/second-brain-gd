@@ -27,6 +27,8 @@ DEFAULTS = {
     "assistant_voice": "marin",
     "assistant_auto_classify": True,
     "assistant_min_confidence": 0.6,
+    # Scanned PDFs: "local" reads page images on this machine (Windows OCR, Tesseract); "ai" uses the vision model.
+    "ocr_mode": "local",
 }
 # When a user's OpenAI project lacks a configured model, the job falls back instead of failing.
 FALLBACK_MODELS = {"assistant_classify_model": "gpt-4o-mini", "assistant_review_model": "gpt-4o"}

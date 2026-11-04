@@ -60,6 +60,7 @@
         <h4>Develop</h4>
         <ul>
           <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#dependencies">Dependencies</a></li>
           <li><a href="#tests">Run the tests</a></li>
           <li><a href="#contributing">Contributing</a></li>
           <li><a href="#security">Security model</a></li>
@@ -438,9 +439,36 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
           Moving or deleting the file on disk never loses it, and web pages are kept as they were on the day you added them.</p>
         <ul>
           <li><b>Text:</b> <code>.txt .md .markdown .csv .json .log .rst .org .html .htm .docx .pdf</code> are extracted, chunked and indexed.</li>
-          <li><b>Images:</b> <code>.png .jpg .jpeg .webp .gif</code> are described by a vision model, including visible text, so you find them by meaning.</li>
+          <li><b>Images:</b> <code>.png .jpg .jpeg .webp .gif</code>: the text inside them is read by the local OCR (no key needed),
+            and with a key a vision model also describes what they show, so you find them by meaning.</li>
+          <li><b>Scanned PDFs</b> (pages that are pictures, with no selectable text) are read by the <b>local OCR</b>: see below.</li>
           <li><b>PDF pages</b> are rendered with PDFium at 320, 640, 1024, 1600 or 2400 px, cached in <code>runtime/pages</code>, and shown sharper as you zoom.</li>
+          <li><b>HTML, .docx and text files</b> open in a reading view of their full text; <b>Open original</b> opens
+            the kept file in your usual app (the browser for HTML).</li>
           <li>« ouvre l'original » shows the kept original.</li>
+        </ul>
+        <h3>Scanned PDFs: local OCR first</h3>
+        <p>Some PDFs only contain pictures of pages: a scan, or an export that saved each page as an image. To check
+          one, open it and try to select a word: if nothing selects, it is pictures. The Brain then reads the pages
+          itself, <b>on your computer</b>:</p>
+        <table>
+          <thead><tr><th>System</th><th>Local OCR</th><th>Setup</th></tr></thead>
+          <tbody>
+            <tr><td>Windows 10 / 11</td><td>The OCR engine built into Windows (<code>Windows.Media.Ocr</code>), called through PowerShell</td>
+              <td>Nothing to install. It reads the languages installed in Windows (Settings → Time &amp; language → Language).</td></tr>
+            <tr><td>Linux</td><td>Tesseract</td><td><code>sudo apt install tesseract-ocr tesseract-ocr-fra</code> (optional)</td></tr>
+          </tbody>
+        </table>
+        <p>Pages are rendered at 2400 px wide before reading, which matters for small print. On a 9-page CV, Windows
+          OCR took about 2 seconds, with a handful of l/I confusions (« Open<b>Al</b> »). Nothing leaves your machine
+          and it is free.</p>
+        <ul>
+          <li><b>Re-read with AI:</b> in the document viewer, a PDF read by the local OCR offers <b>Re-read with AI</b>.
+            The vision model (<code>gpt-4o-mini</code>) reads every page again; passages, search and summary follow.
+            The pages go to OpenAI with your key, about a cent for a few pages.</li>
+          <li><b>Always use AI:</b> <code>PATCH /assistant/settings {"ocr_mode": "ai"}</code> (default <code>"local"</code>).</li>
+          <li><b>No local OCR and no key:</b> the file is refused with a message saying how to get one; nothing is half-added.</li>
+          <li><code>GET /sources/ocr</code> tells which local OCR this machine has.</li>
         </ul>
       </section>
 
@@ -494,6 +522,36 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
         </table>
         <p>Deeper notes live in the repository's <code>docs/architecture/</code>: intake, packs, originals, live
           conversation, billing, agent room, events protocol and process lifecycle.</p>
+      </section>
+
+      <section class="doc" id="dependencies">
+        <p class="kicker">Develop</p>
+        <h2>Dependencies</h2>
+        <p>Everything installs into a private virtual environment in your data folder, without administrator rights.
+          Python packages are pinned with hashes in <code>engine/requirements.lock</code>; pip refuses anything else.</p>
+        <table>
+          <thead><tr><th>Package</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td><code>fastapi</code>, <code>uvicorn</code></td><td>The local engine API on 127.0.0.1</td></tr>
+            <tr><td><code>psutil</code></td><td>Engine-room measurements, process watchdog</td></tr>
+            <tr><td><code>websockets</code></td><td>Voice: Godot ↔ engine, engine ↔ OpenAI Realtime</td></tr>
+            <tr><td><code>keyring</code></td><td>Your keys in the OS credential store</td></tr>
+            <tr><td><code>pypdf</code></td><td>Text of PDFs that have a text layer (pure Python)</td></tr>
+            <tr><td><code>pypdfium2</code></td><td>PDF pages as images: the viewer, cards, and pages for the OCR (prebuilt PDFium)</td></tr>
+          </tbody>
+        </table>
+        <table>
+          <thead><tr><th>Outside Python</th><th>Required?</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td>Godot 4.7 (standard)</td><td>Yes</td><td>The interface</td></tr>
+            <tr><td>Python 3.12 or 3.13</td><td>Yes</td><td>The engine</td></tr>
+            <tr><td>Windows OCR + PowerShell</td><td>Built into Windows</td><td>Reading scanned PDFs and text in images, locally</td></tr>
+            <tr><td>Tesseract (<code>tesseract-ocr</code>, <code>-fra</code>)</td><td>Optional, Linux</td><td>The same on Linux</td></tr>
+            <tr><td>An OpenAI key</td><td>Optional</td><td>Filing, summaries, meaning search, voice, image descriptions, Re-read with AI</td></tr>
+          </tbody>
+        </table>
+        <p>To add a package: edit <code>engine/requirements.in</code>, then regenerate the lock with
+          <code>uv pip compile engine/requirements.in --generate-hashes -o engine/requirements.lock</code> and explain why in the pull request.</p>
       </section>
 
       <section class="doc" id="tests">

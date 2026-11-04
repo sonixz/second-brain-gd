@@ -93,11 +93,27 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
                 "original_path": str(path) if path else None, "original_bytes": src.get("original_bytes"),
                 # pdf/image: rendered pages; html/docx/text: the full text, read inside the app
                 "mode": "pages" if kind in ("pdf", "image") else "text",
+                "text_engine": src.get("text_engine"),
                 "viewable": bool(path) or (kind not in ("pdf", "image") and bool(src.get("chunks")))}
 
     @r.get("/{source_id}/document")
     def get_document(source_id: str) -> dict[str, Any]:
         return document(source_id)
+
+    @r.post("/{source_id}/reread")
+    def post_reread(source_id: str) -> dict[str, Any]:
+        """« Relire avec l'IA »: a scanned PDF read again by the vision model (needs the OpenAI key)."""
+        if client_or_none() is None:
+            raise HTTPException(status_code=409, detail="Re-reading with AI needs your OpenAI key.")
+        return add(core.reread_with_ai, source_id)
+
+    @r.get("/ocr")
+    def get_ocr() -> dict[str, Any]:
+        """Which local OCR this machine has, and the current mode."""
+        from engine.sources import ocr
+
+        with database.session(layout.database) as conn:
+            return {"local": ocr.engine_name(), "mode": core.ocr_mode(conn)}
 
     @r.get("/{source_id}/text")
     def get_text(source_id: str) -> dict[str, Any]:

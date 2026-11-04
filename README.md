@@ -71,8 +71,13 @@ Set `SBGD_HOME` to use another folder. Nothing is ever written inside the reposi
 
 - **Capture:** type in the bottom bar and press Enter (Ctrl+Space focuses it). `[[Another note]]` links,
   `#tag` groups.
-- **Explore:** use the wheel to zoom, drag to pan, drag a node to move it. Click a note to edit it,
-  a space to filter, a tag to search. Press `/` to search and Esc to close.
+- **Explore:** use the wheel to zoom, drag to pan. Drag an item into another place's zone to move it there;
+  dropped elsewhere it stays put. Click a note to edit it, a space to filter, a tag to search. Press `/` to
+  search and Esc to close.
+- **Files:** drop PDFs, Word, HTML, text or images on the window. Originals are kept. A scanned PDF (pages
+  that are pictures) is read by the **local OCR**: built into Windows, Tesseract on Linux
+  (`sudo apt install tesseract-ocr tesseract-ocr-fra`). Nothing leaves your machine; *Re-read with AI* in the
+  viewer is optional. Details and dependencies: [`public/docs.html#files`](public/docs.html#files).
 - **Ambiance:** the ♪ button at the bottom right sets the theme (Auto, Morning, Focus, Evening, Forest), music,
   effects and ambience.
 - **Voice:** click the microphone (Ctrl+M), speak, click again. It needs your own OpenAI API key, asked once
