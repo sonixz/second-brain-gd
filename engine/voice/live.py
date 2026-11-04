@@ -39,7 +39,9 @@ from engine import database
 
 REALTIME_WS = "wss://api.openai.com/v1/realtime?model="
 SAMPLE_RATE = 24000
-DEFAULTS = {"live_model": "gpt-realtime-2.1-mini", "live_transcribe_model": "gpt-realtime-whisper",
+# Measured 2026-11-03: inside a realtime session, gpt-realtime-whisper and gpt-live-transcribe are refused
+# (model_not_found); gpt-4o-mini-transcribe and whisper-1 are accepted.
+DEFAULTS = {"live_model": "gpt-realtime-2.1-mini", "live_transcribe_model": "gpt-4o-mini-transcribe",
             "live_max_minutes": 20, "live_session_cap_usd": 1.0, "live_idle_minutes": 3}
 LIVE_MODELS = ["gpt-realtime-2.1-mini", "gpt-realtime-2.1"]
 # USD per 1M tokens (text in, text cached, text out, audio in, audio cached, audio out), OpenAI list prices

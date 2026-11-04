@@ -60,6 +60,17 @@ Godot has no echo cancellation:
   | `live_max_minutes` | 20 | Ends the conversation at this length |
   | `live_idle_minutes` | 3 | Ends the conversation after this long with no speech |
 
+## First real run (2026-11-03)
+
+The owner enabled `gpt-realtime-2.1-mini`. The first session still failed with `model_not_found`, and the
+model at fault was the **input transcription model**: inside a realtime session, `gpt-realtime-whisper` and
+`gpt-live-transcribe` are refused, while `gpt-4o-mini-transcribe` and `whisper-1` are accepted. The
+default is now `gpt-4o-mini-transcribe`.
+
+Real result: a spoken « Ouvre la vue des captures » produced, about 5 s after the user started speaking, a
+`ui_open_view(captures)` call, the view opening, a spoken answer of 2.1 s, and a cost of $0.0033 for the
+whole exchange.
+
 ## Status (2026-11-03)
 
 Built and tested end to end against a scripted fake Realtime server (`SBGD_VOICE_PROVIDER=fake`). The fake

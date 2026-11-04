@@ -1,5 +1,13 @@
 # Devlog
 
+## Loop 7b follow-up — first real live conversation (2026-11-03)
+
+- The owner enabled `gpt-realtime-2.1-mini`, but the session still said `model_not_found`. The culprit was
+  the input transcription model: `gpt-realtime-whisper` is refused inside a realtime session.
+  `gpt-4o-mini-transcribe` is now the default.
+- Real run: a spoken « Ouvre la vue des captures » produced the tool call, the view opening, and a spoken
+  answer, for $0.0033.
+
 ## Loop 11 — Brain packs: export, import, share (2026-11-03)
 
 - **What a pack is.** A `.brain` file: a zip holding a manifest and a subset database. It carries items,
