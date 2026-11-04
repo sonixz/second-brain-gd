@@ -11,6 +11,7 @@ var value: OptionButton
 var title_edit: LineEdit
 var author_edit: LineEdit
 var preview_label: Label
+var originals_check: CheckBox
 var result_label: Label
 var layers_box: VBoxContainer
 var last_export := ""
@@ -56,6 +57,9 @@ func setup(a: SbApp) -> PacksDialog:
 	author_edit.placeholder_text = "Author (optional)"
 	author_edit.custom_minimum_size = Vector2(200, 0)
 	row2.add_child(author_edit)
+	originals_check = CheckBox.new()
+	originals_check.text = "Include the original files (PDFs, images, pages): bigger, but complete"
+	box.add_child(originals_check)
 	preview_label = Label.new()
 	preview_label.theme_type_variation = "Muted"
 	preview_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
@@ -162,7 +166,8 @@ func refresh_preview() -> void:
 
 
 func do_export() -> void:
-	var body := {"selection": selection(), "title": title_edit.text.strip_edges(), "author": author_edit.text.strip_edges()}
+	var body := {"selection": selection(), "title": title_edit.text.strip_edges(), "author": author_edit.text.strip_edges(),
+		"include_originals": originals_check.button_pressed}
 	result_label.text = "Exporting…"
 	var res := await app.backend.api.call_api("/packs/export", true, HTTPClient.METHOD_POST, JSON.stringify(body))
 	if not is_inside_tree():

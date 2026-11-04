@@ -109,5 +109,66 @@ class SourceTests(unittest.TestCase):
         self.assertIn("dimanche", out["results"][0]["excerpt"])
 
 
+class OriginalTests(unittest.TestCase):
+    """Loop 12: every file and page is kept in <data>/originals, images are described and searchable."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.root = Path(self.tmp.name)
+        (self.root / "data").mkdir()
+        self.db = self.root / "data" / "second_brain.sqlite3"
+        database.migrate(self.db)
+        self.conn = database.connect(self.db)
+        seed_all(self.conn)
+        self.client = FakeChat()
+        self.fixtures = Path(__file__).resolve().parent.parent / "fixtures" / "docs"
+
+    def tearDown(self):
+        self.conn.close()
+        self.tmp.cleanup()
+
+    def test_original_is_kept_once_and_survives_the_file(self):
+        from engine.sources import originals
+        f = self.root / "outside" / "plan.md"
+        f.parent.mkdir()
+        f.write_text("# Plan\n\n" + DOC, encoding="utf-8")
+        src = core.ingest_file(self.conn, self.client, str(f))
+        rel = core.get_source(self.conn, src["id"])["original"]
+        self.assertTrue(rel.startswith("originals/") and rel.endswith(".md"))
+        kept = originals.resolve(self.root, rel)
+        self.assertEqual(kept.read_text(encoding="utf-8"), f.read_text(encoding="utf-8"))
+        copy = self.root / "outside" / "copie.md"
+        copy.write_bytes(f.read_bytes())
+        f.unlink()  # the user deletes the file: the Brain still has it
+        self.assertTrue(kept.is_file())
+        self.assertEqual(originals.keep_file(self.root, copy)[0], rel)  # same content, same original
+        self.assertEqual(len(list((self.root / "originals").rglob("*.md"))), 1)
+
+    def test_resolve_refuses_paths_outside_originals(self):
+        from engine.sources import originals
+        (self.root / "secret.txt").write_text("x")
+        self.assertIsNone(originals.resolve(self.root, "../secret.txt"))
+        self.assertIsNone(originals.resolve(self.root, "originals/../secret.txt"))
+        self.assertIsNone(originals.resolve(self.root, None))
+
+    def test_an_image_is_kept_described_and_found(self):
+        src = core.ingest_file(self.conn, self.client, str(self.fixtures / "sample.png"))
+        row = core.get_source(self.conn, src["id"])
+        self.assertEqual((row["mime"], row["pages"]), ("image/png", 1))
+        self.assertTrue(row["original"].endswith(".png"))
+        note = brain.get_note(self.conn, row["note_id"])
+        self.assertIn("schéma", note["body"])  # the vision description is searchable text
+        hits = brain.search(self.conn, "schéma", 5)
+        self.assertIn(row["note_id"], [h["id"] for h in hits])
+
+    def test_a_web_page_keeps_its_raw_copy(self):
+        html = b"<html><head><title>Compost</title></head><body><p>" + ("Le compost aime l'air. " * 20).encode() + b"</p></body></html>"
+        with mock.patch.object(extract, "from_url_raw", return_value=("Compost", "Le compost aime l'air. " * 20, "text/html", len(html), html)):
+            src = core.ingest_url(self.conn, self.client, "https://example.org/compost")
+        rel = core.get_source(self.conn, src["id"])["original"]
+        self.assertTrue(rel.endswith(".html"))
+        self.assertEqual((self.root / rel).read_bytes(), html)
+
+
 if __name__ == "__main__":
     unittest.main()

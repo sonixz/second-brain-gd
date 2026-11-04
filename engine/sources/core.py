@@ -63,7 +63,8 @@ def _summarise(client: Any, model: str, title: str, text: str) -> dict[str, Any]
 
 
 def ingest(conn: sqlite3.Connection, client: Any | None, kind: str, uri: str, title: str, text: str, mime: str,
-           size: int | None, space_id: str | None = None, summary_model: str = "gpt-4o") -> dict[str, Any]:
+           size: int | None, space_id: str | None = None, summary_model: str = "gpt-4o",
+           original: tuple[str, int] | None = None, pages: int | None = None) -> dict[str, Any]:
     text = (text or "").strip()
     if len(text) < 20:
         raise extract.ExtractError("no readable text found (scanned PDF or empty page?)")
@@ -80,7 +81,7 @@ def ingest(conn: sqlite3.Connection, client: Any | None, kind: str, uri: str, ti
         conn.execute("INSERT INTO source_chunks (source_id, idx, text) VALUES (?, ?, ?)", (sid, i, piece))
     summary: dict[str, Any] = {}
     cost_note = ""
-    if client is not None:
+    if client is not None and not mime.startswith("image/"):  # an image's description is already its summary
         try:
             s = _summarise(client, summary_model, title, text)
             summary = s["out"]
@@ -96,14 +97,17 @@ def ingest(conn: sqlite3.Connection, client: Any | None, kind: str, uri: str, ti
     if summary.get("key_points"):
         lines.append("\n".join(f"- {p}" for p in summary["key_points"][:6]))
     if not lines:
-        lines.append(text[:600] + ("…" if len(text) > 600 else ""))
+        limit = 2000 if mime.startswith("image/") else 600
+        lines.append(text[:limit] + ("…" if len(text) > limit else ""))
     lines.append(f"Source: {uri}")
     tags = [str(t).strip().lower().replace(" ", "-") for t in (summary.get("tags") or [])][:3]
     if tags:
         lines.append(" ".join("#" + t for t in tags if t))
     note = brain.create_note(conn, note_title, "\n\n".join(lines), space_id, kind="reference", source="import")
-    conn.execute("UPDATE sources SET status = 'ready', note_id = ?, chunks = ?, title = ?, updated_at = ? WHERE id = ?",
-                 (note["id"], len(pieces), note_title, utc_now(), sid))
+    conn.execute("UPDATE sources SET status = 'ready', note_id = ?, chunks = ?, title = ?, updated_at = ?,"
+                 " original = ?, original_bytes = ?, pages = ? WHERE id = ?",
+                 (note["id"], len(pieces), note_title, utc_now(), original[0] if original else None,
+                  original[1] if original else None, pages, sid))
     _record(conn, "ok", f"Source added: {note_title} ({len(pieces)} chunks){cost_note}", source_id=sid, kind=kind)
     return {**get_source(conn, sid), "duplicate": False, "summary": summary}
 
@@ -172,15 +176,65 @@ def semantic_search(conn: sqlite3.Connection, client: Any, model: str, query: st
              "snippet": r["text"][:300], "score": round(s, 4)} for s, r in scored]
 
 
+VISION_PROMPT = ("Décris cette image pour un second cerveau, en français et de façon factuelle: ce qu'elle montre, "
+                 "le texte visible (transcris-le fidèlement), les éléments importants (schéma, graphique, personnes, lieux). "
+                 "3 à 8 phrases. N'invente rien.")
+
+
+def describe_image(conn: sqlite3.Connection, client: Any, data: bytes, mime: str) -> str:
+    """A vision model turns an image into searchable text (no key: a placeholder the user can edit)."""
+    import base64
+
+    model = database.get_setting(conn, "assistant_vision_model", "gpt-4o-mini")
+    res = client.complete(model, [{"role": "user", "content": [
+        {"type": "text", "text": VISION_PROMPT},
+        {"type": "image_url", "image_url": {"url": f"data:{mime};base64," + base64.b64encode(data).decode("ascii")}}]}],
+        temperature=0.2)
+    from engine.assistant.core import _usage_event
+
+    _usage_event(conn, "describe_image", res["model"], res["usage"], client.provider)
+    return (res["message"].get("content") or "").strip()
+
+
 def ingest_file(conn: sqlite3.Connection, client: Any | None, path: str, space_id: str | None = None) -> dict[str, Any]:
+    from engine.sources import originals, render
+
     p = Path(path).expanduser()
     title, text, mime = extract.from_file(p)
-    return ingest(conn, client, "file", str(p), title, text, mime, p.stat().st_size, space_id)
+    root = originals.data_root(conn)
+    kept = originals.keep_file(root, p)
+    pages = None
+    if mime == "application/pdf":
+        try:
+            pages = render.page_count(p)
+        except render.RenderError:
+            pages = None
+    elif mime.startswith("image/"):
+        pages = 1
+        data = p.read_bytes()
+        desc = ""
+        if client is not None:
+            try:
+                desc = describe_image(conn, client, data, mime)
+            except Exception as exc:  # the image is still kept and shown
+                desc = f"(description indisponible: {exc.__class__.__name__})"
+        text = f"Image: {p.name}\n\n{desc or 'Pas encore de description (ajoute ta clé OpenAI).'}"
+    return ingest(conn, client, "file", str(p), title, text, mime, p.stat().st_size, space_id, original=kept, pages=pages)
 
 
 def ingest_url(conn: sqlite3.Connection, client: Any | None, url: str, space_id: str | None = None) -> dict[str, Any]:
-    title, text, mime, size = extract.from_url(url)
-    return ingest(conn, client, "url", url.strip(), title, text, mime, size, space_id)
+    from engine.sources import originals, render
+
+    title, text, mime, size, data = extract.from_url_raw(url)
+    ext = "pdf" if mime == "application/pdf" else ("html" if "html" in mime else "txt")
+    kept = originals.keep_bytes(originals.data_root(conn), data, ext)
+    pages = None
+    if ext == "pdf":
+        try:
+            pages = render.page_count(originals.data_root(conn) / kept[0])
+        except render.RenderError:
+            pages = None
+    return ingest(conn, client, "url", url.strip(), title, text, mime, size, space_id, original=kept, pages=pages)
 
 
 # ------------------------------------------------- embeddings status, search

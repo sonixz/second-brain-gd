@@ -169,6 +169,9 @@ class FakeChat:
         FakeChat.last_messages = messages
         last = messages[-1]
         usage = {"prompt_tokens": 100, "completion_tokens": 20}
+        if isinstance(last.get("content"), list):  # an image to describe (vision)
+            return {"message": {"role": "assistant", "content": "Image de test: un schéma avec trois boîtes reliées."},
+                    "usage": usage, "model": model}
         if json_mode and "fiche de référence" in str(messages[0].get("content", "")):
             src = json.loads(last["content"])
             out = {"title": src.get("title") or "Document", "summary": "Résumé de test.", "key_points": ["Point A"],
@@ -230,6 +233,16 @@ class FakeChat:
         text = str(last.get("content", ""))
         low = text.lower()
         views = {"aujourd": "today", "today": "today", "projet": "projects", "agent": "agents", "graph": "graph"}
+        if low.startswith(("ouvre le document", "ouvre le pdf")) and tools:
+            target = text.split(" ", 3)[3].strip(" .!") if len(text.split(" ", 3)) > 3 else ""
+            call = {"id": "call_doc", "type": "function", "function": {"name": "ui_open_document", "arguments": json.dumps({"target": target})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith("page suivante") and tools:
+            call = {"id": "call_page", "type": "function", "function": {"name": "ui_page", "arguments": json.dumps({"change": "next"})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith("ouvre l'original") and tools:
+            call = {"id": "call_orig", "type": "function", "function": {"name": "ui_open_original", "arguments": "{}"}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if low.startswith(("ouvre", "montre", "open", "show")) and tools:
             view = next((v for k, v in views.items() if k in low), "graph")
             call = {"id": "call_ui", "type": "function",

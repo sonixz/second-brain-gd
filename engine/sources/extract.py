@@ -13,7 +13,8 @@ from pathlib import Path
 
 MAX_BYTES = 15 * 1024 * 1024
 TEXT_SUFFIXES = {".txt", ".md", ".markdown", ".csv", ".json", ".log", ".rst", ".org"}
-SUPPORTED = TEXT_SUFFIXES | {".pdf", ".docx", ".html", ".htm"}
+IMAGE_SUFFIXES = {".png", ".jpg", ".jpeg", ".webp", ".gif"}
+SUPPORTED = TEXT_SUFFIXES | IMAGE_SUFFIXES | {".pdf", ".docx", ".html", ".htm"}
 UA = "SecondBrainGD/0.1 (+local knowledge app)"
 
 
@@ -96,6 +97,8 @@ def from_file(path: Path) -> tuple[str, str, str]:
     suffix = path.suffix.lower()
     if suffix not in SUPPORTED:
         raise ExtractError(f"unsupported file type {suffix or '(none)'}; supported: " + ", ".join(sorted(SUPPORTED)))
+    if suffix in IMAGE_SUFFIXES:  # described by a vision model during ingestion
+        return path.stem, "", {".jpg": "image/jpeg", ".jpeg": "image/jpeg"}.get(suffix, "image/" + suffix[1:])
     if suffix == ".pdf":
         return path.stem, pdf_to_text(path), "application/pdf"
     if suffix == ".docx":
@@ -122,6 +125,12 @@ def _public_host(host: str) -> bool:
 
 def from_url(url: str, timeout: float = 20.0) -> tuple[str, str, str, int]:
     """Returns (title, text, mime, bytes)."""
+    title, text, mime, size, _data = from_url_raw(url, timeout)
+    return title, text, mime, size
+
+
+def from_url_raw(url: str, timeout: float = 20.0) -> tuple[str, str, str, int, bytes]:
+    """Returns (title, text, mime, bytes, raw data): the raw page or PDF is kept as the original."""
     parts = urllib.parse.urlparse(url.strip())
     if parts.scheme not in ("http", "https") or not parts.hostname:
         raise ExtractError("only http(s) links are supported")
@@ -143,14 +152,14 @@ def from_url(url: str, timeout: float = 20.0) -> tuple[str, str, str, int]:
         with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as fh:
             fh.write(data)
         try:
-            return Path(parts.path).stem or parts.hostname, pdf_to_text(Path(fh.name)), mime, len(data)
+            return Path(parts.path).stem or parts.hostname, pdf_to_text(Path(fh.name)), mime, len(data), data
         finally:
             Path(fh.name).unlink(missing_ok=True)
     raw = data.decode(charset, errors="replace")
     if "html" in mime or raw.lstrip().lower().startswith(("<!doctype", "<html")):
         title, text = html_to_text(raw)
-        return title or parts.hostname, text, mime or "text/html", len(data)
-    return parts.hostname, raw.strip(), mime or "text/plain", len(data)
+        return title or parts.hostname, text, mime or "text/html", len(data), data
+    return parts.hostname, raw.strip(), mime or "text/plain", len(data), data
 
 
 def chunk(text: str, size: int = 1200, overlap: int = 150) -> list[str]:

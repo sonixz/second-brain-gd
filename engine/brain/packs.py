@@ -112,8 +112,11 @@ def slug(text: str) -> str:
     return (s or "brain")[:48]
 
 
+ORIGINAL_ENTRY = re.compile(r"^originals/[0-9a-f]{2}/([0-9a-f]{64})\.[a-z0-9]{1,8}$")
+
+
 def export(db_path: Path, selection: dict[str, Any], out_dir: Path, title: str, author: str = "",
-           licence: str = "", description: str = "", client: Any = None) -> dict[str, Any]:
+           licence: str = "", description: str = "", client: Any = None, include_originals: bool = False) -> dict[str, Any]:
     with database.session(db_path) as conn:
         ids = resolve(conn, selection, client)
         if not ids:
@@ -147,12 +150,19 @@ def export(db_path: Path, selection: dict[str, Any], out_dir: Path, title: str, 
             n["sources"] = _copy(conn, "sources", f"note_id IN ({qn})", ids)
             _copy(conn, "source_chunks", "source_id IN (SELECT id FROM main.sources)", [])
             version = conn.execute("SELECT MAX(version) FROM main.schema_migrations").fetchone()[0]
+            originals = [r[0] for r in conn.execute("SELECT DISTINCT original FROM main.sources WHERE original IS NOT NULL")]
             conn.commit()
             conn.execute("DETACH DATABASE src")
             conn.execute("VACUUM")
         finally:
             conn.close()
         digest = hashlib.sha256(data.read_bytes()).hexdigest()
+        from engine.sources import originals as kept_files
+
+        root = db_path.parent.parent if db_path.parent.name == "data" else db_path.parent
+        files = [(rel, kept_files.resolve(root, rel)) for rel in originals] if include_originals else []
+        files = [(rel, p) for rel, p in files if p is not None]
+        n["originals"] = len(files)
         manifest = {"format": FORMAT, "version": PACK_VERSION, "title": title.strip()[:120] or "Brain pack",
                     "author": author.strip()[:120], "licence": licence.strip()[:120],
                     "description": description.strip()[:1000], "created_at": utc_now(), "app_version": VERSION,
@@ -167,6 +177,8 @@ def export(db_path: Path, selection: dict[str, Any], out_dir: Path, title: str, 
         with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED) as z:
             z.writestr("manifest.json", json.dumps(manifest, ensure_ascii=False, indent=2))
             z.write(data, "data.sqlite")
+            for rel, p in files:
+                z.write(p, rel)
         return {"path": str(target), "bytes": target.stat().st_size, "manifest": manifest}
     finally:
         shutil.rmtree(work, ignore_errors=True)
@@ -185,8 +197,12 @@ def read_pack(path: Path, work: Path) -> tuple[dict[str, Any], Path]:
         raise PackError("not a Brain pack (not a zip file)") from None
     with z:
         names = set(z.namelist())
-        if names != ENTRIES:
-            raise PackError(f"unexpected content in the pack: {sorted(names - ENTRIES) or sorted(ENTRIES - names)}")
+        extra = {n for n in names - ENTRIES if not ORIGINAL_ENTRY.match(n)}
+        if extra or not ENTRIES <= names:
+            raise PackError(f"unexpected content in the pack: {sorted(extra) or sorted(ENTRIES - names)}")
+        total = sum(z.getinfo(n).file_size for n in names)
+        if total > MAX_PACK_BYTES * 2:
+            raise PackError("this pack unpacks to more than 1 GB")
         info = z.getinfo("data.sqlite")
         if info.file_size > MAX_PACK_BYTES:
             raise PackError("the pack's database is too large")
@@ -204,6 +220,25 @@ def read_pack(path: Path, work: Path) -> tuple[dict[str, Any], Path]:
     if hashlib.sha256(data.read_bytes()).hexdigest() != manifest.get("sha256"):
         raise PackError("the pack is damaged (checksum mismatch)")
     return manifest, data
+
+
+def import_originals(path: Path, root: Path) -> int:
+    """Copies the pack's originals into <data>/originals. Each file must hash to its own name."""
+    count = 0
+    with zipfile.ZipFile(path) as z:
+        for name in z.namelist():
+            m = ORIGINAL_ENTRY.match(name)
+            if not m:
+                continue
+            content = z.read(name)
+            if hashlib.sha256(content).hexdigest() != m.group(1):
+                raise PackError(f"a document in the pack is damaged ({name.rsplit('/', 1)[-1][:12]}…)")
+            target = root / name
+            if not target.exists():
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(content)
+            count += 1
+    return count
 
 
 def _hash(title: str, body: str) -> str:
@@ -304,8 +339,10 @@ def import_pack(db_path: Path, path: Path) -> dict[str, Any]:
                     conn.execute("INSERT INTO source_chunks (source_id, idx, text, embedding, model) VALUES (?, ?, ?, ?, ?)",
                                  (sid, c["idx"], c["text"], c["embedding"] if same_model else None,
                                   c["model"] if same_model else None))
+            root = db_path.parent.parent if db_path.parent.name == "data" else db_path.parent
+            kept = import_originals(path, root)
             counts = {"items": len(ours), "places": len(space_map), "links": links, "vectors_copied": vectors,
-                      "duplicates": dupes, "re_embed": not same_model}
+                      "duplicates": dupes, "re_embed": not same_model, "originals": kept}
             conn.execute("UPDATE pack_layers SET counts = ? WHERE id = ?", (json.dumps(counts), layer))
             database.record_event(conn, {"timestamp": now, "component": "packs", "stage": "import", "status": "ok",
                                          "message": f"Pack imported: {manifest.get('title')} ({len(ours)} items, "

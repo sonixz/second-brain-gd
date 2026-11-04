@@ -26,6 +26,7 @@ var kind_option: OptionButton
 var links_box: VBoxContainer
 var related_label: Label
 var related_box: VBoxContainer
+var doc_row: HBoxContainer
 var save_label: Label
 var stats_label: Label
 var spaces: Array = []
@@ -57,6 +58,7 @@ var toast_action := 0
 var classified := 0
 var last_receipt := ""
 var last_pack_export := ""
+var viewer: DocumentViewer
 var _toast_timer: Timer
 # Views
 var view := "graph"   # graph | today | projects
@@ -84,6 +86,8 @@ func _ready() -> void:
 	graph.set_anchors_preset(Control.PRESET_FULL_RECT)
 	graph.node_selected.connect(_on_node_selected)
 	graph.details_needed.connect(_fetch_card)
+	graph.page_needed.connect(_fetch_card_page)
+	graph.node_activated.connect(func(id: String) -> void: open_document_for(id))
 	graph.screen_offset = Vector2(182, 0)  # half the left panel: zoomed items centre in the free area
 	graph.background_clicked.connect(func() -> void:
 		graph.select("")
@@ -565,6 +569,38 @@ func run_ui_actions(actions: Array) -> void:
 				_change_volume(str(a.get("change", "")))
 			"replay":
 				assistant_panel.replay(str(a.get("which", "last")))
+			"open_document", "open_original":
+				var tid := ""
+				var tgt := str(a.get("target", ""))
+				if tgt != "":
+					tid = graph.find_node(tgt)
+				elif viewer != null and viewer.visible:
+					tid = str(viewer.doc.get("note_id", ""))
+				elif not current_note.is_empty():
+					tid = str(current_note.get("id", ""))
+				else:
+					tid = graph.selected
+				if tid == "" or tid.begins_with("space:") or tid.begins_with("tag:"):
+					show_toast("Which document? Say its title.")
+				elif await open_document_for(tid) and str(a.get("action", "")) == "open_original":
+					viewer.open_original()
+			"page":
+				if viewer != null and viewer.visible:
+					var ch := str(a.get("change", "next"))
+					match ch:
+						"next":
+							viewer.go_page(viewer.page + 1)
+						"previous":
+							viewer.go_page(viewer.page - 1)
+						"first":
+							viewer.go_page(1)
+						"last":
+							viewer.go_page(viewer.pages())
+						_:
+							viewer.go_page(int(ch))
+			"close_document":
+				if viewer != null:
+					viewer.hide_viewer()
 			"zoom":
 				await set_view("graph")
 				var target := str(a.get("target", ""))
@@ -787,6 +823,21 @@ func _build_inspector() -> void:
 	links_box = VBoxContainer.new()
 	links_box.add_theme_constant_override("separation", 0)
 	col.add_child(links_box)
+	doc_row = HBoxContainer.new()
+	doc_row.add_theme_constant_override("separation", 8)
+	doc_row.visible = false
+	col.add_child(doc_row)
+	var view_doc := Button.new()
+	view_doc.text = "View document"
+	view_doc.pressed.connect(func() -> void: open_document_for(str(current_note.get("id", ""))))
+	doc_row.add_child(view_doc)
+	var orig_doc := Button.new()
+	orig_doc.text = "Open original"
+	orig_doc.theme_type_variation = "GhostButton"
+	orig_doc.pressed.connect(func() -> void:
+		if await open_document_for(str(current_note.get("id", ""))):
+			viewer.open_original())
+	doc_row.add_child(orig_doc)
 	related_label = Label.new()
 	related_label.text = "RELATED IDEAS"
 	related_label.theme_type_variation = "Overline"
@@ -885,6 +936,38 @@ func _fetch_card(id: String) -> void:
 	var res := await app.backend.api.call_api("/brain/items/" + nid)
 	if res["ok"] and is_inside_tree():
 		graph.set_details(id, res["data"])
+
+
+func _fetch_card_page(id: String, source_id: String, width: int) -> void:
+	var w := 320
+	for bw in [320, 640, 1024, 1600, 2400]:
+		w = bw
+		if bw >= width:
+			break
+	var res := await app.backend.api.call_api("/sources/%s/page/1?width=%d" % [source_id, w], true, HTTPClient.METHOD_GET, "", true)
+	if res["ok"] and is_inside_tree():
+		var src: Dictionary = (graph.details.get(id, {}) as Dictionary).get("source", {}) if graph.details.get(id, {}).get("source") is Dictionary else {}
+		var tex := DocumentViewer.texture_from(res["bytes"], str(src.get("mime", "image/png")))
+		if tex != null:
+			graph.set_page(id, w, tex)
+
+
+## Opens an item's original (PDF pages or the image) in the full-screen viewer.
+func open_document_for(note_id: String, at_page: int = 1) -> bool:
+	var res := await app.backend.api.call_api("/brain/items/" + note_id)
+	if not res["ok"]:
+		return false
+	var src: Variant = (res["data"] as Dictionary).get("source")
+	if not src is Dictionary:
+		show_toast("This item has no document to show.")
+		return false
+	if viewer == null:
+		viewer = DocumentViewer.new().setup(app)
+		add_child(viewer)
+	var ok := await viewer.open(str((src as Dictionary).get("id", "")), at_page)
+	if not ok:
+		show_toast("No kept original for this item (added before originals were kept?).")
+	return ok
 
 
 func refresh_spaces() -> void:
@@ -1108,6 +1191,7 @@ func open_note(id: String, focus: bool = false) -> void:
 	save_label.text = "Edited %s" % SbFormat.local_time(current_note["updated_at"], true)
 	_render_links()
 	_load_related(id)
+	_show_doc_buttons(id)
 	graph.select(id)
 	if focus:
 		graph.focus_on(id)
@@ -1118,6 +1202,14 @@ func open_note(id: String, focus: bool = false) -> void:
 		var tw := create_tween().set_parallel()
 		tw.tween_property(inspector, "modulate:a", 1.0, 0.25)
 		tw.tween_property(inspector, "position:x", inspector.position.x - 30, 0.3).set_trans(Tween.TRANS_CUBIC)
+
+
+func _show_doc_buttons(id: String) -> void:
+	doc_row.visible = false
+	var res := await app.backend.api.call_api("/brain/items/" + id)
+	if res["ok"] and str(current_note.get("id", "")) == id:
+		var src: Variant = (res["data"] as Dictionary).get("source")
+		doc_row.visible = src is Dictionary and (src as Dictionary).get("original") != null
 
 
 func _render_links() -> void:

@@ -30,6 +30,7 @@ class ExportIn(BaseModel):
     author: str = Field(default="", max_length=120)
     licence: str = Field(default="", max_length=120)
     description: str = Field(default="", max_length=1000)
+    include_originals: bool = False
 
 
 class ImportIn(BaseModel):
@@ -67,7 +68,7 @@ def make_router(layout: Layout, auth: Callable[..., None], client_or_none: Calla
     @r.post("/export", status_code=201)
     def export(body: ExportIn) -> dict[str, Any]:
         return guard(packs.export, layout.database, body.selection.as_dict(), exports_dir(layout), body.title,
-                     body.author, body.licence, body.description, client_or_none())
+                     body.author, body.licence, body.description, client_or_none(), body.include_originals)
 
     @r.get("/layers")
     def layers() -> dict[str, Any]:

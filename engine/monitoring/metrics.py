@@ -81,7 +81,7 @@ class StorageScanner:
             entries = {}
             for name, path in (("database", self.layout.database), ("notes", self.layout.notes),
                                ("logs", self.layout.logs), ("venv", self.layout.venv),
-                               ("runtime", self.layout.runtime)):
+                               ("runtime", self.layout.runtime), ("originals", self.layout.originals)):
                 if path.is_file():
                     size, files = path.stat().st_size, 1
                     for suffix in ("-wal", "-shm"):

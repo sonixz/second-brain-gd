@@ -16,6 +16,8 @@ extends Control
 signal node_selected(id: String, type: String)
 signal background_clicked
 signal details_needed(id: String)
+signal page_needed(id: String, source_id: String, width: int)
+signal node_activated(id: String)
 
 const REPULSION := 5200.0
 const SPRING := 0.035
@@ -50,6 +52,8 @@ var details: Dictionary = {}     # id -> {summary, place, themes, body, item_typ
 var _asked: Dictionary = {}
 var _zoom_tween: Tween
 var show_minimap := true
+var page_tex: Dictionary = {}     # id -> {"w": int, "tex": Texture2D} (first page of a document)
+var _page_asked: Dictionary = {}  # id -> width asked
 var screen_offset := Vector2.ZERO  # centre of the free area (panels cover the left side)
 var follow := ""           # the camera stays on this node (after « zoome sur X ») until you pan
 
@@ -172,6 +176,13 @@ func set_highlight(ids: Array) -> void:
 
 func set_details(id: String, d: Dictionary) -> void:
 	details[id] = d
+	queue_redraw()
+
+
+func set_page(id: String, width: int, tex: Texture2D) -> void:
+	var cur: Dictionary = page_tex.get(id, {})
+	if int(cur.get("w", 0)) < width:
+		page_tex[id] = {"w": width, "tex": tex}
 	queue_redraw()
 
 
@@ -487,6 +498,26 @@ func _draw_card(n: Dictionary, p: Vector2, reading: bool) -> void:
 	var pad := clampf(zoom * 2.2, 5.0, 22.0)
 	var x := rect.position.x + pad + stripe
 	var width := sz.x - pad * 2.0 - stripe
+	# A document or an image: its first page sits on the right, sharper as you zoom in.
+	var src: Variant = d.get("source")
+	if src is Dictionary and int((src as Dictionary).get("pages", 0) if (src as Dictionary).get("pages") != null else 0) > 0:
+		var ph := sz.y - pad * 2.0
+		var pt: Dictionary = page_tex.get(id, {})
+		var tex: Texture2D = pt.get("tex")
+		var aspect := (tex.get_size().x / maxf(1.0, tex.get_size().y)) if tex != null else 0.72
+		var pw := minf(ph * aspect, sz.x * 0.48)
+		ph = pw / aspect
+		var prect := Rect2(Vector2(rect.end.x - pad - pw, rect.position.y + pad), Vector2(pw, ph))
+		if tex != null:
+			draw_rect(prect.grow(1.0), Color(0, 0, 0, 0.3 * a))
+			draw_texture_rect(tex, prect, false, Color(1, 1, 1, a))
+		else:
+			draw_rect(prect, Color(1, 1, 1, 0.12 * a))
+		var want := int(pw)
+		if int(pt.get("w", 0)) < want * 0.8 and int(_page_asked.get(id, 0)) < want * 0.8:
+			_page_asked[id] = want
+			page_needed.emit(id, str((src as Dictionary).get("id", "")), want)
+		width -= pw + pad
 	var y := rect.position.y + pad + fs_title
 	draw_string(_font, Vector2(x, y), str(n["label"]), HORIZONTAL_ALIGNMENT_LEFT, width, fs_title, Color(SbTheme.TEXT, a))
 	y += fs * 1.5
@@ -620,6 +651,8 @@ func _gui_input(event: InputEvent) -> void:
 				_panning = _dragging_node == ""
 				if mb.double_click and _dragging_node == "":
 					create_tween().tween_property(self, "cam", Vector2.ZERO, 0.6).set_trans(Tween.TRANS_CUBIC)
+				elif mb.double_click:
+					node_activated.emit(_dragging_node)
 			else:
 				if not _moved:
 					var hit := node_at(mb.position)

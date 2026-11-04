@@ -413,6 +413,31 @@ class BootstrapIntegration(unittest.TestCase):
         top = feed["items"][0]
         self.assertEqual((top["title"], top["origin"], top["origin_uri"]), ("Dormir mieux", "url", "https://example.org/sommeil"))
         self.assertTrue(top["filed"])
+        # Originals and the document viewer (Loop 12): the PDF is kept, its pages come back as images.
+        fx = ROOT / "tests" / "fixtures" / "docs"
+        code, src = get(f"http://127.0.0.1:{port}/sources/file", tok, "POST", {"path": str(fx / "sample.pdf")})
+        self.assertEqual(code, 201, src)
+        code, doc = get(f"http://127.0.0.1:{port}/sources/{src['id']}/document", tok)
+        self.assertEqual((doc["kind"], doc["pages"], doc["viewable"]), ("pdf", 2, True))
+        self.assertTrue(Path(doc["original_path"]).is_file())
+        self.assertIn("originals", doc["original_path"])
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/sources/{src['id']}/page/2?width=700",
+                                     headers={"Authorization": f"Bearer {tok}"})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            self.assertEqual(r.headers["Content-Type"], "image/png")
+            self.assertEqual(r.read()[:8], b"\x89PNG\r\n\x1a\n")
+        code, _ = get(f"http://127.0.0.1:{port}/sources/{src['id']}/page/9", tok)
+        self.assertEqual(code, 422)
+        code, img = get(f"http://127.0.0.1:{port}/sources/file", tok, "POST", {"path": str(fx / "sample.png")})
+        self.assertEqual(code, 201, img)
+        req = urllib.request.Request(f"http://127.0.0.1:{port}/sources/{img['id']}/page/1",
+                                     headers={"Authorization": f"Bearer {tok}"})
+        with urllib.request.urlopen(req, timeout=30) as r:
+            self.assertEqual(r.headers["Content-Type"], "image/png")
+        code, item = get(f"http://127.0.0.1:{port}/brain/items/{img['note_id']}", tok)
+        self.assertEqual(item["source"]["pages"], 1)
+        code, storage = get(f"http://127.0.0.1:{port}/system/storage", tok)
+        self.assertGreater(storage["entries"]["originals"]["files"], 1)
         # Real costs: read live from OpenAI's shapes (fake pages here), never stored.
         bl = f"http://127.0.0.1:{port}/billing"
         self.assertEqual(get(bl)[0], 401)

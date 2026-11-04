@@ -90,5 +90,9 @@ class Layout:
     def lock_file(self) -> Path:
         return self.runtime / "bootstrap.lock"
 
+    @property
+    def originals(self) -> Path:
+        return self.root / "originals"
+
     def directories(self) -> list[Path]:
-        return [self.root, self.data, self.notes, self.logs, self.runtime]
+        return [self.root, self.data, self.notes, self.logs, self.runtime, self.originals]

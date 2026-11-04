@@ -1,6 +1,7 @@
 """Source routes: add files and links, list, delete, search (all behind the local token)."""
 from __future__ import annotations
 
+from pathlib import Path
 from typing import Any, Callable
 
 from fastapi import APIRouter, Depends, HTTPException, Query, Response
@@ -74,6 +75,43 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
             except brain.NotFound as exc:
                 raise HTTPException(status_code=404, detail=str(exc)) from exc
         return Response(status_code=204)
+
+    def document(source_id: str) -> dict[str, Any]:
+        from engine.sources import originals
+
+        with database.session(layout.database) as conn:
+            try:
+                src = core.get_source(conn, source_id)
+            except brain.NotFound as exc:
+                raise HTTPException(status_code=404, detail=str(exc)) from exc
+        path = originals.resolve(layout.root, src.get("original"))
+        mime = str(src.get("mime") or "")
+        kind = "pdf" if mime == "application/pdf" else ("image" if mime.startswith("image/") else
+                                                         ("html" if "html" in mime else "text"))
+        return {"id": source_id, "note_id": src.get("note_id"), "title": src.get("title"), "uri": src.get("uri"),
+                "mime": mime, "kind": kind, "pages": src.get("pages") or (1 if kind == "image" else 0),
+                "original_path": str(path) if path else None, "original_bytes": src.get("original_bytes"),
+                "viewable": bool(path) and kind in ("pdf", "image")}
+
+    @r.get("/{source_id}/document")
+    def get_document(source_id: str) -> dict[str, Any]:
+        return document(source_id)
+
+    @r.get("/{source_id}/page/{page}")
+    def get_page(source_id: str, page: int, width: int = Query(1024, ge=64, le=4096)) -> Response:
+        from engine.sources import render
+
+        doc = document(source_id)
+        if not doc["viewable"]:
+            raise HTTPException(status_code=404, detail="No viewable original for this source.")
+        path = Path(doc["original_path"])
+        if doc["kind"] == "image":
+            return Response(content=path.read_bytes(), media_type=doc["mime"])
+        try:
+            data = render.render_page(path, page, width, layout.runtime / "pages")
+        except render.RenderError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return Response(content=data, media_type="image/png", headers={"Cache-Control": "max-age=3600"})
 
     @r.get("/search")
     def search(q: str = Query(min_length=1, max_length=300), limit: int = Query(8, ge=1, le=30)) -> dict[str, Any]:

@@ -136,6 +136,37 @@ class PackTests(unittest.TestCase):
         self.assertTrue({"Boucle de jeu", "Économie"} <= pending)
 
 
+class OriginalsInPacksTests(unittest.TestCase):
+    def test_originals_travel_in_the_pack_and_are_verified(self):
+        from engine.sources import core as sources, originals
+        tmp = tempfile.TemporaryDirectory()
+        root = Path(tmp.name)
+        for d in ("a", "b"):
+            (root / d / "data").mkdir(parents=True)
+        a, b = root / "a" / "data" / "second_brain.sqlite3", root / "b" / "data" / "second_brain.sqlite3"
+        make_brain(a)
+        make_brain(b)
+        png = Path(__file__).resolve().parent.parent / "fixtures" / "docs" / "sample.png"
+        with database.session(a) as conn:
+            src = sources.ingest_file(conn, FakeChat(), str(png))
+            nid = src["note_id"]
+        out = packs.export(a, {"note_ids": [nid]}, root / "out", "Image", include_originals=True)
+        self.assertEqual(out["manifest"]["counts"]["originals"], 1)
+        res = packs.import_pack(b, Path(out["path"]))
+        self.assertEqual(res["counts"]["originals"], 1)
+        with database.session(b) as conn:
+            rel = conn.execute("SELECT original FROM sources").fetchone()[0]
+        self.assertTrue(originals.resolve(root / "b", rel).is_file())
+        # a tampered original is refused
+        bad = root / "bad.brain"
+        with zipfile.ZipFile(out["path"]) as z, zipfile.ZipFile(bad, "w") as w:
+            for name in z.namelist():
+                w.writestr(name, z.read(name) + (b"x" if name.startswith("originals/") else b""))
+        with self.assertRaises(packs.PackError):
+            packs.import_pack(b, bad)
+        tmp.cleanup()
+
+
 class VoicePackTests(unittest.TestCase):
     def test_export_and_manage_packs_by_voice(self):
         from engine.assistant import core

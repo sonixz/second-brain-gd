@@ -1,5 +1,27 @@
 # Devlog
 
+## Loop 12 — Originals and the document viewer (2026-11-03)
+
+- **Originals.** The owner asked that the Brain keep the files themselves. Every file and web page is now
+  copied to `<data>/originals/` under its SHA-256, so each is kept once and survives the file being moved
+  or deleted. Before this loop, only the text and the path were stored.
+- **PDF pages as images,** using PDFium (`pypdfium2` 4.30.0: wheels for Windows and Linux, no install, no
+  admin):
+  - fixed widths from 320 to 2400 px, so pages get sharper as you zoom;
+  - stdlib PNG encoding;
+  - a disk cache.
+- **Images are inputs.** A vision model (gpt-4o-mini) writes a searchable description.
+- **Godot.**
+  - Document cards in the graph show their page.
+  - A full-screen viewer: zoom around the cursor, drag, pages, Open original.
+  - Inspector buttons.
+  - Voice: « ouvre le document », « page suivante », « ouvre l'original ».
+- **Packs** can include the originals; each file is verified against its hash on import.
+- **Bugs found by the tests.**
+  - The viewer stayed 64 × 64: anchors were set while it was hidden and not yet in the tree.
+  - In the fake model, « ouvre… » matched the open-view rule before the document rule.
+- **Tests.** Python 130 and Godot 138, on Linux and native Windows (PDF rendering included).
+
 ## Loop 7b follow-up — first real live conversation (2026-11-03)
 
 - The owner enabled `gpt-realtime-2.1-mini`, but the session still said `model_not_found`. The culprit was

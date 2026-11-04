@@ -105,6 +105,15 @@ Principles:
 | **11 — Brain packs: export, import, share** ✅ 2026-11-03 (see docs/architecture/packs.md) | **Export** the whole Brain or a selection (a project, a theme, a search result) as a `.brain` file. It is a zip holding a SQLite subset (items, links, themes, vectors and the embedding model's name), the originals as an option, and a manifest (version, counts, checksum, author, licence).<br>**Import** a pack as a **layer** you can switch on or off, merge, or remove. Duplicates are found by content hash, and the pack is re-embedded if its embedding model differs.<br>**Restart a project** from a pack.<br>**Share** a pack by any means; a catalogue of packs comes later.<br>**Safety.** Imported text is data, never instructions, and checksums are verified. Packs never hold keys, because keys live in the OS keyring. The export preview shows exactly what leaves | « exporte le projet Atlas », « importe ce pack », « désactive le pack X » |
 | **12 — Working conversations** (the assistant module, reborn) | Open a conversation on a subject, a project or a pack. It starts with the relevant items, and answers cite them. Templates for brainstorms and structure (« standards »). Results go back into the Brain as linked items. Live voice (F9) talks to the Brain | « on brainstorme sur… », « structure ça en plan », « garde ça dans le Brain » |
 
+### Graph loops (agreed 2026-11-03; modules are set aside entirely)
+
+| Loop | Content |
+|---|---|
+| **12 — Originals and the document viewer** ✅ 2026-11-03 | `originals/` keeps every file and page. PDF pages render as images, sharper as you zoom, in the graph's cards and in a full-screen viewer. Images are inputs. Voice commands. Packs can carry originals. See docs/architecture/originals.md |
+| **13 — An organised graph** | Each place gets a stable zone, and places can be folded and unfolded. Filters by type, theme, origin, date and pack. By voice: « replie Recettes », « montre seulement les articles sur l'IA » |
+| **14 — Search and connect in the graph** | Results light up in the graph with the reason. The path between two items. Accept or dismiss a related idea. Edit text in the card |
+| **15 — Large volume and timeline** | Thousands of items stay fluid (faster layout, only visible items drawn). A timeline view of captures |
+
 ## Model cadence (owner's OpenAI project, 2026-11-02)
 
 | Use | Now | To evaluate in Loop 4 |

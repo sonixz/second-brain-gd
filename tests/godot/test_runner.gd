@@ -42,7 +42,8 @@ func _run() -> void:
 	OS.set_environment("SBGD_ASSISTANT_PROVIDER", "fake")
 	OS.set_environment("SBGD_KEYRING_SERVICE", "SecondBrainGD-test")  # never the user's real key
 	OS.set_environment("SBGD_BILLING_PROVIDER", "fake")
-	OS.set_environment("SBGD_SEED", "demo")  # the demo areas and notes the flow below relies on  # real-costs panel reads canned OpenAI pages
+	OS.set_environment("SBGD_SEED", "demo")  # the demo areas and notes the flow below relies on
+	OS.set_environment("SBGD_TEST_NO_SHELL", "1")  # « ouvre l'original » records the path instead of launching an app  # real-costs panel reads canned OpenAI pages
 	OS.unset_environment("OPENAI_ADMIN_KEY")
 	# The agent room installs from a tiny local fixture (a fake app-server), never the 160 MB download.
 	OS.set_environment("SBGD_AGENTS_MANIFEST", ProjectSettings.globalize_path("res://tests/fixtures/agents/manifest.json"))
@@ -384,6 +385,39 @@ func _e2e() -> void:
 		if (b2 as Button).text == "▶ Replay":
 			replay_buttons += 1
 	check(replay_buttons >= 3, "every answer has a replay button (%d)" % replay_buttons)
+	# Originals and the document viewer (Loop 12).
+	var pdf := ProjectSettings.globalize_path("res://tests/fixtures/docs/sample.pdf")
+	var pdf_added: bool = await brain.call("add_source_file", pdf)
+	check(pdf_added, "a PDF is added (its original is kept)")
+	await ap.send("Ouvre le document sample", true)
+	var shown := await wait_until(func() -> bool:
+		var v: DocumentViewer = brain.get("viewer")
+		return v != null and v.visible and v.current_texture() != null, 15.0)
+	var dv: DocumentViewer = brain.get("viewer")
+	check(shown and dv.pages() == 2, "« ouvre le document » shows the PDF's real page full screen (%d pages)" % (dv.pages() if dv else 0))
+	await ap.send("Page suivante", true)
+	check(dv.page == 2, "« page suivante » turns the page")
+	var page2_ok := await wait_until(func() -> bool: return dv.current_texture() != null, 10.0)
+	check(page2_ok, "page 2 is rendered by the engine")
+	dv.size = Vector2(1280, 800)  # headless runs have a tiny window; give the viewer a real screen
+	dv.set_zoom(4.0)
+	var sharper := await wait_until(func() -> bool:
+		for key in dv.textures:
+			if str(key).begins_with("2:") and int(str(key).split(":")[1]) >= 1600:
+				return true
+		return false, 10.0)
+	check(sharper, "zooming in fetches a sharper page")
+	await ap.send("Ouvre l'original", true)
+	await wait_until(func() -> bool: return dv.last_opened_original != "", 10.0)
+	check(dv.last_opened_original.ends_with(".pdf") and dv.last_opened_original.contains("originals"), "« ouvre l'original » opens the kept file (%s)" % dv.last_opened_original.get_file())
+	dv.hide_viewer()
+	var doc_id := str(dv.doc.get("note_id", ""))
+	await refresh_and_wait(brain)
+	graph.zoom_level("read", doc_id)
+	var paged := await wait_until(func() -> bool: return graph.page_tex.has(doc_id), 10.0)
+	check(paged, "up close in the graph, the document's card shows its first page")
+	graph.zoom_to(1.0, Vector2.ZERO, 0.01)
+	await create_timer(0.1).timeout
 	# Graph first, semantic zoom (Loop 10).
 	await brain.call("set_view", "graph")
 	var vb: Dictionary = brain.get("view_buttons")
@@ -522,4 +556,9 @@ func _e2e() -> void:
 	app2.audio.stop_all()
 	await process_frame
 	app2.queue_free()
+	await process_frame
+
+
+func refresh_and_wait(brain: Control) -> void:
+	await brain.call("refresh_graph")
 	await process_frame

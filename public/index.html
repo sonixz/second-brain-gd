@@ -103,6 +103,7 @@
           <figure><img src="assets/screens/related-ideas.png" alt="A note open in the inspector with a Related ideas section, and warm dashed lines in the graph joining notes about the same idea" loading="lazy" width="1280" height="800"><figcaption>Related ideas, found by meaning</figcaption></figure>
           <figure><img src="assets/screens/hands-free.png" alt="A listening indicator at the top of the screen saying release F8 to send, while the assistant panel shows the conversation" loading="lazy" width="1280" height="800"><figcaption>Hands-free: hold F8 and speak</figcaption></figure>
           <figure><img src="assets/screens/captures.png" alt="The Captures view: everything added to the brain, newest first, each card showing where it was filed, its type and origin" loading="lazy" width="1280" height="800"><figcaption>Captures: everything you added, as the archivist filed it</figcaption></figure>
+          <figure><img src="assets/screens/document-card.png" alt="The graph zoomed into a PDF: the card shows its title, its text and, on the right, the real first page of the document" loading="lazy" width="1280" height="800"><figcaption>A PDF inside the graph: its real page, sharper as you zoom</figcaption></figure>
           <figure><img src="assets/screens/zoom-read.png" alt="The graph zoomed right into one item: a large card with its title, its place Projets › Client Atlas, and its full text" loading="lazy" width="1280" height="800"><figcaption>Zoom in until the scale disappears and the text is there</figcaption></figure>
         </div>
         <p class="caption-note">Screenshots captured from the real application with the real assistant (Loops 3 and 4), on demo data.</p>
@@ -142,7 +143,9 @@
               <li>An archivist that understands each input, files it in PARA and builds your structure from your data</li>
               <li>Semantic zoom: from named clusters down to an item's full text, readable inside the graph</li>
               <li>Brain packs: export part of your brain as one file, import someone's as a layer you can switch off</li>
+              <li>Every original kept: PDFs and images shown page by page, right inside the graph and full screen</li>
               <li>Your real OpenAI costs and tokens on the dashboard, read live from OpenAI</li>
+              <li>Real-time spoken conversation (F9), with interruptions and the same tools</li>
               <li>Assistant: spoken morning briefing, answers with citations, acts on your notes</li>
               <li>Every capture filed automatically, with undo</li>
               <li>Areas, projects and next actions, a Today view, checklists</li>
@@ -162,9 +165,8 @@
           <div class="road-col">
             <h3><span class="badge badge-wip">In development</span></h3>
             <ul>
-              <li>Real-time voice conversation (built and tested; the first live run waits for model access)</li>
-              <li>Working conversations: brainstorm and structure ideas from your brain, results filed back</li>
-              <li>Modules: today, projects and agents become optional modules around the brain</li>
+              <li>An organised graph: a zone per place, folding, filters by type, theme, origin and date</li>
+              <li>Search and paths in the graph: results that light up, and how two ideas connect</li>
             </ul>
           </div>
           <div class="road-col">
@@ -197,6 +199,23 @@
       <div class="container narrow">
         <p class="overline">Development journal</p>
         <h2>Built in loops</h2>
+        <article class="entry">
+          <header><span class="badge badge-done">Loop 12</span> <time datetime="2026-11-03">November 3, 2026</time></header>
+          <h3>The originals, and a page you can zoom into</h3>
+          <p>The brain now keeps every file and web page you give it, in its own originals folder, once, even if
+            you later move or delete the file. Zoom into a PDF in the graph and its real first page appears in the
+            card. Open it and the pages fill the screen, getting sharper as you zoom in. « Page suivante », « ouvre
+            l'original »: it works by voice too. Images are welcome as well; a vision model describes them so you
+            can find them by meaning.</p>
+        </article>
+        <article class="entry">
+          <header><span class="badge badge-done">Loop 7b</span> <time datetime="2026-11-03">November 3, 2026</time></header>
+          <h3>The first real conversation</h3>
+          <p>With the live voice model enabled, the first real exchange went through: « ouvre la vue des
+            captures », the view opened, and she answered aloud, for a third of a cent. One surprise on the way:
+            the transcription model the app used elsewhere is not accepted inside a live session, so the
+            conversation now uses another one.</p>
+        </article>
         <article class="entry">
           <header><span class="badge badge-done">Loop 11</span> <time datetime="2026-11-03">November 3, 2026</time></header>
           <h3>Brain packs</h3>
@@ -233,7 +252,7 @@
             button: « relis-moi ça » reads it again.</p>
         </article>
         <article class="entry">
-          <header><span class="badge badge-wip">Loop 7b</span> <time datetime="2026-11-03">November 3, 2026</time></header>
+          <header><span class="badge badge-done">Loop 7b</span> <time datetime="2026-11-03">November 3, 2026</time></header>
           <h3>A real conversation, almost</h3>
           <p>Press F9 and talk: speech in, speech out, with the same tools as the text assistant, and a small pill
             showing what this conversation costs so far. It is built and tested end to end against a faithful

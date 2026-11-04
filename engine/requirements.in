@@ -9,3 +9,5 @@ websockets==15.0.1
 keyring==25.6.0
 # Sources: PDF text extraction (pure Python)
 pypdf==5.4.0
+# Documents: render PDF pages to images for the viewer (PDFium, prebuilt wheels, no system install)
+pypdfium2==4.30.0
