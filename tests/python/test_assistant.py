@@ -204,6 +204,14 @@ class HandsFreeTests(unittest.TestCase):
         core.run_tool(self.conn, "ui_replay", {"which": "review"}, [])
         self.assertEqual(core._UI["actions"], [{"action": "replay", "which": "review"}])
 
+    def test_clipboard_and_working_context_by_voice(self):
+        out = core.chat(self.conn, self.client, "Ajoute ça au Brain")
+        self.assertEqual(out["ui_actions"], [{"action": "capture_clipboard"}])
+        out = core.chat(self.conn, self.client, "Je veux structurer le projet Lancement")
+        ctx = out["ui_actions"][0]["context"]
+        self.assertEqual((out["ui_actions"][0]["action"], ctx["name"], ctx["kind"]), ("context", "Lancement", "project"))
+        self.assertIn("Lancement", out["reply"])
+
     def test_spoken_messages_ask_for_a_short_answer(self):
         core.chat(self.conn, self.client, "bonjour", spoken=True)
         self.assertIn("VOIX", FakeChat.last_messages[0]["content"])

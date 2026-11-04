@@ -13,7 +13,7 @@ from engine import VERSION, database
 from engine.api.brain_routes import make_router
 from engine.api.billing_routes import make_router as make_billing_router
 from engine.brain import meaning
-from engine.brain.seed import seed_all
+from engine.brain.seed import seed_for_app
 from engine.assistant.llm import make_client
 from engine.voice import secrets as key_store
 from engine.voice.routes import make_router as make_voice_router
@@ -40,7 +40,7 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
     @asynccontextmanager
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         with database.session(layout.database) as conn:
-            seed_all(conn)
+            seed_for_app(conn)
         worker = meaning.Worker(layout.database, client_or_none)
         worker.start()
         app.state.meaning_worker = worker

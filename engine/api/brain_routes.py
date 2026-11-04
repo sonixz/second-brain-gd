@@ -74,6 +74,12 @@ class ItemPatch(BaseModel):
     text: str | None = Field(default=None, max_length=200)
 
 
+class ContextIn(BaseModel):
+    name: str | None = Field(default=None, max_length=80)
+    space_id: str | None = None
+    kind: Literal["project", "area", "resource"] = "project"
+
+
 class NotePatch(BaseModel):
     title: str | None = Field(default=None, max_length=300)
     body: str | None = Field(default=None, max_length=200_000)
@@ -143,6 +149,26 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     @r.get("/search")
     def get_search(q: str = Query(min_length=1, max_length=200), limit: int = Query(30, ge=1, le=200)) -> dict[str, Any]:
         return {"results": run(meaning.search_notes, client_or_none(), q, limit)}
+
+    @r.get("/feed")
+    def get_feed(limit: int = Query(50, ge=1, le=500)) -> dict[str, Any]:
+        from engine.brain import archivist
+        return {"items": run(archivist.feed, limit)}
+
+    @r.get("/items/{note_id}")
+    def get_item(note_id: str) -> dict[str, Any]:
+        from engine.brain import archivist
+        return run(archivist.item, note_id)
+
+    @r.get("/context")
+    def get_context() -> dict[str, Any]:
+        from engine.brain import archivist
+        return {"context": run(archivist.get_context)}
+
+    @r.put("/context")
+    def put_context(body: ContextIn) -> dict[str, Any]:
+        from engine.brain import archivist
+        return {"context": run(archivist.set_context, body.name, body.space_id, body.kind)}
 
     @r.get("/notes/{note_id}/related")
     def get_related(note_id: str) -> dict[str, Any]:

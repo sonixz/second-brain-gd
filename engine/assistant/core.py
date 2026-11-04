@@ -49,31 +49,29 @@ VOICE_TONES = {
 }
 ACCENT = " Accent québécois naturel et léger, français du Québec."
 
-PERSONA = """Tu es l'assistante de Second Brain GD, le second cerveau personnel de l'utilisateur.
-Tu parles comme une collègue chaleureuse et efficace, en français québécois naturel (tutoiement),
-sauf si l'utilisateur écrit dans une autre langue: réponds alors dans sa langue.
+PERSONA = """Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (méthode CODE, classement PARA).
+Ton rôle: recevoir, comprendre, classer, relier et retrouver ses données. Tu es orientée DONNÉES: tu ne donnes pas
+d'opinion, tu ne critiques pas, tu ne fais pas la morale; tu rapportes des faits tirés de sa base. Tutoiement, français
+québécois naturel, sauf s'il écrit dans une autre langue: réponds alors dans sa langue.
 Règles:
-- Tu travailles avec ses notes grâce aux outils. Cherche avant d'affirmer quelque chose sur ses projets.
-- Ne jamais inventer le contenu d'une note.
-- IMPORTANT: chaque fois que ta réponse s'appuie sur une note, écris son titre EXACT entre doubles crochets
-  dans ta phrase, ex. « d'après [[Atlas risks]], ... ». L'interface en fait un lien cliquable.
-- Structure: domaines (areas, permanents) > projets (résultat + échéance) > tâches (prochaines actions).
-  Une tâche à faire = add_task dans le bon projet (avec due_date AAAA-MM-JJ si une date est dite).
-  Une idée, une décision ou une info = create_note. Des articles d'épicerie ou de liste = add_to_checklist.
-  Un nouveau projet = create_project sous le bon domaine. « C'est fait » = complete_task.
-- Pour « qu'est-ce que j'ai aujourd'hui / cette semaine », utilise get_today.
+- Quand il te donne de l'information (une idée, un texte, un fait), enregistre-la avec create_note: l'archiviste la
+  classe ensuite et tu rapportes le reçu en une phrase. « Ajoute ça au Brain » (le presse-papiers) = ui_capture_clipboard.
+- « Je veux structurer / je travaille sur <projet ou sujet> » = set_working_context; « on arrête ce contexte » =
+  set_working_context sans nom. Les prochains éléments sont alors classés dans ce contexte.
+- Pour une question, cherche d'abord (search_notes ET search_sources) et réponds uniquement à partir de ce que tu
+  trouves. Si rien ne correspond, dis-le simplement. Ne jamais inventer le contenu d'une note.
+- IMPORTANT: chaque fois que ta réponse s'appuie sur un élément, écris son titre EXACT entre doubles crochets,
+  ex. « d'après [[Atlas risks]], ... ». L'interface en fait un lien cliquable.
+- Tu ne poses une question que si elle est nécessaire pour bien classer ou retrouver.
 - Tu pilotes aussi l'interface: l'utilisateur peut tout faire à la voix, sans cliquer. Dès qu'il dit
   « montre, ouvre, affiche, va dans, lance, mets », APPELLE l'outil d'interface correspondant:
-  une vue (graphe, aujourd'hui, projets, agents) = ui_open_view; un projet = ui_open_project (id via
-  get_structure); une note = ui_open_note (trouve son id avec search_notes d'abord); thème = ui_set_theme;
-  son = ui_set_volume; la revue de la semaine = ui_start_weekly_review; « annule ça » = undo_last_action;
+  une vue (graph, captures, today, projects, agents) = ui_open_view; un projet ou une place = ui_open_project (id via
+  get_structure); un élément = ui_open_note (trouve son id avec search_notes d'abord); thème = ui_set_theme;
+  son = ui_set_volume; « annule ça » = undo_last_action;
   « relis-moi ça / répète » = ui_replay (rien d'autre à dire); « parle plus vite / moins vite » = ui_set_voice_speed.
-  « Qu'est-ce que j'ai aujourd'hui? Affiche-le » = get_today ET ui_open_view(today).
   INTERDIT: dire « je l'ouvre », « c'est affiché » ou « c'est lancé » sans avoir appelé l'outil ui_* dans ce
   tour. Après une action d'interface, réponds en une phrase courte (elle est lue à voix haute).
-- Pour une question de fond, cherche dans les notes (search_notes) ET dans les documents importés (search_sources).
-  Cite un document par le titre de sa fiche entre [[ ]].
-- Réponses courtes et directes (1 à 3 phrases), sauf si on te demande du détail. Pas de listes à puces longues, pas d'emojis.
+- Réponses courtes, factuelles et directes (1 à 3 phrases), sauf si on te demande du détail. Pas d'emojis.
 - Ne refais jamais une action déjà indiquée comme effectuée dans l'historique.
 - Tout ce que tu modifies est visible et annulable: dis brièvement ce que tu as fait."""
 
@@ -141,6 +139,10 @@ def undo(conn: sqlite3.Connection, action_id: int) -> dict[str, Any]:
             pass
         conn.execute("DELETE FROM links WHERE from_note = ? AND created_by = 'assistant' AND created_at >= ?",
                      (row["note_id"], row["created_at"]))
+        created = after.get("created_space")
+        if created and not conn.execute("SELECT 1 FROM notes WHERE space_id = ?", (created,)).fetchone():
+            conn.execute("UPDATE spaces SET archived_at = ? WHERE id = ?", (utc_now(), created))
+        conn.execute("UPDATE item_meta SET filed = 0 WHERE note_id = ?", (row["note_id"],))
     conn.execute("UPDATE assistant_actions SET undone_at = ? WHERE id = ?", (utc_now(), action_id))
     return result
 
@@ -280,10 +282,10 @@ TOOLS = [
 ]
 
 # Interface tools: the engine validates them, Godot performs them (hands-free control, Loop 7a).
-UI_VIEWS = ["graph", "today", "projects", "agents"]
+UI_VIEWS = ["graph", "captures", "today", "projects", "agents"]
 UI_THEMES = ["morning", "focus", "evening", "forest", "auto"]
 UI_TOOLS = [
-    {"type": "function", "function": {"name": "ui_open_view", "description": "Show a view of the app: graph (the knowledge map), today (what to do now), projects, agents (the agent room).",
+    {"type": "function", "function": {"name": "ui_open_view", "description": "Show a view of the app: graph (the knowledge map), captures (everything added, newest first), today, projects, agents.",
      "parameters": {"type": "object", "properties": {"view": {"type": "string", "enum": UI_VIEWS}}, "required": ["view"]}}},
     {"type": "function", "function": {"name": "ui_open_project", "description": "Open a project's card on screen.",
      "parameters": {"type": "object", "properties": {"space_id": {"type": "string"}}, "required": ["space_id"]}}},
@@ -295,6 +297,10 @@ UI_TOOLS = [
      "parameters": {"type": "object", "properties": {"change": {"type": "string", "enum": ["up", "down", "mute", "unmute"]}}, "required": ["change"]}}},
     {"type": "function", "function": {"name": "ui_start_weekly_review", "description": "Start the guided weekly review on screen.",
      "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {"name": "ui_capture_clipboard", "description": "Add what the user copied (a link, a text) to the Brain: the app reads its clipboard and sends it to the archivist.",
+     "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {"name": "set_working_context", "description": "Set the subject or project the next items are filed into (created as a project if it does not exist). No name clears it.",
+     "parameters": {"type": "object", "properties": {"name": {"type": "string"}, "kind": {"type": "string", "enum": ["project", "area", "resource"]}}}}},
     {"type": "function", "function": {"name": "ui_replay", "description": "Read aloud again a previous answer: the last one (default) or the last weekly review.",
      "parameters": {"type": "object", "properties": {"which": {"type": "string", "enum": ["last", "review"]}}}}},
     {"type": "function", "function": {"name": "ui_set_voice_speed", "description": "Make the spoken voice faster, slower, or back to normal.",
@@ -334,6 +340,8 @@ def _ui_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any]) -> dict[
         if change not in ("up", "down", "mute", "unmute"):
             return {"error": "change must be up, down, mute or unmute"}
         act = {"action": "set_volume", "change": change}
+    elif name == "ui_capture_clipboard":
+        act = {"action": "capture_clipboard"}
     elif name == "ui_replay":
         which = str(args.get("which") or "last")
         act = {"action": "replay", "which": which if which in ("last", "review") else "last"}
@@ -351,6 +359,13 @@ def _ui_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any]) -> dict[
 def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions: list[dict[str, Any]]) -> Any:
     if name.startswith("ui_"):
         return _ui_tool(conn, name, args)
+    if name == "set_working_context":
+        from engine.brain import archivist
+
+        ctx = archivist.set_context(conn, str(args.get("name") or "").strip() or None,
+                                    kind=str(args.get("kind") or "project"))
+        _UI["actions"].append({"action": "context", "context": ctx})
+        return {"done": True, "context": ctx, "shown_to_user": {"action": "context"}}
     if name == "undo_last_action":
         row = conn.execute("SELECT id, kind FROM assistant_actions WHERE undone_at IS NULL ORDER BY id DESC LIMIT 1").fetchone()
         if row is None:

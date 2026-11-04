@@ -89,7 +89,12 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
 
     @r.post("/classify/{note_id}")
     def post_classify(note_id: str) -> dict[str, Any]:
-        return run(core.classify, note_id)
+        from engine.brain import archivist
+
+        def go(conn, client, nid):
+            core._CLIENT["c"] = client
+            return archivist.file_item(conn, client, nid, float(core.settings(conn)["assistant_min_confidence"]))
+        return run(go, note_id)
 
     @r.post("/speak")
     def post_speak(body: SpeakIn) -> Response:

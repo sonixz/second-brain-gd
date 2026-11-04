@@ -55,9 +55,11 @@ var toast_label: Label
 var toast_undo: Button
 var toast_action := 0
 var classified := 0
+var last_receipt := ""
 var _toast_timer: Timer
 # Views
 var view := "graph"   # graph | today | projects
+var captures_view: CapturesView
 var today_view: TodayView
 var projects_view: ProjectsView
 var agents_view: AgentsView
@@ -163,7 +165,7 @@ func _build_top_bar() -> void:
 	seg.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(seg)
 	var group := ButtonGroup.new()
-	for pair in [["graph", "Graph"], ["today", "Today"], ["projects", "Projects"], ["agents", "Agents"]]:
+	for pair in [["graph", "Graph"], ["captures", "Captures"], ["today", "Today"], ["projects", "Projects"], ["agents", "Agents"]]:
 		var b := Button.new()
 		b.text = str(pair[1])
 		b.toggle_mode = true
@@ -206,11 +208,15 @@ func _build_top_bar() -> void:
 
 
 func _build_views() -> void:
+	captures_view = CapturesView.new().setup(app)
+	captures_view.open_note.connect(func(nid: String) -> void:
+		await set_view("graph")
+		open_note(nid, true))
 	today_view = TodayView.new().setup(app)
 	projects_view = ProjectsView.new().setup(app)
 	agents_view = AgentsView.new().setup(app)
 	agents_view.failed.connect(func(msg: String) -> void: show_toast(msg))
-	for v in [today_view, projects_view, agents_view]:
+	for v in [captures_view, today_view, projects_view, agents_view]:
 		v.set_anchors_preset(Control.PRESET_FULL_RECT)
 		v.offset_left = 388
 		v.offset_right = -24
@@ -240,6 +246,7 @@ func _build_views() -> void:
 
 func set_view(name: String) -> void:
 	view = name
+	captures_view.visible = name == "captures"
 	today_view.visible = name == "today"
 	projects_view.visible = name == "projects"
 	agents_view.visible = name == "agents"
@@ -248,7 +255,9 @@ func set_view(name: String) -> void:
 	graph.mouse_filter = Control.MOUSE_FILTER_STOP if name == "graph" else Control.MOUSE_FILTER_IGNORE
 	for key in view_buttons:
 		(view_buttons[key] as Button).button_pressed = key == name
-	if name == "today":
+	if name == "captures":
+		await captures_view.refresh()
+	elif name == "today":
 		await today_view.refresh()
 	elif name == "projects":
 		await projects_view.refresh()
@@ -515,6 +524,17 @@ func run_ui_actions(actions: Array) -> void:
 				_change_volume(str(a.get("change", "")))
 			"replay":
 				assistant_panel.replay(str(a.get("which", "last")))
+			"capture_clipboard":
+				var clip := DisplayServer.clipboard_get().strip_edges()
+				if clip == "":
+					show_toast("The clipboard is empty: copy a link or a text first.")
+				else:
+					await capture(clip, "typed")
+			"context":
+				var ctx: Variant = a.get("context")
+				capture_hint.text = ("Working on %s: new items are filed there." % str((ctx as Dictionary).get("name", ""))) \
+					if ctx is Dictionary else "No working context: the archivist files freely."
+				await refresh_spaces()
 			"set_voice_speed":
 				app.audio.change_voice_speed(str(a.get("change", "normal")))
 			"refresh":
@@ -597,7 +617,9 @@ func _show_listening(on: bool) -> void:
 
 
 func _refresh_view() -> void:
-	if view == "today":
+	if view == "captures":
+		captures_view.refresh()
+	elif view == "today":
 		today_view.refresh()
 	elif view == "projects":
 		projects_view.refresh()
@@ -613,22 +635,29 @@ func _open_note_by_title(title: String) -> void:
 			return
 
 
-func _classify(note_id: String) -> void:
+## The archivist files the item and answers with a receipt (spoken when the input was spoken).
+func _classify(note_id: String, spoken: bool = false) -> void:
 	if not assistant_panel.configured:
 		return
 	var res := await app.backend.api.call_api("/assistant/classify/" + note_id, true, HTTPClient.METHOD_POST)
 	if not res["ok"] or not is_inside_tree():
 		return
 	var d: Dictionary = res["data"]
-	var prop: Dictionary = d.get("proposal", {})
+	var item: Dictionary = d.get("item", {})
+	var receipt := str(d.get("receipt", ""))
+	last_receipt = receipt
+	assistant_panel.add_receipt(item, receipt, bool(d.get("applied", false)), int(d.get("action_id", 0)))
+	if spoken:
+		assistant_panel.say(receipt, true)
 	if bool(d.get("applied", false)):
 		classified += 1
 		app.audio.play("node_link", 0.05)
-		show_toast("Filed in %s · « %s »" % [prop.get("space_name", "?"), prop.get("title", "")], int(d.get("action_id", 0)))
+		show_toast(receipt, int(d.get("action_id", 0)))
 		await refresh_graph()
 		await refresh_spaces()
 	else:
-		show_toast("Left in the Inbox · not sure where it belongs")
+		show_toast(receipt)
+	_refresh_view()
 
 
 func _build_inspector() -> void:
@@ -919,7 +948,7 @@ func capture(text: String, source: String = "typed") -> void:
 	await refresh_spaces()
 	capture_hint.text = "Saved to %s. Keep going." % _space_name(str(note["space_id"]))
 	if current_space == "":
-		await _classify(str(note["id"]))
+		await _classify(str(note["id"]), source == "voice")
 	_refresh_view()
 
 

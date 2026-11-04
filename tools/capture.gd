@@ -84,7 +84,8 @@ func _run() -> void:
 	SbSettings.set_value("ui", "theme", "morning")
 	SbSettings.set_value("onboarding", "voice_done", false)
 	OS.set_environment("SBGD_VOICE_PROVIDER", "fake")  # screenshots never call OpenAI
-	OS.set_environment("SBGD_BILLING_PROVIDER", "fake")  # canned billing pages in OpenAI's shapes
+	OS.set_environment("SBGD_BILLING_PROVIDER", "fake")
+	OS.set_environment("SBGD_SEED", "demo")  # canned billing pages in OpenAI's shapes
 	app = load("res://scenes/main.tscn").instantiate()
 	root.add_child(app)
 	await pause(1.2)

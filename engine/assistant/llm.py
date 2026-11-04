@@ -174,6 +174,31 @@ class FakeChat:
             out = {"title": src.get("title") or "Document", "summary": "Résumé de test.", "key_points": ["Point A"],
                    "tags": ["test-source"]}
             return {"message": {"role": "assistant", "content": json.dumps(out)}, "usage": usage, "model": model}
+        if json_mode and "ARCHIVISTE" in str(messages[0].get("content", "")):
+            ctx = json.loads(last["content"])
+            it = ctx["item"]
+            text = (it["title"] + " " + it.get("content", "")).lower()
+            words = [w.strip(".,;:!?()«»\"'") for w in it["title"].split()]
+            long_words = [w for w in words if len(w) >= 5] or [w for w in words if w] or ["Divers"]
+            place = next((p for p in ctx["places"] if p["kind"] != "inbox" and p["name"].lower() in text), None)
+            if "???" in text:
+                out = {"title": it["title"], "item_type": "note", "confidence": 0.2,
+                       "question": "C'est pour quel projet?", "place": {}, "themes": [], "receipt": ""}
+            else:
+                if place:
+                    target = {"space_id": place["id"]}
+                elif ctx.get("working_context"):
+                    target = {"space_id": ctx["working_context"]["id"]}
+                else:
+                    name = "Articles" if it.get("origin") in ("url", "file") else long_words[0].capitalize()
+                    target = {"new_space": {"name": name, "kind": "resource"}}
+                out = {"title": it["title"], "item_type": "article" if it.get("origin") == "url" else "note",
+                       "language": "fr", "summary": "Résumé de test." if len(it.get("content", "")) > 400 else None,
+                       "key_points": [], "entities": {"concepts": [long_words[0].lower()]},
+                       "place": target, "themes": [long_words[0].lower()],
+                       "link_ids": [c["id"] for c in ctx["candidates"][:1]], "confidence": 0.9, "question": None,
+                       "receipt": ""}
+            return {"message": {"role": "assistant", "content": json.dumps(out)}, "usage": usage, "model": model}
         if json_mode:  # classification: pick the space whose name appears in the note
             ctx = json.loads(last["content"])
             text = (ctx["note"]["title"] + " " + ctx["note"]["body"]).lower()
@@ -189,6 +214,10 @@ class FakeChat:
             return {"message": {"role": "assistant", "content": json.dumps(out)}, "usage": usage, "model": model}
         if last["role"] == "tool":
             found = json.loads(last["content"])
+            if "context" in found and found.get("done"):
+                ctx = found.get("context") or {}
+                return {"message": {"role": "assistant", "content": f"Contexte: {ctx.get('name', 'aucun')}."},
+                        "usage": usage, "model": model}
             if "shown_to_user" in found or "undone" in found:
                 return {"message": {"role": "assistant", "content": "C'est fait." if found.get("done") or found.get("undone")
                                     else "Rien à annuler."}, "usage": usage, "model": model}
@@ -202,6 +231,14 @@ class FakeChat:
             view = next((v for k, v in views.items() if k in low), "graph")
             call = {"id": "call_ui", "type": "function",
                     "function": {"name": "ui_open_view", "arguments": json.dumps({"view": view})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if "ajoute ça au brain" in low and tools:
+            call = {"id": "call_clip", "type": "function", "function": {"name": "ui_capture_clipboard", "arguments": "{}"}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith("je veux structurer") and tools:
+            name = text.split("structurer", 1)[1].replace("le projet", "").strip(" .!") or None
+            call = {"id": "call_ctx", "type": "function",
+                    "function": {"name": "set_working_context", "arguments": json.dumps({"name": name})}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if low.startswith(("relis", "répète", "repete")) and tools:
             call = {"id": "call_replay", "type": "function", "function": {"name": "ui_replay", "arguments": "{}"}}

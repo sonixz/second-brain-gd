@@ -41,7 +41,8 @@ func _run() -> void:
 	OS.set_environment("SBGD_VOICE_PROVIDER", "fake")
 	OS.set_environment("SBGD_ASSISTANT_PROVIDER", "fake")
 	OS.set_environment("SBGD_KEYRING_SERVICE", "SecondBrainGD-test")  # never the user's real key
-	OS.set_environment("SBGD_BILLING_PROVIDER", "fake")  # real-costs panel reads canned OpenAI pages
+	OS.set_environment("SBGD_BILLING_PROVIDER", "fake")
+	OS.set_environment("SBGD_SEED", "demo")  # the demo areas and notes the flow below relies on  # real-costs panel reads canned OpenAI pages
 	OS.unset_environment("OPENAI_ADMIN_KEY")
 	# The agent room installs from a tiny local fixture (a fake app-server), never the 160 MB download.
 	OS.set_environment("SBGD_AGENTS_MANIFEST", ProjectSettings.globalize_path("res://tests/fixtures/agents/manifest.json"))
@@ -170,10 +171,29 @@ func _e2e() -> void:
 	var filed := await wait_until(func() -> bool: return int(brain.get("classified")) == 1, 20.0)
 	check(filed, "a capture is filed automatically by the assistant")
 	var toast_label: Label = brain.get("toast_label")
-	check(toast_label.text.begins_with("Filed in Getting started"), "a toast says where it went (%s)" % toast_label.text)
+	check(toast_label.text.contains("Ressources › Getting started"), "the archivist's receipt says where it went (%s)" % toast_label.text)
+	check(ap.list.get_child_count() > 0 and str(brain.get("last_receipt")).contains("classé dans"), "the receipt also lands in the assistant panel")
+	# Loop 9: on a place that does not exist yet, the archivist creates it (fresh Brains build their own structure).
+	ce.text = "Photographie de nuit: pose longue et trépied"
+	ce.text_submitted.emit(ce.text)
+	var made := await wait_until(func() -> bool: return int(brain.get("classified")) == 2, 20.0)
+	check(made and str(brain.get("last_receipt")).contains("Ressources › Photographie"), "an unknown subject gets a new place (%s)" % str(brain.get("last_receipt")))
+	await brain.call("set_view", "captures")
+	var cv: CapturesView = brain.get("captures_view")
+	var fed := await wait_until(func() -> bool: return cv.items.size() >= 2 and cv.list.get_child_count() >= 2, 10.0)
+	check(fed and str((cv.items[0] as Dictionary).get("title", "")).begins_with("Photographie"), "the Captures view lists what came in, newest first")
+	await ap.send("Je veux structurer le projet Lancement")
+	check(str(brain.get("capture_hint").text).contains("Lancement"), "« je veux structurer le projet X » sets the working context")
+	await ap.send("Je veux structurer")  # clears it again for the rest of the flow
+	await brain.call("set_view", "graph")
 	await brain.call("_undo_toast")
 	check(toast_label.text.begins_with("Put back"), "the filing can be undone from the toast")
-	check(graph.node_count("note") == gs_before + 1, "undo keeps the note, only its place changes")
+	check(graph.node_count("note") == gs_before + 2, "undo keeps the note, only its place changes")
+	var spaces_res: Dictionary = await app.backend.api.call_api("/brain/spaces")
+	var still_there := false
+	for sp in (spaces_res["data"] as Dictionary).get("spaces", []):
+		still_there = still_there or str((sp as Dictionary).get("name", "")) == "Photographie"
+	check(not still_there, "undoing removes the place the archivist had just created")
 	# Structure: Today view, checklists, Projects view, project card, next actions.
 	await brain.call("set_view", "today")
 	var tv: TodayView = brain.get("today_view")

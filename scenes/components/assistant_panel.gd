@@ -231,6 +231,21 @@ func _on_live_state(st: String) -> void:
 	live_button.text = "End live (F9)" if st != "idle" else "Talk live"
 
 
+## The archivist's receipt for an item that came in: where it went, or what it is waiting on.
+func add_receipt(item: Dictionary, receipt: String, filed: bool, action_id: int) -> void:
+	var lines := [receipt]
+	var summary: Variant = item.get("summary")
+	if summary != null and str(summary) != "":
+		lines.append(str(summary))
+	var themes: Array = item.get("themes", [])
+	if not themes.is_empty():
+		lines.append(" ".join(themes.map(func(t: Variant) -> String: return "#" + str(t))))
+	var acts: Array = []
+	if filed and action_id > 0:
+		acts.append({"kind": "classify", "title": str(item.get("title", "")), "action_id": action_id})
+	_add_bubble("receipt" if filed else "waiting", "\n".join(lines), acts, [])
+
+
 ## A line of the live conversation (already saved by the engine in today's conversation).
 func add_live(role: String, text: String) -> void:
 	_add_bubble(role, text, [], [])
@@ -246,8 +261,8 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array) -> vo
 	wrap.alignment = BoxContainer.ALIGNMENT_END if mine else BoxContainer.ALIGNMENT_BEGIN
 	list.add_child(wrap)
 	var bubble := PanelContainer.new()
-	var special := role in ["briefing", "review"]
-	var col := SbTheme.MINT if mine else (SbTheme.WARM if role == "briefing" else (SbTheme.INFO if role == "review" else SbTheme.PANEL_2))
+	var special := role in ["briefing", "review", "receipt", "waiting"]
+	var col := SbTheme.MINT if mine else (SbTheme.WARM if role in ["briefing", "waiting"] else (SbTheme.INFO if role in ["review", "receipt"] else SbTheme.PANEL_2))
 	bubble.add_theme_stylebox_override("panel", SbTheme.box(Color(col, 0.22 if mine or special else 0.9), 14,
 		Color(col, 0.35), 1, 12))
 	bubble.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -261,7 +276,7 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array) -> vo
 	bubble.add_child(inner)
 	if special:
 		var over := Label.new()
-		over.text = "TODAY" if role == "briefing" else "WEEKLY REVIEW"
+		over.text = {"briefing": "TODAY", "review": "WEEKLY REVIEW", "receipt": "FILED", "waiting": "IN THE INBOX · WAITING"}.get(role, "")
 		over.theme_type_variation = "Overline"
 		over.add_theme_color_override("font_color", col)
 		inner.add_child(over)
@@ -297,7 +312,7 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array) -> vo
 		inner.add_child(line)
 		var l := Label.new()
 		l.theme_type_variation = "Muted"
-		l.text = ("✚ Created " if str(a.get("kind")) == "create_note" else "✎ Updated ") + "« %s »" % str(a.get("title", ""))
+		l.text = ("✚ Created " if str(a.get("kind")) == "create_note" else ("⇢ Filed " if str(a.get("kind")) == "classify" else "✎ Updated ")) + "« %s »" % str(a.get("title", ""))
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		l.clip_text = true
