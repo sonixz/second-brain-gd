@@ -89,8 +89,13 @@ def seed_brain(conn: sqlite3.Connection) -> bool:
 
 
 def seed_for_app(conn: sqlite3.Connection) -> None:
-    """The app's first start: the fresh Brain, or the demo content when SBGD_SEED=demo (tests, screenshots)."""
+    """The app's first start: the fresh Brain, the demo content (SBGD_SEED=demo: tests, screenshots) or the
+    English showcase Brain (SBGD_SEED=showcase: website screenshots)."""
     if os.environ.get("SBGD_SEED") == "demo":
         seed_all(conn)
+    elif os.environ.get("SBGD_SEED") == "showcase":  # the website screenshots (tools/showcase.sh)
+        from engine.brain.showcase import seed_showcase
+
+        seed_showcase(conn)
     else:
         seed_brain(conn)

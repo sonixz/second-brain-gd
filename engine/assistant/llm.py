@@ -347,7 +347,16 @@ class FakeChat:
             return fh.read()
 
 
+def is_fake() -> bool:
+    """A scripted provider, no network: "fake" (tests) or "showcase" (website screenshots)."""
+    return os.environ.get("SBGD_ASSISTANT_PROVIDER") in ("fake", "showcase")
+
+
 def make_client(key: str | None) -> OpenAIChat | FakeChat:
+    if os.environ.get("SBGD_ASSISTANT_PROVIDER") == "showcase":
+        from engine.brain.showcase import ShowcaseChat
+
+        return ShowcaseChat()
     if os.environ.get("SBGD_ASSISTANT_PROVIDER") == "fake":
         return FakeChat()
     if not key:

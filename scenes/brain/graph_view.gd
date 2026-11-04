@@ -23,8 +23,11 @@ const REPULSION := 5200.0
 const SPRING := 0.035
 const DAMPING := 0.86
 const GRAVITY := 0.012
+const HOME_PULL := 0.08            # an item's pull back into its own place's zone (Loop 13 zones)
+const COLLIDE := 74.0              # two items closer than this push apart firmly (a card is 64 × 44)
+const ZONE_FREE := 150.0           # inside this distance from its place, an item moves freely
 const BIRTH_S := 1.1
-const REST := {"space": 150.0, "link": 120.0, "tag": 85.0, "related": 150.0}
+const REST := {"space": 110.0, "link": 120.0, "tag": 85.0, "related": 150.0}
 const ZOOM_MIN := 0.15
 const ZOOM_MAX := 40.0
 const FAR := 0.55
@@ -59,7 +62,9 @@ var filter: Dictionary = {}
 var filtered_out: Dictionary = {}          # node id -> true when filtered out or folded in
 var _note_tags: Dictionary = {}
 var path_ids: Array = []
-const CELL := 260.0
+const CELL := 100.0
+const CROWD := 4                  # a neighbouring cell with more items than this pushes as one body
+const NOTE_FIELDS := ["item_type", "origin", "created_at", "updated_at"]
 const DENSE := 350                # beyond this many items on screen, draw lighter (no halos, fewer labels)
 var _dense := false
 var _mini_at := -1.0
@@ -76,6 +81,7 @@ var _sim_ids: Array[String] = []
 var _sim_index: Dictionary = {}
 var _sim_space := PackedByteArray()
 var _sim_spaces := PackedInt32Array()
+var _sim_home := PackedInt32Array()      # item index -> its place index, -1 for places and tags
 var _edge_a := PackedInt32Array()
 var _edge_b := PackedInt32Array()
 var _edge_rest := PackedFloat32Array()
@@ -126,6 +132,9 @@ func set_graph(data: Dictionary) -> Array[String]:
 			existing["space_id"] = str(src.get("space_id", ""))
 			existing["color"] = src.get("color")
 			existing["layer"] = src.get("layer")
+			for key in NOTE_FIELDS:
+				if src.has(key):
+					existing[key] = src[key]
 		else:
 			var n := _make_node(src, i, raw_nodes.size(), first_load)
 			nodes[id] = n
@@ -171,13 +180,17 @@ func _make_node(src: Dictionary, i: int, total: int, first_load: bool) -> Dictio
 	var type := str(src.get("type", "note"))
 	var angle := TAU * float(i) / maxf(1.0, float(total)) + randf() * 0.3
 	var radius := 120.0 if type == "space" else 260.0 + randf() * 120.0
-	return {
+	var n := {
 		"id": str(src["id"]), "type": type, "label": str(src.get("label", "")), "kind": str(src.get("kind", "")),
 		"space_id": str(src.get("space_id", "")), "weight": int(src.get("weight", 0)), "color": src.get("color"),
 		"layer": src.get("layer"),
 		"pos": Vector2.from_angle(angle) * radius, "vel": Vector2.ZERO,
 		"born": (_t - BIRTH_S * randf() * 0.6) if first_load else _t, "pinned": false,
 	}
+	for key in NOTE_FIELDS:  # what the filters and the timeline read
+		if src.has(key):
+			n[key] = src[key]
+	return n
 
 
 func _rebuild_neighbors() -> void:
@@ -327,7 +340,7 @@ func _layout_anchors() -> void:
 		var ring := i / per_ring
 		var in_ring := mini(per_ring, places.size() - ring * per_ring)
 		var angle := TAU * float(i % per_ring) / float(in_ring) - PI / 2.0 + ring * 0.3
-		var radius := 420.0 + ring * 380.0
+		var radius := maxf(420.0, float(in_ring) * 400.0 / TAU) + ring * 380.0
 		var n: Dictionary = places[i]
 		anchors[str(n["id"])] = custom_anchors.get(str(n["id"]), Vector2.from_angle(angle) * radius)
 
@@ -643,6 +656,12 @@ func _rebuild_sim() -> void:
 		_sim_space[i] = 1 if is_space else 0
 		if is_space:
 			_sim_spaces.append(i)
+	# Each item's place (its index in the packed arrays, -1 for tags): items gravitate to their zone, not to the centre.
+	_sim_home = PackedInt32Array()
+	_sim_home.resize(n)
+	for i in n:
+		var home := "space:" + str((nodes[_sim_ids[i]] as Dictionary).get("space_id", ""))
+		_sim_home[i] = int(_sim_index.get(home, -1)) if _sim_space[i] == 0 else -1
 	_edge_a = PackedInt32Array()
 	_edge_b = PackedInt32Array()
 	_edge_rest = PackedFloat32Array()
@@ -668,33 +687,52 @@ func _simulate(step: float) -> void:
 		pos[i] = (nodes[_sim_ids[i]] as Dictionary)["pos"]
 	var force := PackedVector2Array()
 	force.resize(n)
-	# Repulsion between neighbours only: a grid of CELL-sized cells, each item against the 3×3 cells around it.
+	# Repulsion between neighbours only: a grid of CELL-sized cells. Items of the same cell push each other
+	# exactly; a neighbouring cell pushes as one body at its centre when it is crowded (a dense, unsettled
+	# graph stays cheap), item by item otherwise. Each side applies its own half, so forces stay balanced.
 	var grid: Dictionary = {}
 	for i in n:
 		var key := Vector2i(floori(pos[i].x / CELL), floori(pos[i].y / CELL))
-		if grid.has(key):
-			(grid[key] as PackedInt32Array).append(i)
-		else:
-			grid[key] = PackedInt32Array([i])
+		# Packed arrays are values in GDScript: append to the cell's array, then store it back.
+		var cell: PackedInt32Array = grid.get(key, PackedInt32Array())
+		cell.append(i)
+		grid[key] = cell
+	var centre: Dictionary = {}
+	for key in grid:
+		var members: PackedInt32Array = grid[key]
+		if members.size() > CROWD:
+			var c := Vector2.ZERO
+			for m in members:
+				c += pos[m]
+			centre[key] = c / float(members.size())
 	for key in grid:
 		var here: PackedInt32Array = grid[key]
-		for dx in range(-1, 2):
-			for dy in range(-1, 2):
-				var other_key := Vector2i(key.x + dx, key.y + dy)
-				if not grid.has(other_key):
+		for a in here.size():
+			var i := here[a]
+			var pi := pos[i]
+			var si := _sim_space[i]
+			for b in range(a + 1, here.size()):
+				var j := here[b]
+				if si == 1 and _sim_space[j] == 1:
 					continue
-				var there: PackedInt32Array = grid[other_key]
-				for i in here:
-					var pi := pos[i]
-					var si := _sim_space[i]
-					for j in there:
-						if j <= i or (si == 1 and _sim_space[j] == 1):
+				var f := _push(pi - pos[j], si, _sim_space[j], i, j)
+				force[i] += f
+				force[j] -= f
+			for dx in range(-1, 2):
+				for dy in range(-1, 2):
+					if dx == 0 and dy == 0:
+						continue
+					var other_key := Vector2i(key.x + dx, key.y + dy)
+					if not grid.has(other_key):
+						continue
+					if centre.has(other_key):
+						var crowd: PackedInt32Array = grid[other_key]
+						force[i] += _push(pi - (centre[other_key] as Vector2), si, 0, i, -1) * float(crowd.size())
+						continue
+					for j in (grid[other_key] as PackedInt32Array):
+						if si == 1 and _sim_space[j] == 1:
 							continue
-						var d := pi - pos[j]
-						var dist2 := maxf(d.length_squared(), 100.0)
-						var f := d * (REPULSION * (2.2 if si == 1 or _sim_space[j] == 1 else 1.0) / (dist2 * sqrt(dist2)))
-						force[i] += f
-						force[j] -= f
+						force[i] += _push(pi - pos[j], si, _sim_space[j], i, j)
 	# Places push each other apart at any distance (there are few of them).
 	for a in _sim_spaces.size():
 		var i := _sim_spaces[a]
@@ -725,6 +763,12 @@ func _simulate(step: float) -> void:
 		var f: Vector2
 		if _sim_space[i] == 1 and anchors.has(id):  # a place stays in its zone
 			f = force[i] * 0.25 + ((anchors[id] as Vector2) - p) * 0.06
+		elif _sim_home[i] >= 0:  # free inside its zone, pulled back beyond it
+			var out := p - pos[_sim_home[i]]
+			var dist := out.length()
+			f = force[i] - (out * ((dist - ZONE_FREE) / dist) * HOME_PULL if dist > ZONE_FREE else Vector2.ZERO)
+		elif _sim_space[i] == 0:  # a theme sits among its items, barely pulled to the centre
+			f = force[i] - p * GRAVITY * 0.02
 		else:
 			f = force[i] - p * GRAVITY * 0.35
 		var v: Vector2 = ((node["vel"] as Vector2) + f * step * heat) * DAMPING
@@ -732,6 +776,19 @@ func _simulate(step: float) -> void:
 		node["vel"] = v
 		node["pos"] = p + v * step
 		_sim_pos[i] = node["pos"]
+
+
+## The push of one item on another: inverse-square repulsion (stronger around places), plus a firm
+## collision push between items closer than COLLIDE so cards keep their own room.
+func _push(d: Vector2, sa: int, sb: int, i: int, j: int) -> Vector2:
+	if d.length_squared() < 0.25:  # two items on the same spot: part them in a stable direction
+		d = Vector2.from_angle(float(i * 7 + j * 13)) * 0.5
+	var dist2 := maxf(d.length_squared(), 100.0)
+	var dl := sqrt(dist2)
+	var f := d * (REPULSION * (2.2 if sa == 1 or sb == 1 else 1.0) / (dist2 * dl))
+	if dl < COLLIDE and sa == 0 and sb == 0:
+		f += d * ((COLLIDE - dl) * 0.25 / dl)
+	return f
 
 
 ## Dense or far views (Loop 15): everything ordinary comes from the packed layout arrays,
@@ -1024,9 +1081,12 @@ func _draw_clusters() -> void:
 			continue
 		var h: Dictionary = nodes[hub]
 		var center: Vector2 = h["pos"]
-		var reach := 60.0
+		# The zone holds most of its items: one item pulled away by a link elsewhere does not inflate it.
+		var dists: Array[float] = []
 		for q in members[hub]:
-			reach = maxf(reach, center.distance_to(q as Vector2) + 30.0)
+			dists.append(center.distance_to(q as Vector2))
+		dists.sort()
+		var reach := maxf(60.0, dists[mini(dists.size() - 1, int(dists.size() * 0.6))] + 40.0)
 		var col := _color(h)
 		var sp := world_to_screen(center)
 		draw_circle(sp, reach * zoom, Color(col, 0.07))

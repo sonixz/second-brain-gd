@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 
 from engine import brain, database
 from engine.assistant import core
+from engine.assistant import llm
 from engine.assistant.llm import LLMError, make_client
 from engine.paths import Layout
 from engine.voice import secrets
@@ -56,8 +57,7 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         info = secrets.info(layout, "openai")
         with database.session(layout.database) as conn:
             s = core.settings(conn)
-        import os
-        fake = os.environ.get("SBGD_ASSISTANT_PROVIDER") == "fake"
+        fake = llm.is_fake()
         return {"configured": info.configured or fake, "provider": "fake" if fake else "openai", **s}
 
     @r.patch("/settings")
