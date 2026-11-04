@@ -213,6 +213,18 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     def get_card(space_id: str) -> dict[str, Any]:
         return run(structure.card, space_id)
 
+    @r.delete("/spaces/{space_id}")
+    def delete_space(space_id: str) -> dict[str, Any]:
+        """Removes a place: its items go back to the Inbox. Journalled, so the toast's Undo restores it."""
+        from engine.assistant.core import _journal
+
+        def go(conn):
+            out = brain.remove_space(conn, space_id)
+            out["action_id"] = _journal(conn, "remove_place", space_id, {"note_ids": out["moved_to_inbox"],
+                                        "children": out["children"]}, {"name": out["removed"]}, f"place {out['removed']} retirée")
+            return out
+        return run(go)
+
     @r.patch("/spaces/{space_id}")
     def patch_space(space_id: str, body: SpacePatch) -> dict[str, Any]:
         return run(structure.update_space, space_id, **body.model_dump(exclude_none=True))

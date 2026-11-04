@@ -1152,9 +1152,57 @@ func refresh_spaces() -> void:
 		b.tooltip_text = "Capture into %s; click again to show everything" % s["name"]
 		var sid := str(s["id"])
 		b.pressed.connect(func() -> void: _toggle_space(sid))
-		spaces_box.add_child(b)
+		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		b.clip_text = true
+		var row := HBoxContainer.new()
+		row.add_child(b)
+		if sid != "inbox":
+			var x := Button.new()
+			x.text = "✕"
+			x.theme_type_variation = "GhostButton"
+			x.tooltip_text = "Remove this place: its items go back to the Inbox (Undo available)"
+			var sname := str(s["name"])
+			var count := int(s.get("note_count", 0))
+			x.pressed.connect(func() -> void: _confirm_remove_place(sid, sname, count))
+			row.add_child(x)
+		spaces_box.add_child(row)
 	_rebuild_space_option()
 	_update_capture_hint()
+
+
+func _confirm_remove_place(sid: String, sname: String, count: int) -> void:
+	var dlg := ConfirmationDialog.new()
+	dlg.title = "Remove a place"
+	dlg.dialog_text = "Remove « %s »?\n%s" % [sname, ("Its %d item(s) go back to the Inbox; nothing is deleted." % count) if count > 0
+		else "It is empty."]
+	dlg.ok_button_text = "Remove"
+	dlg.confirmed.connect(func() -> void: remove_place(sid))
+	dlg.visibility_changed.connect(func() -> void:
+		if not dlg.visible:
+			dlg.queue_free())
+	add_child(dlg)
+	dlg.popup_centered()
+
+
+## Removes a place (button ✕ or « supprime la place X »): items back in the Inbox, Undo in the toast.
+func remove_place(sid: String) -> bool:
+	var res := await app.backend.api.call_api("/brain/spaces/" + sid, true, HTTPClient.METHOD_DELETE)
+	if not is_inside_tree():
+		return false
+	if not res["ok"]:
+		var d: Variant = res["data"]
+		show_toast("Could not remove it: %s" % (str((d as Dictionary).get("detail", res["error"])) if d is Dictionary else str(res["error"])))
+		return false
+	var out: Dictionary = res["data"]
+	if current_space == sid:
+		current_space = ""
+	var n := (out.get("moved_to_inbox", []) as Array).size()
+	app.audio.play("whoosh")
+	show_toast("« %s » removed%s." % [str(out.get("removed", "")), (", %d item(s) back in the Inbox" % n) if n > 0 else ""],
+		int(out.get("action_id", 0)))
+	await refresh_graph()
+	await refresh_spaces()
+	return true
 
 
 static func _dot_texture(col: Color) -> ImageTexture:

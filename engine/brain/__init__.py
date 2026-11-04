@@ -66,6 +66,29 @@ def get_space(conn: sqlite3.Connection, space_id: str) -> dict[str, Any]:
 
 
 # ------------------------------------------------------------------- notes
+def remove_space(conn: sqlite3.Connection, space_id: str) -> dict[str, Any]:
+    """A place leaves the graph: its items go back to the Inbox (nothing is lost), its projects lose this area.
+    The place is archived, not deleted, so restore_space() can bring everything back."""
+    sp = get_space(conn, space_id)
+    if sp["kind"] == "inbox" or space_id == "inbox":
+        raise ValueError("the Inbox cannot be removed")
+    notes = [r["id"] for r in conn.execute("SELECT id FROM notes WHERE space_id = ? AND status != 'archived'", (space_id,))]
+    children = [r["id"] for r in conn.execute("SELECT id FROM spaces WHERE area_id = ?", (space_id,))]
+    now = utc_now()
+    conn.execute("UPDATE notes SET space_id = 'inbox', updated_at = ? WHERE space_id = ? AND status != 'archived'", (now, space_id))
+    conn.execute("UPDATE spaces SET area_id = NULL WHERE area_id = ?", (space_id,))
+    conn.execute("UPDATE spaces SET archived_at = ? WHERE id = ?", (now, space_id))
+    return {"removed": sp["name"], "space_id": space_id, "moved_to_inbox": notes, "children": children}
+
+
+def restore_space(conn: sqlite3.Connection, space_id: str, note_ids: list[str], children: list[str]) -> None:
+    conn.execute("UPDATE spaces SET archived_at = NULL WHERE id = ?", (space_id,))
+    for nid in note_ids:
+        conn.execute("UPDATE notes SET space_id = ? WHERE id = ? AND space_id = 'inbox'", (space_id, nid))
+    for cid in children:
+        conn.execute("UPDATE spaces SET area_id = ? WHERE id = ? AND area_id IS NULL", (space_id, cid))
+
+
 def _note_row(conn: sqlite3.Connection, note_id: str) -> sqlite3.Row:
     row = conn.execute("SELECT * FROM notes WHERE id = ?", (note_id,)).fetchone()
     if row is None:

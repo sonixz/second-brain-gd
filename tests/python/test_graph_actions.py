@@ -101,6 +101,22 @@ class GraphActionTests(unittest.TestCase):
         core.undo(self.conn, self.actions[-1]["action_id"])
         self.assertIn(self.voice["id"], {n["id"] for n in brain.graph(self.conn)["nodes"]})
 
+    def test_remove_a_place_items_back_in_inbox_and_undo(self):
+        area = brain.create_space(self.conn, "Carrière", "area")
+        self.conn.execute("UPDATE spaces SET area_id = ? WHERE id = ?", (area["id"], self.job["id"]))
+        out = self.run_tool("remove_place", place="recherche d'emploi")
+        self.assertEqual((out["changed"], out["removed_place"], out["items_back_in_inbox"]), (1, "Recherche d'emploi", 1))
+        self.assertEqual(brain.get_note(self.conn, self.voice["id"])["space_id"], "inbox")
+        self.assertNotIn(self.job["id"], {s["id"] for s in brain.list_spaces(self.conn)})
+        self.assertEqual(self.run_tool("remove_place", place="Inbox")["changed"], 0)
+        gone_area = self.run_tool("remove_place", place="Carrière")
+        self.assertEqual(gone_area["changed"], 1)
+        core.undo(self.conn, self.actions[0]["action_id"])  # the place and its item come back
+        self.assertEqual(brain.get_note(self.conn, self.voice["id"])["space_id"], self.job["id"])
+        self.assertIn(self.job["id"], {s["id"] for s in brain.list_spaces(self.conn)})
+        core.undo(self.conn, self.actions[1]["action_id"])  # and the project is back under its area
+        self.assertEqual(brain.get_space(self.conn, self.job["id"])["area_id"], area["id"])
+
     def test_update_that_changes_nothing_says_so(self):
         out = self.run_tool("update_note", note_id=self.voice["id"], space_id=self.job["id"])
         self.assertEqual(out["changed"], 0)

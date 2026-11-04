@@ -448,6 +448,16 @@ func _e2e() -> void:
 	check(dv.last_opened_original.ends_with(".html") and dv.last_opened_original.contains("originals"), "« Open original » opens the kept HTML file")
 	dv.hide_viewer()
 	DirAccess.remove_absolute(html_path)
+	# A place can be removed from the list (✕): its items go back to the Inbox, Undo restores it.
+	var made_place := await app.backend.api.call_api("/brain/spaces", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Temporary place"}))
+	var tmp_sid := str((made_place["data"] as Dictionary).get("id", ""))
+	await brain.call("refresh_spaces")
+	var removed: bool = await brain.call("remove_place", tmp_sid)
+	var left: Dictionary = (await app.backend.api.call_api("/brain/spaces"))["data"]
+	check(removed and not (left.get("spaces", []) as Array).any(func(x: Variant) -> bool: return str((x as Dictionary)["id"]) == tmp_sid),
+		"a place can be removed")
+	var inbox_kept: Dictionary = await app.backend.api.call_api("/brain/spaces/inbox", true, HTTPClient.METHOD_DELETE)
+	check(not inbox_kept["ok"], "the Inbox cannot be removed")
 	# Graph first, semantic zoom (Loop 10).
 	await brain.call("set_view", "graph")
 	var vb: Dictionary = brain.get("view_buttons")

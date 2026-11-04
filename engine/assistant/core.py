@@ -164,6 +164,8 @@ def undo(conn: sqlite3.Connection, action_id: int) -> dict[str, Any]:
             restored = brain.create_note(conn, before["title"], before["body"], before["space_id"], before["kind"],
                                          source=before.get("source") if before.get("source") in ("typed", "voice") else "typed")
             result["note_id"] = restored["id"]
+    elif kind == "remove_place":
+        brain.restore_space(conn, row["note_id"], (before or {}).get("note_ids", []), (before or {}).get("children", []))
     elif kind in ("link", "unlink"):
         from engine.assistant.actions import undo_link_action
 
@@ -330,6 +332,8 @@ TOOLS = [
         "parameters": {"type": "object", "properties": {"item": {"type": "string"}, "tag": {"type": "string"}}, "required": ["item", "tag"]}}},
     {"type": "function", "function": {"name": "trash_items", "description": "Delete items (« supprime X »): they leave the graph; Undo brings them back.",
         "parameters": {"type": "object", "properties": {"items": {"type": "array", "items": {"type": "string"}}}, "required": ["items"]}}},
+    {"type": "function", "function": {"name": "remove_place", "description": "Remove a place (project, area, resource) from the graph: its items go back to the Inbox, nothing is lost; Undo restores it. The Inbox cannot be removed.",
+        "parameters": {"type": "object", "properties": {"place": {"type": "string"}}, "required": ["place"]}}},
     {"type": "function", "function": {"name": "update_note", "description": "Edit one note by id (title, kind, body, status). To move items to a place use move_items.",
         "parameters": {"type": "object", "properties": {"note_id": {"type": "string"}, "space_id": {"type": "string"},
                                                          "title": {"type": "string"}, "body": {"type": "string"},
@@ -567,7 +571,7 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
         if out.get("undone"):
             _UI["actions"].append({"action": "refresh"})
         return out
-    if name in ("find_items", "move_items", "unlink_items", "link_items", "remove_tag", "trash_items"):
+    if name in ("find_items", "move_items", "unlink_items", "link_items", "remove_tag", "trash_items", "remove_place"):
         from engine.assistant import actions as act
 
         client = _CLIENT.get("c")
@@ -580,6 +584,8 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
                 out = act.unlink_items(conn, client, _journal, actions, str(args.get("item") or ""), str(args.get("other") or ""))
             elif name == "link_items":
                 out = act.link_items(conn, client, _journal, actions, str(args.get("item") or ""), str(args.get("other") or ""))
+            elif name == "remove_place":
+                out = act.remove_place(conn, _journal, actions, str(args.get("place") or ""))
             elif name == "remove_tag":
                 out = act.remove_tag(conn, client, _journal, actions, str(args.get("item") or ""), str(args.get("tag") or ""))
             else:

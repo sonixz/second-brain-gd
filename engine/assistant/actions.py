@@ -239,6 +239,20 @@ def trash_items(conn: sqlite3.Connection, client: Any, journal: Journal, actions
     return {"trashed": gone, "not_found": missing, "ambiguous": ambiguous, "changed": len(gone)}
 
 
+def remove_place(conn: sqlite3.Connection, journal: Journal, actions: list, place: str) -> dict[str, Any]:
+    """« Supprime la place / le projet X »: it leaves the graph, its items go back to the Inbox; Undo restores it."""
+    p = resolve_place(conn, place)
+    if p is None:
+        return {"error": f"no place called « {place} »", "existing_places": all_places(conn), "changed": 0}
+    if p["kind"] == "inbox":
+        return {"error": "the Inbox cannot be removed", "changed": 0}
+    out = brain.remove_space(conn, p["id"])
+    aid = journal(conn, "remove_place", p["id"], {"note_ids": out["moved_to_inbox"], "children": out["children"]},
+                  {"name": out["removed"]}, f"place {out['removed']} retirée")
+    actions.append({"action_id": aid, "kind": "remove_place", "note_id": None, "title": out["removed"]})
+    return {"changed": 1, "removed_place": out["removed"], "items_back_in_inbox": len(out["moved_to_inbox"])}
+
+
 def undo_link_action(conn: sqlite3.Connection, kind: str, note_id: str, before: Any, after: Any) -> None:
     if kind == "link":
         b = (after or {}).get("other")
