@@ -151,6 +151,22 @@ func _run() -> void:
 	await b0.call("set_view", "captures")
 	await pause(1.5)
 	await shot("04g-captures")
+	var cvz: CapturesView = b0.get("captures_view")
+	var pdz := cvz.open_packs()
+	await pause(1.5)
+	pdz.scope.select(1)
+	pdz._fill_values()
+	for i in pdz.value.item_count:
+		if pdz.value.get_item_text(i) == "Client Atlas":
+			pdz.value.select(i)
+	pdz.title_edit.text = ""
+	pdz.refresh_preview()
+	await pause(1.5)
+	await pdz.do_export()
+	await pause(0.8)
+	await shot("04h-packs")
+	pdz.queue_free()
+	await pause(0.3)
 	await b0.call("set_view", "graph")
 	app.show_brain()
 	await pause(7.0)

@@ -82,3 +82,14 @@ class BrainTests(unittest.TestCase):
         brain.delete_note(self.conn, a["id"])
         self.assertEqual(brain.get_note(self.conn, b["id"])["links_out"], [])
         self.assertNotIn(a["id"], [r["id"] for r in brain.search(self.conn, "A")])
+
+
+class AccentedLinkTests(unittest.TestCase):
+    def test_wikilink_to_a_title_starting_with_an_accented_capital(self):
+        d = Path(tempfile.mkdtemp()) / "x.sqlite3"
+        database.migrate(d)
+        with database.session(d) as conn:
+            brain.ensure_inbox(conn)
+            e = brain.create_note(conn, "Économie", "x")
+            n = brain.create_note(conn, "Boucle", "Voir [[économie]]")
+            self.assertEqual(conn.execute("SELECT to_note FROM links WHERE from_note = ?", (n["id"],)).fetchone()[0], e["id"])

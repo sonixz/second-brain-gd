@@ -56,6 +56,7 @@ var toast_undo: Button
 var toast_action := 0
 var classified := 0
 var last_receipt := ""
+var last_pack_export := ""
 var _toast_timer: Timer
 # Views
 var view := "graph"   # graph | today | projects
@@ -230,6 +231,9 @@ func _show_modules(on: bool) -> void:
 
 func _build_views() -> void:
 	captures_view = CapturesView.new().setup(app)
+	captures_view.brain_changed.connect(func() -> void:
+		refresh_graph()
+		refresh_spaces())
 	captures_view.open_note.connect(func(nid: String) -> void:
 		await set_view("graph")
 		open_note(nid, true))
@@ -433,7 +437,21 @@ func _undo_toast() -> void:
 # ---------------------------------------------------------------- sources
 func _on_files_dropped(files: PackedStringArray) -> void:
 	for f in files:
-		await add_source_file(f)
+		if f.get_extension().to_lower() == "brain":
+			await import_pack(f)
+		else:
+			await add_source_file(f)
+
+
+## A .brain pack dropped on the window (or chosen by voice) becomes a layer.
+func import_pack(path: String) -> bool:
+	await set_view("captures")
+	var dlg := captures_view.open_packs()
+	var res: Dictionary = await dlg.import_path(path)
+	if res["ok"]:
+		await refresh_graph()
+		await refresh_spaces()
+	return bool(res["ok"])
 
 
 func _pick_file() -> void:
@@ -556,6 +574,12 @@ func run_ui_actions(actions: Array) -> void:
 				graph.zoom_level(str(a.get("level", "closer")), hit)
 				if hit != "" and str(a.get("level", "")) == "read":
 					graph.select(hit)
+			"import_pack":
+				await set_view("captures")
+				captures_view.open_packs().pick_file()
+			"pack_exported":
+				show_toast("Pack saved: %s" % str(a.get("path", "")).get_file())
+				last_pack_export = str(a.get("path", ""))
 			"capture_clipboard":
 				var clip := clipboard_text().strip_edges()
 				if clip == "":

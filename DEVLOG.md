@@ -1,5 +1,30 @@
 # Devlog
 
+## Loop 11 — Brain packs: export, import, share (2026-11-03)
+
+- **What a pack is.** A `.brain` file: a zip holding a manifest and a subset database. It carries items,
+  places, links, themes, the archivist's records, meaning vectors and the sources' text. It never carries
+  keys, settings, conversations, events or costs.
+- **Export.** Everything, a place (with its projects), a theme, or a search. A preview shows exactly what
+  leaves.
+- **Import as a layer.** New ids, duplicates skipped, and vectors reused when the embedding model matches
+  (otherwise re-embedded automatically). A layer can be switched off or on, merged into your Brain, or
+  removed.
+- **Defensive import.** Exactly two entries, a size limit, a checksum, a read-only database, and a newer
+  schema refused. Imported text is data and is never obeyed.
+- **Voice and gestures.**
+  - « exporte le projet X / exporte tout », « importe un pack », « désactive / réactive / fusionne /
+    retire le pack X ».
+  - Drop a `.brain` on the window.
+  - A Packs dialog in Captures.
+  - In the graph, items from packs have a dotted ring.
+- **Bug fixed on the way.** Wikilinks to titles starting with an accented capital never resolved
+  (« [[Économie]] »): SQLite's `lower()` is ASCII-only, so titles are now compared with `casefold()`.
+- **Polish.** Dialogs now use the app's theme and a fixed size; the screenshot first showed a grey,
+  full-height window.
+- **Tests.** Python 125 (7 pack tests, plus the accent regression) and Godot 131. Linux and native
+  Windows.
+
 ## Loop 10 — The Graph first, semantic zoom (2026-11-03)
 
 - **The Brain comes first.** The top bar shows Graph and Captures. Today, Projects and Agents are

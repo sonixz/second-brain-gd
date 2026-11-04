@@ -13,6 +13,7 @@ from engine import VERSION, database
 from engine.api.brain_routes import make_router
 from engine.api.billing_routes import make_router as make_billing_router
 from engine.api.capture_routes import make_router as make_capture_router
+from engine.api.pack_routes import make_router as make_pack_router
 from engine.brain import meaning
 from engine.brain.seed import seed_for_app
 from engine.assistant.llm import make_client
@@ -150,4 +151,5 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
     app.include_router(make_sources_router(layout, require_token))
     app.include_router(make_billing_router(layout, require_token))
     app.include_router(make_capture_router(layout, require_token, port))
+    app.include_router(make_pack_router(layout, require_token, client_or_none))
     return app

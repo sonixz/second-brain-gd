@@ -203,6 +203,20 @@ func _e2e() -> void:
 	for sp in (spaces_res["data"] as Dictionary).get("spaces", []):
 		still_there = still_there or str((sp as Dictionary).get("name", "")) == "Jeûne"
 	check(not still_there, "undoing removes the place the archivist had just created")
+	# Brain packs (Loop 11): export by voice, import by drop (all duplicates here), layer removed by voice.
+	await ap.send("Exporte Getting started", true)
+	var pack_path := str(brain.get("last_pack_export"))
+	check(pack_path.ends_with(".brain") and FileAccess.file_exists(pack_path), "« exporte Getting started » writes a .brain pack (%s)" % pack_path.get_file())
+	var imported: bool = await brain.call("import_pack", pack_path)
+	var pd: PacksDialog = cv.packs_dialog
+	check(imported and pd != null and pd.result_label.text.contains("already in your Brain"), "dropping a .brain file imports it as a layer, skipping what is already there (%s)" % (pd.result_label.text if pd else ""))
+	var layers_res: Dictionary = await app.backend.api.call_api("/packs/layers")
+	check(((layers_res["data"] as Dictionary).get("layers", []) as Array).size() == 1, "the imported pack is listed as a layer")
+	await ap.send("Retire le pack Getting started", true)
+	layers_res = await app.backend.api.call_api("/packs/layers")
+	check(((layers_res["data"] as Dictionary).get("layers", []) as Array).is_empty(), "« retire le pack » removes the layer")
+	if pd != null:
+		pd.queue_free()
 	# Structure: Today view, checklists, Projects view, project card, next actions.
 	await brain.call("set_view", "today")
 	var tv: TodayView = brain.get("today_view")

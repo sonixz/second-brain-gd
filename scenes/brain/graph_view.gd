@@ -88,6 +88,7 @@ func set_graph(data: Dictionary) -> Array[String]:
 			existing["weight"] = int(src.get("weight", 0))
 			existing["space_id"] = str(src.get("space_id", ""))
 			existing["color"] = src.get("color")
+			existing["layer"] = src.get("layer")
 		else:
 			var n := _make_node(src, i, raw_nodes.size(), first_load)
 			nodes[id] = n
@@ -119,6 +120,7 @@ func _make_node(src: Dictionary, i: int, total: int, first_load: bool) -> Dictio
 	return {
 		"id": str(src["id"]), "type": type, "label": str(src.get("label", "")), "kind": str(src.get("kind", "")),
 		"space_id": str(src.get("space_id", "")), "weight": int(src.get("weight", 0)), "color": src.get("color"),
+		"layer": src.get("layer"),
 		"pos": Vector2.from_angle(angle) * radius, "vel": Vector2.ZERO,
 		"born": (_t - BIRTH_S * randf() * 0.6) if first_load else _t, "pinned": false,
 	}
@@ -420,6 +422,11 @@ func _draw() -> void:
 			_:
 				draw_circle(p, r, Color(col, 0.95 * a))
 				draw_circle(p + Vector2(-r * 0.3, -r * 0.3), r * 0.35, Color(1, 1, 1, 0.25 * a))
+		if n.get("layer") != null and str(n.get("layer")) != "":
+			# from an imported pack: a dotted ring, so a layer reads apart from your own items
+			for k in 12:
+				var a0 := TAU * float(k) / 12.0 + _t * 0.15
+				draw_arc(p, r + 4.0, a0, a0 + TAU / 24.0, 4, Color(SbTheme.INFO, 0.8 * a), 1.6, true)
 		if str(id) == selected:
 			draw_arc(p, r + 7.0, 0, TAU, 48, SbTheme.MINT_SOFT, 2.0, true)
 			draw_arc(p, r + 12.0 + 2.0 * breathe, 0, TAU, 48, Color(SbTheme.MINT_SOFT, 0.35), 1.5, true)

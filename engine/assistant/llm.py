@@ -218,6 +218,9 @@ class FakeChat:
                 ctx = found.get("context") or {}
                 return {"message": {"role": "assistant", "content": f"Contexte: {ctx.get('name', 'aucun')}."},
                         "usage": usage, "model": model}
+            if found.get("file"):
+                return {"message": {"role": "assistant", "content": f"Exporté: {found['file']} ({found['items']} éléments)."},
+                        "usage": usage, "model": model}
             if "shown_to_user" in found or "undone" in found:
                 return {"message": {"role": "assistant", "content": "C'est fait." if found.get("done") or found.get("undone")
                                     else "Rien à annuler."}, "usage": usage, "model": model}
@@ -247,6 +250,17 @@ class FakeChat:
             target = text.split(" sur ", 1)[1].strip(" .!") if " sur " in text else ""
             call = {"id": "call_zoom", "type": "function",
                     "function": {"name": "ui_zoom", "arguments": json.dumps({"level": "read" if target else "closer", "target": target})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith("exporte") and tools:
+            value = text.split(" ", 1)[1].replace("le projet", "").replace("la place", "").strip(" .!") if " " in text else ""
+            args = {"scope": "all"} if value in ("", "tout") else {"scope": "place", "value": value}
+            call = {"id": "call_export", "type": "function", "function": {"name": "export_pack", "arguments": json.dumps(args)}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith(("désactive le pack", "réactive le pack", "fusionne le pack", "retire le pack")) and tools:
+            verb, title = low.split(" le pack ", 1)
+            act = {"désactive": "off", "réactive": "on", "fusionne": "merge", "retire": "remove"}[verb.strip()]
+            call = {"id": "call_pack", "type": "function",
+                    "function": {"name": "manage_pack", "arguments": json.dumps({"action": act, "title": title.strip(" .!")})}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if low.startswith(("vue d'ensemble", "recule")) and tools:
             call = {"id": "call_over", "type": "function",

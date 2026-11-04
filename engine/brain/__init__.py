@@ -157,8 +157,10 @@ def _sync_links_and_tags(conn: sqlite3.Connection, note_id: str) -> None:
     conn.execute("DELETE FROM links WHERE from_note = ? AND kind = 'wikilink'", (note_id,))
     now = utc_now()
     for title in targets:
-        hit = conn.execute("SELECT id FROM notes WHERE lower(title) = ? AND id != ? ORDER BY created_at LIMIT 1",
-                           (title, note_id)).fetchone()
+        # SQLite's lower() only folds ASCII (« Économie » stayed « Économie »), so compare in Python.
+        hit = next((r for r in conn.execute(
+            "SELECT id, title FROM notes WHERE length(title) = ? AND id != ? ORDER BY created_at", (len(title), note_id))
+            if r["title"].casefold() == title.casefold()), None)
         if hit:
             conn.execute("INSERT OR IGNORE INTO links (from_note, to_note, kind, created_by, created_at)"
                          " VALUES (?, ?, 'wikilink', 'user', ?)", (note_id, hit["id"], now))
@@ -207,7 +209,7 @@ def graph(conn: sqlite3.Connection) -> dict[str, Any]:
     edges: list[dict[str, Any]] = []
     for s in list_spaces(conn):
         nodes.append({"id": f"space:{s['id']}", "type": "space", "label": s["name"], "kind": s["kind"],
-                      "color": s["color"], "weight": s["note_count"], "status": s.get("status")})
+                      "color": s["color"], "weight": s["note_count"], "status": s.get("status"), "layer": s.get("layer_id")})
         if s.get("area_id"):
             edges.append({"from": f"space:{s['id']}", "to": f"space:{s['area_id']}", "type": "area"})
     degree: dict[str, int] = {}
@@ -215,9 +217,10 @@ def graph(conn: sqlite3.Connection) -> dict[str, Any]:
         edges.append({"from": r["from_note"], "to": r["to_note"], "type": "link"})
         degree[r["from_note"]] = degree.get(r["from_note"], 0) + 1
         degree[r["to_note"]] = degree.get(r["to_note"], 0) + 1
-    for n in conn.execute("SELECT id, space_id, title, kind, source, pinned, created_at, updated_at FROM notes"
+    for n in conn.execute("SELECT id, space_id, title, kind, source, pinned, created_at, updated_at, layer_id FROM notes"
                           " WHERE status != 'archived'"):
         nodes.append({"id": n["id"], "type": "note", "label": n["title"], "kind": n["kind"], "space_id": n["space_id"],
+                      "layer": n["layer_id"],
                       "source": n["source"], "pinned": bool(n["pinned"]), "created_at": n["created_at"],
                       "updated_at": n["updated_at"], "weight": degree.get(n["id"], 0)})
         edges.append({"from": n["id"], "to": f"space:{n['space_id']}", "type": "space"})

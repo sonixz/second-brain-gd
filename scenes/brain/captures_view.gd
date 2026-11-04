@@ -42,6 +42,12 @@ func setup(a: SbApp) -> CapturesView:
 	browser.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	browser.pressed.connect(show_bookmarklet)
 	head.add_child(browser)
+	var packs_btn := Button.new()
+	packs_btn.text = "Packs…"
+	packs_btn.tooltip_text = "Export part of your Brain as a .brain file, or import one as a layer"
+	packs_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	packs_btn.pressed.connect(func() -> void: open_packs())
+	head.add_child(packs_btn)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -79,6 +85,18 @@ func refresh() -> void:
 
 
 var bookmarklet := ""
+var packs_dialog: PacksDialog
+signal brain_changed
+
+
+func open_packs() -> PacksDialog:
+	packs_dialog = PacksDialog.new().setup(app)
+	packs_dialog.changed.connect(func() -> void:
+		brain_changed.emit()
+		refresh())
+	add_child(packs_dialog)
+	packs_dialog.open()
+	return packs_dialog
 
 
 ## The « Envoyer au Brain » bookmark: copy it, then add it to the browser's bookmarks bar.
@@ -89,6 +107,8 @@ func show_bookmarklet() -> void:
 	bookmarklet = str((res["data"] as Dictionary).get("bookmarklet", ""))
 	var dlg := AcceptDialog.new()
 	dlg.title = "Send to the Brain from your browser"
+	dlg.theme = app.theme
+	dlg.add_theme_stylebox_override("panel", SbTheme.box(SbTheme.PANEL, 0, SbTheme.BORDER, 1, 18))
 	dlg.ok_button_text = "Close"
 	var box := VBoxContainer.new()
 	box.custom_minimum_size = Vector2(620, 0)
