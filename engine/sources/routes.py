@@ -91,19 +91,40 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         return {"id": source_id, "note_id": src.get("note_id"), "title": src.get("title"), "uri": src.get("uri"),
                 "mime": mime, "kind": kind, "pages": src.get("pages") or (1 if kind == "image" else 0),
                 "original_path": str(path) if path else None, "original_bytes": src.get("original_bytes"),
-                "viewable": bool(path) and kind in ("pdf", "image")}
+                # pdf/image: rendered pages; html/docx/text: the full text, read inside the app
+                "mode": "pages" if kind in ("pdf", "image") else "text",
+                "viewable": bool(path) or (kind not in ("pdf", "image") and bool(src.get("chunks")))}
 
     @r.get("/{source_id}/document")
     def get_document(source_id: str) -> dict[str, Any]:
         return document(source_id)
+
+    @r.get("/{source_id}/text")
+    def get_text(source_id: str) -> dict[str, Any]:
+        """The document's full text as the Brain read it (HTML without its markup, .docx paragraphs, plain text)."""
+        doc = document(source_id)
+        text = ""
+        if doc["original_path"] and doc["mode"] == "text":
+            try:
+                text = extract.from_file(Path(doc["original_path"]))[1]
+            except extract.ExtractError:
+                text = ""
+        if not text:  # no original kept (older item): the indexed passages, in order
+            with database.session(layout.database) as conn:
+                rows = conn.execute("SELECT text FROM source_chunks WHERE source_id = ? ORDER BY idx", (source_id,)).fetchall()
+            text = "\n\n".join(r["text"] for r in rows)
+        if not text:
+            raise HTTPException(status_code=404, detail="No text for this source.")
+        return {"id": source_id, "title": doc["title"], "kind": doc["kind"], "text": text[:400_000],
+                "truncated": len(text) > 400_000}
 
     @r.get("/{source_id}/page/{page}")
     def get_page(source_id: str, page: int, width: int = Query(1024, ge=64, le=4096)) -> Response:
         from engine.sources import render
 
         doc = document(source_id)
-        if not doc["viewable"]:
-            raise HTTPException(status_code=404, detail="No viewable original for this source.")
+        if not doc["viewable"] or doc["mode"] != "pages":
+            raise HTTPException(status_code=404, detail="No page images for this source.")
         path = Path(doc["original_path"])
         if doc["kind"] == "image":
             return Response(content=path.read_bytes(), media_type=doc["mime"])

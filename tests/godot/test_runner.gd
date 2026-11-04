@@ -420,6 +420,26 @@ func _e2e() -> void:
 	check(paged, "up close in the graph, the document's card shows its first page")
 	graph.zoom_to(1.0, Vector2.ZERO, 0.01)
 	await create_timer(0.1).timeout
+	# An HTML page opens in the reading view, its original in the browser.
+	var html_path := OS.get_temp_dir().path_join("sbgd-test-cv-%d.html" % Time.get_ticks_usec())
+	var hf := FileAccess.open(html_path, FileAccess.WRITE)
+	hf.store_string("<html><head><title>CV test</title><style>p{color:red}</style></head><body><header><h1>Alex Tremblay</h1></header>"
+		+ "<section><h2>Expérience</h2><p>" + "Architecte infonuagique, automatisation des déploiements. ".repeat(12) + "</p></section></body></html>")
+	hf.close()
+	check(await brain.call("add_source_file", html_path), "an HTML file is added")
+	var srcs: Dictionary = (await app.backend.api.call_api("/sources"))["data"]
+	var html_note := ""
+	for s0 in srcs.get("sources", []):
+		if str((s0 as Dictionary).get("mime", "")) == "text/html" and str((s0 as Dictionary).get("uri", "")).ends_with(html_path.get_file()):
+			html_note = str((s0 as Dictionary).get("note_id", ""))
+	var html_open: bool = await brain.call("open_document_for", html_note)
+	check(html_open and dv.is_text() and dv.reader.visible, "an HTML document opens in the reading view")
+	check(dv.reader_text.text.contains("Alex Tremblay") and dv.reader_text.text.contains("Architecte infonuagique")
+		and not dv.reader_text.text.contains("color:red"), "the reading view shows the full text without its markup")
+	dv.open_original()
+	check(dv.last_opened_original.ends_with(".html") and dv.last_opened_original.contains("originals"), "« Open original » opens the kept HTML file")
+	dv.hide_viewer()
+	DirAccess.remove_absolute(html_path)
 	# Graph first, semantic zoom (Loop 10).
 	await brain.call("set_view", "graph")
 	var vb: Dictionary = brain.get("view_buttons")

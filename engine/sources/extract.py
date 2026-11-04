@@ -24,17 +24,19 @@ class ExtractError(ValueError):
 
 class _Text(HTMLParser):
     SKIP = {"script", "style", "noscript", "svg", "nav", "footer", "header", "form", "aside"}
+    SKIP_FILE = {"script", "style", "noscript", "svg"}  # your own file: its header and side boxes are content
     BLOCK = {"p", "div", "br", "li", "h1", "h2", "h3", "h4", "h5", "h6", "tr", "section", "article", "pre", "blockquote"}
 
-    def __init__(self) -> None:
+    def __init__(self, skip: set[str] | None = None) -> None:
         super().__init__(convert_charrefs=True)
+        self.skip = self.SKIP if skip is None else skip
         self.parts: list[str] = []
         self.title = ""
         self._skip = 0
         self._in_title = False
 
     def handle_starttag(self, tag: str, attrs) -> None:  # type: ignore[override]
-        if tag in self.SKIP:
+        if tag in self.skip:
             self._skip += 1
         if tag == "title":
             self._in_title = True
@@ -42,7 +44,7 @@ class _Text(HTMLParser):
             self.parts.append("\n")
 
     def handle_endtag(self, tag: str) -> None:
-        if tag in self.SKIP and self._skip:
+        if tag in self.skip and self._skip:
             self._skip -= 1
         if tag == "title":
             self._in_title = False
@@ -56,8 +58,9 @@ class _Text(HTMLParser):
             self.parts.append(data)
 
 
-def html_to_text(raw: str) -> tuple[str, str]:
-    p = _Text()
+def html_to_text(raw: str, web_page: bool = True) -> tuple[str, str]:
+    """A web page loses its menus, header and footer; a file of your own (a CV, an export) keeps all its text."""
+    p = _Text(None if web_page else _Text.SKIP_FILE)
     p.feed(raw)
     text = re.sub(r"[ \t\r\f\v]+", " ", "".join(p.parts))
     text = re.sub(r"\n\s*\n+", "\n\n", text).strip()
@@ -105,7 +108,7 @@ def from_file(path: Path) -> tuple[str, str, str]:
         return path.stem, docx_to_text(path), "application/vnd.openxmlformats-officedocument.wordprocessingml.document"
     raw = path.read_bytes().decode("utf-8", errors="replace")
     if suffix in (".html", ".htm"):
-        title, text = html_to_text(raw)
+        title, text = html_to_text(raw, web_page=False)
         return title or path.stem, text, "text/html"
     return path.stem, raw.strip(), "text/plain"
 

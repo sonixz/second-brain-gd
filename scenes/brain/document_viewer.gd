@@ -1,6 +1,7 @@
 class_name DocumentViewer
 extends Control
-## Full-screen view of a kept original (Loop 12): PDF pages rendered by the engine, or an image.
+## Full-screen view of a kept original (Loop 12): PDF pages rendered by the engine, or an image;
+## HTML, .docx and text files open in a reading view of their full text.
 ## Wheel = zoom around the cursor, drag = move, ←/→ or PageUp/PageDown = page, + / − / 0 = zoom,
 ## Esc = close. Sharper pages are fetched as you zoom in.
 
@@ -18,6 +19,10 @@ var title_label: Label
 var page_label: Label
 var hint_label: Label
 var last_opened_original := ""     # tests: what « ouvre l'original » would open
+var page_controls: Array[Control] = []  # hidden in the reading view
+var reader: ScrollContainer        # the reading view (mode "text")
+var reader_text: RichTextLabel
+var font_size := 18
 
 
 func _ready() -> void:
@@ -52,9 +57,11 @@ func setup(a: SbApp) -> DocumentViewer:
 		b.tooltip_text = str(spec[1])
 		b.pressed.connect(spec[2] as Callable)
 		row.add_child(b)
+		page_controls.append(b)
 	page_label = Label.new()
 	page_label.theme_type_variation = "Muted"
 	row.add_child(page_label)
+	page_controls.append(page_label)
 	for spec in [["−", "Zoom out (−)", func() -> void: set_zoom(zoom / 1.4)], ["Fit", "Fit the page (0)", func() -> void: fit()],
 			["+", "Zoom in (+)", func() -> void: set_zoom(zoom * 1.4)]]:
 		var b := Button.new()
@@ -83,7 +90,32 @@ func setup(a: SbApp) -> DocumentViewer:
 	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	hint_label.text = "Wheel to zoom · drag to move · ← → pages · Esc to close"
 	add_child(hint_label)
+	reader = ScrollContainer.new()
+	reader.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
+	reader.offset_top = 84
+	reader.offset_bottom = -56
+	reader.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	reader.visible = false
+	add_child(reader)
+	var center := CenterContainer.new()
+	center.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	reader.add_child(center)
+	var sheet := PanelContainer.new()
+	sheet.theme_type_variation = "Glass"
+	center.add_child(sheet)
+	reader_text = RichTextLabel.new()
+	reader_text.bbcode_enabled = false
+	reader_text.fit_content = true
+	reader_text.selection_enabled = true
+	reader_text.custom_minimum_size = Vector2(820, 0)
+	reader_text.add_theme_font_size_override("normal_font_size", font_size)
+	reader_text.add_theme_constant_override("line_separation", 6)
+	sheet.add_child(reader_text)
 	return self
+
+
+func is_text() -> bool:
+	return str(doc.get("mode", "pages")) == "text"
 
 
 ## Opens the original of a source (its id comes from an item's "source").
@@ -94,6 +126,17 @@ func open(source_id: String, at_page: int = 1) -> bool:
 	doc = res["data"]
 	if not bool(doc.get("viewable", false)):
 		return false
+	if is_text():
+		var t := await app.backend.api.call_api("/sources/%s/text" % source_id)
+		if not t["ok"]:
+			return false
+		reader_text.text = str((t["data"] as Dictionary).get("text", ""))
+		reader.scroll_vertical = 0
+	reader.visible = is_text()
+	for c in page_controls:
+		c.visible = not is_text()
+	hint_label.text = ("Scroll to read · + / − text size · Esc to close" if is_text()
+		else "Wheel to zoom · drag to move · ← → pages · Esc to close")
 	textures.clear()
 	_pending.clear()
 	page = clampi(at_page, 1, maxi(1, int(doc.get("pages", 1))))
@@ -132,6 +175,11 @@ func fit() -> void:
 
 
 func set_zoom(z: float, anchor: Variant = null) -> void:
+	if is_text():  # the reading view zooms its text instead
+		font_size = clampi(roundi(font_size * (1.15 if z > zoom else 1.0 / 1.15)), 12, 40)
+		reader_text.add_theme_font_size_override("normal_font_size", font_size)
+		reader_text.custom_minimum_size.x = clampf(820.0 * font_size / 18.0, 600.0, size.x - 80.0)
+		return
 	var old := zoom
 	zoom = clampf(z, 0.25, 8.0)
 	if anchor is Vector2:  # keep the point under the cursor where it is
@@ -228,6 +276,8 @@ static func texture_from(data: PackedByteArray, mime: String) -> Texture2D:
 
 func _draw() -> void:
 	draw_rect(Rect2(Vector2.ZERO, size), Color(SbTheme.BG, 0.96))
+	if is_text():
+		return
 	var tex := current_texture()
 	var base := _fit_rect(tex.get_size() if tex else Vector2.ZERO)
 	var rect := Rect2(base.get_center() + offset - base.size * zoom * 0.5, base.size * zoom)
@@ -242,6 +292,20 @@ func _draw() -> void:
 
 
 func _gui_input(event: InputEvent) -> void:
+	if is_text() and event is InputEventKey and (event as InputEventKey).pressed:
+		match (event as InputEventKey).keycode:
+			KEY_ESCAPE:
+				hide_viewer()
+			KEY_EQUAL, KEY_PLUS, KEY_KP_ADD:
+				set_zoom(zoom * 1.4)
+			KEY_MINUS, KEY_KP_SUBTRACT:
+				set_zoom(zoom / 1.4)
+			KEY_DOWN, KEY_PAGEDOWN:
+				reader.scroll_vertical += 400 if (event as InputEventKey).keycode == KEY_PAGEDOWN else 60
+			KEY_UP, KEY_PAGEUP:
+				reader.scroll_vertical -= 400 if (event as InputEventKey).keycode == KEY_PAGEUP else 60
+		accept_event()
+		return
 	if event is InputEventMouseButton:
 		var mb := event as InputEventMouseButton
 		if mb.pressed and mb.button_index == MOUSE_BUTTON_WHEEL_UP:
