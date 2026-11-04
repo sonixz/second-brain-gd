@@ -4,10 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Second Brain GD</title>
-  <meta name="description" content="Second Brain GD: a local-first personal knowledge system with an assistant that briefs you, answers from your notes and files every thought. A Godot desktop app with a local Python engine. Your knowledge. Your system. Your control.">
+  <meta name="description" content="Second Brain GD: an open-source, local-first second brain. Give it anything (a thought, a link, a PDF, your voice): an archivist files it with CODE and PARA, links it by meaning, and you explore it in a living graph you can zoom into. Godot app, local Python engine.">
   <meta name="theme-color" content="#2b3c54">
   <meta property="og:title" content="Second Brain GD">
-  <meta property="og:description" content="Your knowledge. Your system. Your control.">
+  <meta property="og:description" content="Your knowledge. Your system. Your control. An open-source, local-first second brain you can talk to.">
+  <meta property="og:image" content="assets/showcase/graph-zones.webp">
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
 </head>
@@ -24,383 +25,617 @@
         <span class="sr-only">Menu</span><span aria-hidden="true">☰</span>
       </button>
       <ul id="nav-links" class="nav-links">
-        <li><a href="#vision">Vision</a></li>
-        <li><a href="#how">How it works</a></li>
-        <li><a href="#architecture">Architecture</a></li>
+        <li><a href="#method">Method</a></li>
+        <li><a href="#product">Product</a></li>
+        <li><a href="#voice">Voice</a></li>
         <li><a href="#roadmap">Roadmap</a></li>
         <li><a href="#journal">Journal</a></li>
-        <li><a href="#source" class="nav-cta">Source</a></li>
+        <li><a href="docs.html">Docs</a></li>
+        <li><a href="https://github.com/sonixz/second-brain-gd" class="nav-cta" rel="noopener">GitHub</a></li>
       </ul>
     </nav>
   </header>
 
   <main id="main">
-    <section class="hero" id="top">
+    <section class="hero hero-split" id="top">
       <canvas id="graph" class="hero-graph" aria-hidden="true"></canvas>
-      <div class="hero-inner">
-        <p class="overline">Open source · Local-first · In early development</p>
-        <h1>SECOND BRAIN <span class="accent">GD</span></h1>
-        <p class="tagline">Your knowledge. Your system. Your control.</p>
-        <p class="lead">A personal knowledge environment that runs on your own computer, with an assistant who
-          briefs you each morning, answers from your own notes and files every thought you type or say.
-          Built with a game engine, so it feels alive.</p>
-        <div class="hero-actions">
-          <a class="btn btn-primary" href="#how">See how it works</a>
-          <a class="btn" href="#roadmap">What works today</a>
+      <div class="hero-grid">
+        <div class="hero-inner">
+          <p class="overline">Open source · Local-first · Voice-driven · Early development</p>
+          <h1>SECOND BRAIN <span class="accent">GD</span></h1>
+          <p class="tagline">Your knowledge. Your system. Your control.</p>
+          <p class="lead">Give it anything: a thought, a link, a PDF, a photo, your voice. An archivist reads it,
+            files it with the CODE method and PARA, and links it by meaning to what you already know. Then you
+            explore it all in a living graph you can zoom into until the text is right there.</p>
+          <div class="hero-actions">
+            <a class="btn btn-primary" href="docs.html#install">Get started</a>
+            <a class="btn" href="#product">See it work</a>
+          </div>
+          <ul class="stats" aria-label="Project facts">
+            <li><b>100%</b> on your disk</li>
+            <li><b>15</b> loops shipped</li>
+            <li><b>290+</b> automated tests</li>
+            <li><b>2 OS</b> Windows &amp; Linux</li>
+          </ul>
         </div>
-        <p class="hero-note"><span class="badge badge-done">Implemented</span> Give it anything: an archivist files it, links it, and you zoom into it, by voice.</p>
+        <figure class="hero-shot">
+          <img src="assets/showcase/graph-zones.webp" alt="The Second Brain GD graph: each place is a zone with its name and count (Kitchen renovation, Learn Japanese, Health…), the Inbox in the middle, the assistant panel on the left answering a question about countertops" width="1280" height="800">
+        </figure>
       </div>
     </section>
 
-    <section id="vision" class="section">
+    <section id="method" class="section">
       <div class="container">
-        <p class="overline">Vision</p>
-        <h2>A second brain you own, end to end</h2>
+        <div class="section-head">
+          <p class="overline">The method</p>
+          <h2>Capture, Organise, Distil, Express</h2>
+          <p>Second Brain GD follows the CODE method and files everything in PARA. You do the capturing; the
+            archivist does the filing; the graph does the remembering.</p>
+        </div>
+        <ol class="code-flow">
+          <li><span class="code-letter">C</span><h3>Capture anything</h3>
+            <p>Type, paste, speak, drop a file, send a page from your browser or grab the clipboard. One intake,
+              whatever the input.</p></li>
+          <li><span class="code-letter">O</span><h3>Organise, for you</h3>
+            <p>The archivist files each input in a project, area or resource, and creates the place when none
+              fits. You get a one-line receipt, and Undo.</p></li>
+          <li><span class="code-letter">D</span><h3>Distil the essence</h3>
+            <p>Long documents get a summary, key points, people and concepts. Related ideas are linked by meaning,
+              across languages.</p></li>
+          <li><span class="code-letter">E</span><h3>Express and share</h3>
+            <p>Search by meaning, ask how two ideas connect, replay the timeline, and export part of your brain as
+              a pack someone else can import.</p></li>
+        </ol>
+        <div class="para" aria-label="PARA">
+          <div><b>Projects</b><span>an outcome with a deadline</span></div>
+          <div><b>Areas</b><span>an ongoing responsibility</span></div>
+          <div><b>Resources</b><span>a topic you care about</span></div>
+          <div><b>Archives</b><span>what is no longer active</span></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="product" class="section section-alt">
+      <div class="container">
+        <div class="section-head">
+          <p class="overline">The product</p>
+          <h2>A brain that files itself, and a graph you can walk into</h2>
+          <p>Every screen below is the real application, captured automatically on demo data.</p>
+        </div>
+
+        <div class="feature">
+          <div class="feature-text">
+            <p class="overline">One intake · the archivist</p>
+            <h3>Drop it in. It is filed before you look up.</h3>
+            <p>The archivist is data-oriented: it has no opinions and asks a question only when it cannot file an
+              item without the answer. It reads what you gave it, picks a title and type, writes a summary for long
+              inputs, finds the people and concepts, chooses a place and links it.</p>
+            <ul>
+              <li>Text, voice, web pages, PDF, Word, Markdown, HTML, images</li>
+              <li>A browser bookmark that sends the page or your selection</li>
+              <li>Every filing journaled: one click, or « annule ça », undoes it</li>
+            </ul>
+            <div class="says"><span class="say">ajoute ça au Brain</span><span class="say">je veux structurer le projet Cuisine</span></div>
+          </div>
+          <figure class="shot"><img src="assets/showcase/intake-receipt.webp" alt="A typed note about electrical work filed straight into Projects › Kitchen renovation: the receipt says where it went and what it links to, with an Undo button" loading="lazy" width="1280" height="800"><figcaption>The receipt: where it went, and why</figcaption></figure>
+        </div>
+
+        <div class="feature flip">
+          <div class="feature-text">
+            <p class="overline">Semantic zoom</p>
+            <h3>A graph with no bottom</h3>
+            <p>Far away you see your places as named zones. Closer, items become cards with their summary. Closer
+              still, the scale disappears and you are reading the full text, inside the graph. A minimap keeps you
+              oriented.</p>
+            <p>Zones are stable, so things stay where you left them. Fold a place away, filter by type, origin,
+              date or theme, and the graph stays fluid at thousands of items.</p>
+            <div class="says"><span class="say">zoome sur la rénovation</span><span class="say">replie Recettes</span><span class="say">montre seulement les articles</span></div>
+          </div>
+          <div>
+            <figure class="shot"><img src="assets/showcase/zoom-cards.webp" alt="Zoomed into Kitchen renovation: items become cards with their place, tags and first lines, including a sketch and a PDF quote thumbnail" loading="lazy" width="1280" height="800"><figcaption>Closer: items become cards</figcaption></figure>
+            <div class="mini-shots">
+              <figure class="shot"><img src="assets/showcase/zoom-read.webp" alt="Zoomed right into one article, its full text readable inside the graph" loading="lazy" width="1280" height="800"><figcaption>Closer still: the full text</figcaption></figure>
+              <figure class="shot"><img src="assets/showcase/filtered.webp" alt="The graph filtered to articles only, with Cooking and Apartment move folded into badges" loading="lazy" width="1280" height="800"><figcaption>Folded places and a filter</figcaption></figure>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-text">
+            <p class="overline">Originals</p>
+            <h3>Every original, kept. Every page, readable.</h3>
+            <p>Each file and web page you add is copied once into an <code>originals</code> folder, so moving or
+              deleting the file never loses it. PDFs show their real pages, inside the card and full screen, and
+              get sharper as you zoom. Images are described by a vision model so you find them by meaning.</p>
+            <div class="says"><span class="say">ouvre le document</span><span class="say">page suivante</span><span class="say">ouvre l'original</span></div>
+          </div>
+          <div>
+            <figure class="shot"><img src="assets/showcase/document-viewer.webp" alt="The full-screen viewer showing page 1 of 2 of a contractor quote PDF, with zoom and Open original" loading="lazy" width="1280" height="800"><figcaption>The document viewer, page by page</figcaption></figure>
+            <div class="mini-shots">
+              <figure class="shot"><img src="assets/showcase/document-card.webp" alt="The contractor quote PDF as a card in the graph: its real first page beside the summary" loading="lazy" width="1280" height="800"><figcaption>A PDF inside the graph</figcaption></figure>
+              <figure class="shot"><img src="assets/showcase/image-card.webp" alt="A photo of a hand-drawn kitchen layout sketch shown as a card, with the description the archivist wrote for it" loading="lazy" width="1280" height="800"><figcaption>Images are described, so you can find them</figcaption></figure>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature flip">
+          <div class="feature-text">
+            <p class="overline">Find · connect · look back</p>
+            <h3>Ask how two ideas are connected</h3>
+            <p>Search lights up the graph and says why each item matched: by meaning, with a score, or by words.
+              Ask how one thing relates to another and the path is drawn, step by step, through shared themes and
+              links. Keep a suggested connection as a real link, or dismiss it for good.</p>
+            <p>The timeline lays everything along a time axis, one lane per place, from minutes to months.</p>
+            <div class="says"><span class="say">comment X est relié à Y ?</span><span class="say">cherche l'article sur…</span><span class="say">montre la chronologie</span></div>
+          </div>
+          <div>
+            <figure class="shot"><img src="assets/showcase/path.webp" alt="A bright path drawn from Opening story for the talk to Automerge, through the items that connect them" loading="lazy" width="1280" height="800"><figcaption>The path between two ideas, drawn</figcaption></figure>
+            <div class="mini-shots">
+              <figure class="shot"><img src="assets/showcase/search.webp" alt="Searching countertops: three hits light up in the graph, each with the reason it matched" loading="lazy" width="1280" height="800"><figcaption>Search, with reasons</figcaption></figure>
+              <figure class="shot"><img src="assets/showcase/timeline.webp" alt="Three weeks of items on the timeline, one lane per place, with dated ticks" loading="lazy" width="1280" height="800"><figcaption>The timeline</figcaption></figure>
+            </div>
+          </div>
+        </div>
+
+        <div class="feature">
+          <div class="feature-text">
+            <p class="overline">Brain packs</p>
+            <h3>Share a part of your brain as one file</h3>
+            <p>Export a project, a theme or a search as a <code>.brain</code> pack: a zip with a manifest and a
+              plain SQLite database, optionally with the originals. Imported, a pack becomes a layer you can switch
+              off, merge into your own brain, or remove without touching your data.</p>
+            <ul>
+              <li>Checksummed, opened read-only, never executed</li>
+              <li>Imported text is treated as data, never as instructions</li>
+              <li>Settings, keys and conversations never leave</li>
+            </ul>
+            <div class="says"><span class="say">exporte le projet Rénovation</span><span class="say">désactive le pack</span></div>
+          </div>
+          <figure class="shot"><img src="assets/showcase/packs.webp" alt="The Brain packs dialog exporting the Local-first software place, 7 items, with a preview of what leaves" loading="lazy" width="1280" height="800"><figcaption>Export with a preview of exactly what leaves</figcaption></figure>
+        </div>
+
+        <div class="gallery" aria-label="More screens">
+          <figure class="shot shot-lead"><img src="assets/showcase/graph-overview.webp" alt="The whole brain from afar in the Evening theme" loading="lazy" width="1280" height="800"><figcaption>The same brain, Evening theme</figcaption></figure>
+          <figure class="shot"><img src="assets/showcase/captures.webp" alt="The Captures list: everything that came in, with its place, type and origin" loading="lazy" width="1280" height="800"><figcaption>Captures: everything that came in</figcaption></figure>
+          <figure class="shot"><img src="assets/showcase/live.webp" alt="Live conversation: a spoken question about how two ideas connect, the answer in the panel and the path drawn in the graph" loading="lazy" width="1280" height="800"><figcaption>Talk live (F9), the graph follows</figcaption></figure>
+          <figure class="shot"><img src="assets/showcase/engine-room.webp" alt="The engine room with real measurements of the local engine" loading="lazy" width="1280" height="800"><figcaption>The engine room, real numbers only</figcaption></figure>
+          <figure class="shot"><img src="assets/showcase/costs.webp" alt="Real OpenAI costs and tokens read from OpenAI" loading="lazy" width="1280" height="800"><figcaption>Your real AI costs</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <section id="voice" class="section">
+      <div class="container">
+        <div class="section-head">
+          <p class="overline">Voice first</p>
+          <h2>Everything you can click, you can say</h2>
+          <p>Hold <kbd>F8</kbd> and speak a thought or a command, or press <kbd>F9</kbd> for a live conversation
+            you can interrupt. The archivist answers briefly, drives the interface and can replay or speed up its
+            voice. The examples are in French, the language the project is built in; the models understand others.</p>
+        </div>
+        <div class="voice-grid">
+          <article class="card"><h3>Capture</h3><p>Thoughts, the clipboard, a working context.</p>
+            <div class="says"><span class="say">ajoute ça au Brain</span><span class="say">note que…</span><span class="say">on travaille sur le projet X</span></div></article>
+          <article class="card"><h3>Explore the graph</h3><p>Zoom, fold, filter, switch to the timeline.</p>
+            <div class="says"><span class="say">zoome sur X</span><span class="say">replie X</span><span class="say">montre la chronologie</span></div></article>
+          <article class="card"><h3>Find and connect</h3><p>Meaning search, paths, related ideas.</p>
+            <div class="says"><span class="say">cherche…</span><span class="say">comment X est relié à Y ?</span><span class="say">ouvre les captures</span></div></article>
+          <article class="card"><h3>Read documents</h3><p>Open a PDF, turn pages, show the original.</p>
+            <div class="says"><span class="say">ouvre le document</span><span class="say">page suivante</span><span class="say">ferme le document</span></div></article>
+          <article class="card"><h3>Share</h3><p>Export, import and manage packs.</p>
+            <div class="says"><span class="say">exporte tout</span><span class="say">importe un pack</span><span class="say">fusionne le pack X</span></div></article>
+          <article class="card"><h3>Control the voice</h3><p>Repeat, speed up, undo, stop.</p>
+            <div class="says"><span class="say">relis-moi ça</span><span class="say">parle plus vite</span><span class="say">annule ça</span></div></article>
+        </div>
+      </div>
+    </section>
+
+    <section id="principles" class="section section-alt">
+      <div class="container">
+        <div class="section-head">
+          <p class="overline">Principles</p>
+          <h2>A second brain you own, end to end</h2>
+        </div>
         <div class="cards cards-3">
           <article class="card">
             <h3>Local-first</h3>
-            <p>Your notes and your database live in your user folder, on your disk. No account and no Docker.
-              AI features use your own OpenAI key, stored in your system's credential store, and send only
-              what each request needs.</p>
-          </article>
-          <article class="card">
-            <h3>Immersive</h3>
-            <p>Built with a game engine. Your ideas form a living constellation, thoughts bloom when you capture them,
-              and each theme (Morning, Focus, Evening) has its own music and sounds.</p>
+            <p>Your brain is a SQLite file and a folder of originals in your user folder. No account, no cloud,
+              no Docker. AI features use your own OpenAI key, kept in your system's credential store, and send
+              only what each request needs.</p>
           </article>
           <article class="card">
             <h3>Transparent</h3>
-            <p>The engine room shows what really runs, with real measurements only. Everything the assistant
-              changes is journaled and can be undone, and every AI call shows its estimated cost.</p>
+            <p>The engine room shows what really runs, measured, never guessed. Every change the archivist makes
+              is journaled and can be undone. Your real AI costs are read live from OpenAI, not estimated.</p>
+          </article>
+          <article class="card">
+            <h3>Alive</h3>
+            <p>Built with a game engine: thoughts bloom when you capture them, places glow, and each theme
+              (Morning, Focus, Evening, Forest) has its own music and sounds.</p>
           </article>
         </div>
         <ul class="principles" aria-label="Principles">
-          <li>Systems thinking</li><li>AI-native, agentic development</li><li>Data ownership</li>
-          <li>Open source</li><li>Modular and extensible</li><li>Premium experience</li>
+          <li>Data ownership</li><li>Plain, documented formats</li><li>Voice first</li>
+          <li>Real or nothing</li><li>Open source</li><li>AI-native development</li>
         </ul>
-      </div>
-    </section>
-
-    <section id="how" class="section section-alt">
-      <div class="container">
-        <p class="overline">How it works</p>
-        <h2>From clone to a running system in a few clicks</h2>
-        <ol class="steps">
-          <li><span class="step-n">1</span><div><h3>Open the project in Godot</h3>
-            <p>Run it. The welcome screen reads the install state from disk.</p></div></li>
-          <li><span class="step-n">2</span><div><h3>Press Setup</h3>
-            <p>Godot finds a compatible Python (3.12 or 3.13) and starts the bootstrap without freezing the interface.</p></div></li>
-          <li><span class="step-n">3</span><div><h3>Watch the real installation</h3>
-            <p>Virtual environment, hash-locked dependencies, SQLite migrations. Each step streams
-              structured events, progress and logs.</p></div></li>
-          <li><span class="step-n">4</span><div><h3>Talk to your brain</h3>
-            <p>Type or speak a thought: it blooms in the graph and the assistant files it in the right project.
-              Each morning she reads you a briefing. Ask her anything and she answers from your notes.</p></div></li>
-        </ol>
-        <div class="shots">
-          <figure><img src="assets/screens/assistant-briefing.png" alt="The assistant's morning briefing next to the knowledge graph in the soft blue Morning theme" loading="lazy" width="1280" height="800"><figcaption>The morning briefing, read aloud</figcaption></figure>
-          <figure><img src="assets/screens/assistant-answer.png" alt="The assistant answering from the user's notes with clickable citations, and a toast saying a new thought was filed in Client Atlas with an Undo button" loading="lazy" width="1280" height="800"><figcaption>Answers with citations, auto-filing with undo</figcaption></figure>
-          <figure><img src="assets/screens/related-ideas.png" alt="A note open in the inspector with a Related ideas section, and warm dashed lines in the graph joining notes about the same idea" loading="lazy" width="1280" height="800"><figcaption>Related ideas, found by meaning</figcaption></figure>
-          <figure><img src="assets/screens/hands-free.png" alt="A listening indicator at the top of the screen saying release F8 to send, while the assistant panel shows the conversation" loading="lazy" width="1280" height="800"><figcaption>Hands-free: hold F8 and speak</figcaption></figure>
-          <figure><img src="assets/screens/captures.png" alt="The Captures view: everything added to the brain, newest first, each card showing where it was filed, its type and origin" loading="lazy" width="1280" height="800"><figcaption>Captures: everything you added, as the archivist filed it</figcaption></figure>
-          <figure><img src="assets/screens/document-card.png" alt="The graph zoomed into a PDF: the card shows its title, its text and, on the right, the real first page of the document" loading="lazy" width="1280" height="800"><figcaption>A PDF inside the graph: its real page, sharper as you zoom</figcaption></figure>
-          <figure><img src="assets/screens/graph-filtered.png" alt="The graph with a zone per place, one place folded with a +2 badge, and a filter bar showing only items about atlas" loading="lazy" width="1280" height="800"><figcaption>A zone per place, places folded away, a filter: « montre seulement… »</figcaption></figure>
-          <figure><img src="assets/screens/graph-path.png" alt="The graph showing a bright path from Morning routine through the theme habits and Weekly review to Atlas risks" loading="lazy" width="1280" height="800"><figcaption>« Comment X est relié à Y ? »: the path, drawn</figcaption></figure>
-          <figure><img src="assets/screens/timeline.png" alt="The graph as a timeline: one lane per place on the left, items placed along a time axis with time ticks at the bottom" loading="lazy" width="1280" height="800"><figcaption>The timeline: what came in, when, and where it went</figcaption></figure>
-          <figure><img src="assets/screens/zoom-read.png" alt="The graph zoomed right into one item: a large card with its title, its place Projets › Client Atlas, and its full text" loading="lazy" width="1280" height="800"><figcaption>Zoom in until the scale disappears and the text is there</figcaption></figure>
-        </div>
-        <p class="caption-note">Screenshots captured from the real application with the real assistant (Loops 3 and 4), on demo data.</p>
       </div>
     </section>
 
     <section id="architecture" class="section">
       <div class="container">
-        <p class="overline">Architecture</p>
-        <h2>Godot in front, Python behind, your disk underneath</h2>
-        <div class="arch" role="img" aria-label="Architecture diagram: the Godot app launches the bootstrap and reads its JSON Lines events, then talks to the local FastAPI service over 127.0.0.1 with a token; the service uses SQLite in the user data folder.">
-          <div class="arch-node arch-godot"><h3>Godot app</h3><p>Brain graph · Capture · Setup · Engine room</p><p class="muted">GDScript, GL Compatibility</p></div>
+        <div class="section-head">
+          <p class="overline">Architecture</p>
+          <h2>Godot in front, Python behind, your disk underneath</h2>
+        </div>
+        <div class="arch" role="img" aria-label="Architecture: the Godot app launches the bootstrap and reads its events, then talks to the local FastAPI engine over 127.0.0.1 with a token; the engine uses SQLite and the originals folder in your user data folder, and reaches OpenAI only with your key.">
+          <div class="arch-node arch-godot"><h3>Godot app</h3><p>Graph · Captures · Voice · Engine room</p><p class="muted">GDScript, GL Compatibility</p></div>
           <div class="arch-link"><span>launches · tails JSON Lines events</span></div>
           <div class="arch-node arch-boot"><h3>Bootstrap</h3><p>Python standard library only</p><p class="muted">detect · venv · pip --require-hashes · migrate · start · verify</p></div>
           <div class="arch-link"><span>starts · HTTP on 127.0.0.1 + bearer token</span></div>
-          <div class="arch-node arch-api"><h3>Local engine</h3><p>FastAPI: brain, voice, assistant</p><p class="muted">/health · /system/status · /system/storage · /system/events</p></div>
+          <div class="arch-node arch-api"><h3>Local engine</h3><p>FastAPI: brain, archivist, sources, packs, voice</p><p class="muted">127.0.0.1 only · token per start</p></div>
           <div class="arch-link"><span>reads · writes</span></div>
-          <div class="arch-node arch-data"><h3>Your data folder</h3><p>SQLite · logs · venv</p><p class="muted">%LOCALAPPDATA%\SecondBrainGD on Windows</p></div>
+          <div class="arch-node arch-data"><h3>Your data folder</h3><p>SQLite · originals · exports · logs</p><p class="muted">%LOCALAPPDATA%\SecondBrainGD on Windows</p></div>
         </div>
-        <p class="note">The engine stops when the app closes, and also on its own if the app crashes. Voice and the
-          assistant reach OpenAI only through the engine, with your own key: Godot never holds it.</p>
+        <p class="note">The engine stops when the app closes, and on its own if the app crashes. Voice and the
+          archivist reach OpenAI only through the engine, with your own key: Godot never holds it.
+          <a href="docs.html#architecture">Read the architecture notes →</a></p>
       </div>
     </section>
 
     <section id="roadmap" class="section section-alt">
       <div class="container">
-        <p class="overline">Features roadmap</p>
-        <h2>What works, what is coming, what is an idea</h2>
-        <p class="legend"><span class="badge badge-done">Implemented</span> works today and is tested ·
-          <span class="badge badge-wip">In development</span> next loops ·
-          <span class="badge badge-idea">Future concept</span> direction, not a promise</p>
+        <div class="section-head">
+          <p class="overline">Roadmap</p>
+          <h2>What works, what is next, what is parked</h2>
+          <p class="legend"><span class="badge badge-done">Works today</span> tested on Linux and Windows ·
+            <span class="badge badge-wip">Next</span> the coming loops ·
+            <span class="badge badge-parked">Parked</span> built, set aside while the graph comes first ·
+            <span class="badge badge-idea">Idea</span> a direction, not a promise</p>
+        </div>
         <div class="roadmap">
           <div class="road-col">
-            <h3><span class="badge badge-done">Implemented</span></h3>
+            <h3><span class="badge badge-done">Works today</span></h3>
+            <h4>Intake</h4>
             <ul>
-              <li>One intake for everything: text, voice, files, web pages, a browser bookmark, the clipboard</li>
-              <li>An archivist that understands each input, files it in PARA and builds your structure from your data</li>
-              <li>Semantic zoom: from named clusters down to an item's full text, readable inside the graph</li>
-              <li>Brain packs: export part of your brain as one file, import someone's as a layer you can switch off</li>
-              <li>Every original kept: PDFs and images shown page by page, right inside the graph and full screen</li>
-              <li>An organised graph: a zone per place, places that fold away, filters by type, origin, date and theme</li>
-              <li>Search that lights up the graph and says why, and « how is X connected to Y? » drawn as a path</li>
-              <li>Thousands of items stay workable, and a timeline shows what came in, place by place</li>
-              <li>Your real OpenAI costs and tokens on the dashboard, read live from OpenAI</li>
-              <li>Real-time spoken conversation (F9), with interruptions and the same tools</li>
-              <li>Assistant: spoken morning briefing, answers with citations, acts on your notes</li>
-              <li>Every capture filed automatically, with undo</li>
-              <li>Areas, projects and next actions, a Today view, checklists</li>
-              <li>Guided weekly review by a reasoning model that connects your week's facts</li>
-              <li>Hands-free: hold F8 and speak, the assistant answers aloud and drives the interface</li>
-              <li>Agent room: Codex agents that work in folders you choose, and change nothing without your approval</li>
-              <li>Search by meaning, in any language, with related ideas linked automatically</li>
-              <li>Project mode: each project gives the assistant its own instructions</li>
-              <li>Files and web links become summarised, searchable notes</li>
-              <li>Voice capture with live transcription (your own key)</li>
-              <li>Living knowledge graph, spaces, links, tags, full-text search</li>
-              <li>Themes with generated music, ambience and sounds</li>
-              <li>One-click setup, local engine, measured System Console</li>
-              <li>Automated tests on Linux and native Windows</li>
+              <li>One intake: text, voice, links, files, images, browser, clipboard</li>
+              <li>An archivist that files in PARA and builds your structure</li>
+              <li>Every original kept; PDFs readable page by page</li>
+            </ul>
+            <h4>Graph</h4>
+            <ul>
+              <li>Semantic zoom down to the full text, with a minimap</li>
+              <li>Stable zones, folding, filters, timeline</li>
+              <li>Search with reasons, paths between ideas</li>
+              <li>Fluid at thousands of items</li>
+            </ul>
+            <h4>Share · voice · trust</h4>
+            <ul>
+              <li>Brain packs as switchable layers</li>
+              <li>Push-to-talk and live conversation, same tools</li>
+              <li>Undo for everything, real costs, one-click setup</li>
             </ul>
           </div>
           <div class="road-col">
-            <h3><span class="badge badge-wip">In development</span></h3>
+            <h3><span class="badge badge-wip">Next</span></h3>
             <ul>
+              <li>Graph beyond 5,000 items: instanced drawing, threaded layout</li>
+              <li>The archivist reads the language from the original text</li>
+              <li>A browser extension next to the bookmarklet</li>
+              <li>Integration tutorials and a pack gallery</li>
+            </ul>
+            <h3 style="margin-top:1.4em"><span class="badge badge-parked">Parked</span></h3>
+            <ul>
+              <li>Morning briefing, Today view, projects and checklists</li>
+              <li>Guided weekly review with a reasoning model</li>
+              <li>Agent room: Codex agents with approvals</li>
             </ul>
           </div>
           <div class="road-col">
-            <h3><span class="badge badge-idea">Future concept</span></h3>
+            <h3><span class="badge badge-idea">Idea</span></h3>
             <ul>
               <li>Your brain shared with your other AI tools (MCP)</li>
-              <li>Local models and offline mode</li>
+              <li>Local models and an offline mode</li>
               <li>Connectors (Microsoft 365, GitHub)</li>
-              <li>Packaged installer</li>
+              <li>A packaged installer</li>
               <li>Optional sync you control</li>
+              <li>A public gallery of brain packs</li>
             </ul>
           </div>
         </div>
       </div>
     </section>
 
-    <section id="open-source" class="section">
-      <div class="container narrow">
-        <p class="overline">Open-source philosophy</p>
-        <h2>Readable, inspectable, yours to change</h2>
-        <p>Second Brain GD is developed in the open spirit: plain formats, a documented event protocol, and an
-          engine you can read in an afternoon. Nothing is hidden behind a service. Metrics that cannot be measured
-          say “Not available” instead of guessing.</p>
-        <p>The repository is private while the foundations settle. The license will be chosen before the first
-          public release.</p>
-      </div>
-    </section>
-
-    <section id="journal" class="section section-alt">
-      <div class="container narrow">
-        <p class="overline">Development journal</p>
-        <h2>Built in loops</h2>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 15</span> <time datetime="2026-11-03">November 3, 2026</time></header>
-          <h3>Thousands of items, and a timeline</h3>
-          <p>We measured before touching anything: with 2,000 items, one layout step took 2.4 seconds. It now
-            takes about 5 milliseconds, and a frame draws in around 30, because items only push their close
-            neighbours and dense views are drawn in a handful of batched calls. A guard in the tests keeps it that
-            way. And a new Timeline toggle, or « montre la chronologie », lays your items along a time axis, one
-            lane per place, from minutes to months.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 14</span> <time datetime="2026-11-03">November 3, 2026</time></header>
-          <h3>Search and connect</h3>
-          <p>Search now lights up the graph and lists each hit with why it matched: by meaning, or by words. Ask
-            « comment ma routine du matin est reliée aux risques d'Atlas ? » and the path appears, bright, through
-            a shared theme and a weekly review, and the archivist says it in one sentence. Related-idea
-            suggestions can be kept as real links or dismissed for good, and a double-click lets you edit an item
-            right on its card.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 13</span> <time datetime="2026-11-03">November 3, 2026</time></header>
-          <h3>An organised graph</h3>
-          <p>Every place now has its own zone: the Inbox in the middle, projects, areas and resources around it,
-            each with its items gathered close. Double-click a place, or say « replie Recettes », and its items
-            fold into it. A filter bar shows only what you ask for: articles, things you spoke, what came in this
-            week, a word or a theme. « Montre seulement les articles sur l'IA » works by voice, and the graph tells
-            you how many items are showing.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 12</span> <time datetime="2026-11-03">November 3, 2026</time></header>
-          <h3>The originals, and a page you can zoom into</h3>
-          <p>The brain now keeps every file and web page you give it, in its own originals folder, once, even if
-            you later move or delete the file. Zoom into a PDF in the graph and its real first page appears in the
-            card. Open it and the pages fill the screen, getting sharper as you zoom in. « Page suivante », « ouvre
-            l'original »: it works by voice too. Images are welcome as well; a vision model describes them so you
-            can find them by meaning.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 7b</span> <time datetime="2026-11-03">November 3, 2026</time></header>
-          <h3>The first real conversation</h3>
-          <p>With the live voice model enabled, the first real exchange went through: « ouvre la vue des
-            captures », the view opened, and she answered aloud, for a third of a cent. One surprise on the way:
-            the transcription model the app used elsewhere is not accepted inside a live session, so the
-            conversation now uses another one.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 11</span> <time datetime="2026-11-03">November 3, 2026</time></header>
-          <h3>Brain packs</h3>
-          <p>Say « exporte le projet Atlas » and the project leaves as one <code>.brain</code> file: its items,
-            places, themes, links, summaries and meaning vectors, never your keys, settings or conversations.
-            Drop someone's pack on the window and it arrives as a layer, marked with a dotted ring in the graph.
-            Switch the layer off, merge it into your own brain, or remove it, by voice too. Identical items are
-            skipped, and imported text is treated as data, never as instructions.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 10</span> <time datetime="2026-11-03">November 3, 2026</time></header>
-          <h3>The graph first, and a zoom with no bottom</h3>
-          <p>The brain is the home screen again. Today, Projects and Agents step aside as optional modules. Zoom
-            out and each place becomes a named cluster. Zoom in and items turn into cards with their place, themes
-            and summary. Keep going and the full text is right there, readable inside the item. A minimap keeps you
-            oriented, and « zoome sur… » or « vue d'ensemble » does it all by voice.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 9</span> <time datetime="2026-11-03">November 3, 2026</time></header>
-          <h3>One intake, and an archivist</h3>
-          <p>Type a thought, paste a link, drop a PDF, speak, press Ctrl+Shift+V, or click « Envoyer au Brain » in
-            your browser: everything goes through the same funnel. The archivist reads it, notes the people, ideas
-            and dates, writes a summary for long pieces, and files it. On an empty brain, it creates the places it
-            needs: a sourdough recipe started « Resources › Recettes », a real article on PARA started « Resources ›
-            Organisation de l'information ». It gives no opinions, asks only when it must, and every filing can be
-            undone. A new install now starts almost empty, with a short guide.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 8</span> <time datetime="2026-11-03">November 3, 2026</time></header>
-          <h3>Real costs, and a livelier voice</h3>
-          <p>The dashboard shows what OpenAI actually bills: this month, today, a 30-day chart by model, tokens and
-            line items, read live from OpenAI with a read-only key and stored nowhere. The spoken voice is faster
-            (adjustable, without turning squeaky), answers given by voice are shorter, and every answer has a replay
-            button: « relis-moi ça » reads it again.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 7b</span> <time datetime="2026-11-03">November 3, 2026</time></header>
-          <h3>A real conversation, almost</h3>
-          <p>Press F9 and talk: speech in, speech out, with the same tools as the text assistant, and a small pill
-            showing what this conversation costs so far. It is built and tested end to end against a faithful
-            simulation; the first conversation with OpenAI's live voice model waits for that model to be enabled
-            on the account.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 7a</span> <time datetime="2026-11-03">November 3, 2026</time></header>
-          <h3>Hands-free</h3>
-          <p>Hold F8, speak, let go. « Montre-moi le projet Atlas », « ouvre ma note sur ma routine du soir », « mets le
-            thème du soir pis baisse le son », « on fait la revue de la semaine », « annule ça »: the assistant answers
-            aloud and the interface follows. No clicks needed. A small indicator shows exactly when the microphone
-            is listening.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 6c</span> <time datetime="2026-11-03">November 3, 2026</time></header>
-          <h3>The agent room</h3>
-          <p>Agents arrive, on by default. Setup downloads OpenAI's Codex agent, checks its fingerprint, and needs
-            no administrator rights and no extra software. Add a project folder, start an agent, and watch it read,
-            plan and propose. Every file it wants to change and every command it wants to run appears as a card:
-            approve once, approve for the session, or decline. Nothing outside your chosen folders, nothing without
-            your yes.</p>
-          <p>Since then it has run for real, with OpenAI's actual agent on Linux and on Windows, without
-            administrator rights. Asked to create a file and read another, it asked permission for every step.
-            Declined, it touched nothing. Approved, it finished in about eleven seconds.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 6b</span> <time datetime="2026-11-03">November 3, 2026</time></header>
-          <h3>A weekly review that thinks</h3>
-          <p>The weekly review now runs on a reasoning model. It reads your week the way a coach would: the client
-            who wants to push the demo back, the supplier call that is late. It connects the two, proposes one
-            concrete next step per project, and cites your notes. If your own OpenAI account does not offer that
-            model, the review quietly uses another one and tells you once.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 5b</span> <time datetime="2026-11-03">November 3, 2026</time></header>
-          <h3>A memory that understands meaning</h3>
-          <p>Every note is now indexed by meaning, quietly in the background. Ask « c'est quoi mes habitudes pour
-            mieux dormir? » and the assistant finds your English note “Bedtime routine”, though no word matches.
-            Notes about the same idea now find each other: they are joined in the graph by a warm dashed line, and
-            listed as related ideas when you open one. Measured on real notes: three true pairs found, no false ones.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 6a</span> <time datetime="2026-11-02">November 2, 2026</time></header>
-          <h3>Project mode</h3>
-          <p>Open a project and the assistant works inside it: she knows its goal, due date and next actions, searches
-            the project first, and follows the project's own instructions. Tell a client project “English-speaking
-            client, contact Mark Chen” and the follow-up email comes out in English, addressed to Mark.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 5</span> <time datetime="2026-11-02">November 2, 2026</time></header>
-          <h3>Sources: files and links</h3>
-          <p>Drop a PDF or a Word file on the window, or paste a link: the brain reads it, writes a short summary
-            card into your graph and indexes every passage. Ask the assistant and she answers from your documents,
-            with the source cited.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 4</span> <time datetime="2026-11-02">November 2, 2026</time></header>
-          <h3>Structure: areas, projects, today</h3>
-          <p>Your life domains (family, health, home, vision at work) now hold projects with a goal, a due date and
-            next actions. A Today view shows what is late, due and next, plus your lists. Say « faut acheter du lait
-            pis du café » and it lands on the grocery list. Once a week, the assistant walks you through every project
-            and asks the questions that move your vision forward.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 3</span> <time datetime="2026-11-02">November 2, 2026</time></header>
-          <h3>An assistant who talks back</h3>
-          <p>The assistant arrives. At the first opening of the day she reads a short briefing aloud: open tasks,
-            what is new, an idea that has been sleeping. She answers from your notes and cites them, saves or moves
-            notes when you ask, and files every capture in the right project. Everything she changes can be undone.
-            You can type to her or speak to her.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 2</span> <time datetime="2026-11-02">November 2, 2026</time></header>
-          <h3>Voice capture</h3>
-          <p>Press the microphone and your words appear while you speak, then bloom as a note. Each user brings their
-            own OpenAI key during onboarding. It is stored in the system's credential store and never by the
-            interface. Measured on the real API: English transcribed without errors, first words in about a
-            second.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 1</span> <time datetime="2026-11-02">November 2, 2026</time></header>
-          <h3>Immersion and the knowledge core</h3>
-          <p>The second brain itself arrives: a living graph where captured thoughts bloom, spaces for projects,
-            [[links]], #tags, full-text search and a morning briefing. A soft blue Morning theme replaces the green,
-            with Focus, Evening and Forest alongside. Each theme has generated music, ambience and interface sounds.</p>
-        </article>
-        <article class="entry">
-          <header><span class="badge badge-done">Loop 0</span> <time datetime="2026-11-02">November 2, 2026</time></header>
-          <h3>Foundation, bootstrap and System Console</h3>
-          <p>The first increment works end to end: Godot finds Python, a standard-library bootstrap builds the
-            environment, migrates SQLite and starts a local FastAPI service, and the System Console shows live,
-            measured state. Tested headless on Linux (Python 3.12) and native Windows (Microsoft Store Python 3.13),
-            including a fix for the Store's silent AppData redirection.</p>
-        </article>
-      </div>
-    </section>
-
-    <section id="source" class="section">
-      <div class="container narrow center">
-        <p class="overline">GitHub &amp; documentation</p>
-        <h2>Read the code, run it yourself</h2>
-        <p>The README covers Windows setup step by step. Architecture, the event protocol, the process
-          lifecycle and troubleshooting are documented in the repository’s <code>docs/</code> folder.</p>
-        <div class="hero-actions center">
-          <a class="btn btn-primary" href="https://github.com/sonixz/second-brain-gd" rel="noopener">GitHub repository</a>
-          <a class="btn" href="https://github.com/sonixz/second-brain-gd/tree/main/docs" rel="noopener">Documentation</a>
+    <section id="journal" class="section">
+      <div class="container">
+        <div class="section-head">
+          <p class="overline">Development journal</p>
+          <h2>Built in loops</h2>
+          <p>Each loop ships something that works, is tested on Linux and native Windows, and is captured from the
+            real app. Pick a phase, or a dot on the line.</p>
         </div>
-        <p class="muted small">Access is limited while the repository is private.</p>
+        <div class="rail" role="group" aria-label="All loops, oldest to newest">
+          <button type="button" class="phase-foundation" data-target="loop-0" title="Loop 0: Foundation, bootstrap and System Console"><span class="dot"></span>0</button>
+          <button type="button" class="phase-foundation" data-target="loop-1" title="Loop 1: Immersion and the knowledge core"><span class="dot"></span>1</button>
+          <button type="button" class="phase-voice" data-target="loop-2" title="Loop 2: Voice capture"><span class="dot"></span>2</button>
+          <button type="button" class="phase-voice" data-target="loop-3" title="Loop 3: An assistant who talks back"><span class="dot"></span>3</button>
+          <button type="button" class="phase-modules" data-target="loop-4" title="Loop 4: Structure: areas, projects, today"><span class="dot"></span>4</button>
+          <button type="button" class="phase-brain" data-target="loop-5" title="Loop 5: Sources: files and links"><span class="dot"></span>5</button>
+          <button type="button" class="phase-brain" data-target="loop-5b" title="Loop 5b: A memory that understands meaning"><span class="dot"></span>5b</button>
+          <button type="button" class="phase-modules" data-target="loop-6a" title="Loop 6a: Project mode"><span class="dot"></span>6a</button>
+          <button type="button" class="phase-modules" data-target="loop-6b" title="Loop 6b: A weekly review that thinks"><span class="dot"></span>6b</button>
+          <button type="button" class="phase-modules" data-target="loop-6c" title="Loop 6c: The agent room"><span class="dot"></span>6c</button>
+          <button type="button" class="phase-voice" data-target="loop-7a" title="Loop 7a: Hands-free"><span class="dot"></span>7a</button>
+          <button type="button" class="phase-voice" data-target="loop-7b-2" title="Loop 7b: The first real conversation"><span class="dot"></span>7b</button>
+          <button type="button" class="phase-voice" data-target="loop-8" title="Loop 8: Real costs, and a livelier voice"><span class="dot"></span>8</button>
+          <button type="button" class="phase-brain" data-target="loop-9" title="Loop 9: One intake, and an archivist"><span class="dot"></span>9</button>
+          <button type="button" class="phase-graph" data-target="loop-10" title="Loop 10: The graph first, and a zoom with no bottom"><span class="dot"></span>10</button>
+          <button type="button" class="phase-brain" data-target="loop-11" title="Loop 11: Brain packs"><span class="dot"></span>11</button>
+          <button type="button" class="phase-graph" data-target="loop-12" title="Loop 12: The originals, and a page you can zoom into"><span class="dot"></span>12</button>
+          <button type="button" class="phase-graph" data-target="loop-13" title="Loop 13: An organised graph"><span class="dot"></span>13</button>
+          <button type="button" class="phase-graph" data-target="loop-14" title="Loop 14: Search and connect"><span class="dot"></span>14</button>
+          <button type="button" class="phase-graph" data-target="loop-15" title="Loop 15: Thousands of items, and a timeline"><span class="dot"></span>15</button>
+        </div>
+        <div class="phases" role="group" aria-label="Filter loops by phase">
+          <button type="button" data-phase="all" aria-pressed="true">All</button>
+          <button type="button" class="phase-graph" data-phase="graph" aria-pressed="false">Graph</button>
+          <button type="button" class="phase-brain" data-phase="brain" aria-pressed="false">Intake &amp; packs</button>
+          <button type="button" class="phase-voice" data-phase="voice" aria-pressed="false">Voice</button>
+          <button type="button" class="phase-modules" data-phase="modules" aria-pressed="false">Parked modules</button>
+          <button type="button" class="phase-foundation" data-phase="foundation" aria-pressed="false">Foundations</button>
+        </div>
+        <div class="loops collapsed">
+          <article class="loop-card phase-graph" id="loop-15" data-phase="graph" data-loop="15" data-date="Nov 3, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-15.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 15</span> · Graph · <time datetime="2026-11-03">Nov 3, 2026</time></p>
+              <h3><button type="button" class="loop-open">Thousands of items, and a timeline</button></h3>
+              <p class="excerpt">We measured before touching anything: with 2,000 items, one layout step took 2.4 seconds. It now takes about 5 milliseconds, and a frame draws in around 30, because items only push their close neighbours and dense views are drawn in a handful of batched calls. A guard in the tests keeps it that way. And a new Timeline toggle, or « montre la chronologie », lays your items along a time axis, one lane per place, from minutes to months.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>We measured before touching anything: with 2,000 items, one layout step took 2.4 seconds. It now takes about 5 milliseconds, and a frame draws in around 30, because items only push their close neighbours and dense views are drawn in a handful of batched calls. A guard in the tests keeps it that way. And a new Timeline toggle, or « montre la chronologie », lays your items along a time axis, one lane per place, from minutes to months.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-graph" id="loop-14" data-phase="graph" data-loop="14" data-date="Nov 3, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-14.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 14</span> · Graph · <time datetime="2026-11-03">Nov 3, 2026</time></p>
+              <h3><button type="button" class="loop-open">Search and connect</button></h3>
+              <p class="excerpt">Search now lights up the graph and lists each hit with why it matched: by meaning, or by words. Ask « comment ma routine du matin est reliée aux risques d&#x27;Atlas ? » and the path appears, bright, through a shared theme and a weekly review, and the archivist says it in one sentence. Related-idea suggestions can be kept as real links or dismissed for good, and a double-click lets you edit an item right on its card.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Search now lights up the graph and lists each hit with why it matched: by meaning, or by words. Ask « comment ma routine du matin est reliée aux risques d'Atlas ? » and the path appears, bright, through a shared theme and a weekly review, and the archivist says it in one sentence. Related-idea suggestions can be kept as real links or dismissed for good, and a double-click lets you edit an item right on its card.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-graph" id="loop-13" data-phase="graph" data-loop="13" data-date="Nov 3, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-13.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 13</span> · Graph · <time datetime="2026-11-03">Nov 3, 2026</time></p>
+              <h3><button type="button" class="loop-open">An organised graph</button></h3>
+              <p class="excerpt">Every place now has its own zone: the Inbox in the middle, projects, areas and resources around it, each with its items gathered close. Double-click a place, or say « replie Recettes », and its items fold into it. A filter bar shows only what you ask for: articles, things you spoke, what came in this week, a word or a theme. « Montre seulement les articles sur l&#x27;IA » works by voice, and the graph tells you how many items are showing.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Every place now has its own zone: the Inbox in the middle, projects, areas and resources around it, each with its items gathered close. Double-click a place, or say « replie Recettes », and its items fold into it. A filter bar shows only what you ask for: articles, things you spoke, what came in this week, a word or a theme. « Montre seulement les articles sur l'IA » works by voice, and the graph tells you how many items are showing.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-graph" id="loop-12" data-phase="graph" data-loop="12" data-date="Nov 3, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-12.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 12</span> · Graph · <time datetime="2026-11-03">Nov 3, 2026</time></p>
+              <h3><button type="button" class="loop-open">The originals, and a page you can zoom into</button></h3>
+              <p class="excerpt">The brain now keeps every file and web page you give it, in its own originals folder, once, even if you later move or delete the file. Zoom into a PDF in the graph and its real first page appears in the card. Open it and the pages fill the screen, getting sharper as you zoom in. « Page suivante », « ouvre l&#x27;original »: it works by voice too. Images are welcome as well; a vision model describes them so you can find them by meaning.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>The brain now keeps every file and web page you give it, in its own originals folder, once, even if you later move or delete the file. Zoom into a PDF in the graph and its real first page appears in the card. Open it and the pages fill the screen, getting sharper as you zoom in. « Page suivante », « ouvre l'original »: it works by voice too. Images are welcome as well; a vision model describes them so you can find them by meaning.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-voice" id="loop-7b-2" data-phase="voice" data-loop="7b" data-date="Nov 3, 2026">
+            <div class="loop-thumb" aria-hidden="true"><span class="glyph">7b</span></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 7b</span> · Voice · <time datetime="2026-11-03">Nov 3, 2026</time></p>
+              <h3><button type="button" class="loop-open">The first real conversation</button></h3>
+              <p class="excerpt">With the live voice model enabled, the first real exchange went through: « ouvre la vue des captures », the view opened, and she answered aloud, for a third of a cent. One surprise on the way: the transcription model the app used elsewhere is not accepted inside a live session, so the conversation now uses another one.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>With the live voice model enabled, the first real exchange went through: « ouvre la vue des captures », the view opened, and she answered aloud, for a third of a cent. One surprise on the way: the transcription model the app used elsewhere is not accepted inside a live session, so the conversation now uses another one.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-brain" id="loop-11" data-phase="brain" data-loop="11" data-date="Nov 3, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-11.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 11</span> · Intake & packs · <time datetime="2026-11-03">Nov 3, 2026</time></p>
+              <h3><button type="button" class="loop-open">Brain packs</button></h3>
+              <p class="excerpt">Say « exporte le projet Atlas » and the project leaves as one .brain file: its items, places, themes, links, summaries and meaning vectors, never your keys, settings or conversations. Drop someone&#x27;s pack on the window and it arrives as a layer, marked with a dotted ring in the graph. Switch the layer off, merge it into your own brain, or remove it, by voice too. Identical items are skipped, and imported text is treated as data, never as instructions.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Say « exporte le projet Atlas » and the project leaves as one <code>.brain</code> file: its items, places, themes, links, summaries and meaning vectors, never your keys, settings or conversations. Drop someone's pack on the window and it arrives as a layer, marked with a dotted ring in the graph. Switch the layer off, merge it into your own brain, or remove it, by voice too. Identical items are skipped, and imported text is treated as data, never as instructions.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-graph" id="loop-10" data-phase="graph" data-loop="10" data-date="Nov 3, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-10.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 10</span> · Graph · <time datetime="2026-11-03">Nov 3, 2026</time></p>
+              <h3><button type="button" class="loop-open">The graph first, and a zoom with no bottom</button></h3>
+              <p class="excerpt">The brain is the home screen again. Today, Projects and Agents step aside as optional modules. Zoom out and each place becomes a named cluster. Zoom in and items turn into cards with their place, themes and summary. Keep going and the full text is right there, readable inside the item. A minimap keeps you oriented, and « zoome sur… » or « vue d&#x27;ensemble » does it all by voice.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>The brain is the home screen again. Today, Projects and Agents step aside as optional modules. Zoom out and each place becomes a named cluster. Zoom in and items turn into cards with their place, themes and summary. Keep going and the full text is right there, readable inside the item. A minimap keeps you oriented, and « zoome sur… » or « vue d'ensemble » does it all by voice.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-brain" id="loop-9" data-phase="brain" data-loop="9" data-date="Nov 3, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-9.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 9</span> · Intake & packs · <time datetime="2026-11-03">Nov 3, 2026</time></p>
+              <h3><button type="button" class="loop-open">One intake, and an archivist</button></h3>
+              <p class="excerpt">Type a thought, paste a link, drop a PDF, speak, press Ctrl+Shift+V, or click « Envoyer au Brain » in your browser: everything goes through the same funnel. The archivist reads it, notes the people, ideas and dates, writes a summary for long pieces, and files it. On an empty brain, it creates the places it needs: a sourdough recipe started « Resources › Recettes », a real article on PARA started « Resources › Organisation de l&#x27;information ». It gives no opinions, asks only when it must, and every filing can be undone. A new install now starts almost empty, with a short guide.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Type a thought, paste a link, drop a PDF, speak, press Ctrl+Shift+V, or click « Envoyer au Brain » in your browser: everything goes through the same funnel. The archivist reads it, notes the people, ideas and dates, writes a summary for long pieces, and files it. On an empty brain, it creates the places it needs: a sourdough recipe started « Resources › Recettes », a real article on PARA started « Resources › Organisation de l'information ». It gives no opinions, asks only when it must, and every filing can be undone. A new install now starts almost empty, with a short guide.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-voice" id="loop-8" data-phase="voice" data-loop="8" data-date="Nov 3, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-8.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 8</span> · Voice · <time datetime="2026-11-03">Nov 3, 2026</time></p>
+              <h3><button type="button" class="loop-open">Real costs, and a livelier voice</button></h3>
+              <p class="excerpt">The dashboard shows what OpenAI actually bills: this month, today, a 30-day chart by model, tokens and line items, read live from OpenAI with a read-only key and stored nowhere. The spoken voice is faster (adjustable, without turning squeaky), answers given by voice are shorter, and every answer has a replay button: « relis-moi ça » reads it again.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>The dashboard shows what OpenAI actually bills: this month, today, a 30-day chart by model, tokens and line items, read live from OpenAI with a read-only key and stored nowhere. The spoken voice is faster (adjustable, without turning squeaky), answers given by voice are shorter, and every answer has a replay button: « relis-moi ça » reads it again.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-voice" id="loop-7b" data-phase="voice" data-loop="7b" data-date="Nov 3, 2026">
+            <div class="loop-thumb" aria-hidden="true"><span class="glyph">7b</span></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 7b</span> · Voice · <time datetime="2026-11-03">Nov 3, 2026</time></p>
+              <h3><button type="button" class="loop-open">A real conversation, almost</button></h3>
+              <p class="excerpt">Press F9 and talk: speech in, speech out, with the same tools as the text assistant, and a small pill showing what this conversation costs so far. It is built and tested end to end against a faithful simulation; the first conversation with OpenAI&#x27;s live voice model waits for that model to be enabled on the account.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Press F9 and talk: speech in, speech out, with the same tools as the text assistant, and a small pill showing what this conversation costs so far. It is built and tested end to end against a faithful simulation; the first conversation with OpenAI's live voice model waits for that model to be enabled on the account.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-voice" id="loop-7a" data-phase="voice" data-loop="7a" data-date="Nov 3, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-7a.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 7a</span> · Voice · <time datetime="2026-11-03">Nov 3, 2026</time></p>
+              <h3><button type="button" class="loop-open">Hands-free</button></h3>
+              <p class="excerpt">Hold F8, speak, let go. « Montre-moi le projet Atlas », « ouvre ma note sur ma routine du soir », « mets le thème du soir pis baisse le son », « on fait la revue de la semaine », « annule ça »: the assistant answers aloud and the interface follows. No clicks needed. A small indicator shows exactly when the microphone is listening.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Hold F8, speak, let go. « Montre-moi le projet Atlas », « ouvre ma note sur ma routine du soir », « mets le thème du soir pis baisse le son », « on fait la revue de la semaine », « annule ça »: the assistant answers aloud and the interface follows. No clicks needed. A small indicator shows exactly when the microphone is listening.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-modules" id="loop-6c" data-phase="modules" data-loop="6c" data-date="Nov 3, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-6c.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 6c</span> · Parked module · <time datetime="2026-11-03">Nov 3, 2026</time></p>
+              <h3><button type="button" class="loop-open">The agent room</button></h3>
+              <p class="excerpt">Agents arrive, on by default. Setup downloads OpenAI&#x27;s Codex agent, checks its fingerprint, and needs no administrator rights and no extra software. Add a project folder, start an agent, and watch it read, plan and propose. Every file it wants to change and every command it wants to run appears as a card: approve once, approve for the session, or decline. Nothing outside your chosen folders, nothing without your yes. Since then it has run for real, with OpenAI&#x27;s actual agent on Linux and on Windows, without administrator rights. Asked to create a file and read another, it asked permission for every step. Declined, it touched nothing. Approved, it finished in about eleven seconds.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Agents arrive, on by default. Setup downloads OpenAI's Codex agent, checks its fingerprint, and needs no administrator rights and no extra software. Add a project folder, start an agent, and watch it read, plan and propose. Every file it wants to change and every command it wants to run appears as a card: approve once, approve for the session, or decline. Nothing outside your chosen folders, nothing without your yes.</p> <p>Since then it has run for real, with OpenAI's actual agent on Linux and on Windows, without administrator rights. Asked to create a file and read another, it asked permission for every step. Declined, it touched nothing. Approved, it finished in about eleven seconds.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-modules" id="loop-6b" data-phase="modules" data-loop="6b" data-date="Nov 3, 2026">
+            <div class="loop-thumb" aria-hidden="true"><span class="glyph">6b</span></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 6b</span> · Parked module · <time datetime="2026-11-03">Nov 3, 2026</time></p>
+              <h3><button type="button" class="loop-open">A weekly review that thinks</button></h3>
+              <p class="excerpt">The weekly review now runs on a reasoning model. It reads your week the way a coach would: the client who wants to push the demo back, the supplier call that is late. It connects the two, proposes one concrete next step per project, and cites your notes. If your own OpenAI account does not offer that model, the review quietly uses another one and tells you once.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>The weekly review now runs on a reasoning model. It reads your week the way a coach would: the client who wants to push the demo back, the supplier call that is late. It connects the two, proposes one concrete next step per project, and cites your notes. If your own OpenAI account does not offer that model, the review quietly uses another one and tells you once.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-brain" id="loop-5b" data-phase="brain" data-loop="5b" data-date="Nov 3, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-5b.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 5b</span> · Intake & packs · <time datetime="2026-11-03">Nov 3, 2026</time></p>
+              <h3><button type="button" class="loop-open">A memory that understands meaning</button></h3>
+              <p class="excerpt">Every note is now indexed by meaning, quietly in the background. Ask « c&#x27;est quoi mes habitudes pour mieux dormir? » and the assistant finds your English note “Bedtime routine”, though no word matches. Notes about the same idea now find each other: they are joined in the graph by a warm dashed line, and listed as related ideas when you open one. Measured on real notes: three true pairs found, no false ones.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Every note is now indexed by meaning, quietly in the background. Ask « c'est quoi mes habitudes pour mieux dormir? » and the assistant finds your English note “Bedtime routine”, though no word matches. Notes about the same idea now find each other: they are joined in the graph by a warm dashed line, and listed as related ideas when you open one. Measured on real notes: three true pairs found, no false ones.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-modules" id="loop-6a" data-phase="modules" data-loop="6a" data-date="Nov 2, 2026">
+            <div class="loop-thumb" aria-hidden="true"><span class="glyph">6a</span></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 6a</span> · Parked module · <time datetime="2026-11-02">Nov 2, 2026</time></p>
+              <h3><button type="button" class="loop-open">Project mode</button></h3>
+              <p class="excerpt">Open a project and the assistant works inside it: she knows its goal, due date and next actions, searches the project first, and follows the project&#x27;s own instructions. Tell a client project “English-speaking client, contact Mark Chen” and the follow-up email comes out in English, addressed to Mark.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Open a project and the assistant works inside it: she knows its goal, due date and next actions, searches the project first, and follows the project's own instructions. Tell a client project “English-speaking client, contact Mark Chen” and the follow-up email comes out in English, addressed to Mark.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-brain" id="loop-5" data-phase="brain" data-loop="5" data-date="Nov 2, 2026">
+            <div class="loop-thumb" aria-hidden="true"><span class="glyph">5</span></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 5</span> · Intake & packs · <time datetime="2026-11-02">Nov 2, 2026</time></p>
+              <h3><button type="button" class="loop-open">Sources: files and links</button></h3>
+              <p class="excerpt">Drop a PDF or a Word file on the window, or paste a link: the brain reads it, writes a short summary card into your graph and indexes every passage. Ask the assistant and she answers from your documents, with the source cited.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Drop a PDF or a Word file on the window, or paste a link: the brain reads it, writes a short summary card into your graph and indexes every passage. Ask the assistant and she answers from your documents, with the source cited.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-modules" id="loop-4" data-phase="modules" data-loop="4" data-date="Nov 2, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-4.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 4</span> · Parked module · <time datetime="2026-11-02">Nov 2, 2026</time></p>
+              <h3><button type="button" class="loop-open">Structure: areas, projects, today</button></h3>
+              <p class="excerpt">Your life domains (family, health, home, vision at work) now hold projects with a goal, a due date and next actions. A Today view shows what is late, due and next, plus your lists. Say « faut acheter du lait pis du café » and it lands on the grocery list. Once a week, the assistant walks you through every project and asks the questions that move your vision forward.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Your life domains (family, health, home, vision at work) now hold projects with a goal, a due date and next actions. A Today view shows what is late, due and next, plus your lists. Say « faut acheter du lait pis du café » and it lands on the grocery list. Once a week, the assistant walks you through every project and asks the questions that move your vision forward.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-voice" id="loop-3" data-phase="voice" data-loop="3" data-date="Nov 2, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-3.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 3</span> · Voice · <time datetime="2026-11-02">Nov 2, 2026</time></p>
+              <h3><button type="button" class="loop-open">An assistant who talks back</button></h3>
+              <p class="excerpt">The assistant arrives. At the first opening of the day she reads a short briefing aloud: open tasks, what is new, an idea that has been sleeping. She answers from your notes and cites them, saves or moves notes when you ask, and files every capture in the right project. Everything she changes can be undone. You can type to her or speak to her.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>The assistant arrives. At the first opening of the day she reads a short briefing aloud: open tasks, what is new, an idea that has been sleeping. She answers from your notes and cites them, saves or moves notes when you ask, and files every capture in the right project. Everything she changes can be undone. You can type to her or speak to her.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-voice" id="loop-2" data-phase="voice" data-loop="2" data-date="Nov 2, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-2.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 2</span> · Voice · <time datetime="2026-11-02">Nov 2, 2026</time></p>
+              <h3><button type="button" class="loop-open">Voice capture</button></h3>
+              <p class="excerpt">Press the microphone and your words appear while you speak, then bloom as a note. Each user brings their own OpenAI key during onboarding. It is stored in the system&#x27;s credential store and never by the interface. Measured on the real API: English transcribed without errors, first words in about a second.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Press the microphone and your words appear while you speak, then bloom as a note. Each user brings their own OpenAI key during onboarding. It is stored in the system's credential store and never by the interface. Measured on the real API: English transcribed without errors, first words in about a second.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-foundation" id="loop-1" data-phase="foundation" data-loop="1" data-date="Nov 2, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-1.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 1</span> · Foundations · <time datetime="2026-11-02">Nov 2, 2026</time></p>
+              <h3><button type="button" class="loop-open">Immersion and the knowledge core</button></h3>
+              <p class="excerpt">The second brain itself arrives: a living graph where captured thoughts bloom, spaces for projects, [[links]], #tags, full-text search and a morning briefing. A soft blue Morning theme replaces the green, with Focus, Evening and Forest alongside. Each theme has generated music, ambience and interface sounds.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>The second brain itself arrives: a living graph where captured thoughts bloom, spaces for projects, [[links]], #tags, full-text search and a morning briefing. A soft blue Morning theme replaces the green, with Focus, Evening and Forest alongside. Each theme has generated music, ambience and interface sounds.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-foundation" id="loop-0" data-phase="foundation" data-loop="0" data-date="Nov 2, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-0.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 0</span> · Foundations · <time datetime="2026-11-02">Nov 2, 2026</time></p>
+              <h3><button type="button" class="loop-open">Foundation, bootstrap and System Console</button></h3>
+              <p class="excerpt">The first increment works end to end: Godot finds Python, a standard-library bootstrap builds the environment, migrates SQLite and starts a local FastAPI service, and the System Console shows live, measured state. Tested headless on Linux (Python 3.12) and native Windows (Microsoft Store Python 3.13), including a fix for the Store&#x27;s silent AppData redirection.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>The first increment works end to end: Godot finds Python, a standard-library bootstrap builds the environment, migrates SQLite and starts a local FastAPI service, and the System Console shows live, measured state. Tested headless on Linux (Python 3.12) and native Windows (Microsoft Store Python 3.13), including a fix for the Store's silent AppData redirection.</p></div>
+            </div>
+          </article>
+        </div>
+        <p class="center"><button type="button" class="btn loops-more">Show all 21 loops</button></p>
+        <dialog class="reader" id="reader" aria-labelledby="reader-title">
+          <button class="reader-close" type="button" aria-label="Close">✕</button>
+          <div class="reader-img"></div>
+          <div class="reader-body">
+            <p class="loop-meta"></p>
+            <h3 id="reader-title"></h3>
+            <div class="reader-text"></div>
+          </div>
+        </dialog>
+      </div>
+    </section>
+
+    <section id="open-source" class="section section-alt">
+      <div class="container">
+        <div class="section-head">
+          <p class="overline">Open source</p>
+          <h2>Built to be read, run and extended</h2>
+          <p>Plain formats, a small documented engine, real tests, and tutorials to plug your own tools into it.</p>
+        </div>
+        <div class="os-grid">
+          <article class="card"><h3>Get started</h3><p>Install on Windows or Linux in a few clicks, no admin rights.</p><a href="docs.html#install">Install guide →</a></article>
+          <article class="card"><h3>Local HTTP API</h3><p>Add notes, links and files, search, draw paths, from any script.</p><a href="docs.html#api">API tutorial →</a></article>
+          <article class="card"><h3>Brain packs</h3><p>A zip, a manifest and SQLite. Build packs, share them, import them.</p><a href="docs.html#packs">Pack format →</a></article>
+          <article class="card"><h3>Contribute</h3><p>How loops work, how to run the tests, where things live.</p><a href="docs.html#contributing">Contributing →</a></article>
+        </div>
+        <p class="note">The repository is private while the foundations settle. The licence will be chosen before
+          the first public release.</p>
       </div>
     </section>
   </main>
 
+  <dialog class="lightbox" id="lightbox" aria-label="Screenshot">
+    <form method="dialog"><button class="reader-close" aria-label="Close">✕</button></form>
+    <img alt=""><p></p>
+  </dialog>
+
   <footer class="footer">
     <div class="container footer-inner">
       <span><img src="assets/logo.svg" alt="" width="20" height="20"> Second Brain GD</span>
-      <span class="muted">Local-first knowledge system · Godot + Python</span>
+      <span class="muted"><a href="docs.html">Docs</a> · <a href="#journal">Journal</a> · <a href="https://github.com/sonixz/second-brain-gd" rel="noopener">GitHub</a> · Local-first knowledge system · Godot + Python</span>
     </div>
   </footer>
   <script src="js/main.js"></script>

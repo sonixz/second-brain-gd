@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Second Brain GD Docs</title>
+  <meta name="description" content="Second Brain GD documentation: install, the archivist, the graph, voice commands, and integration tutorials (browser, local HTTP API, brain packs, files).">
+  <meta name="theme-color" content="#2b3c54">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="skip" href="#docs-main">Skip to content</a>
+  <header class="site-header">
+    <nav class="nav" aria-label="Main">
+      <a class="brand" href="index.html" aria-label="Second Brain GD home">
+        <img src="assets/logo.svg" alt="" width="32" height="32">
+        <span>SECOND BRAIN <b>GD</b></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">
+        <span class="sr-only">Menu</span><span aria-hidden="true">☰</span>
+      </button>
+      <ul id="nav-links" class="nav-links">
+        <li><a href="index.html#method">Method</a></li>
+        <li><a href="index.html#product">Product</a></li>
+        <li><a href="index.html#journal">Journal</a></li>
+        <li><a href="docs.html" aria-current="page">Docs</a></li>
+        <li><a href="https://github.com/sonixz/second-brain-gd" class="nav-cta" rel="noopener">GitHub</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <div class="docs-layout">
+    <aside class="docs-nav" aria-label="Documentation">
+      <button class="btn docs-toc-toggle" type="button" aria-expanded="false">Contents</button>
+      <input class="docs-search" type="search" placeholder="Filter the docs…" aria-label="Filter the docs">
+      <nav>
+        <h4>Start</h4>
+        <ul>
+          <li><a href="#install">Install</a></li>
+          <li><a href="#openai-key">Your OpenAI key</a></li>
+          <li><a href="#data">Where your data lives</a></li>
+        </ul>
+        <h4>Use</h4>
+        <ul>
+          <li><a href="#capture">Capture anything</a></li>
+          <li><a href="#archivist">How the archivist files</a></li>
+          <li><a href="#graph">The graph</a></li>
+          <li><a href="#voice">Voice commands</a></li>
+        </ul>
+        <h4>Integrate</h4>
+        <ul>
+          <li><a href="#browser">From your browser</a></li>
+          <li><a href="#api">Local HTTP API</a></li>
+          <li><a href="#packs">Brain packs</a></li>
+          <li><a href="#files">Files and originals</a></li>
+          <li><a href="#costs">Real AI costs</a></li>
+          <li><a href="#agents">Agent room (parked)</a></li>
+        </ul>
+        <h4>Develop</h4>
+        <ul>
+          <li><a href="#architecture">Architecture</a></li>
+          <li><a href="#tests">Run the tests</a></li>
+          <li><a href="#contributing">Contributing</a></li>
+          <li><a href="#security">Security model</a></li>
+          <li><a href="#troubleshooting">Troubleshooting</a></li>
+        </ul>
+      </nav>
+    </aside>
+
+    <main id="docs-main" class="docs-main">
+      <header>
+        <p class="overline">Documentation</p>
+        <h1>Second Brain GD docs</h1>
+        <p class="muted">Install it, feed it, talk to it, and plug your own tools into it. Everything here describes
+          the current development build; the repository is private for now.</p>
+        <div class="doc-cards">
+          <a href="#install"><b>Install in 5 minutes</b><span>Godot, Python, one Setup button.</span></a>
+          <a href="#api"><b>Script your brain</b><span>Add, file and search from any language.</span></a>
+          <a href="#packs"><b>Share a pack</b><span>Export part of your brain as one file.</span></a>
+        </div>
+      </header>
+
+      <!-- START -->
+      <section class="doc" id="install">
+        <p class="kicker">Start</p>
+        <h2>Install</h2>
+        <p>Second Brain GD runs from the source checkout. You need three things, and none of them needs
+          administrator rights or Docker.</p>
+        <table>
+          <thead><tr><th>Tool</th><th>Version</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>Godot</td><td>4.7, standard build (not .NET)</td><td><a href="https://godotengine.org/download/" rel="noopener">godotengine.org</a></td></tr>
+            <tr><td>Python</td><td>3.12 or 3.13</td><td>python.org (tick <em>Add python.exe to PATH</em>) or the Microsoft Store</td></tr>
+            <tr><td>Git</td><td>any recent</td><td>to clone the repository</td></tr>
+          </tbody>
+        </table>
+        <h3>Windows</h3>
+        <ol class="steps-doc">
+          <li><p>Clone the repository:</p>
+<pre><code>git clone git@github.com:sonixz/second-brain-gd.git C:\git\second-brain-gd</code></pre></li>
+          <li><p>Start Godot, choose <b>Import</b>, select <code>project.godot</code>, then press <b>Run</b> (F5).</p></li>
+          <li><p>Press <b>Setup</b>. The app finds Python, creates a private virtual environment, installs the
+            hash-locked dependencies (about 30 MB from PyPI the first time), creates the database, starts the local
+            engine and verifies it. Each step streams its progress.</p></li>
+          <li><p>Add your OpenAI key when asked (or skip and add it later), and you land in the graph with a short
+            <b>Getting started</b> guide.</p></li>
+        </ol>
+        <p>Next launches say <b>Installed</b>, and <b>Start</b> takes a few seconds: finished steps are verified
+          and skipped.</p>
+        <h3>Linux and WSL</h3>
+<pre><code>sudo apt install python3.12 python3.12-venv   # or your distribution's equivalent
+git clone git@github.com:sonixz/second-brain-gd.git
+cd second-brain-gd
+godot --path .                                # then press Setup</code></pre>
+        <p>The bootstrap also runs without Godot:</p>
+<pre><code>python3 engine/bootstrap.py detect   # is this Python compatible?
+python3 engine/bootstrap.py setup    # install or repair, then start the engine
+python3 engine/bootstrap.py status   # show install_state.json
+python3 engine/bootstrap.py stop     # stop the engine</code></pre>
+        <div class="callout warn"><p><b>Microsoft Store Python</b> silently redirects folders it creates under
+          AppData. Run Setup from Godot (it creates the data folder first), or see
+          <a href="#troubleshooting">Troubleshooting</a>.</p></div>
+      </section>
+
+      <section class="doc" id="openai-key">
+        <p class="kicker">Start</p>
+        <h2>Your OpenAI key</h2>
+        <p>The archivist, meaning search, voice and image descriptions use your own OpenAI API key. Without one,
+          the Brain still captures, stores, links and searches by words; nothing is lost.</p>
+        <ul>
+          <li><b>Where to enter it:</b> the prompt after Setup, the microphone the first time, or the engine
+            room's <b>Voice</b> card.</li>
+          <li><b>Where it goes:</b> your system's credential store (Windows Credential Manager, Secret Service on
+            Linux). Never in a file, never in Godot, never in logs.</li>
+          <li><b>Who uses it:</b> only the local engine, and only for the request at hand.</li>
+        </ul>
+        <table>
+          <thead><tr><th>Feature</th><th>Default model</th></tr></thead>
+          <tbody>
+            <tr><td>Archivist (filing)</td><td><code>gpt-6-sol</code>, falling back to <code>gpt-4o-mini</code></td></tr>
+            <tr><td>Chat</td><td><code>gpt-4o</code></td></tr>
+            <tr><td>Meaning search and related ideas</td><td><code>text-embedding-3-small</code></td></tr>
+            <tr><td>Image descriptions</td><td><code>gpt-4o-mini</code></td></tr>
+            <tr><td>Live conversation (F9)</td><td><code>gpt-realtime-2.1-mini</code> with <code>gpt-4o-mini-transcribe</code></td></tr>
+          </tbody>
+        </table>
+        <p>Models can be changed in the engine room; every call's cost is shown, and your real bill can be read
+          live (see <a href="#costs">Real AI costs</a>).</p>
+      </section>
+
+      <section class="doc" id="data">
+        <p class="kicker">Start</p>
+        <h2>Where your data lives</h2>
+        <p>Nothing is ever written inside the repository. Set <code>SBGD_HOME</code> to use another folder.</p>
+        <table>
+          <thead><tr><th>System</th><th>Folder</th></tr></thead>
+          <tbody>
+            <tr><td>Windows</td><td><code>%LOCALAPPDATA%\SecondBrainGD</code></td></tr>
+            <tr><td>Linux</td><td><code>~/.local/share/second-brain-gd</code></td></tr>
+            <tr><td>macOS (untested)</td><td><code>~/Library/Application Support/SecondBrainGD</code></td></tr>
+          </tbody>
+        </table>
+        <table>
+          <thead><tr><th>Inside</th><th>What</th></tr></thead>
+          <tbody>
+            <tr><td><code>data/second_brain.sqlite3</code></td><td>Your brain: items, places, links, themes, the archivist's records, meaning vectors</td></tr>
+            <tr><td><code>data/originals/</code></td><td>Every file and web page you added, kept once by content hash</td></tr>
+            <tr><td><code>exports/</code></td><td>Brain packs you exported</td></tr>
+            <tr><td><code>runtime/server.json</code>, <code>runtime/api_token</code></td><td>The engine's port and its token while it runs (see <a href="#api">API</a>)</td></tr>
+            <tr><td><code>logs/</code></td><td><code>bootstrap.log</code> and <code>server.log</code></td></tr>
+            <tr><td><code>config.json</code></td><td>Settings such as <code>{"port": 8765}</code></td></tr>
+          </tbody>
+        </table>
+        <p>Backing up your brain means copying this folder while the app is closed.</p>
+      </section>
+
+      <!-- USE -->
+      <section class="doc" id="capture">
+        <p class="kicker">Use</p>
+        <h2>Capture anything</h2>
+        <p>Everything enters through one funnel, lands in the Inbox, and the archivist files it within seconds.</p>
+        <figure class="shot doc-shot"><img src="assets/showcase/intake-receipt.webp" alt="A typed note filed into Projects › Kitchen renovation, with the receipt and an Undo button" loading="lazy" width="1280" height="800"><figcaption>A typed note, filed in seconds. The receipt says where and why.</figcaption></figure>
+        <table>
+          <thead><tr><th>Input</th><th>How</th></tr></thead>
+          <tbody>
+            <tr><td>A thought or a long text</td><td>Type or paste in the bar at the bottom, then <kbd>Enter</kbd> (<kbd>Ctrl</kbd>+<kbd>Space</kbd> focuses it). <code>[[Title]]</code> links, <code>#tag</code> groups.</td></tr>
+            <tr><td>A web page</td><td>Paste its URL in the same bar: it is fetched, kept, summarised and indexed.</td></tr>
+            <tr><td>A file</td><td>Drop it on the window: PDF, Word, Markdown, text, HTML, CSV, JSON, PNG, JPG, WebP, GIF.</td></tr>
+            <tr><td>Your voice</td><td>Hold <kbd>F8</kbd>, speak, release. The receipt is spoken back.</td></tr>
+            <tr><td>The clipboard</td><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>, or say « ajoute ça au Brain ».</td></tr>
+            <tr><td>Your browser</td><td>The « Envoyer au Brain » bookmark (see <a href="#browser">From your browser</a>).</td></tr>
+            <tr><td>Your scripts</td><td>The <a href="#api">local HTTP API</a>.</td></tr>
+          </tbody>
+        </table>
+        <p>The <b>Captures</b> tab lists everything that came in, newest first, with where it was filed, its type,
+          origin, summary and themes. Click a card to fly to the item in the graph.</p>
+      </section>
+
+      <section class="doc" id="archivist">
+        <p class="kicker">Use</p>
+        <h2>How the archivist files</h2>
+        <p>The archivist is data-oriented: it receives, understands, files and links. It gives no opinions and
+          asks only when it cannot file an item without an answer.</p>
+        <h3>CODE and PARA</h3>
+        <p>The Brain follows the <b>CODE</b> method (Capture, Organise, Distil, Express) and files into
+          <b>PARA</b>:</p>
+        <table>
+          <thead><tr><th>Place</th><th>Means</th><th>Example</th></tr></thead>
+          <tbody>
+            <tr><td>Project</td><td>An outcome with a deadline</td><td>Kitchen renovation</td></tr>
+            <tr><td>Area</td><td>An ongoing responsibility</td><td>Health, Finances</td></tr>
+            <tr><td>Resource</td><td>A topic you care about</td><td>Local-first software</td></tr>
+            <tr><td>Archive</td><td>No longer active</td><td>Last year's move</td></tr>
+          </tbody>
+        </table>
+        <p>A new brain starts with only an Inbox and a Getting started guide. The archivist creates places and
+          themes as your data arrives.</p>
+        <h3>What it reads and decides</h3>
+        <ul>
+          <li><b>Reads:</b> the item and an excerpt of its original, your places with a few example titles, your
+            themes, the six closest items by meaning, and your working context.</li>
+          <li><b>Decides:</b> a title, type and language; a summary and key points for long inputs; people,
+            organisations, concepts, places and dates; a place (existing or new); 1–3 themes; links; a confidence
+            score; and a one-line receipt.</li>
+          <li><b>When unsure:</b> below the confidence threshold the item stays in the Inbox with its question.</li>
+          <li><b>Undo:</b> every filing is journaled. Use the receipt's Undo or say « annule ça »; a place the
+            archivist had just created is removed too if it is empty again.</li>
+        </ul>
+        <h3>Working context</h3>
+        <p>Say « je veux structurer le projet Rénovation »: the project is created if needed and the next items are
+          filed with it in mind. Say it with no name to clear it.</p>
+      </section>
+
+      <section class="doc" id="graph">
+        <p class="kicker">Use</p>
+        <h2>The graph</h2>
+        <p>Wheel to zoom, drag to pan, drag an item to move it, <kbd>/</kbd> to search, <kbd>Esc</kbd> to close.</p>
+        <figure class="shot doc-shot"><img src="assets/showcase/zoom-cards.webp" alt="Zoomed into the Kitchen renovation place: items shown as cards" loading="lazy" width="1280" height="800"><figcaption>The <i>near</i> level: items become cards.</figcaption></figure>
+        <h3>Semantic zoom</h3>
+        <table>
+          <thead><tr><th>Level</th><th>You see</th></tr></thead>
+          <tbody>
+            <tr><td>Far</td><td>Places as named zones with their counts, the Inbox in the middle</td></tr>
+            <tr><td>Middle</td><td>Items as dots and their links</td></tr>
+            <tr><td>Near</td><td>Items as cards: title, place, first lines; PDFs show their first page</td></tr>
+            <tr><td>Read</td><td>The full text, inside the graph. Double-click to edit it in place</td></tr>
+          </tbody>
+        </table>
+        <h3>Organise the view</h3>
+        <ul>
+          <li><b>Zones</b> are stable: each place keeps its spot around the Inbox.</li>
+          <li><b>Fold</b> a place (double-click it, or « replie Recettes ») into a <code>+N</code> badge.</li>
+          <li><b>Filter</b> by type, origin, date, word, theme or pack (« montre seulement les articles sur l'IA »,
+            « enlève les filtres »).</li>
+          <li><b>Timeline</b>: the toggle, or « montre la chronologie », lays items along time, one lane per place.</li>
+          <li><b>Paths</b>: « comment X est relié à Y ? » draws the shortest meaningful path.</li>
+          <li><b>Related ideas</b>: dashed lines suggested by meaning. Keep one as a real link (✓) or dismiss it (✕).</li>
+        </ul>
+      </section>
+
+      <section class="doc" id="voice">
+        <p class="kicker">Use</p>
+        <h2>Voice commands</h2>
+        <p>Hold <kbd>F8</kbd> to speak one thought or command; press <kbd>F9</kbd> for a live conversation you can
+          interrupt (F9 again, or « merci, c'est tout », to end). The phrases below are examples, not a fixed
+          grammar: the model understands paraphrases and other languages.</p>
+        <table>
+          <thead><tr><th>Goal</th><th>Say</th></tr></thead>
+          <tbody>
+            <tr><td>Capture</td><td>« ajoute ça au Brain » · « note que… » · « je veux structurer le projet X »</td></tr>
+            <tr><td>Navigate</td><td>« ouvre les captures » · « zoome sur X » · « replie X » · « montre la chronologie »</td></tr>
+            <tr><td>Filter</td><td>« montre seulement les articles sur l'IA » · « enlève les filtres »</td></tr>
+            <tr><td>Find</td><td>« cherche l'article sur… » · « comment X est relié à Y ? »</td></tr>
+            <tr><td>Documents</td><td>« ouvre le document X » · « page suivante » · « ouvre l'original » · « ferme le document »</td></tr>
+            <tr><td>Packs</td><td>« exporte le projet X » · « exporte tout » · « importe un pack » · « désactive / fusionne / retire le pack X »</td></tr>
+            <tr><td>Voice</td><td>« relis-moi ça » · « parle plus vite » · « annule ça »</td></tr>
+          </tbody>
+        </table>
+        <table>
+          <thead><tr><th>Key</th><th>Action</th></tr></thead>
+          <tbody>
+            <tr><td><kbd>F8</kbd> (hold)</td><td>Push to talk</td></tr>
+            <tr><td><kbd>F9</kbd></td><td>Start or end a live conversation</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>M</kbd></td><td>Microphone in the capture bar</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd></td><td>Capture the clipboard</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>Space</kbd></td><td>Focus the capture bar</td></tr>
+            <tr><td><kbd>/</kbd> · <kbd>Esc</kbd></td><td>Search · close</td></tr>
+            <tr><td><kbd>←</kbd> <kbd>→</kbd> · <kbd>+</kbd> <kbd>−</kbd> · <kbd>0</kbd></td><td>In the document viewer: pages · zoom · fit</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <!-- INTEGRATE -->
+      <section class="doc" id="browser">
+        <p class="kicker">Integrate · tutorial</p>
+        <h2>Send pages from your browser</h2>
+        <p>A bookmarklet sends the current page, or just your selection, to your Brain. It works in any browser,
+          with no extension.</p>
+        <ol class="steps-doc">
+          <li><p>In the app, open <b>Captures</b> and press <b>Send from browser…</b>.</p></li>
+          <li><p>Copy the link it shows, then add a bookmark named « Envoyer au Brain » to your bookmarks bar with that
+            link as its address.</p></li>
+          <li><p>On any page, click the bookmark. Without a selection, the page is fetched, kept as an original,
+            summarised and filed. With a selection, the selection becomes a quote with the page as its source.</p></li>
+        </ol>
+        <p>Under the hood it opens:</p>
+<pre><code>http://127.0.0.1:&lt;port&gt;/capture?key=&lt;capture key&gt;&amp;url=…&amp;title=…[&amp;text=selection]</code></pre>
+        <ul>
+          <li><b>Why a navigation, not a script:</b> browsers allow a top-level navigation to the local engine,
+            while they often block page scripts from calling 127.0.0.1.</li>
+          <li><b>The capture key</b> can only add a page or a selection. It is not the API token and not your
+            OpenAI key. Renew it from the same dialog if it ever leaks; the old bookmark stops working.</li>
+          <li>If the engine had to use another port, copy the link again.</li>
+        </ul>
+      </section>
+
+      <section class="doc" id="api">
+        <p class="kicker">Integrate · tutorial</p>
+        <h2>Script your brain with the local HTTP API</h2>
+        <p>The engine is a FastAPI service on <code>127.0.0.1</code>. Anything the app does, a script can do:
+          add notes, links and files, ask the archivist to file them, search, draw paths, export packs.</p>
+        <h3>1. Find the port and the token</h3>
+        <p>While the app runs, the engine writes its port to <code>runtime/server.json</code> and a fresh token to
+          <code>runtime/api_token</code> in your <a href="#data">data folder</a>. The token changes at every start
+          and is deleted when the engine stops.</p>
+<pre><code># Linux / WSL (bash)
+SB="${SBGD_HOME:-$HOME/.local/share/second-brain-gd}"
+PORT=$(python3 -c "import json,sys;print(json.load(open(sys.argv[1]))['port'])" "$SB/runtime/server.json")
+TOKEN=$(cat "$SB/runtime/api_token")
+API="http://127.0.0.1:$PORT"
+auth=(-H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json")
+curl -s "$API/health"</code></pre>
+<pre><code># Windows (PowerShell)
+$SB = "$env:LOCALAPPDATA\SecondBrainGD"
+$PORT = (Get-Content "$SB\runtime\server.json" | ConvertFrom-Json).port
+$H = @{ Authorization = "Bearer " + (Get-Content "$SB\runtime\api_token" -Raw).Trim() }
+Invoke-RestMethod "http://127.0.0.1:$PORT/health"</code></pre>
+        <h3>2. Add a thought and let the archivist file it</h3>
+<pre><code>ID=$(curl -s "${auth[@]}" -d '{"title":"Reading lamp idea","body":"A warm lamp over the kitchen island. #renovation"}' \
+  "$API/brain/notes" | python3 -c "import json,sys;print(json.load(sys.stdin)['id'])")
+curl -s "${auth[@]}" -X POST "$API/assistant/classify/$ID"   # → {"applied": true, "receipt": "…", …}</code></pre>
+        <h3>3. Add a web page or a file</h3>
+<pre><code>curl -s "${auth[@]}" -d '{"url":"https://example.com/article"}' "$API/sources/url"     # → {"note_id": "…", …}
+curl -s "${auth[@]}" -d '{"path":"/home/me/Documents/quote.pdf"}' "$API/sources/file"
+# then file it: POST $API/assistant/classify/&lt;note_id&gt;</code></pre>
+        <h3>4. Search and connect</h3>
+<pre><code>curl -s "${auth[@]}" "$API/brain/search?q=warm%20lighting&amp;limit=10"
+curl -s "${auth[@]}" "$API/brain/path?from=Reading%20lamp%20idea&amp;to=Kitchen%20renovation"
+curl -s "${auth[@]}" "$API/brain/feed"          # what came in, as the archivist filed it</code></pre>
+        <h3>Main routes</h3>
+        <table>
+          <thead><tr><th>Route</th><th>Does</th></tr></thead>
+          <tbody>
+            <tr><td><code>GET /health</code></td><td>Public liveness check, reveals nothing private</td></tr>
+            <tr><td><code>POST /brain/notes</code></td><td>Create an item: <code>title</code>, <code>body</code>, optional <code>space_id</code>, <code>kind</code></td></tr>
+            <tr><td><code>GET /brain/items/{id}</code></td><td>An item with the archivist's record</td></tr>
+            <tr><td><code>POST /assistant/classify/{id}</code></td><td>Ask the archivist to file an item</td></tr>
+            <tr><td><code>POST /sources/url</code> · <code>/sources/file</code></td><td>Ingest a page or a local file (kept as an original)</td></tr>
+            <tr><td><code>GET /sources/{id}/page/{n}?width=</code></td><td>A PDF page as PNG (320 to 2400 px)</td></tr>
+            <tr><td><code>GET /brain/search?q=</code></td><td>Meaning search, then words</td></tr>
+            <tr><td><code>GET /brain/path?from=&amp;to=</code></td><td>The path between two items</td></tr>
+            <tr><td><code>GET /brain/graph</code> · <code>/brain/structure</code></td><td>Everything the graph draws · your PARA places</td></tr>
+            <tr><td><code>GET/PUT /brain/context</code></td><td>The working context</td></tr>
+            <tr><td><code>POST /packs/preview</code> · <code>/packs/export</code> · <code>/packs/import</code></td><td>Brain packs (see <a href="#packs">Packs</a>)</td></tr>
+            <tr><td><code>GET /assistant/actions</code> · <code>POST /assistant/actions/{id}/undo</code></td><td>The journal, and Undo</td></tr>
+          </tbody>
+        </table>
+        <div class="callout"><p>The API binds to <code>127.0.0.1</code> only and has no CORS: a web page cannot read
+          it. Treat the token like a password while the app runs. The interactive API docs are disabled on purpose.</p></div>
+        <h3>Python example</h3>
+<pre><code>import json, os, pathlib, urllib.request
+
+home = pathlib.Path(os.environ.get("SBGD_HOME", pathlib.Path.home() / ".local/share/second-brain-gd"))
+port = json.loads((home / "runtime/server.json").read_text())["port"]
+token = (home / "runtime/api_token").read_text().strip()
+
+def call(method, path, body=None):
+    req = urllib.request.Request(f"http://127.0.0.1:{port}{path}", method=method,
+                                 data=json.dumps(body).encode() if body is not None else None,
+                                 headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+    with urllib.request.urlopen(req) as r:
+        return json.loads(r.read())
+
+note = call("POST", "/brain/notes", {"title": "Book: Local-First Software", "body": "Ink &amp; Switch essay, 2019. #local-first"})
+print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
+      </section>
+
+      <section class="doc" id="packs">
+        <p class="kicker">Integrate · tutorial</p>
+        <h2>Brain packs: share part of your brain</h2>
+        <p>A pack is a <code>.brain</code> file you can share, archive or use to restart a project elsewhere.
+          Imported, it becomes a <b>layer</b>: switch it off, merge it, or remove it without touching your own items.</p>
+        <figure class="shot doc-shot"><img src="assets/showcase/packs.webp" alt="The Brain packs dialog exporting one place" loading="lazy" width="1280" height="800"><figcaption>Captures → Packs…: export one place, with a preview.</figcaption></figure>
+        <h3>Export</h3>
+        <ol class="steps-doc">
+          <li><p>Open <b>Captures → Packs…</b> (or say « exporte le projet Rénovation »).</p></li>
+          <li><p>Choose what leaves: everything, a place, a theme, a search, or chosen items. The preview lists
+            exactly what will be written before anything is.</p></li>
+          <li><p>Add a title, author, licence and description, tick <b>include originals</b> if you want the PDFs and
+            pages too, and export. The file lands in <code>exports/</code>.</p></li>
+        </ol>
+<pre><code>curl -s "${auth[@]}" -d '{"selection":{"place":"Kitchen renovation"},"title":"Kitchen renovation",
+  "author":"me","licence":"CC BY 4.0","include_originals":true}' "$API/packs/export"</code></pre>
+        <h3>Import</h3>
+        <p>Drop a <code>.brain</code> on the window, use the Packs dialog, say « importe un pack », or
+          <code>POST /packs/import {"path": "…"}</code>. Then manage layers from the dialog, by voice, or with
+          <code>GET /packs/layers</code>, <code>PATCH /packs/layers/{id} {"enabled": false}</code>,
+          <code>POST /packs/layers/{id}/merge</code> and <code>DELETE /packs/layers/{id}</code>.</p>
+        <h3>The format</h3>
+        <table>
+          <thead><tr><th>Entry</th><th>Content</th></tr></thead>
+          <tbody>
+            <tr><td><code>manifest.json</code></td><td><code>format: "sbgd-brain-pack"</code>, <code>version: 1</code>, title, author, licence, description, dates, app and schema versions, embedding model, the selection, counts, and the database's <code>sha256</code></td></tr>
+            <tr><td><code>data.sqlite</code></td><td>A normal Second Brain database holding only the selected items: places, items, links, themes, the archivist's records, meaning vectors, sources and their indexed text</td></tr>
+            <tr><td><code>originals/…</code> (optional)</td><td>The original files, each verified by its hash on import</td></tr>
+          </tbody>
+        </table>
+        <p><b>Never included:</b> settings, keys, conversations, the action journal, system events and costs. A
+          test checks those tables are empty in every exported pack.</p>
+        <h3>What import guarantees</h3>
+        <ul>
+          <li>Only the known entries are accepted (no <code>../escape.py</code>), up to 512 MB.</li>
+          <li>The checksum must match; the database is opened read-only; a newer schema is refused.</li>
+          <li>Every item gets a new id; identical items are skipped; vectors are reused when the embedding model matches.</li>
+          <li>Imported text is <b>data, never instructions</b>, and nothing in a pack is ever executed.</li>
+        </ul>
+        <div class="callout"><p><b>Build a pack from your own data:</b> start the app with an empty data folder
+          (<code>SBGD_HOME=/tmp/my-pack</code>), feed it through the <a href="#api">API</a> (a folder of Markdown, a
+          reading list, a course), let the archivist file it, then export everything. You get a ready-to-share,
+          pre-filed, pre-linked brain.</p></div>
+      </section>
+
+      <section class="doc" id="files">
+        <p class="kicker">Integrate</p>
+        <h2>Files and originals</h2>
+        <p>Every file and web page is copied once to <code>data/originals/&lt;2 hex&gt;/&lt;sha256&gt;.&lt;ext&gt;</code>.
+          Moving or deleting the file on disk never loses it, and web pages are kept as they were on the day you added them.</p>
+        <ul>
+          <li><b>Text:</b> <code>.txt .md .markdown .csv .json .log .rst .org .html .htm .docx .pdf</code> are extracted, chunked and indexed.</li>
+          <li><b>Images:</b> <code>.png .jpg .jpeg .webp .gif</code> are described by a vision model, including visible text, so you find them by meaning.</li>
+          <li><b>PDF pages</b> are rendered with PDFium at 320, 640, 1024, 1600 or 2400 px, cached in <code>runtime/pages</code>, and shown sharper as you zoom.</li>
+          <li>« ouvre l'original » shows the kept original.</li>
+        </ul>
+      </section>
+
+      <section class="doc" id="costs">
+        <p class="kicker">Integrate</p>
+        <h2>Real AI costs on the dashboard</h2>
+        <p>The engine room can show your real OpenAI bill and token usage, read live from OpenAI's Costs and Usage
+          APIs; nothing is stored locally and nothing is estimated.</p>
+        <ol class="steps-doc">
+          <li><p>On platform.openai.com, go to Settings → Organization → Admin keys → Create, with permissions
+            <b>Restricted</b> and only <b>Usage API: Read</b>. It cannot call models or change anything; a normal
+            project key cannot read billing.</p></li>
+          <li><p>In the engine room's <b>Real costs · OpenAI billing</b> card, paste it. It goes to your credential store, like your API key.</p></li>
+          <li><p>Figures refresh every five minutes, by day and by model.</p></li>
+        </ol>
+      </section>
+
+      <section class="doc" id="agents">
+        <p class="kicker">Integrate · parked</p>
+        <h2>Agent room (parked)</h2>
+        <div class="callout parked"><p>Built and tested, set aside while the graph comes first. It stays in the
+          code and will come back as a module.</p></div>
+        <p>The agent room runs OpenAI Codex agents in folders you choose. The Codex app-server package is
+          downloaded from the official release, verified against a pinned SHA-256 and unpacked safely. Agents work
+          read-only by default, every command or file change waits for your approval, and <b>Decline</b> is
+          always offered.</p>
+      </section>
+
+      <!-- DEVELOP -->
+      <section class="doc" id="architecture">
+        <p class="kicker">Develop</p>
+        <h2>Architecture</h2>
+<pre><code>Godot app (GDScript)  ── launches, tails JSON Lines events ──▶  engine/bootstrap.py (stdlib only)
+      │                                                         venv · pip --require-hashes · migrate · start · verify
+      └── HTTP 127.0.0.1 + Bearer token ──▶  engine/api (FastAPI)
+                                               brain · archivist · sources · packs · voice · billing
+                                                     │
+                                                     ▼
+                                    &lt;data&gt;/data/second_brain.sqlite3 · originals/ · exports/</code></pre>
+        <table>
+          <thead><tr><th>Folder</th><th>What lives there</th></tr></thead>
+          <tbody>
+            <tr><td><code>scenes/</code></td><td>Godot screens: <code>brain/</code> (graph, captures, viewer, filters, packs), <code>startup/</code>, <code>dashboard/</code>, components</td></tr>
+            <tr><td><code>scripts/</code></td><td>GDScript: <code>core/</code> (app, theme, audio, settings), <code>setup/</code>, <code>voice/</code>, <code>monitoring/</code></td></tr>
+            <tr><td><code>engine/brain/</code></td><td>Items, places, links, archivist, meaning, packs, paths, seeds</td></tr>
+            <tr><td><code>engine/sources/</code></td><td>Extraction, originals, PDF rendering</td></tr>
+            <tr><td><code>engine/assistant/</code> · <code>voice/</code></td><td>The archivist's chat and tools · push-to-talk and live relay</td></tr>
+            <tr><td><code>engine/database/migrations/</code></td><td>Numbered, checksummed, immutable SQL migrations</td></tr>
+            <tr><td><code>tests/</code> · <code>tools/</code></td><td>Python and Godot tests · capture, benchmarks, test runners</td></tr>
+          </tbody>
+        </table>
+        <p>Deeper notes live in the repository's <code>docs/architecture/</code>: intake, packs, originals, live
+          conversation, billing, agent room, events protocol and process lifecycle.</p>
+      </section>
+
+      <section class="doc" id="tests">
+        <p class="kicker">Develop</p>
+        <h2>Run the tests</h2>
+        <p>The Python tests create a real virtual environment and start the real engine in a temporary folder.
+          The Godot runner presses the real Setup button headless and drives the app, including a performance guard
+          on a 2,000-item graph. No test calls OpenAI: fake providers stand in.</p>
+<pre><code># Linux / WSL
+./tools/test.sh                         # Python + Godot (set GODOT= if godot is not on PATH)
+
+# Windows
+.\tools\test.ps1                                                   # Python
+.\tools\test.ps1 -Godot C:\path\Godot_v4.7.2-stable_win64_console.exe   # + Godot end to end</code></pre>
+        <p>Screenshots are captured from the real app on a private virtual display (no window opens):</p>
+<pre><code>./tools/capture.sh loop-16                       # the loop's own screens, your data folder
+SBGD_SHOT_SIZE=1600x1000 ./tools/showcase.sh     # the website screenshots, from the example brain</code></pre>
+        <p>The showcase seeds an example brain (ten places, about forty-five items over three weeks, a PDF and a sketch kept
+          as originals) with a scripted stand-in model, so it never calls OpenAI and never touches your own data. Convert the
+          results for the site with <code>godot --headless --path . --script res://tools/web_images.gd -- in.png=out.webp@1280</code>.</p>
+      </section>
+
+      <section class="doc" id="contributing">
+        <p class="kicker">Develop</p>
+        <h2>Contributing</h2>
+        <p>The project is built in <b>loops</b>: small increments that each ship something working, tested on
+          Linux and native Windows, captured from the real app and written up in the journal.</p>
+        <ul>
+          <li><b>Real or nothing.</b> No mock-ups in the UI, no estimated numbers. A value that cannot be measured
+            says so.</li>
+          <li><b>Everything undoable.</b> A change made by the archivist goes through the action journal.</li>
+          <li><b>Schema changes</b> are new migrations; applied ones are never edited.</li>
+          <li><b>Dependencies</b> are pinned with hashes (<code>engine/requirements.in</code> → <code>uv pip compile … --generate-hashes</code>).</li>
+          <li><b>Voice parity.</b> A new action in the interface gets a tool the archivist can call, and a test in the fake model.</li>
+          <li><b>No secrets</b> in the repository or in logs. Keys go to the credential store; developer keys go through dotenvx.</li>
+          <li><b>Tests first-class.</b> A change comes with Python tests and, for UI, checks in <code>tests/godot/test_runner.gd</code>.</li>
+        </ul>
+      </section>
+
+      <section class="doc" id="security">
+        <p class="kicker">Develop</p>
+        <h2>Security model</h2>
+        <ul>
+          <li>The engine listens on <code>127.0.0.1</code> only; a new 32-byte token is generated at each start,
+            passed by environment variable, stored with private permissions and deleted at stop.</li>
+          <li><code>/health</code> is the only public route; there is no CORS and no docs endpoint.</li>
+          <li>Keys live in the OS credential store; Godot never holds them; they never reach logs or events.</li>
+          <li>No silent interpreter download, no admin rights, no remote scripts. Only pip wheels pinned by SHA-256.</li>
+          <li>Imported packs and fetched pages are data, never instructions; archives are unpacked defensively.</li>
+          <li>The engine stops with the app, and on its own if the app crashes (parent-process watchdog).</li>
+        </ul>
+      </section>
+
+      <section class="doc" id="troubleshooting">
+        <p class="kicker">Develop</p>
+        <h2>Troubleshooting</h2>
+        <table>
+          <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+          <tbody>
+            <tr><td>No compatible Python found</td><td>Install 3.12 or 3.13, tick <em>Add to PATH</em>, restart Godot. Or paste the path to <code>python.exe</code> in <b>Check prerequisites</b>, or set <code>SBGD_PYTHON</code>.</td></tr>
+            <tr><td>Typing <code>python</code> opens the Store</td><td>That is the App execution alias. Install Python, or disable the alias in Windows settings.</td></tr>
+            <tr><td>Setup fails with the Store Python</td><td>Run Setup from Godot (it creates the data folder first).</td></tr>
+            <tr><td>The bookmarklet stopped working</td><td>The engine changed port or the key was renewed: copy the link again.</td></tr>
+            <tr><td>Voice or filing does nothing</td><td>Check the key in the engine room's Voice card; the error is shown there in plain words.</td></tr>
+          </tbody>
+        </table>
+        <p>Logs: <code>logs/bootstrap.log</code> (every setup event, including pip output) and <code>logs/server.log</code>.
+          More in the repository's <code>docs/troubleshooting.md</code>.</p>
+      </section>
+    </main>
+  <dialog class="lightbox" id="lightbox" aria-label="Screenshot">
+    <form method="dialog"><button class="reader-close" aria-label="Close">✕</button></form>
+    <img alt=""><p></p>
+  </dialog>
+  </div>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span><img src="assets/logo.svg" alt="" width="20" height="20"> Second Brain GD</span>
+      <span class="muted"><a href="index.html">Home</a> · <a href="index.html#journal">Journal</a> · <a href="https://github.com/sonixz/second-brain-gd" rel="noopener">GitHub</a></span>
+    </div>
+  </footer>
+  <script src="js/main.js"></script>
+</body>
+</html>

@@ -2,13 +2,28 @@
 
 **Your knowledge. Your system. Your control.**
 
-Second Brain GD is an open-source, local-first personal knowledge environment. Godot is the user interface,
-a local Python engine runs the services, and everything is stored in your own user folder.
+Second Brain GD is an open-source, local-first second brain you can talk to. Give it anything (a thought,
+a link, a PDF, a photo, your voice): an archivist files it with the CODE method and PARA, links it by meaning
+to what you already know, and you explore it all in a living graph you can zoom into until the text is there.
+Godot is the interface, a local Python engine runs the services, and everything stays in your user folder.
 
-> Status: **Loop 1**. Setup wizard, local engine, and a living knowledge graph with capture, spaces, search,
-> morning briefing, themes and a generated soundtrack. See [STATUS.md](STATUS.md).
+> Status: **Loop 15**, in active development. Intake and archivist, semantic zoom, originals and PDF viewer,
+> zones, filters, paths, timeline, brain packs, push-to-talk and live conversation. See [STATUS.md](STATUS.md)
+> and the journal on the landing page (`public/index.html`).
+
+**Documentation:** open [`public/docs.html`](public/docs.html) — install, the archivist, the graph, voice
+commands, and integration tutorials (browser bookmarklet, local HTTP API, brain packs, real AI costs).
 
 The repository is **private** during development.
+
+![The graph: one zone per place, the Inbox in the middle, the assistant answering on the left](docs/screenshots/showcase/01-graph-overview.png)
+
+| Zoom in: items become cards | Your PDFs, page by page | How is X connected to Y? |
+|---|---|---|
+| ![Cards](docs/screenshots/showcase/04-graph-cards.png) | ![Document viewer](docs/screenshots/showcase/07-document-viewer.png) | ![Path](docs/screenshots/showcase/10-path.png) |
+
+The screenshots come from a scripted example brain (`SBGD_SHOT_SIZE=1600x1000 ./tools/showcase.sh`):
+no OpenAI calls, no personal data, rendered on a private virtual display.
 
 ## Quick start on Windows
 
@@ -120,9 +135,10 @@ scenes/        Godot screens (startup/, dashboard/) and UI components
 scripts/       GDScript: core/ (app, theme, paths), setup/ (Python locator, bootstrap runner), monitoring/ (API client)
 engine/        Python: bootstrap.py, installer/, database/ (+ migrations), api/, monitoring/
 tests/         python/ (unittest), godot/ (headless end-to-end)
-public/        static landing page (open public/index.html, no build)
+public/        landing page and docs (open public/index.html or public/docs.html, no build)
 docs/          architecture/, troubleshooting, screenshots
-tools/         test.sh, test.ps1, capture.sh (screenshots on a private virtual display)
+tools/         test.sh, test.ps1, capture.sh / showcase.sh (screenshots on a private virtual display),
+               web_images.gd (PNG → WebP for the site)
 ```
 
 ## Documentation
