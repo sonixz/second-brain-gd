@@ -15,7 +15,9 @@ from engine.assistant.llm import LLMError, TTS_PRICE_PER_1M_CHARS, estimate_cost
 from engine.events import utc_now
 
 DEFAULTS = {
-    "assistant_chat_model": "gpt-4o",
+    # Chat with tools: gpt-6-sol since 2026-11-04 (tools/assistant_bench.py, the owner's real failures replayed on a
+    # throwaway brain): gpt-6-sol 12/12 in 4.0 s, gpt-4o 11/12 in 3.6 s. Falls back to gpt-4o.
+    "assistant_chat_model": "gpt-6-sol",
     # Measured 2026-11-02 on 10 French captures (tools/model_bench.py): gpt-6-sol 10/10 in 1.45 s,
     # gpt-4o 9/10, gpt-4o-mini 7/10. Chat stays on gpt-4o: as correct with tools and faster (2.9 s vs 4.4 s).
     "assistant_classify_model": "gpt-6-sol",
@@ -31,7 +33,8 @@ DEFAULTS = {
     "ocr_mode": "local",
 }
 # When a user's OpenAI project lacks a configured model, the job falls back instead of failing.
-FALLBACK_MODELS = {"assistant_classify_model": "gpt-4o-mini", "assistant_review_model": "gpt-4o"}
+FALLBACK_MODELS = {"assistant_classify_model": "gpt-4o-mini", "assistant_review_model": "gpt-4o",
+                   "assistant_chat_model": "gpt-4o"}
 MAX_TOOL_ROUNDS = 8
 # A reply that claims an interface action or an undo, in a turn where no tool ran, gets one nudge
 # (measured 2026-11-03: gpt-4o sometimes said « j'annule » or « la revue est lancée » without the tool).
@@ -42,6 +45,18 @@ CLAIM_NUDGE = ("Tu viens d'affirmer une action sans appeler d'outil dans ce tour
                "appelle maintenant l'outil (ui_* ou undo_last_action). Sinon, corrige ta réponse sans prétendre "
                "l'avoir faite.")
 HISTORY = 20
+# The clipboard is captured only when the user talks about it (2026-11-04: a « what do you mean? » captured a CV).
+CLIPBOARD_RE = re.compile(r"presse[- ]?papier|clipboard|copi[ée]|ce que j'ai copi|\bcolle|ctrl|"
+                          r"ajoute[rz]? (ça|ca|ceci|cela|ce lien|ce texte)\b", re.IGNORECASE)
+# A reply that reports a change to the brain, in a turn where nothing really changed, gets corrected
+# (2026-11-04: « les deux CV ont été détachés » after two updates that changed nothing).
+# Past participles only (« classé », not the « classe » of a note title); quoted and [[cited]] titles are ignored.
+CHANGE_RE = re.compile(r"\b(classée?s?|déplacée?s?|détachée?s?|ajoutée?s?|rangée?s?|mise?s? dans|supprimée?s?|reliée?s?|"
+                       r"retirée?s?|enlevée?s?|créée?s?|modifiée?s?)(?!\w)", re.IGNORECASE)
+QUOTED_RE = re.compile(r"\[\[.*?\]\]|«.*?»|\".*?\"")
+CHANGE_NUDGE = ("Vérification du moteur: AUCUN changement réel n'a été fait dans ta base pendant ce tour (aucun outil n'a "
+                "rien modifié). Ne dis pas que c'est fait. Si l'utilisateur demande un changement, fais-le maintenant avec "
+                "find_items puis move_items / unlink_items / trash_items; sinon, dis honnêtement ce qui n'a pas été fait et pourquoi.")
 
 VOICE_TONES = {
     "morning": "Voix chaleureuse et souriante, débit vif et naturel, comme une collègue efficace.",
@@ -57,7 +72,8 @@ d'opinion, tu ne critiques pas, tu ne fais pas la morale; tu rapportes des faits
 québécois naturel, sauf s'il écrit dans une autre langue: réponds alors dans sa langue.
 Règles:
 - Quand il te donne de l'information (une idée, un texte, un fait), enregistre-la avec create_note: l'archiviste la
-  classe ensuite et tu rapportes le reçu en une phrase. « Ajoute ça au Brain » (le presse-papiers) = ui_capture_clipboard.
+  classe ensuite et tu rapportes le reçu en une phrase. ui_capture_clipboard SEULEMENT s'il parle du presse-papiers
+  ou de ce qu'il a copié (« ajoute ce que j'ai copié »).
 - « Je veux structurer / je travaille sur <projet ou sujet> » = set_working_context; « on arrête ce contexte » =
   set_working_context sans nom. Les prochains éléments sont alors classés dans ce contexte.
 - Pour une question, cherche d'abord (search_notes ET search_sources) et réponds uniquement à partir de ce que tu
@@ -65,6 +81,14 @@ Règles:
 - IMPORTANT: chaque fois que ta réponse s'appuie sur un élément, écris son titre EXACT entre doubles crochets,
   ex. « d'après [[Atlas risks]], ... ». L'interface en fait un lien cliquable.
 - Tu ne poses une question que si elle est nécessaire pour bien classer ou retrouver.
+- AGIR SUR LE GRAPHE (classer, déplacer, relier, supprimer): d'abord find_items pour identifier les éléments exacts
+  (ex. place « Inbox » pour ce qui n'est pas classé), puis l'outil d'action avec leurs titres exacts. Un élément a UNE
+  seule place: « détacher de l'Inbox » = le déplacer dans sa place (move_items). Des lignes vers un #thème ou une autre
+  note ne sont pas une place. Ne dis jamais qu'une place n'existe pas sans l'avoir vérifié (find_items / list_spaces).
+- Rapporte EXACTEMENT le résultat des outils: ce qui a bougé, ce qui était déjà en place, ce qui est introuvable ou
+  ambigu (alors demande lequel). Si un outil répond changed 0 ou no_change, rien n'a été fait: dis-le.
+- Les CONSIGNES de l'utilisateur (« classe mes CV », « mets ça dans… ») sont des demandes à exécuter, jamais du
+  contenu à enregistrer avec create_note.
 - Tu pilotes aussi l'interface: l'utilisateur peut tout faire à la voix, sans cliquer. Dès qu'il dit
   « montre, ouvre, affiche, va dans, lance, mets », APPELLE l'outil d'interface correspondant:
   une vue (graph, captures, today, projects, agents) = ui_open_view; un projet ou une place = ui_open_project (id via
@@ -140,6 +164,10 @@ def undo(conn: sqlite3.Connection, action_id: int) -> dict[str, Any]:
             restored = brain.create_note(conn, before["title"], before["body"], before["space_id"], before["kind"],
                                          source=before.get("source") if before.get("source") in ("typed", "voice") else "typed")
             result["note_id"] = restored["id"]
+    elif kind in ("link", "unlink"):
+        from engine.assistant.actions import undo_link_action
+
+        undo_link_action(conn, kind, row["note_id"], before, after)
     elif kind == "create_project":
         conn.execute("UPDATE spaces SET archived_at = ? WHERE id = ?", (utc_now(), row["note_id"]))
     elif kind in ("create_note", "add_task"):
@@ -289,7 +317,20 @@ TOOLS = [
         "parameters": {"type": "object", "properties": {"checklist": {"type": "string"},
                                                          "items": {"type": "array", "items": {"type": "string"}}},
                        "required": ["checklist", "items"]}}},
-    {"type": "function", "function": {"name": "update_note", "description": "Move or edit a note (space, title, kind, body, status).",
+    {"type": "function", "function": {"name": "find_items", "description": "Find items by what the user calls them (words or meaning) or list everything in one place (e.g. place « Inbox »). Returns id, exact title, place and type (PDF, page HTML, note dictée...). Use it BEFORE acting on items you have not seen in this turn.",
+        "parameters": {"type": "object", "properties": {"query": {"type": "string"}, "place": {"type": "string", "description": "a place name, e.g. Inbox or Recherche d'emploi"}}}}},
+    {"type": "function", "function": {"name": "move_items", "description": "Move (file, re-file, « détacher de l'Inbox », « mets X dans Y ») one or more items into a place. Items by exact title or id; place by name. Reports moved / already_there / not_found / ambiguous: report exactly that.",
+        "parameters": {"type": "object", "properties": {"items": {"type": "array", "items": {"type": "string"}}, "place": {"type": "string"}},
+                       "required": ["items", "place"]}}},
+    {"type": "function", "function": {"name": "unlink_items", "description": "Remove the link between two items (« défais le lien entre X et Y »). Says so when they were not directly linked (then they share a #tag or a place).",
+        "parameters": {"type": "object", "properties": {"item": {"type": "string"}, "other": {"type": "string"}}, "required": ["item", "other"]}}},
+    {"type": "function", "function": {"name": "link_items", "description": "Link two items (« relie X à Y »).",
+        "parameters": {"type": "object", "properties": {"item": {"type": "string"}, "other": {"type": "string"}}, "required": ["item", "other"]}}},
+    {"type": "function", "function": {"name": "remove_tag", "description": "Remove a #tag from an item.",
+        "parameters": {"type": "object", "properties": {"item": {"type": "string"}, "tag": {"type": "string"}}, "required": ["item", "tag"]}}},
+    {"type": "function", "function": {"name": "trash_items", "description": "Delete items (« supprime X »): they leave the graph; Undo brings them back.",
+        "parameters": {"type": "object", "properties": {"items": {"type": "array", "items": {"type": "string"}}}, "required": ["items"]}}},
+    {"type": "function", "function": {"name": "update_note", "description": "Edit one note by id (title, kind, body, status). To move items to a place use move_items.",
         "parameters": {"type": "object", "properties": {"note_id": {"type": "string"}, "space_id": {"type": "string"},
                                                          "title": {"type": "string"}, "body": {"type": "string"},
                                                          "kind": {"type": "string", "enum": list(brain.KINDS)},
@@ -430,6 +471,9 @@ def _ui_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any]) -> dict[
     elif name == "ui_import_pack":
         act = {"action": "import_pack"}
     elif name == "ui_capture_clipboard":
+        if not CLIPBOARD_RE.search(_CONTEXT.get("user_text") or ""):
+            return {"refused": "The user did not mention the clipboard or something copied: do not capture it. "
+                    "If they asked to file or move items, use find_items and move_items."}
         act = {"action": "capture_clipboard"}
     elif name == "ui_replay":
         which = str(args.get("which") or "last")
@@ -523,6 +567,28 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
         if out.get("undone"):
             _UI["actions"].append({"action": "refresh"})
         return out
+    if name in ("find_items", "move_items", "unlink_items", "link_items", "remove_tag", "trash_items"):
+        from engine.assistant import actions as act
+
+        client = _CLIENT.get("c")
+        try:
+            if name == "find_items":
+                return act.find_items(conn, client, str(args.get("query") or ""), str(args.get("place") or ""))
+            if name == "move_items":
+                out = act.move_items(conn, client, _journal, actions, [str(i) for i in args.get("items") or []], str(args.get("place") or ""))
+            elif name == "unlink_items":
+                out = act.unlink_items(conn, client, _journal, actions, str(args.get("item") or ""), str(args.get("other") or ""))
+            elif name == "link_items":
+                out = act.link_items(conn, client, _journal, actions, str(args.get("item") or ""), str(args.get("other") or ""))
+            elif name == "remove_tag":
+                out = act.remove_tag(conn, client, _journal, actions, str(args.get("item") or ""), str(args.get("tag") or ""))
+            else:
+                out = act.trash_items(conn, client, _journal, actions, [str(i) for i in args.get("items") or []])
+        except (brain.NotFound, ValueError) as exc:
+            return {"error": str(exc), "changed": 0}
+        if out.get("changed"):
+            _UI["actions"].append({"action": "refresh"})
+        return out
     try:
         if name == "search_notes":
             from engine.brain.meaning import search_notes
@@ -532,7 +598,10 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
             if scope:
                 shared = {r["id"] for r in conn.execute("SELECT id FROM spaces WHERE kind = 'resource'")}
                 hits = [h for h in hits if h["space_id"] in scope or h["space_id"] in shared]
-            return {"results": [{k: r.get(k) for k in ("id", "title", "space_id", "kind", "snippet", "match")} for r in hits[:8]],
+            from engine.assistant.actions import place_name
+
+            return {"results": [{**{k: r.get(k) for k in ("id", "title", "space_id", "kind", "snippet", "match")},
+                                 "place": place_name(conn, r.get("space_id"))} for r in hits[:8]],
                     "scope": "project + shared resources" if scope else "everything"}
         if name == "get_note":
             n = brain.get_note(conn, str(args["note_id"]))
@@ -544,7 +613,10 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
             notes = brain.list_notes(conn, args.get("space_id"), min(int(args.get("limit") or 15), 40))
             if args.get("kind"):
                 notes = [n for n in notes if n["kind"] == args["kind"]]
-            return {"notes": [{k: n[k] for k in ("id", "title", "space_id", "kind", "status", "updated_at")} for n in notes]}
+            from engine.assistant.actions import place_name
+
+            return {"notes": [{**{k: n[k] for k in ("id", "title", "space_id", "kind", "status", "updated_at")},
+                               "place": place_name(conn, n["space_id"])} for n in notes]}
         if name == "create_note":
             n = brain.create_note(conn, str(args["title"]), str(args.get("body") or ""), args.get("space_id") or None,
                                   args.get("kind") or "note", source="agent")
@@ -602,9 +674,15 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
             before = _snapshot(conn, nid)
             fields = {k: args[k] for k in ("space_id", "title", "body", "kind", "status") if args.get(k)}
             n = brain.update_note(conn, nid, **fields)
-            aid = _journal(conn, "update_note", nid, before, _snapshot(conn, nid), "modifiée par l'assistante")
+            after = _snapshot(conn, nid)
+            if after == before:
+                return {"changed": 0, "no_change": f"« {n['title']} » already had these values: nothing changed."}
+            aid = _journal(conn, "update_note", nid, before, after, "modifiée par l'assistante")
             actions.append({"action_id": aid, "kind": "update_note", "note_id": nid, "title": n["title"]})
-            return {"updated": {"id": nid, "title": n["title"], "space_id": n["space_id"]}}
+            _UI["actions"].append({"action": "refresh"})
+            from engine.assistant.actions import place_name
+
+            return {"changed": 1, "updated": {"id": nid, "title": n["title"], "place": place_name(conn, n["space_id"])}}
     except (brain.NotFound, ValueError, KeyError) as exc:
         return {"error": str(exc)}
     return {"error": f"unknown tool {name}"}
@@ -655,6 +733,7 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
          spoken: bool = False, open_note: str | None = None) -> dict[str, Any]:
     _CLIENT["c"] = client
     _CONTEXT["open_note"] = open_note
+    _CONTEXT["user_text"] = text
     on_screen = ""
     if open_note:
         row = conn.execute("SELECT title FROM notes WHERE id = ?", (open_note,)).fetchone()
@@ -688,8 +767,9 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
     reply = ""
     tools_ran = False
     nudged = False
+    change_nudged = False
     for _ in range(MAX_TOOL_ROUNDS):
-        res = client.complete(s["assistant_chat_model"], messages, tools=TOOLS)
+        res = complete_with_fallback(conn, client, "assistant_chat_model", messages, tools=TOOLS)
         cost += _usage_event(conn, "chat", res["model"], res["usage"], client.provider)
         msg = res["message"]
         calls = msg.get("tool_calls") or []
@@ -699,6 +779,12 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
                 nudged = True
                 messages.append({"role": "assistant", "content": reply})
                 messages.append({"role": "user", "content": CLAIM_NUDGE})
+                reply = ""
+                continue
+            if not actions and not change_nudged and not _UI["actions"] and CHANGE_RE.search(QUOTED_RE.sub(" ", reply)):
+                change_nudged = True
+                messages.append({"role": "assistant", "content": reply})
+                messages.append({"role": "user", "content": CHANGE_NUDGE})
                 reply = ""
                 continue
             break
@@ -715,7 +801,7 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
     if not reply:
         # Out of tool rounds: ask for a plain summary of what was done, without tools.
         messages.append({"role": "user", "content": "Résume en 1 à 3 phrases ce que tu viens de faire, sans appeler d'outil."})
-        res = client.complete(s["assistant_chat_model"], messages)
+        res = complete_with_fallback(conn, client, "assistant_chat_model", messages)
         cost += _usage_event(conn, "chat", res["model"], res["usage"], client.provider)
         reply = (res["message"].get("content") or "").strip() or "C'est fait."
     cited = _cited(conn, reply)

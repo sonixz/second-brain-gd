@@ -140,7 +140,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           <thead><tr><th>Feature</th><th>Default model</th></tr></thead>
           <tbody>
             <tr><td>Archivist (filing)</td><td><code>gpt-6-sol</code>, falling back to <code>gpt-4o-mini</code></td></tr>
-            <tr><td>Chat</td><td><code>gpt-4o</code></td></tr>
+            <tr><td>Assistant (chat with tools)</td><td><code>gpt-6-sol</code>, falling back to <code>gpt-4o</code></td></tr>
             <tr><td>Meaning search and related ideas</td><td><code>text-embedding-3-small</code></td></tr>
             <tr><td>Image descriptions</td><td><code>gpt-4o-mini</code></td></tr>
             <tr><td>Live conversation (F9)</td><td><code>gpt-realtime-2.1-mini</code> with <code>gpt-4o-mini-transcribe</code></td></tr>
@@ -266,10 +266,23 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         <p>Hold <kbd>F8</kbd> to speak one thought or command; press <kbd>F9</kbd> for a live conversation you can
           interrupt (F9 again, or « merci, c'est tout », to end). The phrases below are examples, not a fixed
           grammar: the model understands paraphrases and other languages.</p>
+        <div class="callout"><p><b>Two microphones, two jobs.</b> The microphone in the <b>capture bar</b> (bottom,
+          <kbd>Ctrl</kbd>+<kbd>M</kbd>) dictates <b>content</b>: what you say becomes an item in the Brain. <kbd>F8</kbd>,
+          <kbd>F9</kbd> and the microphone in the <b>assistant panel</b> are for <b>requests</b>: « classe mes CV » is
+          carried out, not stored.</p></div>
+        <h3>How the assistant acts on your graph</h3>
+        <p>It is an agent with tools that run on your real database: it finds items by what you call them
+          (<code>find_items</code>), then acts (<code>move_items</code>, <code>link_items</code>, <code>unlink_items</code>,
+          <code>remove_tag</code>, <code>trash_items</code>…). Each tool reports exactly what changed, what was already in
+          place, and what was not found or ambiguous; the engine checks that a reply never claims a change that did not
+          happen. Every change has an Undo. Items have <b>one place</b>: « take it out of the Inbox » means moving it to its
+          place; lines to a #tag or another item are not places. <code>tools/assistant_bench.py</code> replays real
+          requests on a throwaway brain to compare models.</p>
         <table>
           <thead><tr><th>Goal</th><th>Say</th></tr></thead>
           <tbody>
             <tr><td>Capture</td><td>« ajoute ça au Brain » · « note que… » · « je veux structurer le projet X »</td></tr>
+            <tr><td>Organise</td><td>« mets mes quatre CV dans Recherche d'emploi » · « qu'est-ce qui attend dans l'Inbox ? » · « enlève le lien entre X et Y » · « relie X à Y » · « supprime la note X »</td></tr>
             <tr><td>Navigate</td><td>« ouvre les captures » · « zoome sur X » · « replie X » · « montre la chronologie »</td></tr>
             <tr><td>Filter</td><td>« montre seulement les articles sur l'IA » · « enlève les filtres »</td></tr>
             <tr><td>Find</td><td>« cherche l'article sur… » · « comment X est relié à Y ? »</td></tr>
@@ -283,7 +296,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           <tbody>
             <tr><td><kbd>F8</kbd> (hold)</td><td>Push to talk</td></tr>
             <tr><td><kbd>F9</kbd></td><td>Start or end a live conversation</td></tr>
-            <tr><td><kbd>Ctrl</kbd>+<kbd>M</kbd></td><td>Microphone in the capture bar</td></tr>
+            <tr><td><kbd>Ctrl</kbd>+<kbd>M</kbd></td><td>Microphone in the capture bar: <b>dictates content</b> (it becomes an item), not a request</td></tr>
             <tr><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd></td><td>Capture the clipboard</td></tr>
             <tr><td><kbd>Ctrl</kbd>+<kbd>Space</kbd></td><td>Focus the capture bar</td></tr>
             <tr><td><kbd>/</kbd> · <kbd>Esc</kbd></td><td>Search · close</td></tr>
