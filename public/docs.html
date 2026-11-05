@@ -294,6 +294,28 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             <tr><td>Daily briefing</td><td>What came in, where it went, what to explore</td><td>None: it waits for your idea</td></tr>
           </tbody>
         </table>
+        <h3>What an agent is: instructions, capabilities, a model</h3>
+        <p>An agent is a profile stored in your Brain: its <b>instructions</b> (role, tone, rules), its <b>capabilities</b>
+          (which tools it may use) and its <b>model</b>, with its own conversation. Press <b>ⓘ</b> in an agent's title bar to
+          read all of it. The Archivist and Sparring can be adjusted and brought <b>back to the original</b>; other agents
+          can be created (the Agent Builder interviews you, so you never write instructions yourself) and deleted.</p>
+        <table>
+          <thead><tr><th>Capability</th><th>Tools</th></tr></thead>
+          <tbody>
+            <tr><td>Read the Brain</td><td>search, read items and documents, places, paths between ideas</td></tr>
+            <tr><td>Internet</td><td>search the web, read a page</td></tr>
+            <tr><td>Browser</td><td>open a tab, close the tabs it opened</td></tr>
+            <tr><td>Capture</td><td>add notes, web pages, the page in your browser, the clipboard</td></tr>
+            <tr><td>Organise the graph</td><td>file, move, link, unlink, delete, places, packs, undo</td></tr>
+            <tr><td>Approved synthesis</td><td>save a synthesis of the conversation, only after your « yes »</td></tr>
+            <tr><td>Drive the interface</td><td>zoom, filter, open views, items and documents, voice speed</td></tr>
+          </tbody>
+        </table>
+        <p>The Archivist has every capability except the synthesis; Sparring reads the Brain and the web, drives the
+          interface and saves approved syntheses. A new tool joins a capability, and every agent that has it gets it.
+          API: <code>GET /assistant/agents</code>, <code>POST /assistant/agents</code>, <code>PATCH /assistant/agents/{id}</code>,
+          <code>POST /assistant/agents/{id}/reset</code>, <code>DELETE /assistant/agents/{id}</code>; chat and live take
+          <code>agent</code>. Shortcuts <kbd>Ctrl</kbd>+<kbd>5</kbd>… open the custom agents.</p>
         <h3>Arranging the panels</h3>
         <ul>
           <li><b>Move</b> a panel by its title bar (⠿). Near the left, right or bottom edge, the place it will land lights up;

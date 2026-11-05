@@ -33,7 +33,8 @@ var replayed := ""
 
 signal activated(agent: String)       # the user typed, spoke or clicked here: F8/F9 now go to this agent
 
-var agent := "archivist"             # archivist | sparring (engine/assistant/agents.py)
+var agent := "archivist"             # an agent id (engine/assistant/agents.py): archivist, sparring, or a custom one
+var intro := ""                      # what a non-archivist agent says first (from its profile)
 var draft_box: VBoxContainer         # Sparring's synthesis waiting for approval
 
 
@@ -81,7 +82,7 @@ func setup(a: SbApp, b: Control, who: String = "archivist") -> AssistantPanel:
 	row.add_theme_constant_override("separation", 6)
 	add_child(row)
 	input = LineEdit.new()
-	input.placeholder_text = "Think out loud with Sparring…" if agent == "sparring" else "Ask or tell the archivist…"
+	input.placeholder_text = "Ask or tell the archivist…" if agent == "archivist" else ("Think out loud with Sparring…" if agent == "sparring" else "Talk with this agent…")
 	input.focus_entered.connect(func() -> void: activated.emit(agent))
 	input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	input.custom_minimum_size = Vector2(0, 40)
@@ -129,11 +130,15 @@ func start() -> void:
 			_add_bubble(role, str(m["content"]), meta.get("actions", []), meta.get("cited", []), meta.get("sources", []))
 			if str(m["role"]) == "briefing":
 				had_briefing = true
-	if agent == "sparring":  # no briefing: a thinking partner waits for your idea
+	if agent != "archivist":  # no briefing: the other agents wait for you
 		if messages_shown == 0:
-			_add_bubble("assistant", "I'm Sparring. Tell me an idea you're chewing on: I'll ask questions, challenge it or reassure you, "
-				+ "and bring in what your Brain already holds. I don't change anything; when you're done, ask me to sum it up "
-				+ "and I'll save the synthesis once you approve it.", [], [])
+			if intro == "":
+				var r := await app.backend.api.call_api("/assistant/agents")
+				for item in ((r["data"] as Dictionary).get("agents", []) if r["ok"] else []):
+					if str((item as Dictionary)["id"]) == agent:
+						intro = str((item as Dictionary).get("intro", ""))
+			if intro != "":
+				_add_bubble("assistant", intro, [], [])
 		return
 	if not had_briefing:
 		_set_busy(true)
@@ -199,7 +204,7 @@ func send(text: String, spoken: bool = false) -> void:
 
 ## Sparring drafted a synthesis: it is shown in full, with a button to save it (or say « oui, sauvegarde »).
 func show_draft() -> void:
-	var res := await app.backend.api.call_api("/assistant/draft")
+	var res := await app.backend.api.call_api("/assistant/draft?agent=" + agent)
 	if not res["ok"] or not is_inside_tree():
 		return
 	var d: Variant = (res["data"] as Dictionary).get("draft")

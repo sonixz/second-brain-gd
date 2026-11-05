@@ -649,11 +649,13 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
         from engine.assistant import agents
 
         if name == "draft_synthesis":
-            out = agents.draft(conn, str(args.get("title") or ""), str(args.get("body") or ""), str(args.get("place") or ""))
+            out = agents.draft(conn, str(_CONTEXT.get("agent") or "sparring"), str(args.get("title") or ""),
+                               str(args.get("body") or ""), str(args.get("place") or ""))
             if out.get("draft_ready"):
-                _UI["actions"].append({"action": "synthesis_draft"})
+                _UI["actions"].append({"action": "synthesis_draft", "agent": str(_CONTEXT.get("agent") or "sparring")})
             return out
-        out = agents.save(conn, _CLIENT.get("c"), _journal, actions, _CONTEXT.get("user_text") or "")
+        out = agents.save(conn, str(_CONTEXT.get("agent") or "sparring"), _CLIENT.get("c"), _journal, actions,
+                          _CONTEXT.get("user_text") or "")
         if out.get("changed"):
             _UI["actions"].append({"action": "refresh"})
         return out
@@ -845,7 +847,8 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
          spoken: bool = False, open_note: str | None = None, agent: str = "archivist") -> dict[str, Any]:
     from engine.assistant import agents
 
-    agent = agents.name(agent)
+    agent = agents.name(conn, agent)
+    prof = agents.profile(conn, agent)
     _CLIENT["c"] = client
     _CONTEXT["agent"] = agent
     _CONTEXT["open_note"] = open_note
@@ -864,7 +867,7 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
         except brain.NotFound:
             pass
     now = datetime.now().strftime("%A %Y-%m-%d %H:%M")
-    messages: list[dict[str, Any]] = [{"role": "system", "content": agents.persona(agent) + f"\nNous sommes le {now}." + focus
+    messages: list[dict[str, Any]] = [{"role": "system", "content": agents.persona(conn, agent) + f"\nNous sommes le {now}." + focus
                                         + on_screen + (SPOKEN_RULE if spoken else "")}]
     for m in history(conn, conversation, HISTORY):
         content = m["content"]
@@ -886,8 +889,7 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
     nudged = False
     change_nudged = False
     for _ in range(MAX_TOOL_ROUNDS):
-        res = complete_with_fallback(conn, client, agents.get(agent)["model_setting"], messages,
-                                     tools=agents.tools(agent, TOOLS + agents.SYNTHESIS_TOOLS))
+        res = complete_agent(conn, client, prof, messages, tools=agents.tools(conn, agent, TOOLS + agents.SYNTHESIS_TOOLS))
         cost += _usage_event(conn, "chat", res["model"], res["usage"], client.provider)
         msg = res["message"]
         calls = msg.get("tool_calls") or []
@@ -915,13 +917,13 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
             except ValueError:
                 args = {}
             tname = call["function"]["name"]
-            result = run_tool(conn, tname, args, actions) if agents.allowed(agent, tname) else \
-                {"error": f"{tname} is not available to {agents.get(agent)['label']}"}
+            result = run_tool(conn, tname, args, actions) if agents.allowed(conn, agent, tname) else \
+                {"error": f"{tname} is not available to {agents.label(conn, agent)}"}
             messages.append({"role": "tool", "tool_call_id": call["id"], "content": json.dumps(result, ensure_ascii=False)[:12000]})
     if not reply:
         # Out of tool rounds: ask for a plain summary of what was done, without tools.
         messages.append({"role": "user", "content": "Résume en 1 à 3 phrases ce que tu viens de faire, sans appeler d'outil."})
-        res = complete_with_fallback(conn, client, agents.get(agent)["model_setting"], messages)
+        res = complete_agent(conn, client, prof, messages)
         cost += _usage_event(conn, "chat", res["model"], res["usage"], client.provider)
         reply = (res["message"].get("content") or "").strip() or "C'est fait."
     cited = _cited(conn, reply)
@@ -1022,6 +1024,20 @@ def knowledge_facts(conn: sqlite3.Connection, since: str) -> dict[str, Any]:
 def _model_refused(exc: Exception) -> bool:
     msg = str(exc).lower()
     return ("http 403" in msg or "http 404" in msg) and "model" in msg
+
+
+def complete_agent(conn: sqlite3.Connection, client: Any, prof: dict[str, Any], messages: list[dict[str, Any]],
+                   **kwargs: Any) -> dict[str, Any]:
+    """An agent's model: the built-in ones follow their setting (with its fallback); a custom model falls back to gpt-4o."""
+    stored = database.get_setting(conn, "agent_profiles") or {}
+    if prof.get("model_setting") and not (stored.get(prof["id"]) or {}).get("model"):
+        return complete_with_fallback(conn, client, prof["model_setting"], messages, **kwargs)
+    try:
+        return client.complete(str(prof.get("model") or "gpt-6-sol"), messages, **kwargs)
+    except LLMError as exc:
+        if not _model_refused(exc):
+            raise
+        return client.complete("gpt-4o", messages, **kwargs)
 
 
 def complete_with_fallback(conn: sqlite3.Connection, client: Any, setting: str, messages: list[dict[str, Any]],

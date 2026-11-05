@@ -75,14 +75,14 @@ class SparringTests(unittest.TestCase):
                 mock.patch.object(archivist, "file_item", return_value={"receipt": "Idée classée dans Ressources › IA."}) as filed:
             first = core.chat(self.conn, FakeChat(), "Résume-moi tout ça", agent="sparring")
             self.assertIsNone(self.conn.execute("SELECT 1 FROM notes WHERE title = 'Agent vocal Sparring'").fetchone())
-            self.assertIn({"action": "synthesis_draft"}, first["ui_actions"])
-            self.assertEqual(database.get_setting(self.conn, "sparring_draft")["title"], "Agent vocal Sparring")
+            self.assertIn({"action": "synthesis_draft", "agent": "sparring"}, first["ui_actions"])
+            self.assertEqual(agents.pending(self.conn, "sparring")["title"], "Agent vocal Sparring")
             second = core.chat(self.conn, FakeChat(), "Oui, parfait, vas-y", agent="sparring")
         self.assertEqual(filed.call_count, 1)  # the archivist files it
         row = self.conn.execute("SELECT id, kind, source, body FROM notes WHERE title = 'Agent vocal Sparring'").fetchone()
         self.assertEqual((row["kind"], row["source"]), ("idea", "agent"))
         self.assertIn("Synthèse d'une conversation avec Sparring", row["body"])
-        self.assertIsNone(database.get_setting(self.conn, "sparring_draft"))
+        self.assertIsNone(agents.pending(self.conn, "sparring"))
         core.undo(self.conn, second["actions"][0]["action_id"])  # and it can be undone
         self.assertIsNone(self.conn.execute("SELECT 1 FROM notes WHERE id = ?", (row["id"],)).fetchone())
 
@@ -92,10 +92,10 @@ class SparringTests(unittest.TestCase):
         self.assertTrue(agents.APPROVE_RE.search("oui"))
         self.assertTrue(agents.REFUSE_RE.search("oui mais change le titre"))
         self.assertIsNone(agents.APPROVE_RE.search("non, attends"))
-        self.assertEqual(agents.save(self.conn, None, core._journal, [], "oui")["changed"], 0)  # nothing drafted
+        self.assertEqual(agents.save(self.conn, "sparring", None, core._journal, [], "oui")["changed"], 0)  # nothing drafted
 
     def test_the_archivist_does_not_get_the_synthesis_tools(self):
-        names = [t["function"]["name"] for t in agents.tools("archivist", core.TOOLS + agents.SYNTHESIS_TOOLS)]
+        names = [t["function"]["name"] for t in agents.tools(self.conn, "archivist", core.TOOLS + agents.SYNTHESIS_TOOLS)]
         self.assertIn("move_items", names)
         self.assertNotIn("save_synthesis", names)
 
@@ -113,3 +113,50 @@ class SparringTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class AgentProfileTests(unittest.TestCase):
+    """Loop 2: agents are profiles (instructions, capabilities, model) stored in the Brain."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db = Path(self.tmp.name) / "p.sqlite3"
+        database.migrate(self.db)
+        self.conn = database.connect(self.db)
+        seed_if_empty(self.conn)
+
+    def tearDown(self):
+        self.conn.close()
+        self.tmp.cleanup()
+
+    def test_every_tool_belongs_to_a_capability(self):
+        grouped = {t for c in agents.CAPABILITIES.values() for t in c["tools"]}
+        names = {t["function"]["name"] for t in core.TOOLS + agents.SYNTHESIS_TOOLS}
+        self.assertEqual(names - grouped, set())  # a new tool must join a capability
+
+    def test_builtins_can_be_adjusted_and_reset(self):
+        agents.update(self.conn, "sparring", {"instructions": "Tu es Sparring, plus direct. " * 3})
+        p = agents.profile(self.conn, "sparring")
+        self.assertTrue(p["modified"])
+        self.assertIn("plus direct", agents.persona(self.conn, "sparring"))
+        self.assertIn("draft_synthesis", agents.persona(self.conn, "sparring"))  # synthesis rules follow the capability
+        agents.reset(self.conn, "sparring")
+        self.assertFalse(agents.profile(self.conn, "sparring")["modified"])
+        with self.assertRaises(KeyError):
+            agents.delete(self.conn, "archivist")
+
+    def test_a_custom_agent_has_its_tools_conversation_and_model(self):
+        p = agents.create(self.conn, {"name": "Coach entrevue", "instructions": "Tu prépares mes entrevues d'embauche. " * 4,
+                                      "capabilities": ["read_brain", "internet", "organise_typo"]})
+        self.assertEqual((p["id"], p["letter"], p["capabilities"]), ("coach-entrevue", "C", ["read_brain", "internet"]))
+        self.assertIn("web_search", p["tools"])
+        self.assertNotIn("move_items", p["tools"])
+        self.assertTrue(agents.allowed(self.conn, "coach-entrevue", "end_conversation"))
+        self.assertEqual(agents.conversation("coach-entrevue")[:15], "coach-entrevue-")
+        with mock.patch.object(FakeChat, "complete", return_value={"message": {"role": "assistant", "content": "Prêt."},
+                                                                    "usage": {}, "model": "gpt-6-sol"}) as m:
+            core.chat(self.conn, FakeChat(), "Prépare-moi", agent="coach-entrevue")
+        self.assertEqual(m.call_args[0][0], "gpt-6-sol")
+        self.assertIn("entrevues", m.call_args[0][1][0]["content"])
+        agents.delete(self.conn, "coach-entrevue")
+        self.assertEqual(agents.name(self.conn, "coach-entrevue"), "archivist")  # unknown agents fall back to the archivist

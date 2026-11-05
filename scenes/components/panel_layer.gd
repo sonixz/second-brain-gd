@@ -141,7 +141,7 @@ func _stack(side: String) -> Array[SbFloatingPanel]:
 ## Moves glide, except at start-up, while dragging, and in tests.
 func _place(p: SbFloatingPanel, r: Rect2) -> void:
 	p.custom_minimum_size = Vector2.ZERO
-	var old: Variant = p.get_meta("glide", null)
+	var old: Variant = p.get_meta("glide") if p.has_meta("glide") else null
 	if old is Tween and (old as Tween).is_valid():
 		(old as Tween).kill()
 	if not animate or not _laid_out or p._dragging or not p.is_inside_tree() \

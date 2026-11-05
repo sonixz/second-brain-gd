@@ -55,6 +55,9 @@ var places_panel: SbFloatingPanel      # briefing, places, sources (was « Space
 var sparring_chat: AssistantPanel      # Sparring, the thinking partner (reads, argues, saves only an approved synthesis)
 var sparring_panel: SbFloatingPanel
 var active_agent := "archivist"        # F8 and F9 talk to the agent you last used
+var agent_chats: Dictionary = {}       # agent id -> AssistantPanel (every agent: built-in and custom)
+var agent_panels: Dictionary = {}      # agent id -> SbFloatingPanel
+var agent_names: Dictionary = {}       # agent id -> name, for titles
 var toast: PanelContainer
 var toast_label: Label
 var toast_undo: Button
@@ -161,6 +164,7 @@ func _ready() -> void:
 	refresh_sources()
 	assistant_panel.start()
 	sparring_chat.start()
+	refresh_agents()
 	if str(app.state.get("view", "graph")) != "graph":
 		set_view(str(app.state["view"]))
 	var keep := str(app.state.get("selected_note", ""))
@@ -199,7 +203,13 @@ func _watch_browser() -> void:
 ## Ctrl+1 Archivist, Ctrl+2 Sparring, Ctrl+3 Places, Ctrl+4 the item tile: opens it (and talks to that agent),
 ## or shrinks it into the rail if it is already open.
 func toggle_panel(index: int) -> void:
-	var p: SbFloatingPanel = [archivist_panel, sparring_panel, places_panel, inspector][clampi(index, 0, 3)]
+	var order: Array = [archivist_panel, sparring_panel, places_panel, inspector]
+	for id in agent_panels:  # custom agents: Ctrl+5…
+		if id != "archivist" and id != "sparring":
+			order.append(agent_panels[id])
+	if index < 0 or index >= order.size():
+		return
+	var p: SbFloatingPanel = order[index]
 	if p.visible and not p.minimized:
 		p.set_minimized(true)
 		return
@@ -207,9 +217,10 @@ func toggle_panel(index: int) -> void:
 		show_toast("No item open: click one in the graph.")
 		return
 	p.reveal()
-	if p == archivist_panel or p == sparring_panel:
-		set_agent("sparring" if p == sparring_panel else "archivist")
-		chat_panel().input.grab_focus()
+	for id in agent_panels:
+		if agent_panels[id] == p:
+			set_agent(id)
+			chat_panel().input.grab_focus()
 
 
 ## Tab: the graph alone. Every open panel shrinks into the rail; Tab again brings back exactly those.
@@ -233,17 +244,160 @@ func toggle_focus_mode() -> void:
 
 ## The agent F8 and F9 talk to: the one whose panel you last typed in, spoke to or grabbed.
 func set_agent(who: String) -> void:
-	active_agent = "sparring" if who == "sparring" else "archivist"
-	archivist_panel.title_label.text = "ARCHIVIST" + ("  ●" if active_agent == "archivist" else "")
-	sparring_panel.title_label.text = "SPARRING" + ("  ●" if active_agent == "sparring" else "")
+	active_agent = who if agent_chats.has(who) else "archivist"
+	for id in agent_panels:
+		(agent_panels[id] as SbFloatingPanel).title_label.text = str(agent_names.get(id, id)).to_upper() + ("  ●" if id == active_agent else "")
 
 
 func chat_panel(who: String = "") -> AssistantPanel:
-	return sparring_chat if (who if who != "" else active_agent) == "sparring" else assistant_panel
+	var id := who if who != "" else active_agent
+	return agent_chats.get(id, assistant_panel)
 
 
 func agent_panel(who: String = "") -> SbFloatingPanel:
-	return sparring_panel if (who if who != "" else active_agent) == "sparring" else archivist_panel
+	var id := who if who != "" else active_agent
+	return agent_panels.get(id, archivist_panel)
+
+
+## One agent: its conversation panel inside a floating panel, Voice/Live and ⓘ in the title bar.
+func _make_agent(id: String, agent_name: String, letter: String, intro: String, shrunk: bool) -> AssistantPanel:
+	var chat := AssistantPanel.new().setup(app, self, id)
+	chat.intro = intro
+	chat.note_requested.connect(_open_note_by_title)
+	chat.ui_requested.connect(run_ui_actions)
+	chat.brain_changed.connect(func() -> void:
+		await refresh_graph()
+		await refresh_spaces()
+		_refresh_view())
+	var panel := SbFloatingPanel.new().setup(id, agent_name.to_upper(), chat,
+		{"dock": "left", "size": 340.0, "minimized": shrunk, "icon": letter,
+		 "free": Rect2(420 + 20 * agent_chats.size(), 120 + 20 * agent_chats.size(), 380, 560)})
+	var head := chat.get_child(0)  # Voice and Live move up into the title bar
+	for c in head.get_children():
+		head.remove_child(c)
+		panel.extra.add_child(c)
+	head.queue_free()
+	var info := Button.new()
+	info.text = "ⓘ"
+	info.theme_type_variation = "GhostButton"
+	info.tooltip_text = "Instructions, capabilities and model of this agent"
+	info.pressed.connect(func() -> void: show_agent_info(id))
+	panel.extra.add_child(info)
+	panel_layer.add_panel(panel)
+	chat.activated.connect(set_agent)
+	panel.focused.connect(func() -> void: set_agent(id))
+	agent_chats[id] = chat
+	agent_panels[id] = panel
+	agent_names[id] = agent_name
+	return chat
+
+
+## The agents stored in the Brain: new ones get their panel (on the rail), deleted ones leave, names follow.
+var agent_profiles: Array = []
+
+
+func refresh_agents() -> void:
+	var res := await app.backend.api.call_api("/assistant/agents")
+	if not res["ok"] or not is_inside_tree():
+		return
+	agent_profiles = (res["data"] as Dictionary).get("agents", [])
+	var seen := {}
+	for item in agent_profiles:
+		var p: Dictionary = item
+		var id := str(p["id"])
+		seen[id] = true
+		if not agent_chats.has(id):
+			var chat := _make_agent(id, str(p.get("name", id)), str(p.get("letter", "?")), str(p.get("intro", "")), true)
+			chat.start()
+		else:
+			agent_names[id] = str(p.get("name", id))
+			(agent_chats[id] as AssistantPanel).intro = str(p.get("intro", ""))
+	for id in agent_chats.keys():
+		if not seen.has(id) and id != "archivist" and id != "sparring":
+			(agent_panels[id] as SbFloatingPanel).queue_free()
+			agent_chats.erase(id)
+			agent_panels.erase(id)
+			agent_names.erase(id)
+	set_agent(active_agent)
+
+
+## ⓘ: what an agent is: its instructions, capabilities and model; reset (built-in) or delete (custom).
+func show_agent_info(id: String) -> void:
+	await refresh_agents()
+	var prof: Dictionary = {}
+	for item in agent_profiles:
+		if str((item as Dictionary)["id"]) == id:
+			prof = item
+	if prof.is_empty():
+		return
+	var res := await app.backend.api.call_api("/assistant/agents")
+	var caps: Dictionary = (res["data"] as Dictionary).get("capabilities", {}) if res["ok"] else {}
+	var dlg := AcceptDialog.new()
+	dlg.title = "%s · instructions" % str(prof.get("name", id))
+	dlg.ok_button_text = "Close"
+	var box := VBoxContainer.new()
+	box.custom_minimum_size = Vector2(720, 560)
+	box.add_theme_constant_override("separation", 8)
+	dlg.add_child(box)
+	var meta := Label.new()
+	meta.text = "Model: %s%s" % [str(prof.get("model", "")), "   ·   adjusted (not the original)" if bool(prof.get("modified", false)) else ""]
+	meta.theme_type_variation = "Muted"
+	box.add_child(meta)
+	var cap_title := Label.new()
+	cap_title.text = "CAPABILITIES"
+	cap_title.theme_type_variation = "Overline"
+	box.add_child(cap_title)
+	var have: Array = prof.get("capabilities", [])
+	for key in caps:
+		var c: Dictionary = caps[key]
+		var l := Label.new()
+		l.text = ("✓  " if key in have else "—  ") + "%s: %s" % [str(c.get("label", key)), str(c.get("description", ""))]
+		l.modulate = Color(1, 1, 1, 1.0 if key in have else 0.45)
+		box.add_child(l)
+	var ins_title := Label.new()
+	ins_title.text = "INSTRUCTIONS"
+	ins_title.theme_type_variation = "Overline"
+	box.add_child(ins_title)
+	var text := TextEdit.new()
+	text.text = str(prof.get("instructions", ""))
+	text.editable = false
+	text.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
+	text.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	box.add_child(text)
+	var hint := Label.new()
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.theme_type_variation = "Muted"
+	hint.text = "To change this agent, talk to the Agent Builder: « modifie %s… »." % str(prof.get("name", id))
+	box.add_child(hint)
+	var row := HBoxContainer.new()
+	box.add_child(row)
+	if bool(prof.get("builtin", false)) and bool(prof.get("modified", false)):
+		var reset := Button.new()
+		reset.text = "Back to the original"
+		reset.theme_type_variation = "GhostButton"
+		reset.pressed.connect(func() -> void:
+			await app.backend.api.call_api("/assistant/agents/%s/reset" % id, true, HTTPClient.METHOD_POST)
+			dlg.queue_free()
+			show_toast("%s is back to its original instructions." % str(prof.get("name", id))))
+		row.add_child(reset)
+	if not bool(prof.get("builtin", false)):
+		var del := Button.new()
+		del.text = "Delete this agent"
+		del.theme_type_variation = "GhostButton"
+		del.pressed.connect(func() -> void:
+			await app.backend.api.call_api("/assistant/agents/" + id, true, HTTPClient.METHOD_DELETE)
+			dlg.queue_free()
+			await refresh_agents()
+			show_toast("%s deleted." % str(prof.get("name", id))))
+		row.add_child(del)
+	add_child(dlg)
+	dlg.popup_centered()
+	dlg.confirmed.connect(dlg.queue_free)
+	dlg.canceled.connect(dlg.queue_free)
+	last_agent_info = id
+
+
+var last_agent_info := ""
 
 
 ## Docked panels take room on the left and right: the graph's toolbar and centre move into the free area.
@@ -403,39 +557,10 @@ func _build_left_panel() -> void:
 	panel_layer = SbPanelLayer.new()
 	add_child(panel_layer)
 	panel_layer.edges_changed.connect(_on_panel_edges)
-	assistant_panel = AssistantPanel.new().setup(app, self)
-	assistant_panel.note_requested.connect(_open_note_by_title)
-	assistant_panel.ui_requested.connect(run_ui_actions)
-	assistant_panel.brain_changed.connect(func() -> void:
-		await refresh_graph()
-		await refresh_spaces()
-		_refresh_view())
-	archivist_panel = SbFloatingPanel.new().setup("archivist", "ARCHIVIST", assistant_panel,
-		{"dock": "left", "size": 340.0, "free": Rect2(420, 120, 360, 560)})
-	var head_row := assistant_panel.get_child(0)  # Voice and Talk live move up into the title bar
-	for c in head_row.get_children():
-		head_row.remove_child(c)
-		archivist_panel.extra.add_child(c)
-	head_row.queue_free()
-	panel_layer.add_panel(archivist_panel)
-	sparring_chat = AssistantPanel.new().setup(app, self, "sparring")
-	sparring_chat.note_requested.connect(_open_note_by_title)
-	sparring_chat.ui_requested.connect(run_ui_actions)
-	sparring_chat.brain_changed.connect(func() -> void:
-		await refresh_graph()
-		await refresh_spaces())
-	sparring_panel = SbFloatingPanel.new().setup("sparring", "SPARRING", sparring_chat,
-		{"dock": "left", "size": 340.0, "minimized": true, "free": Rect2(440, 140, 380, 560)})
-	var spar_head := sparring_chat.get_child(0)
-	for c in spar_head.get_children():
-		spar_head.remove_child(c)
-		sparring_panel.extra.add_child(c)
-	spar_head.queue_free()
-	panel_layer.add_panel(sparring_panel)
-	assistant_panel.activated.connect(set_agent)
-	sparring_chat.activated.connect(set_agent)
-	archivist_panel.focused.connect(func() -> void: set_agent("archivist"))
-	sparring_panel.focused.connect(func() -> void: set_agent("sparring"))
+	assistant_panel = _make_agent("archivist", "Archivist", "A", "", false)
+	archivist_panel = agent_panels["archivist"]
+	sparring_chat = _make_agent("sparring", "Sparring", "S", "", true)
+	sparring_panel = agent_panels["sparring"]
 	spaces_page = VBoxContainer.new()
 	spaces_page.add_theme_constant_override("separation", 10)
 	spaces_page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -789,8 +914,9 @@ func run_ui_actions(actions: Array) -> void:
 				show_toast("Pack saved: %s" % str(a.get("path", "")).get_file())
 				last_pack_export = str(a.get("path", ""))
 			"synthesis_draft":
-				sparring_panel.reveal()
-				await sparring_chat.show_draft()
+				var drafter := str(a.get("agent", "sparring"))
+				agent_panel(drafter).reveal()
+				await chat_panel(drafter).show_draft()
 			"open_url":
 				var url := str(a.get("url", ""))
 				last_opened_url = url
@@ -1825,7 +1951,7 @@ func _unhandled_key_input(event: InputEvent) -> void:
 	elif k.keycode == KEY_M and k.ctrl_pressed:
 		toggle_voice()
 		accept_event()
-	elif k.ctrl_pressed and k.keycode in [KEY_1, KEY_2, KEY_3, KEY_4]:
+	elif k.ctrl_pressed and k.keycode >= KEY_1 and k.keycode <= KEY_9:
 		toggle_panel(int(k.keycode - KEY_1))
 		accept_event()
 	elif k.keycode == KEY_TAB and not k.ctrl_pressed and view == "graph" \

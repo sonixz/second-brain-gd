@@ -7,7 +7,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from pydantic import BaseModel, Field
 
 from engine import brain, database
-from engine.assistant import core
+from engine.assistant import agents, core
 from engine.assistant import llm
 from engine.assistant.llm import LLMError, make_client
 from engine.paths import Layout
@@ -19,7 +19,17 @@ class ChatIn(BaseModel):
     space_id: str | None = None
     spoken: bool = False  # the message came by voice: the reply is read aloud, so it must be short
     open_note: str | None = Field(default=None, max_length=64)  # the item open on screen, for « garde ce lien »
-    agent: Literal["archivist", "sparring"] = "archivist"
+    agent: str = Field(default="archivist", max_length=40)
+
+
+class AgentIn(BaseModel):
+    name: str | None = Field(default=None, max_length=40)
+    instructions: str | None = Field(default=None, max_length=20000)
+    capabilities: list[str] | None = None
+    model: str | None = Field(default=None, max_length=40)
+    letter: str | None = Field(default=None, max_length=2)
+    color: str | None = Field(default=None, max_length=8)
+    intro: str | None = Field(default=None, max_length=600)
 
 
 class SpeakIn(BaseModel):
@@ -79,14 +89,55 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     def get_history(limit: int = Query(50, ge=1, le=200), agent: str = Query("archivist", max_length=20)) -> dict[str, Any]:
         from engine.assistant import agents
 
-        conv = agents.conversation(agent)
-        return {"conversation": conv, "agent": agents.name(agent), "messages": run(core.history, conv, limit, needs_client=False)}
+        with database.session(layout.database) as conn:
+            aid = agents.name(conn, agent)
+        conv = agents.conversation(aid)
+        return {"conversation": conv, "agent": aid, "messages": run(core.history, conv, limit, needs_client=False)}
+
+    @r.get("/agents")
+    def get_agents() -> dict[str, Any]:
+        with database.session(layout.database) as conn:
+            return {"agents": agents.profiles(conn),
+                    "capabilities": {k: {"label": v["label"], "description": v["description"]} for k, v in agents.CAPABILITIES.items()}}
+
+    @r.post("/agents", status_code=201)
+    def create_agent(body: AgentIn) -> dict[str, Any]:
+        with database.session(layout.database) as conn:
+            try:
+                return agents.create(conn, body.model_dump(exclude_none=True))
+            except ValueError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @r.patch("/agents/{agent_id}")
+    def patch_agent(agent_id: str, body: AgentIn) -> dict[str, Any]:
+        with database.session(layout.database) as conn:
+            try:
+                return agents.update(conn, agent_id, body.model_dump(exclude_none=True))
+            except KeyError as exc:
+                raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    @r.post("/agents/{agent_id}/reset")
+    def reset_agent(agent_id: str) -> dict[str, Any]:
+        with database.session(layout.database) as conn:
+            try:
+                return agents.reset(conn, agent_id)
+            except KeyError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @r.delete("/agents/{agent_id}")
+    def delete_agent(agent_id: str) -> dict[str, Any]:
+        with database.session(layout.database) as conn:
+            try:
+                agents.delete(conn, agent_id)
+            except KeyError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+        return {"deleted": agent_id}
 
     @r.get("/draft")
-    def get_draft() -> dict[str, Any]:
-        """Sparring's synthesis waiting for approval (shown on screen in full)."""
+    def get_draft(agent: str = Query("sparring", max_length=40)) -> dict[str, Any]:
+        """An agent's synthesis waiting for approval (shown on screen in full)."""
         with database.session(layout.database) as conn:
-            return {"draft": database.get_setting(conn, "sparring_draft")}
+            return {"draft": agents.pending(conn, agents.name(conn, agent))}
 
     @r.post("/chat")
     def post_chat(body: ChatIn) -> dict[str, Any]:

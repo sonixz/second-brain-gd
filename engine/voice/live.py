@@ -252,7 +252,7 @@ class LiveSession:
                  send_json: SendJson, send_audio: SendAudio, text_client: Any = None, agent: str = "archivist"):
         from engine.assistant import agents
 
-        self.agent = agents.name(agent)
+        self.agent = agent or "archivist"
         self.last_user = ""
         self.db_path = db_path
         self.up = upstream
@@ -281,14 +281,22 @@ class LiveSession:
         now = datetime.now().strftime("%A %Y-%m-%d %H:%M")
         from engine.assistant import agents
 
-        return agents.persona(self.agent) + LIVE_RULES + f"\nNous sommes le {now}." + self.focus
+        conn = self._db()
+        try:
+            return agents.persona(conn, self.agent) + LIVE_RULES + f"\nNous sommes le {now}." + self.focus
+        finally:
+            conn.close()
 
     def tools(self) -> list[dict[str, Any]]:
         from engine.assistant import core
 
         from engine.assistant import agents
 
-        return realtime_tools(agents.tools(self.agent, core.TOOLS + agents.SYNTHESIS_TOOLS))
+        conn = self._db()
+        try:
+            return realtime_tools(agents.tools(conn, self.agent, core.TOOLS + agents.SYNTHESIS_TOOLS))
+        finally:
+            conn.close()
 
     async def start(self) -> None:
         await self.up.connect()
@@ -328,8 +336,9 @@ class LiveSession:
             core._CLIENT["c"] = self.text_client
             core._UI["actions"] = []
             core._CONTEXT["user_text"] = self.last_user  # what « save it » is checked against
-            if name not in ("focus_project", "end_conversation") and not agents.allowed(self.agent, name):
-                return {"error": f"{name} is not available to {agents.get(self.agent)['label']}"}, []
+            core._CONTEXT["agent"] = self.agent
+            if not agents.allowed(conn, self.agent, name):
+                return {"error": f"{name} is not available to {agents.label(conn, self.agent)}"}, []
             if name == "focus_project":
                 sid = str(args.get("space_id", ""))
                 try:

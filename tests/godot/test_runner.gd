@@ -546,6 +546,18 @@ func _e2e() -> void:
 	var hist_a: Dictionary = (await app.backend.api.call_api("/assistant/history?agent=archivist"))["data"]
 	check(not str(hist_a.get("messages", [])).contains("Synthèse de test"), "Sparring's conversation stays separate from the archivist's")
 	brain.call("set_agent", "archivist")
+	# Agents as data (Loop 2): a custom agent gets its panel on the rail; ⓘ shows its instructions and capabilities.
+	await app.backend.api.call_api("/assistant/agents/sparring/reset", true, HTTPClient.METHOD_POST)
+	var made_agent := await _create_test_agent(app)
+	await brain.call("refresh_agents")
+	var panels_now: Dictionary = brain.get("agent_panels")
+	check(made_agent and panels_now.has("coach-test") and (panels_now["coach-test"] as SbFloatingPanel).minimized,
+		"a new agent gets its own panel, waiting on the rail")
+	await brain.call("show_agent_info", "sparring")
+	check(str(brain.get("last_agent_info")) == "sparring", "ⓘ shows an agent's instructions, capabilities and model")
+	await app.backend.api.call_api("/assistant/agents/coach-test", true, HTTPClient.METHOD_DELETE)
+	await brain.call("refresh_agents")
+	check(not (brain.get("agent_panels") as Dictionary).has("coach-test"), "a deleted agent's panel goes away")
 	# The legend and the lines' tooltips; the navigation is Graph, Captures, Projects.
 	var gv: GraphView = brain.get("graph")
 	var some_note := ""
@@ -826,6 +838,14 @@ func _drop_check() -> void:
 	g.drop_item("n1", Vector2(5000, 5000))
 	check(moved.size() == 1 and not bool((g.nodes["n1"] as Dictionary)["pinned"]), "an item dropped outside any zone floats back (nothing is pinned)")
 	g.queue_free()
+
+
+## Agents are created by the Agent Builder (Loop 3); here straight through the engine for the test.
+func _create_test_agent(app: SbApp) -> bool:
+	var res := await app.backend.api.call_api("/assistant/agents", true, HTTPClient.METHOD_POST,
+		JSON.stringify({"name": "Coach test", "instructions": "Tu prépares mes entrevues, avec des questions précises et du feedback franc.",
+			"capabilities": ["read_brain", "internet"]}))
+	return res["ok"]
 
 
 func refresh_and_wait(brain: Control) -> void:
