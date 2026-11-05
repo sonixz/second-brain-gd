@@ -49,8 +49,9 @@ var voice_target := "capture"   # capture | chat
 # Assistant
 var assistant_panel: AssistantPanel
 var spaces_page: VBoxContainer
-var tab_assistant: Button
-var tab_spaces: Button
+var panel_layer: SbPanelLayer
+var archivist_panel: SbFloatingPanel   # the conversation with the archivist (was the « Assistant » tab)
+var places_panel: SbFloatingPanel      # briefing, places, sources (was « Spaces & briefing »)
 var toast: PanelContainer
 var toast_label: Label
 var toast_undo: Button
@@ -191,6 +192,13 @@ func _watch_browser() -> void:
 	_browser_rev = rev
 
 
+## Docked panels take room on the left and right: the graph's toolbar and centre move into the free area.
+func _on_panel_edges(left: float, right: float) -> void:
+	filters_bar.offset_left = panel_layer.margin_side + left
+	graph.screen_offset = Vector2((left - right) * 0.5, 0)
+	graph.legend_x = panel_layer.margin_side + left
+
+
 func _every(s: float, fn: Callable) -> void:
 	var t := Timer.new()
 	t.wait_time = s
@@ -298,8 +306,7 @@ func _build_views() -> void:
 		projects_view.show_card(pid))
 	today_view.changed.connect(func() -> void: refresh_graph())
 	today_view.review_requested.connect(func() -> void:
-		tab_assistant.button_pressed = true
-		tab_assistant.pressed.emit()
+		archivist_panel.reveal()
 		assistant_panel.run_review())
 	projects_view.changed.connect(func() -> void:
 		refresh_graph()
@@ -308,8 +315,7 @@ func _build_views() -> void:
 	projects_view.failed.connect(func(msg: String) -> void: show_toast(msg))
 	projects_view.ask_assistant.connect(func(sid: String, prompt: String) -> void:
 		current_space = sid
-		tab_assistant.button_pressed = true
-		tab_assistant.pressed.emit()
+		archivist_panel.reveal()
 		assistant_panel.send(prompt))
 
 
@@ -340,31 +346,9 @@ func set_view(name: String) -> void:
 
 
 func _build_left_panel() -> void:
-	var panel := PanelContainer.new()
-	panel.theme_type_variation = "Glass"
-	panel.set_anchors_preset(Control.PRESET_LEFT_WIDE)
-	panel.offset_left = 24
-	panel.offset_right = 24 + 340
-	panel.offset_top = 92
-	panel.offset_bottom = -112
-	add_child(panel)
-	var root := VBoxContainer.new()
-	root.add_theme_constant_override("separation", 10)
-	panel.add_child(root)
-	var tabs := HBoxContainer.new()
-	tabs.add_theme_constant_override("separation", 6)
-	root.add_child(tabs)
-	var group := ButtonGroup.new()
-	tab_assistant = Button.new()
-	tab_assistant.text = "Assistant"
-	tab_spaces = Button.new()
-	tab_spaces.text = "Spaces & briefing"
-	for b in [tab_assistant, tab_spaces]:
-		b.toggle_mode = true
-		b.button_group = group
-		b.theme_type_variation = "GhostButton"
-		tabs.add_child(b)
-	tab_assistant.button_pressed = true
+	panel_layer = SbPanelLayer.new()
+	add_child(panel_layer)
+	panel_layer.edges_changed.connect(_on_panel_edges)
 	assistant_panel = AssistantPanel.new().setup(app, self)
 	assistant_panel.note_requested.connect(_open_note_by_title)
 	assistant_panel.ui_requested.connect(run_ui_actions)
@@ -372,17 +356,23 @@ func _build_left_panel() -> void:
 		await refresh_graph()
 		await refresh_spaces()
 		_refresh_view())
-	root.add_child(assistant_panel)
+	archivist_panel = SbFloatingPanel.new().setup("archivist", "ARCHIVIST", assistant_panel,
+		{"dock": "left", "size": 340.0, "free": Rect2(420, 120, 360, 560)})
+	var head_row := assistant_panel.get_child(0)  # Voice and Talk live move up into the title bar
+	for c in head_row.get_children():
+		head_row.remove_child(c)
+		archivist_panel.extra.add_child(c)
+	head_row.queue_free()
+	panel_layer.add_panel(archivist_panel)
 	spaces_page = VBoxContainer.new()
 	spaces_page.add_theme_constant_override("separation", 10)
-	spaces_page.visible = false
-	root.add_child(spaces_page)
-	tab_assistant.pressed.connect(func() -> void:
-		assistant_panel.visible = true
-		spaces_page.visible = false)
-	tab_spaces.pressed.connect(func() -> void:
-		assistant_panel.visible = false
-		spaces_page.visible = true)
+	spaces_page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	var places_scroll := ScrollContainer.new()
+	places_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	places_scroll.add_child(spaces_page)
+	places_panel = SbFloatingPanel.new().setup("places", "PLACES · TODAY", places_scroll,
+		{"dock": "left", "size": 340.0, "minimized": true, "free": Rect2(800, 120, 320, 480)})
+	panel_layer.add_panel(places_panel)
 	var col := spaces_page
 	var over := Label.new()
 	over.text = "BRIEFING"
@@ -429,6 +419,15 @@ func _build_left_panel() -> void:
 	sources_box = VBoxContainer.new()
 	sources_box.add_theme_constant_override("separation", 0)
 	col.add_child(sources_box)
+	col.add_child(HSeparator.new())
+	var reset := Button.new()
+	reset.text = "Reset the panel layout"
+	reset.theme_type_variation = "GhostButton"
+	reset.tooltip_text = "Archivist on the left, item on the right, this panel shrunk under the archivist"
+	reset.pressed.connect(func() -> void:
+		panel_layer.reset_all()
+		show_toast("Panels back in their places."))
+	col.add_child(reset)
 
 
 func _build_toast() -> void:
@@ -641,8 +640,7 @@ func run_ui_actions(actions: Array) -> void:
 				await set_view("graph")
 				await open_note(str(a.get("note_id", "")), true)
 			"weekly_review":
-				tab_assistant.button_pressed = true
-				tab_assistant.pressed.emit()
+				archivist_panel.reveal()
 				assistant_panel.run_review()
 			"set_volume":
 				_change_volume(str(a.get("change", "")))
@@ -774,8 +772,7 @@ func push_to_talk(pressed: bool, use_mic: bool = true) -> void:
 		return
 	if pressed and not ptt_active and voice_state == "idle":
 		ptt_active = true
-		tab_assistant.button_pressed = true
-		tab_assistant.pressed.emit()
+		archivist_panel.reveal()
 		voice_target = "chat"
 		var res := await app.backend.api.call_api("/voice/status")
 		var st: Dictionary = res["data"] if res["ok"] else {}
@@ -896,19 +893,11 @@ func _classify(note_id: String, spoken: bool = false) -> void:
 
 
 func _build_inspector() -> void:
-	inspector = PanelContainer.new()
-	inspector.theme_type_variation = "Glass"
-	inspector.set_anchors_preset(Control.PRESET_RIGHT_WIDE)
-	inspector.offset_left = -404
-	inspector.offset_right = -24
-	inspector.offset_top = 92
-	inspector.offset_bottom = -110
-	inspector.grow_horizontal = Control.GROW_DIRECTION_BEGIN
-	inspector.visible = false
-	add_child(inspector)
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 10)
-	inspector.add_child(col)
+	inspector = SbFloatingPanel.new().setup("item", "ITEM", col, {"dock": "right", "size": 380.0, "free": Rect2(900, 120, 380, 560)})
+	inspector.visible = false
+	panel_layer.add_panel(inspector)
 	var head := HBoxContainer.new()
 	col.add_child(head)
 	save_label = Label.new()
@@ -1858,9 +1847,8 @@ func _on_voice_delta(text: String) -> void:
 
 
 func _on_live_text(text: String, role: String) -> void:
-	if tab_assistant != null and not tab_assistant.button_pressed:
-		tab_assistant.button_pressed = true
-		tab_assistant.pressed.emit()
+	if archivist_panel != null:
+		archivist_panel.reveal()
 	assistant_panel.add_live(role, text)
 
 
@@ -1886,8 +1874,7 @@ func toggle_live() -> void:
 		return
 	if voice_state != "idle":
 		return
-	tab_assistant.button_pressed = true
-	tab_assistant.pressed.emit()
+	archivist_panel.reveal()
 	app.live.start(true)
 
 

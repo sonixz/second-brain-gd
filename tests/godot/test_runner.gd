@@ -465,6 +465,50 @@ func _e2e() -> void:
 	check(ap.last_opened_url == "https://example.com/emplois/devsecops", "a source opens in the browser")
 	var web_linked: String = ap._linkify("Voir https://example.org/guide et [[Atlas risks]]")
 	check(web_linked.contains("[url=https://example.org/guide]") and web_linked.contains("[url=Atlas risks]"), "web addresses and item titles both become links")
+	# Floating panels (2026-11-04): move, dock by dropping near an edge, shrink, remember, reset.
+	brain.size = Vector2(1600, 1000)  # headless windows are tiny
+	var layer: SbPanelLayer = brain.get("panel_layer")
+	layer.size = brain.size
+	layer.relayout()
+	var arch: SbFloatingPanel = brain.get("archivist_panel")
+	var places: SbFloatingPanel = brain.get("places_panel")
+	layer.reset_all()
+	layer.relayout()
+	check(arch.dock == "left" and not arch.minimized and places.minimized and arch.size.y > 500.0,
+		"the archivist is docked on the left; Places waits as a title bar under it (%.0f px tall)" % arch.size.y)
+	check(is_equal_approx(float((brain.get("filters_bar") as Control).offset_left), layer.margin_side + layer.left_extent),
+		"the graph's toolbar moves aside for the docked panels")
+	var drag := func(panel: SbFloatingPanel, to: Vector2) -> void:
+		var start := panel.global_position + Vector2(60, 12)
+		var down := InputEventMouseButton.new()
+		down.button_index = MOUSE_BUTTON_LEFT
+		down.pressed = true
+		down.global_position = start
+		panel._on_header_input(down)
+		var mv := InputEventMouseMotion.new()
+		mv.global_position = to
+		panel._on_header_input(mv)
+		var up := InputEventMouseButton.new()
+		up.button_index = MOUSE_BUTTON_LEFT
+		up.pressed = false
+		up.global_position = to
+		panel._on_header_input(up)
+		layer.relayout()
+	drag.call(arch, Vector2(700, 300))
+	check(arch.dock == "free" and arch.position.x > 500.0, "dragged to the middle, the archivist floats there")
+	drag.call(arch, Vector2(1560, 300))
+	check(arch.dock == "right" and arch.position.x + arch.size.x > 1500.0, "dropped near the right edge, it docks there")
+	var saved: Dictionary = SbSettings.get_value("panels", "archivist", {})
+	check(str(saved.get("dock", "")) == "right", "its place is remembered")
+	arch.set_minimized(true)
+	layer.relayout()
+	check(arch.size.y < 90.0, "shrunk to its title bar (%.0f px)" % arch.size.y)
+	arch.reveal()
+	layer.relayout()
+	check(not arch.minimized and arch.size.y > 300.0, "it opens again")
+	layer.reset_all()
+	layer.relayout()
+	check(arch.dock == "left" and places.minimized, "« Reset the panel layout » puts everything back")
 	# The legend and the lines' tooltips; the navigation is Graph, Captures, Projects.
 	var gv: GraphView = brain.get("graph")
 	var some_note := ""

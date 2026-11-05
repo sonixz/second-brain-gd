@@ -60,6 +60,7 @@ var anchors: Dictionary = {}         # space node id -> its zone's centre (Loop 
 var custom_anchors: Dictionary = {}  # zones the user moved by dragging a place
 var zone_reach: Dictionary = {}      # space node id -> its zone's radius in world units, as last drawn
 var show_legend := false
+var legend_x := 388.0          # left edge of the free area (docked panels move it)
 var folded: Dictionary = {}          # space node id -> true when its items are folded in
 var filter: Dictionary = {}
 var filtered_out: Dictionary = {}          # node id -> true when filtered out or folded in
@@ -1300,7 +1301,7 @@ const LEGEND := [["link", "Link: you wrote [[…]], the archivist linked, or you
 
 func _draw_legend() -> void:
 	var font := get_theme_default_font()
-	var box := Rect2(Vector2(388, 148), Vector2(470, 30 + LEGEND.size() * 26))
+	var box := Rect2(Vector2(legend_x, 148), Vector2(470, 30 + LEGEND.size() * 26))
 	draw_rect(box, Color(SbTheme.BG, 0.92))
 	draw_rect(box, Color(SbTheme.FOREST_LIGHT, 0.35), false, 1.0)
 	draw_string(font, box.position + Vector2(14, 22), "LINES IN THE GRAPH", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(SbTheme.TEXT, 0.7))

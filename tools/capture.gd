@@ -170,8 +170,7 @@ func _run() -> void:
 	await b0.call("set_view", "graph")
 	app.show_brain()
 	await pause(7.0)
-	(app.current().get("tab_spaces") as Button).pressed.emit()
-	(app.current().get("tab_spaces") as Button).button_pressed = true
+	(app.current().get("places_panel") as SbFloatingPanel).reveal()
 	await pause(0.5)
 	await shot("05-brain-morning")
 	var brain: Control = app.current()

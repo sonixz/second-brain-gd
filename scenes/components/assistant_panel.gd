@@ -41,7 +41,7 @@ func setup(a: SbApp, b: Control) -> AssistantPanel:
 	head.alignment = BoxContainer.ALIGNMENT_END
 	speak_toggle = CheckButton.new()
 	speak_toggle.text = "Voice"
-	speak_toggle.tooltip_text = "The assistant reads its answers aloud (voice: marin)"
+	speak_toggle.tooltip_text = "The archivist reads its answers aloud (voice: marin)"
 	speak_toggle.button_pressed = bool(SbSettings.get_value("assistant", "speaks", true))
 	speak_toggle.toggled.connect(func(on: bool) -> void:
 		SbSettings.set_value("assistant", "speaks", on)
@@ -49,8 +49,8 @@ func setup(a: SbApp, b: Control) -> AssistantPanel:
 			app.audio.stop_voice())
 	head.add_child(speak_toggle)
 	live_button = Button.new()
-	live_button.text = "Talk live"
-	live_button.tooltip_text = "A spoken conversation with the assistant (F9 to start and end)"
+	live_button.text = "Live"
+	live_button.tooltip_text = "A spoken conversation with the archivist (F9 to start and end)"
 	live_button.toggle_mode = false
 	live_button.pressed.connect(func() -> void: brain.call("toggle_live"))
 	head.add_child(live_button)
@@ -72,7 +72,7 @@ func setup(a: SbApp, b: Control) -> AssistantPanel:
 	row.add_theme_constant_override("separation", 6)
 	add_child(row)
 	input = LineEdit.new()
-	input.placeholder_text = "Ask or tell your assistant…"
+	input.placeholder_text = "Ask or tell the archivist…"
 	input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	input.custom_minimum_size = Vector2(0, 40)
 	input.text_submitted.connect(func(t: String) -> void: send(t))
@@ -80,7 +80,7 @@ func setup(a: SbApp, b: Control) -> AssistantPanel:
 	mic_button = Button.new()
 	mic_button.icon = load("res://assets/icons/mic.svg")
 	mic_button.custom_minimum_size = Vector2(40, 40)
-	mic_button.tooltip_text = "Talk to the assistant (click, speak, click again)"
+	mic_button.tooltip_text = "Talk to the archivist (click, speak, click again)"
 	mic_button.set_meta("sfx", "none")
 	mic_button.pressed.connect(func() -> void: brain.call("toggle_voice", "chat"))
 	row.add_child(mic_button)
@@ -235,7 +235,7 @@ func _err(res: Dictionary) -> String:
 
 
 func _on_live_state(st: String) -> void:
-	live_button.text = "End live (F9)" if st != "idle" else "Talk live"
+	live_button.text = "End (F9)" if st != "idle" else "Live"
 
 
 ## The archivist's receipt for an item that came in: where it went, or what it is waiting on.
