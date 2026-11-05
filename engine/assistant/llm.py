@@ -263,6 +263,10 @@ class FakeChat:
                         "usage": usage, "model": model}
             if "explanation" in found:
                 return {"message": {"role": "assistant", "content": found["explanation"]}, "usage": usage, "model": model}
+            if "opened" in found or "closed" in found or "added" in found or ("error" in found and "browser" in str(found["error"])):
+                said = ("Ouvert." if "opened" in found else "Fermé." if "closed" in found
+                        else f"Ajouté: [[{found['added']}]]." if "added" in found else "L'extension n'est pas connectée.")
+                return {"message": {"role": "assistant", "content": said}, "usage": usage, "model": model}
             if found.get("file"):
                 return {"message": {"role": "assistant", "content": f"Exporté: {found['file']} ({found['items']} éléments)."},
                         "usage": usage, "model": model}
@@ -284,6 +288,18 @@ class FakeChat:
             other = text.split(" avec ", 1)[1].strip(" .!") if " avec " in text else ""
             call = {"id": "call_rel", "type": "function", "function": {"name": "related_idea", "arguments": json.dumps(
                 {"action": "keep" if low.startswith("garde") else "dismiss", "other": other})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith("ouvre la page http") and tools:
+            call = {"id": "call_open", "type": "function", "function": {"name": "open_web_page",
+                                                                         "arguments": json.dumps({"url": text.split()[3].strip(" .")})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith(("injecte-la", "ajoute cette page")) and tools:
+            call = {"id": "call_cap", "type": "function", "function": {"name": "capture_browser_tab", "arguments": json.dumps(
+                {"tab": "active" if "cette page" in low else "last_opened"})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith(("ferme-la", "ferme les onglets")) and tools:
+            call = {"id": "call_close", "type": "function", "function": {"name": "close_browser_tabs", "arguments": json.dumps(
+                {"which": "all" if "onglets" in low else "last"})}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if low.startswith(("cherche sur le web", "cherche sur internet")) and tools:
             q = text.split(" ", 4)[-1].strip(" .!?") if len(text.split()) > 4 else text

@@ -74,6 +74,11 @@ Set `SBGD_HOME` to use another folder. Nothing is ever written inside the reposi
 - **Explore:** use the wheel to zoom, drag to pan. Drag an item into another place's zone to move it there;
   dropped elsewhere it stays put. Click a note to edit it, a space to filter, a tag to search. Press `/` to
   search and Esc to close.
+- **Browser:** the Edge/Chrome extension in `browser-extension/` sends the page you read (as you see it) in one
+  click, and lets the assistant open, add (« injecte-la ») and close tabs by voice. Install: `edge://extensions` →
+  Developer mode → Load unpacked; pair it from *Captures → Send from browser…*. Guide:
+  [`public/docs.html#extension`](public/docs.html#extension).
+- **Internet:** « cherche sur internet … » searches the web (through OpenAI) and answers with its sources as links.
 - **Files:** drop PDFs, Word, HTML, text or images on the window. Originals are kept. A scanned PDF (pages
   that are pictures) is read by the **local OCR**: built into Windows, Tesseract on Linux
   (`sudo apt install tesseract-ocr tesseract-ocr-fra`). Nothing leaves your machine; *Re-read with AI* in the
@@ -139,6 +144,7 @@ The Godot test presses the real Setup button headless and checks the System Cons
 scenes/        Godot screens (startup/, dashboard/) and UI components
 scripts/       GDScript: core/ (app, theme, paths), setup/ (Python locator, bootstrap runner), monitoring/ (API client)
 engine/        Python: bootstrap.py, installer/, database/ (+ migrations), api/, monitoring/
+browser-extension/  the Edge/Chrome extension (Manifest V3): pairing, send page/selection, voice open/add/close
 tests/         python/ (unittest), godot/ (headless end-to-end)
 public/        landing page and docs (open public/index.html or public/docs.html, no build)
 docs/          architecture/, troubleshooting, screenshots

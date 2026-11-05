@@ -158,5 +158,8 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
     app.include_router(make_sources_router(layout, require_token))
     app.include_router(make_billing_router(layout, require_token))
     app.include_router(make_capture_router(layout, require_token, port))
+    from engine.browser.routes import make_router as make_browser_router
+
+    app.include_router(make_browser_router(layout, require_token, port))
     app.include_router(make_pack_router(layout, require_token, client_or_none))
     return app

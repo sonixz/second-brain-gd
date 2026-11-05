@@ -340,6 +340,29 @@ def reread_with_ai(conn: sqlite3.Connection, client: Any, source_id: str) -> dic
     return {**get_source(conn, source_id), "duplicate": False}
 
 
+MAX_PAGE_HTML = 3_000_000
+MAX_PAGE_TEXT = 1_000_000
+
+
+def ingest_page(conn: sqlite3.Connection, client: Any | None, url: str, title: str, html: str, text: str,
+                space_id: str | None = None) -> dict[str, Any]:
+    """A page as the user's browser shows it (the extension): after their login, scripts and checks. Nothing is
+    downloaded again. The page's HTML is kept as its original; its readable text is indexed."""
+    from engine.sources import originals
+
+    url = (url or "").strip()
+    if not url.startswith(("http://", "https://")):
+        raise extract.ExtractError("only web pages (http/https) can be sent from the browser")
+    html = (html or "")[:MAX_PAGE_HTML]
+    page_title, readable = extract.html_to_text(html) if html else ("", "")
+    rendered = (text or "")[:MAX_PAGE_TEXT].strip()
+    if len(readable) < 200 and len(rendered) > len(readable):  # an app-like page: what was on screen reads better
+        readable = rendered
+    kept = originals.keep_bytes(originals.data_root(conn), html.encode("utf-8"), "html") if html else None
+    return ingest(conn, client, "url", url, (title or page_title or url)[:300], readable, "text/html",
+                  len(html.encode("utf-8")) if html else len(readable), space_id, original=kept, text_engine="browser")
+
+
 def ingest_url(conn: sqlite3.Connection, client: Any | None, url: str, space_id: str | None = None) -> dict[str, Any]:
     from engine.sources import originals, render
 

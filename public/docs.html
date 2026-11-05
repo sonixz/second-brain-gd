@@ -51,7 +51,8 @@
         <h4>Integrate</h4>
         <ul>
           <li><a href="#internet">Internet</a></li>
-          <li><a href="#browser">From your browser</a></li>
+          <li><a href="#extension">Browser extension</a></li>
+          <li><a href="#browser">Bookmark (no extension)</a></li>
           <li><a href="#api">Local HTTP API</a></li>
           <li><a href="#packs">Brain packs</a></li>
           <li><a href="#files">Files and originals</a></li>
@@ -342,11 +343,143 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         </ul>
       </section>
 
+      <section class="doc" id="extension">
+        <p class="kicker">Integrate · tutorial</p>
+        <h2>Browser extension (Edge, Chrome)</h2>
+        <p>The extension connects <b>your</b> browser to your Brain. Send the page you are reading, or just a passage,
+          in one click; and let the assistant open pages for you, add them once you have checked them, and close them,
+          by voice. It sends the page <b>as your browser shows it</b>: after your login, the page's scripts and any
+          « I am not a robot » check. Nothing is downloaded a second time, so sites that block robots (many job boards)
+          are not a problem.</p>
+        <div class="callout"><p><b>Local and private.</b> The extension is a folder of the project
+          (<code>browser-extension/</code>), loaded in your own browser. No store, no account, no publication. It talks only
+          to the engine on <code>127.0.0.1</code>, with its own token obtained by pairing.</p></div>
+
+        <h3>1. Install it (once)</h3>
+        <ol class="steps-doc">
+          <li><p>Open <code>edge://extensions</code> in Edge, or <code>chrome://extensions</code> in Chrome (version 116 or later).</p></li>
+          <li><p>Turn on <b>Developer mode</b> (in Edge, the switch in the left menu; in Chrome, top right).</p></li>
+          <li><p>Click <b>Load unpacked</b> and choose the folder <code>browser-extension</code> of your Second Brain GD
+            checkout (for example <code>C:\git\second-brain-gd\browser-extension</code>).</p></li>
+          <li><p>Pin it to the toolbar (the puzzle icon, then the pin) so its icon is always visible.</p></li>
+        </ol>
+        <p>The browser may remind you that an extension runs in developer mode: that is expected for an extension that does
+          not come from a store. After an update of the project, click <b>Reload</b> on the extension's card.</p>
+
+        <h3>2. Pair it with your Brain</h3>
+        <ol class="steps-doc">
+          <li><p>In the app: <b>Captures → Send from browser… → Pair a browser</b>. A code like <code>K7Q2-M9XD</code> and the
+            engine's port appear. The code works <b>once</b>, for 10 minutes, and dies after 5 wrong attempts.</p></li>
+          <li><p>Click the extension's icon, type the code (and the port if it is not 8765), keep
+            « Also let the Brain read the pages it opens » ticked, and press <b>Pair</b>.</p></li>
+          <li><p>The browser asks for the permission to read pages: accept it to use voice commands such as « injecte-la »
+            (see the permissions below). The app's dialog then shows <b>● Connected: Edge 130</b>.</p></li>
+        </ol>
+        <p>Pair several browsers if you want (Edge and Chrome, up to five). <b>Unpair all browsers</b> in the same dialog
+          revokes every extension token at once; an unpaired extension forgets its token and asks to be paired again.</p>
+
+        <h3>3. Use it</h3>
+        <table>
+          <thead><tr><th>You</th><th>What happens</th></tr></thead>
+          <tbody>
+            <tr><td>Click the icon → <b>Send this page</b>, or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></td>
+              <td>The page you see is kept (its HTML as the original), its text indexed, summarised and filed by the archivist. A ✓ appears on the icon; the app shows « From your browser: … » and refreshes the graph.</td></tr>
+            <tr><td>Select text → right-click → <b>Send the selection to the Brain</b></td>
+              <td>Only that passage enters, as a quote, with the page as its source.</td></tr>
+            <tr><td>« ouvre la première offre » (<kbd>F8</kbd>)</td>
+              <td>The Brain opens the page in a new tab of your browser and remembers it.</td></tr>
+            <tr><td>« injecte-la » / « ajoute-la »</td>
+              <td>The page the Brain opened is added as your browser shows it, after your check.</td></tr>
+            <tr><td>« ajoute cette page »</td><td>The tab in front of you is added.</td></tr>
+            <tr><td>« garde juste le passage sélectionné »</td><td>Only your selection on that page is added.</td></tr>
+            <tr><td>« ferme-la » / « ferme les onglets que tu as ouverts »</td>
+              <td>The last tab the Brain opened, or all of them, close. <b>Your own tabs are never closed.</b></td></tr>
+          </tbody>
+        </table>
+        <p>Without the extension, « ouvre-la » still opens the page in your default browser, but the Brain cannot read or
+          close that tab; « ajoute-la » then downloads the page itself, and a site that refuses robots gives a reference
+          card (title, summary, link) instead of the full page.</p>
+
+        <h3>Permissions, and why</h3>
+        <table>
+          <thead><tr><th>Permission</th><th>Why</th></tr></thead>
+          <tbody>
+            <tr><td><code>http://127.0.0.1/*</code></td><td>Talk to your engine, and nothing else on the network.</td></tr>
+            <tr><td><code>tabs</code></td><td>Open the pages the Brain opens, remember them, close them.</td></tr>
+            <tr><td><code>activeTab</code>, <code>scripting</code></td><td>Read the page you send by clicking (the icon, the shortcut, the right-click menu): access to that one tab, at that moment.</td></tr>
+            <tr><td><code>contextMenus</code></td><td>The right-click entries.</td></tr>
+            <tr><td><code>storage</code>, <code>alarms</code></td><td>Keep the port and token; wake up and reconnect when the browser stopped the extension.</td></tr>
+            <tr><td><i>Optional:</i> read pages on all sites</td><td>Only for voice commands (« injecte-la »), where you do not click.
+              The extension itself only reads a tab the Brain opened or the one you name; it never browses your history, cookies or passwords. You can refuse it: clicking Send keeps working.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>How it works</h3>
+<pre><code>Edge / Chrome                               Second Brain engine (127.0.0.1:8765)
+┌──────────────────────────┐   WebSocket    ┌──────────────────────────────────┐
+│ background.js            │◀── commands ───│ assistant tools: open_web_page,   │
+│  open · capture · close  │─── results ───▶│ capture_browser_tab,              │
+│                          │                │ close_browser_tabs                │
+│ the page as you see it   │── POST page ──▶│ /browser/capture → kept, indexed, │
+│ (HTML + visible text)    │                │ summarised, filed by the archivist│
+└──────────────────────────┘                └──────────────────────────────────┘</code></pre>
+        <ul>
+          <li>The extension keeps one WebSocket to <code>/browser/ws</code>; the engine pings it every 20 seconds, which also
+            keeps the browser from putting the extension to sleep. If the link drops (app closed, computer asleep) it
+            reconnects by itself, with an alarm every 30 seconds as a safety net.</li>
+          <li>A page arrives with its HTML (kept as the original, up to 3 MB) and the text that was on screen (up to 1 MB).
+            The readable text comes from the HTML without menus, header and footer; for an app-like page with little HTML
+            text, the visible text is used. A PDF tab or a protected page cannot be read by a script: the engine then
+            downloads the address itself.</li>
+          <li>The app checks every two seconds whether something arrived from the browser, refreshes the graph and says so.</li>
+        </ul>
+
+        <h3>Security</h3>
+        <ul>
+          <li><b>Its own token.</b> Pairing exchanges the one-time code for a random token; the engine stores only its
+            hash. That token can send pages and answer commands, nothing else: it cannot read your Brain, call the API or
+            your OpenAI key. Unpair revokes it.</li>
+          <li><b>Only 127.0.0.1.</b> Nothing goes to a server. Searching the web (see <a href="#internet">Internet</a>) is
+            separate and goes through OpenAI.</li>
+          <li><b>Pages are data.</b> Whatever a page says, the assistant never follows instructions found in it.</li>
+          <li><b>Limited reach.</b> Commands act only on tabs the Brain opened, or on the tab in front when you ask for it;
+            browser pages (<code>edge://</code>, <code>chrome://</code>, the stores) cannot be read at all.</li>
+        </ul>
+
+        <h3>Troubleshooting</h3>
+        <table>
+          <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
+          <tbody>
+            <tr><td>The icon's dot is orange: « Paired, not connected »</td><td>Open the app (the engine must run). It reconnects within 30 seconds; or click <b>Reconnect</b> in the extension's settings.</td></tr>
+            <tr><td>« The Brain is not reachable on 127.0.0.1:8765 »</td><td>The engine uses another port: read it in the pairing dialog and enter it when pairing.</td></tr>
+            <tr><td>« wrong code » or « no pairing code is active »</td><td>Ask for a new code (it lasts 10 minutes and works once).</td></tr>
+            <tr><td>« the extension may not read pages yet »</td><td>Open the extension and click <b>Allow reading the pages the Brain opens</b>, or send by clicking instead.</td></tr>
+            <tr><td>« this page cannot be sent »</td><td>Browser and store pages are off limits; for a PDF, the engine downloads it.</td></tr>
+            <tr><td>The extension asks to pair again</td><td>It was unpaired from the app (or the token was revoked): pair again.</td></tr>
+          </tbody>
+        </table>
+
+        <h3>API (for developers)</h3>
+        <table>
+          <thead><tr><th>Route</th><th>Auth</th><th>Purpose</th></tr></thead>
+          <tbody>
+            <tr><td><code>POST /browser/pair/start</code></td><td>API token</td><td>New one-time pairing code (10 min) and the port</td></tr>
+            <tr><td><code>POST /browser/pair</code> <code>{code, browser}</code></td><td>the code</td><td>Returns the extension's token</td></tr>
+            <tr><td><code>GET /browser/status</code></td><td>API token</td><td>Paired browsers, connected or not, pages received (<code>rev</code>, <code>last_added</code>)</td></tr>
+            <tr><td><code>DELETE /browser/pair</code></td><td>API token</td><td>Revoke every extension token, close the link</td></tr>
+            <tr><td><code>WS /browser/ws</code></td><td>token in the first message</td><td><code>{"type":"hello","token",…}</code>, then commands
+              <code>{"type":"command","id","action":"open|capture|close",…}</code> answered by <code>{"type":"result","id","ok","data"}</code>; pings every 20 s</td></tr>
+            <tr><td><code>POST /browser/capture</code> <code>{url, title, html, text, selection, selection_only, place}</code></td><td>extension token</td><td>Add a page or a passage; returns the note, its place and the archivist's receipt</td></tr>
+          </tbody>
+        </table>
+      </section>
+
       <section class="doc" id="browser">
         <p class="kicker">Integrate · tutorial</p>
-        <h2>Send pages from your browser</h2>
-        <p>A bookmarklet sends the current page, or just your selection, to your Brain. It works in any browser,
-          with no extension.</p>
+        <h2>Without the extension: a bookmark</h2>
+        <p>Prefer the <a href="#extension">browser extension</a>. If you cannot install it, a bookmarklet sends the address
+          of the current page, or your selection, to your Brain, in any browser. The engine then downloads the page
+          itself, so pages behind a login or a robot check may be refused.</p>
         <ol class="steps-doc">
           <li><p>In the app, open <b>Captures</b> and press <b>Send from browser…</b>.</p></li>
           <li><p>Copy the link it shows, then add a bookmark named « Envoyer au Brain » to your bookmarks bar with that
@@ -414,6 +547,7 @@ curl -s "${auth[@]}" "$API/brain/feed"          # what came in, as the archivist
             <tr><td><code>GET/PUT /brain/context</code></td><td>The working context</td></tr>
             <tr><td><code>POST /packs/preview</code> · <code>/packs/export</code> · <code>/packs/import</code></td><td>Brain packs (see <a href="#packs">Packs</a>)</td></tr>
             <tr><td><code>GET /assistant/actions</code> · <code>POST /assistant/actions/{id}/undo</code></td><td>The journal, and Undo</td></tr>
+            <tr><td><code>/browser/…</code></td><td>The browser extension: pairing, status, live link, pages (see <a href="#extension">Browser extension</a>)</td></tr>
           </tbody>
         </table>
         <div class="callout"><p>The API binds to <code>127.0.0.1</code> only and has no CORS: a web page cannot read
@@ -563,7 +697,8 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
             <tr><td><code>scenes/</code></td><td>Godot screens: <code>brain/</code> (graph, captures, viewer, filters, packs), <code>startup/</code>, <code>dashboard/</code>, components</td></tr>
             <tr><td><code>scripts/</code></td><td>GDScript: <code>core/</code> (app, theme, audio, settings), <code>setup/</code>, <code>voice/</code>, <code>monitoring/</code></td></tr>
             <tr><td><code>engine/brain/</code></td><td>Items, places, links, archivist, meaning, packs, paths, seeds</td></tr>
-            <tr><td><code>engine/sources/</code></td><td>Extraction, originals, PDF rendering</td></tr>
+            <tr><td><code>engine/sources/</code></td><td>Extraction, originals, PDF rendering, local OCR</td></tr>
+            <tr><td><code>engine/browser/</code> · <code>browser-extension/</code></td><td>Pairing, live link and pages from the browser · the Edge/Chrome extension (Manifest V3)</td></tr>
             <tr><td><code>engine/assistant/</code> · <code>voice/</code></td><td>The archivist's chat and tools · push-to-talk and live relay</td></tr>
             <tr><td><code>engine/database/migrations/</code></td><td>Numbered, checksummed, immutable SQL migrations</td></tr>
             <tr><td><code>tests/</code> · <code>tools/</code></td><td>Python and Godot tests · capture, benchmarks, test runners</td></tr>
@@ -649,7 +784,9 @@ SBGD_SHOT_SIZE=1600x1000 ./tools/showcase.sh     # the website screenshots, from
           <li><code>/health</code> is the only public route; there is no CORS and no docs endpoint.</li>
           <li>Keys live in the OS credential store; Godot never holds them; they never reach logs or events.</li>
           <li>No silent interpreter download, no admin rights, no remote scripts. Only pip wheels pinned by SHA-256.</li>
-          <li>Imported packs and fetched pages are data, never instructions; archives are unpacked defensively.</li>
+          <li>Imported packs, fetched pages and pages sent by the browser are data, never instructions; archives are unpacked defensively.</li>
+          <li>The browser extension gets its own token by one-time pairing (hash stored, revocable); it can only send pages
+            and answer commands, and only reaches <code>127.0.0.1</code>.</li>
           <li>The engine stops with the app, and on its own if the app crashes (parent-process watchdog).</li>
         </ul>
       </section>

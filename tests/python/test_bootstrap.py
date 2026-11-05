@@ -438,6 +438,19 @@ class BootstrapIntegration(unittest.TestCase):
         self.assertEqual(item["source"]["pages"], 1)
         code, storage = get(f"http://127.0.0.1:{port}/system/storage", tok)
         self.assertGreater(storage["entries"]["originals"]["files"], 1)
+        # Browser extension (2026-11-04): pairing, live commands from the assistant, a page sent from the tab.
+        bc = subprocess.run([venv_py, str(ROOT / "tests" / "python" / "browser_client.py"), str(port), tok],
+                            capture_output=True, text=True, timeout=120, **NO_WINDOW)
+        self.assertEqual(bc.returncode, 0, bc.stderr[-1200:])
+        b = json.loads(bc.stdout.strip().splitlines()[-1])
+        self.assertEqual((b["wrong_code"], b["paired"], b["code_reused"], b["capture_without_token"]), (403, 200, 403, 401))
+        self.assertEqual((b["welcome"], b["status_connected"]), ("welcome", True))
+        self.assertEqual(b["commands"], ["open", "capture", "close"])
+        self.assertEqual(b["replies"][0], "Ouvert.")
+        self.assertIn("Analyste DevSecOps", b["replies"][1])
+        self.assertEqual(b["replies"][2], "Fermé.")
+        self.assertGreaterEqual(b["rev"], 1)
+        self.assertEqual((b["unpair"], b["capture_after_unpair"]), (1, 401))
         # Real costs: read live from OpenAI's shapes (fake pages here), never stored.
         bl = f"http://127.0.0.1:{port}/billing"
         self.assertEqual(get(bl)[0], 401)

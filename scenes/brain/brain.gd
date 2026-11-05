@@ -148,6 +148,7 @@ func _ready() -> void:
 	add_child(_save_timer)
 	_every(GRAPH_REFRESH_S, func() -> void: refresh_graph())
 	_every(HEALTH_EVERY_S, _check_health)
+	_every(2.0, _watch_browser)
 	_update_greeting()
 	await _check_health()
 	await refresh_spaces()
@@ -160,6 +161,34 @@ func _ready() -> void:
 	var keep := str(app.state.get("selected_note", ""))
 	if keep != "":
 		open_note(keep)
+
+
+## Pages sent by the browser extension arrive without the app asking: refresh and say so.
+var browser_status: Dictionary = {}
+var last_opened_url := ""
+var _browser_rev := -1
+var _browser_busy := false
+
+
+func _watch_browser() -> void:
+	if _browser_busy or not is_inside_tree():
+		return
+	_browser_busy = true
+	var res := await app.backend.api.call_api("/browser/status")
+	_browser_busy = false
+	if not res["ok"] or not is_inside_tree():
+		return
+	browser_status = res["data"]
+	var rev := int(browser_status.get("rev", 0))
+	if _browser_rev >= 0 and rev != _browser_rev:
+		var last: Dictionary = browser_status.get("last_added", {})
+		app.audio.play("note_create", 0.04)
+		show_toast("From your browser: « %s » → %s" % [str(last.get("title", "")).left(60), str(last.get("place", "Inbox"))])
+		await refresh_graph()
+		await refresh_spaces()
+		if view == "captures":
+			await captures_view.refresh()
+	_browser_rev = rev
 
 
 func _every(s: float, fn: Callable) -> void:
@@ -689,6 +718,11 @@ func run_ui_actions(actions: Array) -> void:
 			"pack_exported":
 				show_toast("Pack saved: %s" % str(a.get("path", "")).get_file())
 				last_pack_export = str(a.get("path", ""))
+			"open_url":
+				var url := str(a.get("url", ""))
+				last_opened_url = url
+				if url.begins_with("http") and OS.get_environment("SBGD_TEST_NO_SHELL") != "1":
+					OS.shell_open(url)
 			"capture_clipboard":
 				var clip := clipboard_text().strip_edges()
 				if clip == "":

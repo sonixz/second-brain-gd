@@ -106,7 +106,7 @@ func show_bookmarklet() -> void:
 		return
 	bookmarklet = str((res["data"] as Dictionary).get("bookmarklet", ""))
 	var dlg := AcceptDialog.new()
-	dlg.title = "Send to the Brain from your browser"
+	dlg.title = "Your browser and the Brain"
 	dlg.theme = app.theme
 	dlg.add_theme_stylebox_override("panel", SbTheme.box(SbTheme.PANEL, 0, SbTheme.BORDER, 1, 18))
 	dlg.ok_button_text = "Close"
@@ -114,6 +114,13 @@ func show_bookmarklet() -> void:
 	box.custom_minimum_size = Vector2(620, 0)
 	box.add_theme_constant_override("separation", 10)
 	dlg.add_child(box)
+	_extension_section(box)
+	var sep := HSeparator.new()
+	box.add_child(sep)
+	var alt := Label.new()
+	alt.text = "WITHOUT THE EXTENSION: A BOOKMARK"
+	alt.theme_type_variation = "Overline"
+	box.add_child(alt)
 	var how := Label.new()
 	how.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	how.text = ("1. Copy the link below.\n2. In your browser, add a bookmark named « Envoyer au Brain » and paste it as the address.\n"
@@ -150,6 +157,83 @@ func show_bookmarklet() -> void:
 	dlg.popup_centered()
 	dlg.confirmed.connect(dlg.queue_free)
 	dlg.canceled.connect(dlg.queue_free)
+
+
+## The browser extension (Edge, Chrome): status, pairing code, unpairing. The extension itself lives in
+## browser-extension/ and is loaded once in the browser (Developer mode → Load unpacked).
+var pair_code := ""
+
+
+func _extension_section(box: VBoxContainer) -> void:
+	var title := Label.new()
+	title.text = "BROWSER EXTENSION · EDGE, CHROME (RECOMMENDED)"
+	title.theme_type_variation = "Overline"
+	box.add_child(title)
+	var state := Label.new()
+	state.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(state)
+	var steps := Label.new()
+	steps.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	steps.theme_type_variation = "Muted"
+	steps.text = ("Install it once: in the browser open edge://extensions (or chrome://extensions), turn on Developer mode, "
+		+ "click « Load unpacked » and choose the folder browser-extension in the project. Then pair it: click below, "
+		+ "and type the code in the extension (its icon in the toolbar). It talks only to this computer.")
+	box.add_child(steps)
+	var code_label := Label.new()
+	code_label.add_theme_font_size_override("font_size", 30)
+	code_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	code_label.visible = false
+	box.add_child(code_label)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	box.add_child(row)
+	var pair := Button.new()
+	pair.text = "Pair a browser"
+	pair.theme_type_variation = "PrimaryButton"
+	row.add_child(pair)
+	var unpair := Button.new()
+	unpair.text = "Unpair all browsers"
+	unpair.theme_type_variation = "GhostButton"
+	row.add_child(unpair)
+	var refresh_state := func() -> void:
+		var r := await app.backend.api.call_api("/browser/status")
+		if not r["ok"] or not is_instance_valid(state):
+			return
+		var d: Dictionary = r["data"]
+		var paired: Array = d.get("paired", [])
+		if bool(d.get("connected", false)):
+			state.text = "● Connected: %s (extension %s)%s" % [str(d.get("browser", "")), str(d.get("extension_version", "")),
+				"" if bool(d.get("can_read_tabs", false)) else ". Voice « injecte-la » needs « Allow reading the pages the Brain opens » in the extension."]
+		elif not paired.is_empty():
+			state.text = "○ Paired (%s), not connected right now. The extension reconnects by itself while the app is open." % \
+				", ".join(paired.map(func(x: Variant) -> String: return str((x as Dictionary).get("browser", "browser"))))
+		else:
+			state.text = "○ No browser paired yet."
+		unpair.visible = not paired.is_empty()
+	refresh_state.call()
+	pair.pressed.connect(func() -> void:
+		var r := await app.backend.api.call_api("/browser/pair/start", true, HTTPClient.METHOD_POST)
+		if not r["ok"]:
+			code_label.text = "Could not start pairing"
+			code_label.visible = true
+			return
+		var d: Dictionary = r["data"]
+		pair_code = str(d.get("code", ""))
+		code_label.text = "%s     port %d" % [pair_code, int(d.get("port", 8765))]
+		code_label.visible = true
+		pair.text = "New code"
+		steps.text = "Type this code in the extension within 10 minutes (it works once). Then this window shows « Connected »."
+		for i in 60:  # watch for the extension for two minutes
+			await get_tree().create_timer(2.0).timeout
+			if not is_instance_valid(state):
+				return
+			await refresh_state.call()
+			if state.text.begins_with("●"):
+				code_label.visible = false
+				return)
+	unpair.pressed.connect(func() -> void:
+		await app.backend.api.call_api("/browser/pair", true, HTTPClient.METHOD_DELETE)
+		refresh_state.call())
 
 
 static func origin_label(it: Dictionary) -> String:
