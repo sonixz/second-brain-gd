@@ -2,7 +2,7 @@
 // Keeps one WebSocket to the local engine (127.0.0.1) and answers its commands: open a tab, capture a tab,
 // close the tabs it opened. Also sends pages when you click, use the shortcut or the right-click menu.
 // It only reads a page you send yourself or a tab the Brain opened; it never touches your other tabs.
-import { base, browserName, canReadTabs, grabPage, post, settings, VERSION } from "./brain.js";
+import { base, browserName, canReadTabs, DEFAULT_PORT, grabPage, post, settings, VERSION } from "./brain.js";
 
 let ws = null;
 let retryMs = 2000;
@@ -102,6 +102,31 @@ chrome.permissions.onAdded.addListener(async () => send({ type: "permissions", c
 chrome.permissions.onRemoved.addListener(async () => send({ type: "permissions", can_read_tabs: await canReadTabs() }));
 connect();
 
+// ---------------------------------------------------------------- pairing
+// Done here, not in the popup: the browser's permission prompt (asked at the same click) closes the popup, and
+// whatever the popup was still doing dies with it.
+async function pair(code, port) {
+  let res;
+  try {
+    res = await fetch(base(port) + "/browser/pair", {
+      method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code, browser: browserName() }),
+    });
+  } catch {
+    return pairFailed(`The Brain is not reachable on 127.0.0.1:${port}. Is the app open, and is the port right?`);
+  }
+  const data = await res.json().catch(() => ({}));
+  if (!res.ok || !data.token) return pairFailed(data.detail || `Pairing failed (${res.status})`);
+  await chrome.storage.session.remove("pairError");
+  await chrome.storage.local.set({ port, token: data.token });  // the storage listener connects
+  return { ok: true };
+}
+
+async function pairFailed(error) {
+  await chrome.storage.session.set({ pairError: error });
+  return { ok: false, error };
+}
+
 // ---------------------------------------------------------------- commands from the Brain
 async function run(cmd) {
   if (cmd.action === "open") {
@@ -128,7 +153,7 @@ async function run(cmd) {
     } else {
       const { opened: o, last } = await opened();
       tabId = o[last] ? Number(last) : undefined;
-      if (tabId === undefined) throw new Error("no page opened by the Brain is open: say « ajoute cette page » for the tab in front");
+      if (tabId === undefined) throw new Error("no page opened by the Brain is open: say “add this page” for the tab in front");
     }
     if (tabId === undefined) throw new Error("no tab to capture");
     return capture(tabId, { selectionOnly: !!cmd.selection_only, place: cmd.place || "", byVoice: true });
@@ -146,13 +171,13 @@ async function waitLoaded(tabId, ms = 15000) {
 }
 
 // Reads the tab as the user sees it and sends it. byVoice: the user did not click, so the extension needs the
-// optional « read the pages the Brain opens » permission (a click grants access to that one tab by itself).
+// optional “read the pages the Brain opens” permission (a click grants access to that one tab by itself).
 export async function capture(tabId, { selectionOnly = false, place = "", byVoice = false } = {}) {
   const tab = await waitLoaded(tabId);
   const url = tab.url || "";
   if (!/^https?:\/\//i.test(url)) throw new Error("this page cannot be sent (only web pages, not browser or extension pages)");
   if (byVoice && !(await canReadTabs())) {
-    throw new Error("the extension may not read pages yet: open it and click « Allow reading the pages the Brain opens »");
+    throw new Error("the extension may not read pages yet: open it and click “Allow reading the pages the Brain opens”");
   }
   let page;
   try {
@@ -210,6 +235,12 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
     if (msg.type === "send") {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       return tab ? sendFromUser(tab, !!msg.selectionOnly) : { ok: false, error: "no tab" };
+    }
+    if (msg.type === "pair") return pair(String(msg.code || ""), Number(msg.port) || DEFAULT_PORT);
+    if (msg.type === "pairError") {  // what went wrong while the popup was closed (Edge's permission prompt closes it)
+      const { pairError } = await chrome.storage.session.get("pairError");
+      await chrome.storage.session.remove("pairError");
+      return { error: pairError || "" };
     }
     if (msg.type === "reconnect") {
       if (ws) ws.close();

@@ -439,6 +439,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         <div class="callout"><p><b>Local and private.</b> The extension is a folder of the project
           (<code>browser-extension/</code>), loaded in your own browser. No store, no account, no publication. It talks only
           to the engine on <code>127.0.0.1</code>, with its own token obtained by pairing.</p></div>
+        <p>Step by step with screenshots of the real Edge: <a href="howto.html#browser">How-to → Connect your browser</a>.</p>
 
         <h3>1. Install it (once)</h3>
         <ol class="steps-doc">
@@ -846,11 +847,18 @@ SBGD_SHOT_SIZE=1600x1000 ./tools/showcase.sh     # the website screenshots, from
           per step; its text lives in <code>tools/howto/guides.py</code> and <code>tools/howto/build_page.py</code> writes
           <code>public/howto.html</code>. Guides marked <i>Real answers</i> are recorded once with the real model, then replayed:</p>
 <pre><code>./tools/howto.sh                    # every guide, recorded answers replayed: no network, no key, no cost
-./tools/howto.sh --record web       # the real model answers again (OPENAI_API_KEY through dotenvx)</code></pre>
+./tools/howto.sh --record web       # the real model answers again (OPENAI_API_KEY through dotenvx)
+./tools/howto.sh --edge browser     # the browser guide: drives a real Microsoft Edge (Windows, from WSL)</code></pre>
         <p>A recording keeps the model's answers, web searches and downloaded pages
           (<code>tools/howto/recordings/</code>); item ids are mapped to the new ones on each run. A guide whose steps no
           longer play, or whose screenshots do not match its steps, makes the run fail, so the guides double as end-to-end
           tests. After a recorded run, the tokens used are checked against a cap per guide.</p>
+        <p>The browser guide's Edge screenshots are the real Edge window. <code>tools/howto/edge.ps1</code> starts a separate
+          Edge with a throwaway profile (no sign-in, no sync, nothing from your own Edge), loads the extension from
+          <code>browser-extension/</code>, drives it through DevTools on <code>127.0.0.1</code> and Windows UI Automation (for
+          Edge's own permission prompt), captures the window, then closes it and deletes the profile. It takes the screen
+          for about three minutes, so it only runs with <code>--edge</code>; otherwise the screenshots already on the site
+          are kept.</p>
       </section>
 
       <section class="doc" id="contributing">

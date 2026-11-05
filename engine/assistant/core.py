@@ -921,6 +921,10 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
         ui_done = (m.get("meta") or {}).get("ui_actions") or []
         if ui_done:  # interface actions really performed, so the model sees the tools behind past replies
             content += "\n(Interface: " + "; ".join(str(u.get("action")) + (f" {u.get('view') or u.get('name') or u.get('title') or u.get('theme') or u.get('change') or ''}") for u in ui_done) + ")"
+        shown = (m.get("meta") or {}).get("sources") or []
+        if shown:  # the links listed under that reply: « open the first one » means the first of these
+            content += "\n(Sources affichées sous cette réponse, dans l'ordre: " + "; ".join(
+                f"{i}. {src.get('title') or src.get('url')} {src.get('url')}" for i, src in enumerate(shown, 1)) + ")"
         messages.append({"role": "assistant" if m["role"] in ("assistant", "briefing") else "user", "content": content})
     messages.append({"role": "user", "content": text})
     _save(conn, conversation, "user", text)

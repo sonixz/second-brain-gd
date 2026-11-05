@@ -1,4 +1,4 @@
-import { base, browserName, DEFAULT_PORT, settings } from "./brain.js";
+import { DEFAULT_PORT, settings } from "./brain.js";
 
 const $ = (id) => document.getElementById(id);
 const show = (id, on) => { $(id).hidden = !on; };
@@ -33,23 +33,15 @@ $("pairBtn").addEventListener("click", async () => {
   const code = $("code").value.trim();
   const port = Number($("port").value) || DEFAULT_PORT;
   if (!code) return error("Enter the code shown in the app.");
-  // The permission prompt must come straight from the click, before anything else is awaited.
+  // Both start at the click: the permission prompt must come straight from it, and it closes this popup, so the
+  // pairing itself runs in the service worker and finishes even if the popup is gone.
+  const paired = chrome.runtime.sendMessage({ type: "pair", code, port });
   const asked = $("allow").checked ? chrome.permissions.request({ origins: ["<all_urls>"] }) : Promise.resolve(false);
   $("pairBtn").disabled = true;
   try {
     await asked.catch(() => false);
-    let res;
-    try {
-      res = await fetch(base(port) + "/browser/pair", {
-        method: "POST", headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ code, browser: browserName() }),
-      });
-    } catch {
-      throw new Error(`The Brain is not reachable on 127.0.0.1:${port}. Is the app open, and is the port right?`);
-    }
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok || !data.token) throw new Error(data.detail || `Pairing failed (${res.status})`);
-    await chrome.storage.local.set({ port, token: data.token });
+    const out = await paired;
+    if (!out || !out.ok) throw new Error((out && out.error) || "Pairing failed");
     await new Promise((r) => setTimeout(r, 600));
     await render();
   } catch (e) {
@@ -70,7 +62,7 @@ async function sendPage(selectionOnly) {
   btn.disabled = false;
   btn.textContent = label;
   if (!out.ok) return error(out.error);
-  $("result").textContent = out.duplicate ? `Already in your Brain: « ${out.title} »` : `✓ ${out.receipt || "Added."}`;
+  $("result").textContent = out.duplicate ? `Already in your Brain: “${out.title}”` : `✓ ${out.receipt || "Added."}`;
   show("result", true);
 }
 
@@ -90,4 +82,10 @@ $("unpair").addEventListener("click", async () => {
   render();
 });
 
-render();
+render().then(async () => {  // a pairing that failed after the permission prompt closed the popup
+  const st = await status();
+  if (!st.paired) {
+    const { error: e } = await chrome.runtime.sendMessage({ type: "pairError" });
+    if (e) error(e);
+  }
+});

@@ -48,6 +48,9 @@ export async function post(path, body) {
 // Runs inside the page: what the user sees, after login, scripts and checks.
 export function grabPage() {
   const sel = String(window.getSelection ? window.getSelection() : "").slice(0, 20000);
+  if (document.contentType === "application/pdf") {  // the browser's PDF viewer: the engine downloads the file
+    return { url: location.href, title: document.title || "", html: "", text: "", selection: "" };
+  }
   return {
     url: location.href,
     title: document.title || "",

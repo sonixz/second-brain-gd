@@ -9,7 +9,7 @@ the assistant open, add and close tabs by voice. It talks only to the engine on 
 **Pair:** in the app, *Captures → Send from browser… → Pair a browser*; type the code in the extension's popup.
 
 **Use:** the icon → *Send this page*; `Alt+Shift+B`; right-click a selection → *Send the selection to the Brain*;
-by voice (F8): « ouvre la première offre », « injecte-la », « ferme-la ».
+by voice (F8): “open the first one”, “add it”, “close it” (or in French: « ouvre la première », « ajoute-la », « ferme-la »).
 
 Full guide, permissions, security and troubleshooting: `public/docs.html#extension`.
 

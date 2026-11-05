@@ -416,3 +416,138 @@ func guide_own_agent() -> void:
 		await b.call("show_agent_info", made)
 		await pause(1.2)
 		await step("ⓘ its settings: switches, model, instructions")
+
+
+# ---------------------------------------------------------------- 6. Connect your browser (real Edge, real answers)
+## A real Microsoft Edge on the Windows desktop, driven by tools/howto/edge.ps1: a throwaway profile (no sign-in),
+## the extension loaded from browser-extension/. Its screenshots are the Edge window itself, toolbar and all.
+## Only with tools/howto.sh --edge (it needs Windows and a few minutes of the screen).
+var edge_ps1 := ""
+var edge_out := ""
+
+
+func edge(args: Array) -> String:
+	var out := []
+	var code := OS.execute("powershell.exe", ["-NoProfile", "-ExecutionPolicy", "Bypass", "-File", edge_ps1] + args, out, true)
+	var text := "".join(out).strip_edges()
+	print("edge %s: %s" % [args[0], text.left(300)])
+	if code != 0:
+		push_error("edge %s failed: %s" % [args[0], text.left(400)])
+	return text
+
+
+## A step whose screenshot is the Edge window (focus first unless an extension popup must stay open).
+func edge_step(what: String, focus: bool = true) -> void:
+	step_n += 1
+	if focus:
+		edge(["focus"])
+	edge(["shot", edge_out + "\\%02d.png" % step_n])
+	print("step %02d: %s (Edge)" % [step_n, what])
+
+
+func popup(js: String) -> String:
+	return edge(["eval", "/popup.html", js, "gesture"])
+
+
+func open_popup() -> void:
+	edge(["focus"])
+	edge(["eval", "/background.js", "chrome.action.openPopup().then(() => 'open')", "gesture"])
+	await pause(1.2)
+
+
+func guide_browser() -> void:
+	edge_ps1 = OS.get_environment("SBGD_EDGE_PS1")
+	edge_out = OS.get_environment("SBGD_EDGE_OUT")
+	await overview()
+	# 1. The app: Captures → Send from browser… → Pair a browser.
+	var cv: CapturesView = b.get("captures_view")
+	await b.call("set_view", "captures")
+	await pause(0.8)
+	await cv.show_bookmarklet()
+	await pause(0.8)
+	var dlg: AcceptDialog = null
+	for c in cv.get_children():
+		if c is AcceptDialog:
+			dlg = c
+	for btn in dlg.find_children("*", "Button", true, false):
+		if (btn as Button).text == "Pair a browser":
+			(btn as Button).pressed.emit()
+	await pause(1.5)
+	await step("the app shows a one-time pairing code and its port")
+	var code := cv.pair_code
+	var port := str(app.backend.api.port)
+	# 2. Edge: the extension's popup, code and port typed in.
+	edge(["launch", OS.get_environment("SBGD_EDGE_EXT"), "https://en.wikipedia.org/wiki/Heat_pump"])
+	await pause(4.0)
+	edge(["dismiss", "Not now"])
+	await open_popup()
+	popup("document.getElementById('code').value = '%s'; document.getElementById('port').value = '%s'; 'typed'" % [code, port])
+	await pause(0.5)
+	await edge_step("Edge: the extension's popup, code and port typed in", false)
+	# 3. Pair: Edge asks for the permission to read the pages the Brain opens.
+	popup("document.getElementById('pairBtn').click(); 'clicked'")
+	await pause(2.0)
+	await edge_step("Edge asks: let the extension read the pages", false)
+	for i in 3:  # Edge's own prompt: Allow (checked from the extension itself, the click is retried if needed)
+		edge(["click", "Allow"])
+		await pause(1.0)
+		if edge(["eval", "/background.js", "chrome.permissions.contains({origins: ['<all_urls>']})"]) == "true":
+			break
+	# 4. The app: connected, with the browser's name.
+	var state_ok := func() -> bool:
+		for l in dlg.find_children("*", "Label", true, false):
+			if (l as Label).text.begins_with("● Connected") and not (l as Label).text.contains(" need "):
+				return true
+		return false
+	if not await wait_until(state_ok, 40.0):
+		push_error("browser: the extension did not connect")
+		edge(["close"])
+		return
+	await pause(0.8)
+	await step("the app: ● Connected: Edge")
+	dlg.queue_free()
+	# 5. Edge: Send this page.
+	var before := int(b.get("classified"))
+	await open_popup()
+	popup("document.getElementById('send').click(); 'sent'")
+	var sent := false
+	for i in 90:  # the engine reads and files the page (the model summarises it)
+		await pause(1.0)
+		if popup("document.getElementById('result').hidden ? '' : 'shown'").contains("shown") \
+				or popup("document.getElementById('error').hidden ? '' : 'error'").contains("error"):
+			sent = true
+			break
+	await pause(0.5)
+	await edge_step("Edge: Send this page, the receipt in the popup", false)
+	# 6. The app: the page is in, filed, marked as coming from the browser.
+	await wait_until(func() -> bool: return int(b.get("classified")) > before, 30.0)
+	await b.call("set_view", "captures")
+	await pause(1.5)
+	await step("the app: the page, as Edge showed it, read and filed")
+	await b.call("set_view", "graph")
+	await pause(0.8)
+	# 7. A web search in the app, then "open the first one": Edge opens it.
+	var ap: AssistantPanel = b.get("assistant_panel")
+	await ask(ap, "Search the web: do cold-climate heat pumps still work at -25 °C?")
+	await wait_until(func() -> bool: return not ap.busy, 90.0)
+	await pause(1.0)
+	await step("a web search: the answer and its sources")
+	await ask(ap, "Open the first one.")
+	await wait_until(func() -> bool: return not ap.busy, 60.0)
+	await pause(4.0)
+	await edge_step("Edge opens the page, in a new tab")
+	# 8. "Add it": the page as Edge shows it.
+	before = int(b.get("classified"))
+	await ask(ap, "Add it.")
+	await wait_until(func() -> bool: return int(b.get("classified")) > before or not ap.busy, 90.0)
+	await wait_until(func() -> bool: return not ap.busy, 60.0)
+	await pause(2.0)
+	await step("“add it”: the open page is kept and filed", true)
+	# 9. "Close it": only the tab the Brain opened.
+	await ask(ap, "Close it.")
+	await wait_until(func() -> bool: return not ap.busy, 60.0)
+	await pause(2.0)
+	await edge_step("Edge: the Brain's tab is closed, yours stays")
+	edge(["close"])
+	if not sent:
+		push_error("browser: the page was not sent")

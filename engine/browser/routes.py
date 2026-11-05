@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import re
 import secrets as pysecrets
 from typing import Any, Callable
 
@@ -39,10 +40,19 @@ class PageIn(BaseModel):
     place: str = Field(default="", max_length=120)
 
 
+def needs_download(page: PageIn) -> bool:
+    """Nothing readable came from the tab (a PDF in the browser's viewer, a protected page): the engine downloads it.
+    A PDF tab still has a little html (the viewer's <embed>) but no text, in its html or its innerText."""
+    if page.text.strip():
+        return False
+    visible = re.sub(r"(?is)<(script|style)[^>]*>.*?</\1>|<[^>]+>", " ", page.html)
+    return len(visible.split()) < 20
+
+
 def capture(layout: Layout, page: PageIn) -> dict[str, Any]:
     """Adds a page (or the selected passage) sent by the browser, then lets the archivist file it."""
     from engine.assistant import core
-    from engine.assistant.actions import place_name, resolve_place
+    from engine.assistant.actions import resolve_place
     from engine.brain import archivist
     from engine.sources import core as sources
 
@@ -61,7 +71,7 @@ def capture(layout: Layout, page: PageIn) -> dict[str, Any]:
                                      page.selection.strip() + f"\n\nSource: {page.url}", space_id, kind="reference", source="import")
             archivist.save_meta(conn, note["id"], origin="url", origin_uri=page.url, item_type="quote")
             note_id, duplicate, title = note["id"], False, note["title"]
-        elif not page.html.strip() and not page.text.strip():  # a PDF or a protected tab: download it instead
+        elif needs_download(page):  # a PDF or a protected tab: download it instead
             src = sources.ingest_url(conn, client, page.url, space_id)
             note_id, duplicate, title = src.get("note_id"), bool(src.get("duplicate")), src.get("title", "")
         else:
@@ -73,8 +83,8 @@ def capture(layout: Layout, page: PageIn) -> dict[str, Any]:
             core._CLIENT["c"] = client
             receipt = archivist.file_item(conn, client, note_id, float(core.settings(conn)["assistant_min_confidence"])).get("receipt") or ""
     with database.session(layout.database) as conn:
-        place = place_name(conn, conn.execute("SELECT space_id FROM notes WHERE id = ?", (note_id,)).fetchone()["space_id"]) \
-            if note_id else ""
+        place = archivist.place_label(conn, conn.execute("SELECT space_id FROM notes WHERE id = ?", (note_id,)).fetchone()["space_id"],
+                                      "en") if note_id else ""  # shown in the app and the popup, which are in English
         database.record_event(conn, {"timestamp": utc_now(), "component": "browser", "stage": "capture", "status": "ok",
                                      "message": f"From the browser: {title}" + (" (already in the Brain)" if duplicate else ""),
                                      "details": {"url": page.url[:300]}})

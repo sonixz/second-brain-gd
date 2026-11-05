@@ -5,6 +5,7 @@ kind "scripted": no model answer matters, the scripted showcase model is used.
 
   python3 tools/howto/guides.py --ids            the guide ids, in page order
   python3 tools/howto/guides.py --kind <id>      real | scripted
+  python3 tools/howto/guides.py --edge <id>      yes when the guide drives a real Microsoft Edge (tools/howto.sh --edge)
   python3 tools/howto/guides.py --check <id>     one screenshot per step?
   python3 tools/howto/guides.py --cost <id>      the recorded run's cost, against the cap
 """
@@ -23,9 +24,9 @@ GUIDES: list[dict] = []
 
 
 def guide(id: str, title: str, kind: str, minutes: int, goal: str, needs: list[str], steps: list[tuple[str, str]],
-          trouble: list[tuple[str, str]], docs: list[tuple[str, str]], group: str) -> None:
+          trouble: list[tuple[str, str]], docs: list[tuple[str, str]], group: str, edge: bool = False) -> None:
     GUIDES.append({"id": id, "title": title, "kind": kind, "minutes": minutes, "goal": goal, "needs": needs,
-                   "steps": steps, "trouble": trouble, "docs": docs, "group": group})
+                   "steps": steps, "trouble": trouble, "docs": docs, "group": group, "edge": edge})
 
 
 def by_id(gid: str) -> dict:
@@ -228,6 +229,46 @@ guide(
     "Find and connect")
 
 guide(
+    "browser", "Connect your browser", "real", 5,
+    "Pair Microsoft Edge (or Chrome) with your Brain once; then send the page you are reading in one click, and "
+    "let the Archivist open, add and close tabs when you ask.",
+    ["The extension loaded once: <code>edge://extensions</code> → Developer mode → <b>Load unpacked</b> → the "
+     "<code>browser-extension</code> folder of the project (<a href=\"docs.html#extension\">Browser extension</a>)"],
+    [("In the app: <b>Captures</b> → <b>Send from browser…</b> → <b>Pair a browser</b>.",
+      "A one-time code and the port the Brain listens on. The code works once and only for 10 minutes."),
+     ("In Edge, click the Second Brain icon in the toolbar and type the code and the port.",
+      "The extension's popup, in Edge. Keep the box ticked if you want to say “add it” for the pages the Brain "
+      "opens."),
+     ("Click <b>Pair</b>.",
+      "Edge itself asks whether the extension may read the pages. Click <b>Allow</b>. It only ever reads a page you "
+      "send, or one the Brain opened for you."),
+     ("Back in the app.",
+      "<b>● Connected: Edge</b>, with the extension's version. It reconnects by itself whenever the app is open."),
+     ("On any page, the icon → <b>Send this page</b> (or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd>).",
+      "The receipt shows in the popup: the page as Edge shows it (after your login, nothing downloaded again) is read, "
+      "summarised and filed."),
+     ("Look in Captures.",
+      "The page is there, filed by the Archivist, like anything else you add."),
+     ("Ask the Archivist: <span class=\"say\">Search the web: do cold-climate heat pumps still work at -25 °C?</span>",
+      "An answer with its sources, as links."),
+     ("<span class=\"say\">Open the first one.</span>",
+      "Edge opens it in a new tab, in front: here a PDF from Natural Resources Canada, in Edge's own viewer. The "
+      "Brain remembers it opened that tab."),
+     ("<span class=\"say\">Add it.</span>",
+      "The tab is kept and filed, with a receipt and Undo. A web page is taken as Edge shows it; a PDF, which the "
+      "extension cannot read inside Edge's viewer, is downloaded by the Brain instead."),
+     ("<span class=\"say\">Close it.</span>",
+      "Edge closes the tab the Brain opened. Your own tabs are never touched."),
+     ],
+    [("“The Brain is not reachable”.", "The app must be open, and the port in the popup must be the one the app "
+      "shows."),
+     ("“Wrong code” or “no pairing code is active”.", "Ask the app for a new code (it works once, 10 minutes)."),
+     ("“Add it” says the extension may not read pages.", "Open the popup and click <b>Allow reading the pages the "
+      "Brain opens</b>.")],
+    [("Browser extension", "docs.html#extension"), ("Internet", "docs.html#internet")],
+    "Find and connect", edge=True)
+
+guide(
     "organise", "Organise by voice", "real", 3,
     "Move, link and undo by naming things, the way you would ask a person.",
     [],
@@ -341,6 +382,8 @@ if __name__ == "__main__":
         print("\n".join(g["id"] for g in GUIDES))
     elif a[:1] == ["--kind"]:
         print(by_id(a[1])["kind"])
+    elif a[:1] == ["--edge"]:
+        print("yes" if by_id(a[1])["edge"] else "no")
     elif a[:1] == ["--check"]:
         sys.exit(_check(a[1]))
     elif a[:1] == ["--cost"]:

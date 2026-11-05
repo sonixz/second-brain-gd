@@ -1,6 +1,7 @@
 :root { color-scheme: dark; --bg: #2b3c54; --panel: #33475f; --text: #f1f6fc; --muted: #b5c6da; --mint: #a9d4ff;
         --ok: #a9f0c7; --warn: #ffd27a; --bad: #ff9c8a; }
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }  /* "button { display: block }" below would show hidden buttons */
 body { margin: 0; width: 320px; padding: 14px 16px 16px; background: var(--bg); color: var(--text);
        font: 14px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
 header { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }

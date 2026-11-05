@@ -72,11 +72,17 @@ back in French; "Re-read with AI" timed out after 4 s; the item tile slid in ove
 slid under the docked panel; replies showed raw **bold**; an agent's creation read "Updated" with an Undo that
 could not work.
 
-Left: guide 6 (the browser) needs a real Edge window, see below.
+Guide 6 (the browser), done 2026-11-05 with the owner's go: the Edge screenshots are the real Edge window
+(`tools/howto.sh --edge browser`, driver `tools/howto/edge.ps1`: throwaway profile, no sign-in, closed and deleted at
+the end). The real runs found and fixed: pairing never finished when “read the pages” was ticked (Edge's permission
+prompt closes the popup, which was doing the pairing: it now runs in the service worker); “open the first one” after a
+web search failed (the conversation history did not keep the links listed under a reply); a PDF tab could not be added
+(Edge's viewer has no readable text: the engine now downloads it); hidden popup buttons showed anyway (CSS); a source
+title with line breaks was squeezed into a narrow column; the app's “Connected” line kept a stale permission warning;
+the receipt toast said “Ressources”; the popup had a French phrase. Recording the guide costs about 45,000 tokens.
 
 ## Decisions to confirm with the owner
 
-- Guide 6: the owner wants Edge shown for real (no screenshots from them). That needs a visible Edge window with a
-  throwaway profile (no sign-in, no sync), the extension loaded from the folder, for a few minutes: run only with
-  the owner's go, at a moment that suits them.
+- Guide 6: the owner wants Edge shown for real (no screenshots from them): done with a throwaway Edge profile, with
+  their go (2026-11-05). Re-running it takes the screen for about three minutes: ask first.
 - Budget: approved by the owner ("pas de problème").

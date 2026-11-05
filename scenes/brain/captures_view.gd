@@ -228,9 +228,10 @@ func _extension_section(box: VBoxContainer) -> void:
 			if not is_instance_valid(state):
 				return
 			await refresh_state.call()
-			if state.text.begins_with("●"):
+			if state.text.begins_with("●") and code_label.visible:  # keeps watching: the permission can come a moment later
 				code_label.visible = false
-				return)
+				steps.text = ("Paired. On any page: the extension's icon → Send this page (or Alt+Shift+B). The Archivist "
+					+ "can now open, add and close pages when you ask."))
 	unpair.pressed.connect(func() -> void:
 		await app.backend.api.call_api("/browser/pair", true, HTTPClient.METHOD_DELETE)
 		refresh_state.call())

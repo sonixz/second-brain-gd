@@ -74,6 +74,15 @@ class PageTests(Base):
         self.assertIn("Tableau de bord", " ".join(r[0] for r in self.conn.execute(
             "SELECT text FROM source_chunks WHERE source_id = ?", (src["id"],))))
 
+    def test_a_pdf_tab_is_downloaded_instead(self):
+        from engine.browser.routes import PageIn, needs_download
+
+        viewer = '<html><body style="margin:0"><embed src="about:blank" type="application/pdf"></body></html>'
+        self.assertTrue(needs_download(PageIn(url="https://example.org/report.pdf", html=viewer, text="")))
+        self.assertTrue(needs_download(PageIn(url="https://example.org/report.pdf")))
+        self.assertFalse(needs_download(PageIn(url="https://jobs.example.org/7", html=PAGE, text="")))
+        self.assertFalse(needs_download(PageIn(url="https://app.example.org", html="<div id=app></div>", text="Tableau " * 30)))
+
     def test_only_web_pages(self):
         with self.assertRaises(extract.ExtractError):
             sources.ingest_page(self.conn, None, "file:///C:/secret.txt", "x", PAGE, "")

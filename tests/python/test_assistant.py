@@ -54,6 +54,25 @@ class AssistantTests(unittest.TestCase):
         roles = [m["role"] for m in core.history(self.conn, core.today_conversation())]
         self.assertEqual(roles, ["user", "assistant"])
 
+    def test_history_keeps_the_sources_shown(self):
+        """« Open the first one » after a web search: the model must still see the links listed under that reply."""
+        conv = core.today_conversation()
+        core._save(self.conn, conv, "user", "Search the web: heat pumps at -25 °C?")
+        core._save(self.conn, conv, "assistant", "Yes, some models work down to -30 °C.",
+                   {"sources": [{"title": "Cold climate heat pumps", "url": "https://example.org/ccashp"},
+                                {"title": "NRCan", "url": "https://example.org/nrcan"}]})
+        seen = []
+
+        class Spy(FakeChat):
+            def complete(self, model, messages, tools=None, **kw):
+                seen.append(list(messages))
+                return super().complete(model, messages, tools, **kw)
+
+        core.chat(self.conn, Spy(), "Open the first one.")
+        past = next(m["content"] for m in seen[0] if m["role"] == "assistant" and "-30" in str(m["content"]))
+        self.assertIn("1. Cold climate heat pumps https://example.org/ccashp", past)
+        self.assertIn("2. NRCan https://example.org/nrcan", past)
+
     def test_tools_create_and_update_are_journaled(self):
         actions = []
         created = core.run_tool(self.conn, "create_note", {"title": "From the assistant", "kind": "task"}, actions)

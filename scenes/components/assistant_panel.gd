@@ -422,7 +422,7 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 			var sd: Dictionary = item
 			var url := str(sd.get("url", ""))
 			lines.append("↗ [url=%s][color=#%s]%s[/color][/url]  [color=#%s]%s[/color]" % [url, SbTheme.MINT.to_html(false),
-				_bb(str(sd.get("title", url)).left(70)), SbTheme.MUTED.to_html(false), _bb(_host(url))])
+				_bb(one_line(str(sd.get("title", url))).left(70)), SbTheme.MUTED.to_html(false), _bb(_host(url))])
 		src.text = "\n".join(lines)
 		src.meta_clicked.connect(_on_link)
 		inner.add_child(src)
@@ -503,6 +503,11 @@ static func said(key: String) -> String:
 	var lang := str(SbSettings.get_value("voice", "language", "fr"))
 	var d: Dictionary = SAID.get(key, {})
 	return str(d.get(lang, d.get("fr", "")))
+
+
+## A title on one line (a PDF's title can carry line breaks).
+static func one_line(t: String) -> String:
+	return RegEx.create_from_string("\\s+").sub(t, " ", true).strip_edges()
 
 
 static func _host(url: String) -> String:

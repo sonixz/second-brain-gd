@@ -63,6 +63,8 @@ func _run() -> void:
 	check(apic.timeout_for("/sources/abc/reread?job=1-2", HTTPClient.METHOD_POST) >= 300.0, "re-reading with AI may take minutes (its job id in the query)")
 	check(AssistantPanel._linkify("renews on **December 1**.").contains("[b]December 1[/b]") and AssistantPanel.spoken("**$1,284**") == "$1,284",
 		"a reply's **bold** shows as bold and is read without the stars")
+	check(AssistantPanel.one_line("Improving\nEnergy  Performance\n in Canada") == "Improving Energy Performance in Canada",
+		"a source title with line breaks shows on one line")
 	apic.free()
 	var brain_script: GDScript = load("res://scenes/brain/brain.gd")
 	check(brain_script.progress_text({"stage": "ocr", "done": 3, "total": 9}) == "page 3 / 9 read (local OCR)"
