@@ -252,6 +252,12 @@ func _run() -> void:
 	await pause(3.0)
 	await shot("15-evening")
 
+	# 16. An agent's settings (ⓘ): capabilities to tick, model, instructions.
+	await b.call("show_agent_info", "sparring")
+	await pause(1.0)
+	await shot("16-agent-settings")
+	b.call("close_agent_settings")
+
 	SbSettings.set_value("ui", "theme", "auto")
 	await app.backend.shutdown_engine(3.0)
 	app.audio.stop_all()

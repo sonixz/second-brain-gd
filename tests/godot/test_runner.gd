@@ -554,7 +554,24 @@ func _e2e() -> void:
 	check(made_agent and panels_now.has("coach-test") and (panels_now["coach-test"] as SbFloatingPanel).minimized,
 		"a new agent gets its own panel, waiting on the rail")
 	await brain.call("show_agent_info", "sparring")
-	check(str(brain.get("last_agent_info")) == "sparring", "ⓘ shows an agent's instructions, capabilities and model")
+	var sett: SbAgentSettings = brain.get("agent_settings")
+	check(str(brain.get("last_agent_info")) == "sparring" and sett != null and sett.instructions.text.contains("Sparring"),
+		"ⓘ opens the agent's settings with its instructions")
+	check(brain.get("agent_settings_panel") is SbFloatingPanel, "the settings open in a floating tile you can move")
+	(sett.checks["internet"] as CheckButton).button_pressed = false  # switch Internet off: saved at once
+	var unticked := await wait_until(func() -> bool:
+		return not ("internet" in (sett.prof.get("capabilities", []) as Array)), 5.0)
+	check(unticked, "switching a capability off saves it at once (Internet removed from Sparring)")
+	sett.model_option.select(2)
+	sett.model_option.item_selected.emit(2)
+	var remodel := await wait_until(func() -> bool: return str(sett.prof.get("model", "")) == "gpt-4o", 5.0)
+	check(remodel, "the model can be changed (%s)" % str(sett.prof.get("model", "")))
+	sett.instructions.text = str(sett.instructions.text) + "\n- Termine toujours par une question."
+	sett.instructions.text_changed.emit()
+	await sett._patch({"instructions": sett.instructions.text})
+	check(str(sett.prof.get("instructions", "")).ends_with("Termine toujours par une question."), "the instructions can be edited and saved")
+	await app.backend.api.call_api("/assistant/agents/sparring/reset", true, HTTPClient.METHOD_POST)
+	brain.call("close_agent_settings")
 	await app.backend.api.call_api("/assistant/agents/coach-test", true, HTTPClient.METHOD_DELETE)
 	await brain.call("refresh_agents")
 	check(not (brain.get("agent_panels") as Dictionary).has("coach-test"), "a deleted agent's panel goes away")

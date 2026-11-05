@@ -48,7 +48,8 @@ func setup(a: SbApp, b: Control, who: String = "archivist") -> AssistantPanel:
 	add_child(head)
 	head.alignment = BoxContainer.ALIGNMENT_END
 	speak_toggle = CheckButton.new()
-	speak_toggle.text = "Voice"
+	speak_toggle.text = ""
+	speak_toggle.icon = load("res://assets/icons/speaker.svg")
 	speak_toggle.tooltip_text = "The archivist reads its answers aloud (voice: marin)"
 	speak_toggle.button_pressed = bool(SbSettings.get_value("assistant", "speaks", true))
 	speak_toggle.toggled.connect(func(on: bool) -> void:

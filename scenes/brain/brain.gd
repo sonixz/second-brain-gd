@@ -290,7 +290,7 @@ func _make_agent(id: String, agent_name: String, letter: String, intro: String, 
 		panel.extra.add_child(c)
 	head.queue_free()
 	var info := Button.new()
-	info.text = "ⓘ"
+	info.icon = load("res://assets/icons/info.svg")
 	info.theme_type_variation = "GhostButton"
 	info.tooltip_text = "Instructions, capabilities and model of this agent"
 	info.pressed.connect(func() -> void: show_agent_info(id))
@@ -333,80 +333,50 @@ func refresh_agents() -> void:
 	set_agent(active_agent)
 
 
-## ⓘ: what an agent is: its instructions, capabilities and model; reset (built-in) or delete (custom).
+## ⓘ: an agent's settings in a floating tile (move it, dock it, shrink it): name, model, on/off capabilities,
+## first words, instructions; reset or delete.
+var agent_settings: SbAgentSettings
+var agent_settings_panel: SbFloatingPanel
+
+
 func show_agent_info(id: String) -> void:
-	await refresh_agents()
+	var res := await app.backend.api.call_api("/assistant/agents")
+	if not res["ok"] or not is_inside_tree():
+		return
+	var data: Dictionary = res["data"]
+	agent_profiles = data.get("agents", [])
 	var prof: Dictionary = {}
 	for item in agent_profiles:
 		if str((item as Dictionary)["id"]) == id:
 			prof = item
 	if prof.is_empty():
 		return
-	var res := await app.backend.api.call_api("/assistant/agents")
-	var caps: Dictionary = (res["data"] as Dictionary).get("capabilities", {}) if res["ok"] else {}
-	var dlg := AcceptDialog.new()
-	dlg.title = "%s · instructions" % str(prof.get("name", id))
-	dlg.ok_button_text = "Close"
-	var box := VBoxContainer.new()
-	box.custom_minimum_size = Vector2(720, 560)
-	box.add_theme_constant_override("separation", 8)
-	dlg.add_child(box)
-	var meta := Label.new()
-	meta.text = "Model: %s%s" % [str(prof.get("model", "")), "   ·   adjusted (not the original)" if bool(prof.get("modified", false)) else ""]
-	meta.theme_type_variation = "Muted"
-	box.add_child(meta)
-	var cap_title := Label.new()
-	cap_title.text = "CAPABILITIES"
-	cap_title.theme_type_variation = "Overline"
-	box.add_child(cap_title)
-	var have: Array = prof.get("capabilities", [])
-	for key in caps:
-		var c: Dictionary = caps[key]
-		var l := Label.new()
-		l.text = ("✓  " if key in have else "—  ") + "%s: %s" % [str(c.get("label", key)), str(c.get("description", ""))]
-		l.modulate = Color(1, 1, 1, 1.0 if key in have else 0.45)
-		box.add_child(l)
-	var ins_title := Label.new()
-	ins_title.text = "INSTRUCTIONS"
-	ins_title.theme_type_variation = "Overline"
-	box.add_child(ins_title)
-	var text := TextEdit.new()
-	text.text = str(prof.get("instructions", ""))
-	text.editable = false
-	text.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	text.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	box.add_child(text)
-	var hint := Label.new()
-	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	hint.theme_type_variation = "Muted"
-	hint.text = "To change this agent, talk to the Agent Builder: « modifie %s… »." % str(prof.get("name", id))
-	box.add_child(hint)
-	var row := HBoxContainer.new()
-	box.add_child(row)
-	if bool(prof.get("builtin", false)) and bool(prof.get("modified", false)):
-		var reset := Button.new()
-		reset.text = "Back to the original"
-		reset.theme_type_variation = "GhostButton"
-		reset.pressed.connect(func() -> void:
-			await app.backend.api.call_api("/assistant/agents/%s/reset" % id, true, HTTPClient.METHOD_POST)
-			dlg.queue_free()
-			show_toast("%s is back to its original instructions." % str(prof.get("name", id))))
-		row.add_child(reset)
-	if not bool(prof.get("builtin", false)):
-		var del := Button.new()
-		del.text = "Delete this agent"
-		del.theme_type_variation = "GhostButton"
-		del.pressed.connect(func() -> void:
-			await app.backend.api.call_api("/assistant/agents/" + id, true, HTTPClient.METHOD_DELETE)
-			dlg.queue_free()
-			await refresh_agents()
-			show_toast("%s deleted." % str(prof.get("name", id))))
-		row.add_child(del)
-	add_child(dlg)
-	dlg.popup_centered()
-	dlg.confirmed.connect(dlg.queue_free)
-	dlg.canceled.connect(dlg.queue_free)
+	close_agent_settings()
+	agent_settings = SbAgentSettings.new().setup(app, id, prof, data.get("capabilities", {}), data.get("models", []))
+	agent_settings.changed.connect(func() -> void: refresh_agents())
+	agent_settings.ask_builder.connect(func(n: String) -> void: open_agent("builder", "Je veux modifier l'agent %s." % n))
+	agent_settings.close_requested.connect(close_agent_settings)
+	var w := 560.0
+	agent_settings_panel = SbFloatingPanel.new().setup("agent-settings", "%s · SETTINGS" % str(prof.get("name", id)).to_upper(),
+		agent_settings, {"dock": "free", "size": w, "icon": "⚙",
+		 "free": Rect2(maxf(24.0, size.x * 0.5 - w * 0.5), 110, w, maxf(420.0, size.y - 240.0))})
+	agent_settings_panel.minimized = false
+	agent_settings_panel.visible = true
+	var close := Button.new()
+	close.text = "✕"
+	close.theme_type_variation = "GhostButton"
+	close.tooltip_text = "Close the settings"
+	close.pressed.connect(close_agent_settings)
+	agent_settings_panel.extra.add_child(close)
+	panel_layer.add_panel(agent_settings_panel)
 	last_agent_info = id
+
+
+func close_agent_settings() -> void:
+	if agent_settings_panel != null and is_instance_valid(agent_settings_panel):
+		agent_settings_panel.queue_free()
+		panel_layer.queue_layout()
+	agent_settings_panel = null
 
 
 var last_agent_info := ""

@@ -98,7 +98,9 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     def get_agents() -> dict[str, Any]:
         with database.session(layout.database) as conn:
             return {"agents": agents.profiles(conn),
-                    "capabilities": {k: {"label": v["label"], "description": v["description"]} for k, v in agents.CAPABILITIES.items()}}
+                    "capabilities": {k: {"label": v["label"], "description": v["description"], "tools": v["tools"]}
+                                     for k, v in agents.CAPABILITIES.items()},
+                    "models": agents.MODELS}
 
     @r.get("/agent-draft")
     def get_agent_draft() -> dict[str, Any]:

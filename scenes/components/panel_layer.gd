@@ -95,7 +95,7 @@ func relayout() -> void:
 		var width := 0.0
 		var total_w := 0.0
 		for p in stack:
-			width = maxf(width, p.dock_size)
+			width = maxf(width, maxf(p.dock_size, p.get_combined_minimum_size().x))  # never narrower than its title bar
 			total_w += p.weight
 		width = minf(width, a.size.x * 0.45)
 		var free_h := a.size.y - gap * float(stack.size() - 1)

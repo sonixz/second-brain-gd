@@ -40,6 +40,11 @@ CAPABILITIES: dict[str, dict[str, Any]] = {
                             "ui_close_document", "ui_filter", "ui_layout", "ui_fold", "ui_search", "ui_replay",
                             "ui_set_voice_speed"]},
 }
+# Models an agent can use (the settings card lists them; the engine falls back to gpt-4o if a project lacks one).
+MODELS = [{"id": "gpt-6-sol", "label": "gpt-6-sol · fast, sharp (default)"},
+          {"id": "gpt-6-astra", "label": "gpt-6-astra · deeper reasoning, slower"},
+          {"id": "gpt-4o", "label": "gpt-4o · fast, reliable"},
+          {"id": "gpt-4o-mini", "label": "gpt-4o-mini · cheapest"}]
 LIVE_ONLY = ("focus_project", "end_conversation")  # the live conversation's own tools, for every agent
 PRESETS = {  # what the Agent Builder offers
     "read_only": ["read_brain", "internet", "browser", "interface"],
