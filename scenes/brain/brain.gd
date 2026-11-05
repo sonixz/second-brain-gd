@@ -98,6 +98,10 @@ func _ready() -> void:
 	filters_bar.offset_right = -24
 	filters_bar.offset_top = 92
 	add_child(filters_bar)
+	filters_bar.edit_toggled.connect(set_edit_mode)
+	filters_bar.tidy_requested.connect(tidy_graph)
+	filters_bar.legend_toggled.connect(func(on: bool) -> void: graph.show_legend = on)
+	graph.positions_changed.connect(_save_positions)
 	filters_bar.layout_changed.connect(func(mode: String) -> void:
 		graph.set_layout(mode)
 		app.state["graph_layout"] = mode)
@@ -643,6 +647,12 @@ func run_ui_actions(actions: Array) -> void:
 				await refresh_graph()
 				graph.set_path(a.get("ids", []), a.get("steps", []))
 				path_active = true
+			"edit_mode":
+				await set_view("graph")
+				if str(a.get("mode", "")) == "tidy":
+					await tidy_graph()
+				else:
+					set_edit_mode(str(a.get("mode", "")) == "on")
 			"layout":
 				await set_view("graph")
 				filters_bar.timeline_button.button_pressed = str(a.get("mode", "zones")) == "timeline"
@@ -842,6 +852,38 @@ func move_to_place(note_id: String, space_id: String) -> bool:
 	if not current_note.is_empty() and str(current_note["id"]) == note_id:
 		open_note(note_id)
 	return true
+
+
+## Edit mode (button Edit, key E, « mode édition »): the graph freezes and keeps what you place.
+func set_edit_mode(on: bool) -> void:
+	if graph.edit_mode == on:
+		return
+	graph.set_edit_mode(on)
+	filters_bar.edit_button.set_pressed_no_signal(on)
+	filters_bar.tidy_button.visible = on
+	show_toast("Edit mode: drag items or whole places · drop an item into a place to refile it · Ctrl+Z undoes · E to finish"
+		if on else "Layout saved. What you placed stays there.")
+
+
+func tidy_graph() -> void:
+	graph.tidy()
+	await app.backend.api.call_api("/brain/positions", true, HTTPClient.METHOD_DELETE)
+	show_toast("Tidied: the graph arranges itself again.")
+
+
+var _pending_positions: Dictionary = {}
+
+
+func _save_positions(changes: Dictionary) -> void:
+	for id in changes:
+		var v: Vector2 = changes[id]
+		_pending_positions[id] = [snappedf(v.x, 0.1), snappedf(v.y, 0.1)]
+	await get_tree().create_timer(0.4).timeout
+	if _pending_positions.is_empty() or not is_inside_tree():
+		return
+	var batch := _pending_positions
+	_pending_positions = {}
+	await app.backend.api.call_api("/brain/positions", true, HTTPClient.METHOD_PUT, JSON.stringify({"positions": batch}))
 
 
 ## No place chosen (or only the Inbox selected): the archivist decides where a new item goes.
@@ -1743,6 +1785,21 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		accept_event()
 	elif k.keycode == KEY_M and k.ctrl_pressed:
 		toggle_voice()
+		accept_event()
+	elif view == "graph" and k.keycode == KEY_E and not k.ctrl_pressed and not k.alt_pressed \
+			and not (get_viewport().gui_get_focus_owner() is LineEdit or get_viewport().gui_get_focus_owner() is TextEdit):
+		set_edit_mode(not graph.edit_mode)
+		accept_event()
+	elif k.keycode == KEY_Z and k.ctrl_pressed and graph.edit_mode \
+			and not (get_viewport().gui_get_focus_owner() is LineEdit or get_viewport().gui_get_focus_owner() is TextEdit):
+		var back := graph.undo_move()
+		if back.is_empty():
+			show_toast("Nothing to undo.")
+		else:
+			_save_positions(back)
+		accept_event()
+	elif k.keycode == KEY_ESCAPE and graph.edit_mode:
+		set_edit_mode(false)
 		accept_event()
 	elif k.keycode == KEY_ESCAPE:
 		graph.select("")

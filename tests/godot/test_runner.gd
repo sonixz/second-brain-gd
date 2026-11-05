@@ -458,6 +458,65 @@ func _e2e() -> void:
 		"a place can be removed")
 	var inbox_kept: Dictionary = await app.backend.api.call_api("/brain/spaces/inbox", true, HTTPClient.METHOD_DELETE)
 	check(not inbox_kept["ok"], "the Inbox cannot be removed")
+	# Edit mode (2026-11-04): frozen layout, a place moves with its items, placements are saved, Ctrl+Z, Tidy.
+	await brain.call("set_view", "graph")
+	await refresh_and_wait(brain)
+	await ap.send("Mode édition", true)
+	check(graph.edit_mode and filters_bar_of(brain).edit_button.button_pressed, "« mode édition » freezes the graph")
+	graph.size = Vector2(1280, 800)  # headless windows are tiny: the minimap would cover the whole graph
+	var place_id := ""
+	for id in graph.nodes:  # a place whose centre is clear (no item lying on it), so the press grabs the place
+		if str(id).begins_with("space:") and str(id) != "space:inbox" and not graph._members(str(id)).is_empty() \
+				and graph.node_at(graph.world_to_screen(graph.nodes[id]["pos"])) == str(id):
+			place_id = str(id)
+			break
+	var member: String = graph._members(place_id)[0]
+	var before_member: Vector2 = graph.nodes[member]["pos"]
+	var before_place: Vector2 = graph.nodes[place_id]["pos"]
+	graph._process(0.1)
+	check(graph.nodes[member]["pos"] == before_member, "nothing moves by itself in edit mode")
+	var screen_a: Vector2 = graph.world_to_screen(before_place)
+	var press := InputEventMouseButton.new()
+	press.button_index = MOUSE_BUTTON_LEFT
+	press.pressed = true
+	press.position = screen_a
+	graph._gui_input(press)
+	var motion := InputEventMouseMotion.new()
+	motion.button_mask = MOUSE_BUTTON_MASK_LEFT
+	motion.position = screen_a + Vector2(60, 40)
+	graph._gui_input(motion)
+	var release := InputEventMouseButton.new()
+	release.button_index = MOUSE_BUTTON_LEFT
+	release.pressed = false
+	release.position = screen_a + Vector2(60, 40)
+	graph._gui_input(release)
+	var moved_by: Vector2 = (graph.nodes[member]["pos"] as Vector2) - before_member
+	check(moved_by.length() > 20.0, "dragging a place moves its items with it (%.0f px)" % moved_by.length())
+	var has_saved := false
+	var gdata: Dictionary = {}
+	for attempt in 30:
+		await create_timer(0.2).timeout
+		gdata = (await app.backend.api.call_api("/brain/graph"))["data"]
+		for nd in gdata.get("nodes", []):
+			if str((nd as Dictionary)["id"]) == member and (nd as Dictionary).has("saved_pos"):
+				has_saved = true
+		if has_saved:
+			break
+	check(has_saved, "the placement is saved by the engine")
+	var undone: Dictionary = graph.undo_move()
+	check(undone.has(member) and graph.nodes[member]["pos"] == before_member, "Ctrl+Z puts the place and its items back")
+	await ap.send("Range le graphe", true)
+	await create_timer(0.3).timeout
+	gdata = (await app.backend.api.call_api("/brain/graph"))["data"]
+	check(not (gdata.get("nodes", []) as Array).any(func(x: Variant) -> bool: return (x as Dictionary).has("saved_pos")),
+		"« range le graphe » forgets every placement")
+	await ap.send("Termine l'édition", true)
+	check(not graph.edit_mode, "« termine l'édition » leaves edit mode")
+	graph.show_legend = true
+	graph.queue_redraw()
+	await process_frame
+	check(graph.edge_text({"from": member, "to": place_id, "type": "space"}).contains("belongs to"), "a line explains itself on hover")
+	graph.show_legend = false
 	# Graph first, semantic zoom (Loop 10).
 	await brain.call("set_view", "graph")
 	var vb: Dictionary = brain.get("view_buttons")
@@ -728,6 +787,10 @@ func _drop_check() -> void:
 	g.drop_item("n1", Vector2(5000, 5000))
 	check(moved.size() == 1 and bool((g.nodes["n1"] as Dictionary)["pinned"]), "an item dropped outside any zone stays where it was put")
 	g.queue_free()
+
+
+func filters_bar_of(brain: Control) -> GraphFilters:
+	return brain.get("filters_bar")
 
 
 func refresh_and_wait(brain: Control) -> void:

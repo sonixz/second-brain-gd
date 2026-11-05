@@ -19,6 +19,7 @@ signal details_needed(id: String)
 signal page_needed(id: String, source_id: String, width: int)
 signal node_activated(id: String)
 signal item_dropped_on_place(id: String, space_id: String)  # an item dragged into another place's zone
+signal positions_changed(changes: Dictionary)  # node id -> Vector2: what the user just placed (saved by the brain)
 
 const REPULSION := 5200.0
 const SPRING := 0.035
@@ -59,6 +60,11 @@ var show_minimap := true
 var anchors: Dictionary = {}         # space node id -> its zone's centre (Loop 13)
 var custom_anchors: Dictionary = {}  # zones the user moved by dragging a place
 var zone_reach: Dictionary = {}      # space node id -> its zone's radius in world units, as last drawn
+var edit_mode := false               # the layout is frozen: only what the user drags moves (and stays)
+var show_legend := false
+var _move_undo: Array = []           # edit mode: {node id: previous position} per gesture, for Ctrl+Z
+var _drag_start: Dictionary = {}     # positions at the start of the current drag
+var _settle_until := -1.0            # after « Tidy », the layout runs for a moment even in edit mode
 var folded: Dictionary = {}          # space node id -> true when its items are folded in
 var filter: Dictionary = {}
 var filtered_out: Dictionary = {}          # node id -> true when filtered out or folded in
@@ -171,10 +177,27 @@ func set_graph(data: Dictionary) -> Array[String]:
 			var hub := "space:" + str(n.get("space_id", ""))
 			if str(n["type"]) == "note" and anchors.has(hub):
 				n["pos"] = (anchors[hub] as Vector2) + Vector2.from_angle(randf() * TAU) * (60.0 + randf() * 80.0)
+	# Where the user put things stays put (edit mode, saved by the engine).
+	for id in incoming:
+		var saved: Variant = (incoming[id] as Dictionary).get("saved_pos")
+		if not saved is Array or (saved as Array).size() < 2 or not nodes.has(id):
+			continue
+		var at := Vector2(float(saved[0]), float(saved[1]))
+		var n: Dictionary = nodes[id]
+		if str(n["type"]) == "space":
+			custom_anchors[id] = at
+			anchors[id] = at
+			if first_load or born.has(id):
+				n["pos"] = at
+		else:
+			n["pinned"] = true
+			if first_load or born.has(id) or not n.has("_placed"):
+				n["pos"] = at
+				n["_placed"] = true
 	_update_shown()
 	if graph_layout == "timeline":
 		_timeline_targets()
-	heat = 1.0
+	heat = 0.0 if edit_mode else 1.0
 	return born
 
 
@@ -625,7 +648,7 @@ func _process(delta: float) -> void:
 		cam = cam.lerp((nodes[follow]["pos"] as Vector2) - screen_offset / zoom, minf(1.0, delta * 8.0))
 	if graph_layout == "timeline":
 		_timeline_step(delta)
-	elif heat > 0.02:
+	elif heat > 0.02 and (not edit_mode or _t < _settle_until):
 		_simulate(minf(delta, 0.05) * 60.0)
 		heat *= 0.995 if _sim_ids.size() < 600 else (0.985 if _sim_ids.size() < 2000 else 0.97)
 	queue_redraw()
@@ -1067,6 +1090,10 @@ func _draw_all() -> void:
 		_draw_label(n, p, r, dim)
 	if show_minimap and nodes.size() > 1:
 		_draw_minimap()
+	if show_legend:
+		_draw_legend()
+	if edit_mode:  # a visible frame says the layout is frozen and yours
+		draw_rect(Rect2(Vector2(2, 2), size - Vector2(4, 4)), Color(SbTheme.WARM, 0.35), false, 2.0)
 
 
 func _draw_clusters() -> void:
@@ -1257,6 +1284,126 @@ static func _ease_out_back(x: float) -> float:
 
 
 # -------------------------------------------------------------------- input
+## Edit mode: the layout stops; dragging an item or a whole place moves it and it stays there.
+func set_edit_mode(on: bool) -> void:
+	edit_mode = on
+	if not on:
+		heat = maxf(heat, 0.3)  # pinned things stay; the rest settles around them
+	queue_redraw()
+
+
+## « Tidy »: forget every placement and let the layout arrange everything again.
+func tidy() -> void:
+	custom_anchors.clear()
+	_move_undo.clear()
+	for id in nodes:
+		var n: Dictionary = nodes[id]
+		n["pinned"] = false
+		n.erase("_placed")
+	_layout_anchors()
+	for id in anchors:
+		if nodes.has(id):
+			(nodes[id] as Dictionary)["pos"] = anchors[id]
+	_rebuild_sim()
+	heat = 1.0
+	_settle_until = _t + 2.5  # it settles even in edit mode, then freezes again
+
+
+## Ctrl+Z in edit mode: the last gesture goes back. Returns the positions to save.
+func undo_move() -> Dictionary:
+	if _move_undo.is_empty():
+		return {}
+	var back: Dictionary = _move_undo.pop_back()
+	for id in back:
+		if nodes.has(id):
+			_place(str(id), back[id] as Vector2)
+	return back
+
+
+func _place(id: String, at: Vector2) -> void:
+	var n: Dictionary = nodes[id]
+	n["pos"] = at
+	n["pinned"] = str(n["type"]) != "space"
+	if _sim_index.has(id):
+		_sim_pos[int(_sim_index[id])] = at
+	if str(n["type"]) == "space":
+		anchors[id] = at
+		custom_anchors[id] = at
+
+
+func _members(space_node: String) -> Array:
+	var sid := space_node.trim_prefix("space:")
+	var out: Array = []
+	for id in nodes:
+		var n: Dictionary = nodes[id]
+		if str(n["type"]) == "note" and str(n["space_id"]) == sid:
+			out.append(id)
+	return out
+
+
+## What a line means, for its tooltip and the legend.
+func edge_at(screen_pos: Vector2) -> Dictionary:
+	var best: Dictionary = {}
+	var best_d := 6.0
+	for e in edges:
+		if filtered_out.has(e["from"]) or filtered_out.has(e["to"]):
+			continue
+		var a := world_to_screen((nodes[e["from"]] as Dictionary)["pos"] as Vector2)
+		var b := world_to_screen((nodes[e["to"]] as Dictionary)["pos"] as Vector2)
+		var d := Geometry2D.get_closest_point_to_segment(screen_pos, a, b).distance_to(screen_pos)
+		if d < best_d:
+			best_d = d
+			best = e
+	return best
+
+
+func edge_text(e: Dictionary) -> String:
+	if e.is_empty():
+		return ""
+	var a := str((nodes[e["from"]] as Dictionary)["label"])
+	var b := str((nodes[e["to"]] as Dictionary)["label"])
+	match str(e["type"]):
+		"space":
+			return "« %s » belongs to the place « %s »" % [a, b]
+		"area":
+			return "« %s » is part of « %s »" % [a, b]
+		"tag":
+			return "« %s » carries %s" % [a, b]
+		"related":
+			return "Suggested by meaning (dashed): « %s » ≈ « %s »\nOpen the item to keep (✓) or dismiss (✕) it" % [a, b]
+	return "Link: « %s » — « %s »" % [a, b]
+
+
+const LEGEND := [["link", "Link: you wrote [[…]], the archivist linked, or you kept a suggestion"],
+	["related", "Suggested by meaning, not confirmed yet"],
+	["space", "Belongs to this place"], ["tag", "Carries this #theme"], ["path", "Answer to « how is X connected to Y? »"]]
+
+
+func _draw_legend() -> void:
+	var font := get_theme_default_font()
+	var box := Rect2(Vector2(388, 148), Vector2(470, 30 + LEGEND.size() * 26))
+	draw_rect(box, Color(SbTheme.BG, 0.92))
+	draw_rect(box, Color(SbTheme.FOREST_LIGHT, 0.35), false, 1.0)
+	draw_string(font, box.position + Vector2(14, 22), "LINES IN THE GRAPH", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(SbTheme.TEXT, 0.7))
+	for i in LEGEND.size():
+		var y := box.position.y + 44.0 + i * 26.0
+		var a := Vector2(box.position.x + 14, y)
+		var b := a + Vector2(46, 0)
+		match str(LEGEND[i][0]):
+			"link":
+				draw_line(a, b, Color(SbTheme.MINT, 0.85), 2.2, true)
+				draw_circle(a.lerp(b, 0.6), 2.4, Color(SbTheme.MINT_SOFT, 0.9))
+			"related":
+				draw_dashed_line(a, b, Color(SbTheme.WARM, 0.8), 1.8, 6.0)
+			"space":
+				draw_line(a, b, Color(SbTheme.FOREST_LIGHT, 0.6), 1.2, true)
+			"tag":
+				draw_line(a, b, Color(SbTheme.MUTED, 0.5), 1.0, true)
+			"path":
+				draw_line(a, b, Color(SbTheme.WARM, 1.0), 3.5, true)
+		draw_string(font, Vector2(b.x + 14, y + 5), str(LEGEND[i][1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(SbTheme.TEXT, 0.9))
+
+
 ## The place whose zone contains a world point ("" when none). Closest centre wins where zones overlap.
 func zone_at(world: Vector2) -> String:
 	var best := ""
@@ -1273,18 +1420,19 @@ func zone_at(world: Vector2) -> String:
 
 ## End of a drag: an item let go inside another place's zone asks to be refiled there;
 ## anywhere else it stays where it was put instead of drifting back.
-func drop_item(id: String, world: Vector2) -> void:
+func drop_item(id: String, world: Vector2) -> bool:
 	if not nodes.has(id):
-		return
+		return false
 	var n: Dictionary = nodes[id]
 	if str(n["type"]) != "note":
-		return
+		return false
 	var hub := zone_at(world)
 	if hub != "" and hub != "space:" + str(n["space_id"]) and not folded.has(hub):
-		n["pinned"] = false
+		n["pinned"] = edit_mode  # in edit mode it stays exactly where it was dropped
 		item_dropped_on_place.emit(id, hub.trim_prefix("space:"))
-	else:
-		n["pinned"] = true
+		return true
+	n["pinned"] = true
+	return false
 
 
 func node_at(screen_pos: Vector2) -> String:
@@ -1329,6 +1477,12 @@ func _gui_input(event: InputEvent) -> void:
 				_moved = false
 				_dragging_node = node_at(mb.position)
 				_panning = _dragging_node == ""
+				_drag_start.clear()
+				if _dragging_node != "":
+					_drag_start[_dragging_node] = (nodes[_dragging_node] as Dictionary)["pos"]
+					if edit_mode and _dragging_node.begins_with("space:"):  # a place moves with everything in it
+						for m in _members(_dragging_node):
+							_drag_start[m] = (nodes[m] as Dictionary)["pos"]
 				if mb.double_click and _dragging_node == "":
 					create_tween().tween_property(self, "cam", Vector2.ZERO, 0.6).set_trans(Tween.TRANS_CUBIC)
 				elif mb.double_click and _dragging_node.begins_with("space:"):
@@ -1337,7 +1491,17 @@ func _gui_input(event: InputEvent) -> void:
 					node_activated.emit(_dragging_node)
 			else:
 				if _moved and _dragging_node != "":
-					drop_item(_dragging_node, screen_to_world(mb.position))
+					var refiled := drop_item(_dragging_node, screen_to_world(mb.position))
+					if refiled and not edit_mode:
+						_drag_start.erase(_dragging_node)  # it floats into its new place
+					var changes := {}
+					for id in _drag_start:
+						if nodes.has(id) and (nodes[id] as Dictionary)["pos"] != _drag_start[id]:
+							changes[id] = (nodes[id] as Dictionary)["pos"]
+					if not changes.is_empty():
+						if edit_mode:
+							_move_undo.append(_drag_start.duplicate())
+						positions_changed.emit(changes)
 				if not _moved:
 					var hit := node_at(mb.position)
 					if hit != "":
@@ -1356,6 +1520,13 @@ func _gui_input(event: InputEvent) -> void:
 				_moved = true
 			if _dragging_node != "" and _moved:
 				var n: Dictionary = nodes[_dragging_node]
+				var shift := screen_to_world(mm.position) - (n["pos"] as Vector2)
+				if edit_mode and _dragging_node.begins_with("space:"):
+					for m in _members(_dragging_node):
+						var mn: Dictionary = nodes[m]
+						mn["pos"] = (mn["pos"] as Vector2) + shift
+						if _sim_index.has(m):
+							_sim_pos[int(_sim_index[m])] = mn["pos"]
 				n["pos"] = screen_to_world(mm.position)
 				if _sim_index.has(_dragging_node):
 					_sim_pos[int(_sim_index[_dragging_node])] = n["pos"]
@@ -1372,3 +1543,5 @@ func _gui_input(event: InputEvent) -> void:
 				hovered = h
 				mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if h != "" else Control.CURSOR_ARROW
 				tooltip_text = ""
+			if h == "" and zoom >= 0.25:
+				tooltip_text = edge_text(edge_at(mm.position))

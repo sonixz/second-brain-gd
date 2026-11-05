@@ -257,7 +257,30 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           <li><b>Timeline</b>: the toggle, or « montre la chronologie », lays items along time, one lane per place.</li>
           <li><b>Paths</b>: « comment X est relié à Y ? » draws the shortest meaningful path.</li>
           <li><b>Related ideas</b>: dashed lines suggested by meaning. Keep one as a real link (✓) or dismiss it (✕).</li>
+          <li><b>Move items between places</b>: drag an item into another place's zone to file it there.</li>
+          <li><b>Remove a place</b>: ✕ next to it in <i>Spaces &amp; briefing</i>, or « supprime la place X ». Its items go back to the Inbox; Undo restores it.</li>
         </ul>
+        <h3>Edit mode: your layout</h3>
+        <p>Press <b>Edit</b> (or <kbd>E</kbd>, or « mode édition »). The graph stops moving and a frame shows you are editing.</p>
+        <ul>
+          <li>Drag an <b>item</b> anywhere; drag a <b>place</b> and its whole zone moves with everything in it.</li>
+          <li>Drop an item into another place to refile it; it stays exactly where you dropped it.</li>
+          <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes the last gesture. <kbd>E</kbd> or <kbd>Esc</kbd> (or « termine l'édition ») finishes.</li>
+          <li>Everything you place is <b>saved</b> and stays there after a restart, also outside edit mode.</li>
+          <li><b>Tidy</b> (or « range le graphe ») forgets every placement and lets the graph arrange itself again.</li>
+        </ul>
+        <h3>What the lines mean</h3>
+        <p>The <b>?</b> button shows the legend, and hovering a line says what it is.</p>
+        <table>
+          <thead><tr><th>Line</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td>Solid, bright, with a dot travelling along</td><td>A real link: you wrote <code>[[…]]</code>, the archivist linked them, or you kept a suggestion</td></tr>
+            <tr><td>Dashed, warm</td><td>Suggested by meaning, not confirmed (✓ keeps it, ✕ dismisses it)</td></tr>
+            <tr><td>Thin, pale</td><td>The item belongs to this place (or a project to its area)</td></tr>
+            <tr><td>Thin, faint grey</td><td>The item carries this #theme</td></tr>
+            <tr><td>Thick, golden</td><td>The answer to « how is X connected to Y? », shown for a moment</td></tr>
+          </tbody>
+        </table>
       </section>
 
       <section class="doc" id="voice">
