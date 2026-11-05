@@ -74,6 +74,9 @@ Set `SBGD_HOME` to use another folder. Nothing is ever written inside the reposi
 - **Explore:** use the wheel to zoom, drag to pan. Drag an item into another place's zone to move it there;
   dropped elsewhere it stays put. Click a note to edit it, a space to filter, a tag to search. Press `/` to
   search and Esc to close.
+- **Two agents:** the *Archivist* keeps the graph (files, moves, links, finds); *Sparring* is a thinking partner for long
+  spoken sessions (F9): it questions, challenges or reassures, never changes the Brain, and saves a synthesis only when
+  you approve it. Each has its own floating panel; F8/F9 talk to the one you last used.
 - **Browser:** the Edge/Chrome extension in `browser-extension/` sends the page you read (as you see it) in one
   click, and lets the assistant open, add (« injecte-la ») and close tabs by voice. Install: `edge://extensions` →
   Developer mode → Load unpacked; pair it from *Captures → Send from browser…*. Guide:

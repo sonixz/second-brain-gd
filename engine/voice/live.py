@@ -249,7 +249,11 @@ def make_upstream(api_key: str | None, model: str) -> OpenAIUpstream | FakeUpstr
 # ---------------------------------------------------------------- the conversation
 class LiveSession:
     def __init__(self, db_path: Path, upstream: Any, settings: dict[str, Any], voice: str,
-                 send_json: SendJson, send_audio: SendAudio, text_client: Any = None):
+                 send_json: SendJson, send_audio: SendAudio, text_client: Any = None, agent: str = "archivist"):
+        from engine.assistant import agents
+
+        self.agent = agents.name(agent)
+        self.last_user = ""
         self.db_path = db_path
         self.up = upstream
         self.s = settings
@@ -275,12 +279,16 @@ class LiveSession:
         from engine.assistant import core
 
         now = datetime.now().strftime("%A %Y-%m-%d %H:%M")
-        return core.PERSONA + LIVE_RULES + f"\nNous sommes le {now}." + self.focus
+        from engine.assistant import agents
+
+        return agents.persona(self.agent) + LIVE_RULES + f"\nNous sommes le {now}." + self.focus
 
     def tools(self) -> list[dict[str, Any]]:
         from engine.assistant import core
 
-        return realtime_tools(core.TOOLS)
+        from engine.assistant import agents
+
+        return realtime_tools(agents.tools(self.agent, core.TOOLS + agents.SYNTHESIS_TOOLS))
 
     async def start(self) -> None:
         await self.up.connect()
@@ -303,7 +311,9 @@ class LiveSession:
 
         conn = self._db()
         try:
-            core._save(conn, core.today_conversation(), role, text, {"live": True, **(meta or {})})
+            from engine.assistant import agents
+
+            core._save(conn, agents.conversation(self.agent), role, text, {"live": True, **(meta or {})})
             conn.commit()
         finally:
             conn.close()
@@ -313,8 +323,13 @@ class LiveSession:
 
         conn = self._db()
         try:
+            from engine.assistant import agents
+
             core._CLIENT["c"] = self.text_client
             core._UI["actions"] = []
+            core._CONTEXT["user_text"] = self.last_user  # what « save it » is checked against
+            if name not in ("focus_project", "end_conversation") and not agents.allowed(self.agent, name):
+                return {"error": f"{name} is not available to {agents.get(self.agent)['label']}"}, []
             if name == "focus_project":
                 sid = str(args.get("space_id", ""))
                 try:
@@ -392,6 +407,7 @@ class LiveSession:
                 text = str(ev.get("transcript") or "").strip()
                 if text:
                     await self.send_json({"type": "user_text", "text": text})
+                    self.last_user = text
                     await asyncio.to_thread(self._save, "user", text)
             elif t == "response.done":
                 self.responding = False

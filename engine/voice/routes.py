@@ -156,7 +156,8 @@ def make_router(layout: Layout, auth: Callable[..., None], token: str) -> APIRou
             text_client = make_client(key)  # meaning search inside the tools; keyword search without it
         except PermissionError:
             text_client = None
-        sess = live.LiveSession(layout.database, up, s, voice, send_json, send_audio, text_client)
+        agent = ws.query_params.get("agent", "archivist")
+        sess = live.LiveSession(layout.database, up, s, voice, send_json, send_audio, text_client, agent=agent)
         try:
             await sess.start()
         except Exception as exc:
@@ -166,7 +167,7 @@ def make_router(layout: Layout, auth: Callable[..., None], token: str) -> APIRou
             await ws.close(code=1011)
             return
         record("live", "started", f"Live conversation opened ({up.provider}, {up.model})")
-        await send_json({"type": "ready", "model": up.model, "voice": voice, "provider": up.provider})
+        await send_json({"type": "ready", "model": up.model, "voice": voice, "provider": up.provider, "agent": sess.agent})
         pump = asyncio.create_task(sess.pump())
         idle = asyncio.create_task(sess.idle_watch())
 

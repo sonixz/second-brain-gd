@@ -24,14 +24,14 @@ var _was_open := false
 var is_ready := false
 
 
-func connect_to(port: int, token: String) -> Error:
+func connect_to(port: int, token: String, agent: String = "archivist") -> Error:
 	_ws = WebSocketPeer.new()
 	_ws.handshake_headers = PackedStringArray(["Authorization: Bearer " + token])
 	_ws.inbound_buffer_size = 1 << 22
 	_ws.outbound_buffer_size = 1 << 22
 	_was_open = false
 	is_ready = false
-	return _ws.connect_to_url("ws://127.0.0.1:%d/voice/live" % port)
+	return _ws.connect_to_url("ws://127.0.0.1:%d/voice/live?agent=%s" % [port, agent.uri_encode()])
 
 
 func is_open() -> bool:

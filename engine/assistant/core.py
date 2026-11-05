@@ -34,10 +34,12 @@ DEFAULTS = {
     # Internet access for the assistant (search with OpenAI's hosted web search, read pages from this machine).
     "web_access": True,
     "web_search_model": "gpt-4o-mini",
+    # Sparring, the thinking partner (2026-11-04): fast enough to talk with, good at arguing.
+    "sparring_chat_model": "gpt-6-sol",
 }
 # When a user's OpenAI project lacks a configured model, the job falls back instead of failing.
 FALLBACK_MODELS = {"assistant_classify_model": "gpt-4o-mini", "assistant_review_model": "gpt-4o",
-                   "assistant_chat_model": "gpt-4o"}
+                   "assistant_chat_model": "gpt-4o", "sparring_chat_model": "gpt-4o"}
 MAX_TOOL_ROUNDS = 8
 # A reply that claims an interface action or an undo, in a turn where no tool ran, gets one nudge
 # (measured 2026-11-03: gpt-4o sometimes said « j'annule » or « la revue est lancée » without the tool).
@@ -643,6 +645,18 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
         if out.get("undone"):
             _UI["actions"].append({"action": "refresh"})
         return out
+    if name in ("draft_synthesis", "save_synthesis"):
+        from engine.assistant import agents
+
+        if name == "draft_synthesis":
+            out = agents.draft(conn, str(args.get("title") or ""), str(args.get("body") or ""), str(args.get("place") or ""))
+            if out.get("draft_ready"):
+                _UI["actions"].append({"action": "synthesis_draft"})
+            return out
+        out = agents.save(conn, _CLIENT.get("c"), _journal, actions, _CONTEXT.get("user_text") or "")
+        if out.get("changed"):
+            _UI["actions"].append({"action": "refresh"})
+        return out
     if name in ("open_web_page", "capture_browser_tab", "close_browser_tabs"):
         return _browser_tool(conn, name, args, actions)
     if name in ("web_search", "read_web_page", "add_web_page"):
@@ -828,8 +842,12 @@ SPOKEN_RULE = ("\nCe message est arrivé à la VOIX et ta réponse sera lue à v
 
 
 def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None = None,
-         spoken: bool = False, open_note: str | None = None) -> dict[str, Any]:
+         spoken: bool = False, open_note: str | None = None, agent: str = "archivist") -> dict[str, Any]:
+    from engine.assistant import agents
+
+    agent = agents.name(agent)
     _CLIENT["c"] = client
+    _CONTEXT["agent"] = agent
     _CONTEXT["open_note"] = open_note
     _CONTEXT["user_text"] = text
     on_screen = ""
@@ -838,7 +856,7 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
         if row:
             on_screen = "\nÉlément ouvert à l'écran: « " + row["title"] + " » (id " + open_note + ")."
     s = settings(conn)
-    conversation = today_conversation()
+    conversation = agents.conversation(agent)
     focus = ""
     if space_id:
         try:
@@ -846,7 +864,7 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
         except brain.NotFound:
             pass
     now = datetime.now().strftime("%A %Y-%m-%d %H:%M")
-    messages: list[dict[str, Any]] = [{"role": "system", "content": PERSONA + f"\nNous sommes le {now}." + focus
+    messages: list[dict[str, Any]] = [{"role": "system", "content": agents.persona(agent) + f"\nNous sommes le {now}." + focus
                                         + on_screen + (SPOKEN_RULE if spoken else "")}]
     for m in history(conn, conversation, HISTORY):
         content = m["content"]
@@ -868,7 +886,8 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
     nudged = False
     change_nudged = False
     for _ in range(MAX_TOOL_ROUNDS):
-        res = complete_with_fallback(conn, client, "assistant_chat_model", messages, tools=TOOLS)
+        res = complete_with_fallback(conn, client, agents.get(agent)["model_setting"], messages,
+                                     tools=agents.tools(agent, TOOLS + agents.SYNTHESIS_TOOLS))
         cost += _usage_event(conn, "chat", res["model"], res["usage"], client.provider)
         msg = res["message"]
         calls = msg.get("tool_calls") or []
@@ -895,12 +914,14 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
                 args = json.loads(call["function"].get("arguments") or "{}")
             except ValueError:
                 args = {}
-            result = run_tool(conn, call["function"]["name"], args, actions)
+            tname = call["function"]["name"]
+            result = run_tool(conn, tname, args, actions) if agents.allowed(agent, tname) else \
+                {"error": f"{tname} is not available to {agents.get(agent)['label']}"}
             messages.append({"role": "tool", "tool_call_id": call["id"], "content": json.dumps(result, ensure_ascii=False)[:12000]})
     if not reply:
         # Out of tool rounds: ask for a plain summary of what was done, without tools.
         messages.append({"role": "user", "content": "Résume en 1 à 3 phrases ce que tu viens de faire, sans appeler d'outil."})
-        res = complete_with_fallback(conn, client, "assistant_chat_model", messages)
+        res = complete_with_fallback(conn, client, agents.get(agent)["model_setting"], messages)
         cost += _usage_event(conn, "chat", res["model"], res["usage"], client.provider)
         reply = (res["message"].get("content") or "").strip() or "C'est fait."
     cited = _cited(conn, reply)

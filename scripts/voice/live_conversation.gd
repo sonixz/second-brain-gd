@@ -27,6 +27,7 @@ var minutes := 0.0
 var last_error := ""
 var last_end := ""
 var headphones := false
+var agent := "archivist"       # who you talk to: archivist or sparring (set by the brain screen before start)
 var _pill: PanelContainer
 var _dot: Label
 var _label: Label
@@ -127,7 +128,7 @@ func _refresh() -> void:
 		return
 	var texts := {"connecting": "Connecting…", "listening": "Live · I'm listening", "speaking":
 		"Live · speaking" + ("" if headphones else " — F8 to interrupt"), "thinking": "Live · looking it up…"}
-	_label.text = str(texts.get(state, "Live"))
+	_label.text = ("Sparring · " if agent == "sparring" else "") + str(texts.get(state, "Live"))
 	var col := SbTheme.WARM if state == "listening" else (SbTheme.MINT if state == "speaking" else SbTheme.INFO)
 	_dot.add_theme_color_override("font_color", col)
 	var money := ("$%.3f" % float(cost_usd)) if cost_usd != null else "cost unknown"
@@ -147,7 +148,7 @@ func start(use_mic: bool = true) -> bool:
 	active = true
 	_pill.visible = true
 	_set_state("connecting")
-	var err := stream.connect_to(app.backend.api.port, app.backend.api.token)
+	var err := stream.connect_to(app.backend.api.port, app.backend.api.token, agent)
 	if err != OK:
 		last_error = "Cannot open the live connection (%s)." % error_string(err)
 		stop("error")

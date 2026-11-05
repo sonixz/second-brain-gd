@@ -52,6 +52,9 @@ var spaces_page: VBoxContainer
 var panel_layer: SbPanelLayer
 var archivist_panel: SbFloatingPanel   # the conversation with the archivist (was the « Assistant » tab)
 var places_panel: SbFloatingPanel      # briefing, places, sources (was « Spaces & briefing »)
+var sparring_chat: AssistantPanel      # Sparring, the thinking partner (reads, argues, saves only an approved synthesis)
+var sparring_panel: SbFloatingPanel
+var active_agent := "archivist"        # F8 and F9 talk to the agent you last used
 var toast: PanelContainer
 var toast_label: Label
 var toast_undo: Button
@@ -157,6 +160,7 @@ func _ready() -> void:
 	await load_briefing()
 	refresh_sources()
 	assistant_panel.start()
+	sparring_chat.start()
 	if str(app.state.get("view", "graph")) != "graph":
 		set_view(str(app.state["view"]))
 	var keep := str(app.state.get("selected_note", ""))
@@ -190,6 +194,21 @@ func _watch_browser() -> void:
 		if view == "captures":
 			await captures_view.refresh()
 	_browser_rev = rev
+
+
+## The agent F8 and F9 talk to: the one whose panel you last typed in, spoke to or grabbed.
+func set_agent(who: String) -> void:
+	active_agent = "sparring" if who == "sparring" else "archivist"
+	archivist_panel.title_label.text = "ARCHIVIST" + ("  ●" if active_agent == "archivist" else "")
+	sparring_panel.title_label.text = "SPARRING" + ("  ●" if active_agent == "sparring" else "")
+
+
+func chat_panel(who: String = "") -> AssistantPanel:
+	return sparring_chat if (who if who != "" else active_agent) == "sparring" else assistant_panel
+
+
+func agent_panel(who: String = "") -> SbFloatingPanel:
+	return sparring_panel if (who if who != "" else active_agent) == "sparring" else archivist_panel
 
 
 ## Docked panels take room on the left and right: the graph's toolbar and centre move into the free area.
@@ -364,6 +383,24 @@ func _build_left_panel() -> void:
 		archivist_panel.extra.add_child(c)
 	head_row.queue_free()
 	panel_layer.add_panel(archivist_panel)
+	sparring_chat = AssistantPanel.new().setup(app, self, "sparring")
+	sparring_chat.note_requested.connect(_open_note_by_title)
+	sparring_chat.ui_requested.connect(run_ui_actions)
+	sparring_chat.brain_changed.connect(func() -> void:
+		await refresh_graph()
+		await refresh_spaces())
+	sparring_panel = SbFloatingPanel.new().setup("sparring", "SPARRING", sparring_chat,
+		{"dock": "left", "size": 340.0, "minimized": true, "free": Rect2(440, 140, 380, 560)})
+	var spar_head := sparring_chat.get_child(0)
+	for c in spar_head.get_children():
+		spar_head.remove_child(c)
+		sparring_panel.extra.add_child(c)
+	spar_head.queue_free()
+	panel_layer.add_panel(sparring_panel)
+	assistant_panel.activated.connect(set_agent)
+	sparring_chat.activated.connect(set_agent)
+	archivist_panel.focused.connect(func() -> void: set_agent("archivist"))
+	sparring_panel.focused.connect(func() -> void: set_agent("sparring"))
 	spaces_page = VBoxContainer.new()
 	spaces_page.add_theme_constant_override("separation", 10)
 	spaces_page.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -716,6 +753,9 @@ func run_ui_actions(actions: Array) -> void:
 			"pack_exported":
 				show_toast("Pack saved: %s" % str(a.get("path", "")).get_file())
 				last_pack_export = str(a.get("path", ""))
+			"synthesis_draft":
+				sparring_panel.reveal()
+				await sparring_chat.show_draft()
 			"open_url":
 				var url := str(a.get("url", ""))
 				last_opened_url = url
@@ -772,7 +812,7 @@ func push_to_talk(pressed: bool, use_mic: bool = true) -> void:
 		return
 	if pressed and not ptt_active and voice_state == "idle":
 		ptt_active = true
-		archivist_panel.reveal()
+		agent_panel().reveal()
 		voice_target = "chat"
 		var res := await app.backend.api.call_api("/voice/status")
 		var st: Dictionary = res["data"] if res["ok"] else {}
@@ -1804,7 +1844,8 @@ func start_voice(use_mic: bool) -> bool:
 	capture_edit.text = ""
 	capture_edit.editable = false
 	capture_edit.placeholder_text = "Listening…  speak, then release F8" if ptt_active else "Listening…  speak, then click the microphone again"
-	capture_hint.text = ("Listening for the assistant · release F8 to send" if ptt_active else "Listening for the assistant · click the mic to finish") if voice_target == "chat" \
+	var who := "Sparring" if active_agent == "sparring" else "the archivist"
+	capture_hint.text = ("Listening for %s · release F8 to send" % who if ptt_active else "Listening for %s · click the mic to finish" % who) if voice_target == "chat" \
 		else "Listening · Ctrl+M or click the mic to finish"
 	return true
 
@@ -1835,7 +1876,7 @@ func stop_voice() -> void:
 	capture_edit.text = ""
 	if voice_target == "chat":
 		voice_target = "capture"
-		await assistant_panel.send(text, true)
+		await chat_panel().send(text, true)
 	else:
 		await capture(text, "voice")
 
@@ -1847,9 +1888,10 @@ func _on_voice_delta(text: String) -> void:
 
 
 func _on_live_text(text: String, role: String) -> void:
-	if archivist_panel != null:
-		archivist_panel.reveal()
-	assistant_panel.add_live(role, text)
+	var who := str(app.live.agent)
+	if agent_panel(who) != null:
+		agent_panel(who).reveal()
+	chat_panel(who).add_live(role, text)
 
 
 func _on_live_finished(reason: String) -> void:
@@ -1874,7 +1916,8 @@ func toggle_live() -> void:
 		return
 	if voice_state != "idle":
 		return
-	archivist_panel.reveal()
+	agent_panel().reveal()
+	app.live.agent = active_agent
 	app.live.start(true)
 
 

@@ -5,6 +5,7 @@ extends PanelContainer
 ## Its place is remembered in the settings ("panels" section), per panel id. An SbPanelLayer arranges docked panels.
 
 signal layout_changed
+signal focused                     # its title bar was pressed
 
 const HEADER_H := 40.0
 const SNAP_PX := 72.0
@@ -117,6 +118,7 @@ func _on_header_input(event: InputEvent) -> void:
 			_dragging = false
 			return
 		if mb.pressed:
+			focused.emit()
 			_dragging = true
 			_grab = mb.global_position - global_position
 			if get_parent() != null:

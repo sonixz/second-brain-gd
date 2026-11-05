@@ -509,6 +509,20 @@ func _e2e() -> void:
 	layer.reset_all()
 	layer.relayout()
 	check(arch.dock == "left" and places.minimized, "« Reset the panel layout » puts everything back")
+	# Sparring (2026-11-04): its own panel and conversation; F8 follows the agent you use; a synthesis is saved on approval.
+	var sp: AssistantPanel = brain.get("sparring_chat")
+	sp.input.focus_entered.emit()
+	check(str(brain.get("active_agent")) == "sparring", "using Sparring's panel makes it the agent F8 and F9 talk to")
+	await sp.send("Résume-moi tout ça")
+	var drafted := await wait_until(func() -> bool: return sp.last_draft != "", 10.0)
+	check(drafted and sp.last_draft == "Synthèse de test", "Sparring shows its synthesis in full, not saved yet")
+	var before_notes := int(((await app.backend.api.call_api("/brain/graph"))["data"] as Dictionary)["nodes"].size())
+	await sp.send("Oui, sauvegarde cette synthèse dans le Brain.")
+	var saved_ok := await wait_until(func() -> bool: return sp.last_reply.contains("C'est dans ton Brain"), 10.0)
+	check(saved_ok, "on approval the synthesis is saved (%s)" % sp.last_reply.left(60))
+	var hist_a: Dictionary = (await app.backend.api.call_api("/assistant/history?agent=archivist"))["data"]
+	check(not str(hist_a.get("messages", [])).contains("Synthèse de test"), "Sparring's conversation stays separate from the archivist's")
+	brain.call("set_agent", "archivist")
 	# The legend and the lines' tooltips; the navigation is Graph, Captures, Projects.
 	var gv: GraphView = brain.get("graph")
 	var some_note := ""

@@ -263,6 +263,10 @@ class FakeChat:
                         "usage": usage, "model": model}
             if "explanation" in found:
                 return {"message": {"role": "assistant", "content": found["explanation"]}, "usage": usage, "model": model}
+            if found.get("draft_ready"):
+                return {"message": {"role": "assistant", "content": "Voici la synthèse. Je l'enregistre dans le Brain?"}, "usage": usage, "model": model}
+            if "saved" in found:
+                return {"message": {"role": "assistant", "content": f"C'est dans ton Brain: [[{found['saved']}]]."}, "usage": usage, "model": model}
             if "opened" in found or "closed" in found or "added" in found or ("error" in found and "browser" in str(found["error"])):
                 said = ("Ouvert." if "opened" in found else "Fermé." if "closed" in found
                         else f"Ajouté: [[{found['added']}]]." if "added" in found else "L'extension n'est pas connectée.")
@@ -288,6 +292,14 @@ class FakeChat:
             other = text.split(" avec ", 1)[1].strip(" .!") if " avec " in text else ""
             call = {"id": "call_rel", "type": "function", "function": {"name": "related_idea", "arguments": json.dumps(
                 {"action": "keep" if low.startswith("garde") else "dismiss", "other": other})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        names = [t["function"]["name"] for t in tools or []]
+        if "draft_synthesis" in names and ("résume" in low or "synthétise" in low):
+            call = {"id": "call_draft", "type": "function", "function": {"name": "draft_synthesis", "arguments": json.dumps(
+                {"title": "Synthèse de test", "body": "## L'idée\nUne idée de test.\n## Décidé\nOn garde l'essentiel."})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if "save_synthesis" in names and low.startswith("oui"):
+            call = {"id": "call_save", "type": "function", "function": {"name": "save_synthesis", "arguments": "{}"}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if low.startswith("ouvre la page http") and tools:
             call = {"id": "call_open", "type": "function", "function": {"name": "open_web_page",

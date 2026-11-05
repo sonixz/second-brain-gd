@@ -19,6 +19,7 @@ class ChatIn(BaseModel):
     space_id: str | None = None
     spoken: bool = False  # the message came by voice: the reply is read aloud, so it must be short
     open_note: str | None = Field(default=None, max_length=64)  # the item open on screen, for « garde ce lien »
+    agent: Literal["archivist", "sparring"] = "archivist"
 
 
 class SpeakIn(BaseModel):
@@ -75,13 +76,21 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
             return core.settings(conn)
 
     @r.get("/history")
-    def get_history(limit: int = Query(50, ge=1, le=200)) -> dict[str, Any]:
-        return {"conversation": core.today_conversation(),
-                "messages": run(core.history, core.today_conversation(), limit, needs_client=False)}
+    def get_history(limit: int = Query(50, ge=1, le=200), agent: str = Query("archivist", max_length=20)) -> dict[str, Any]:
+        from engine.assistant import agents
+
+        conv = agents.conversation(agent)
+        return {"conversation": conv, "agent": agents.name(agent), "messages": run(core.history, conv, limit, needs_client=False)}
+
+    @r.get("/draft")
+    def get_draft() -> dict[str, Any]:
+        """Sparring's synthesis waiting for approval (shown on screen in full)."""
+        with database.session(layout.database) as conn:
+            return {"draft": database.get_setting(conn, "sparring_draft")}
 
     @r.post("/chat")
     def post_chat(body: ChatIn) -> dict[str, Any]:
-        return run(core.chat, body.text, body.space_id, body.spoken, body.open_note)
+        return run(core.chat, body.text, body.space_id, body.spoken, body.open_note, body.agent)
 
     @r.post("/briefing")
     def post_briefing(force: bool = False) -> dict[str, Any]:

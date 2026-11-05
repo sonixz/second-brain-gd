@@ -50,6 +50,7 @@
         </ul>
         <h4>Integrate</h4>
         <ul>
+          <li><a href="#agents-profiles">Archivist and Sparring</a></li>
           <li><a href="#internet">Internet</a></li>
           <li><a href="#extension">Browser extension</a></li>
           <li><a href="#browser">Bookmark (no extension)</a></li>
@@ -142,7 +143,8 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           <thead><tr><th>Feature</th><th>Default model</th></tr></thead>
           <tbody>
             <tr><td>Archivist (filing)</td><td><code>gpt-6-sol</code>, falling back to <code>gpt-4o-mini</code></td></tr>
-            <tr><td>Assistant (chat with tools)</td><td><code>gpt-6-sol</code>, falling back to <code>gpt-4o</code></td></tr>
+            <tr><td>Archivist (chat with tools)</td><td><code>gpt-6-sol</code>, falling back to <code>gpt-4o</code></td></tr>
+            <tr><td>Sparring (thinking partner)</td><td><code>gpt-6-sol</code>, falling back to <code>gpt-4o</code></td></tr>
             <tr><td>Meaning search and related ideas</td><td><code>text-embedding-3-small</code></td></tr>
             <tr><td>Image descriptions</td><td><code>gpt-4o-mini</code></td></tr>
             <tr><td>Live conversation (F9)</td><td><code>gpt-realtime-2.1-mini</code> with <code>gpt-4o-mini-transcribe</code></td></tr>
@@ -275,6 +277,38 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             <tr><td>Thick, golden</td><td>The answer to « how is X connected to Y? », shown for a moment</td></tr>
           </tbody>
         </table>
+      </section>
+
+      <section class="doc" id="agents-profiles">
+        <p class="kicker">Use</p>
+        <h2>Two agents: the Archivist and Sparring</h2>
+        <p>Both work on the same Brain, each with its own role, tools, model and conversation. Each has its own floating
+          panel; <kbd>F8</kbd> and <kbd>F9</kbd> talk to the one you last used (its title shows a ●).</p>
+        <table>
+          <thead><tr><th></th><th>Archivist</th><th>Sparring</th></tr></thead>
+          <tbody>
+            <tr><td>Role</td><td>Keeps the graph: files, moves, links, finds, cleans up</td><td>A thinking partner: questions, challenges or reassures, brings in what your Brain holds</td></tr>
+            <tr><td>Changes the Brain</td><td>Yes, with Undo</td><td><b>Never</b>, except a synthesis you asked for and approved</td></tr>
+            <tr><td>Reads</td><td>The Brain, documents, the web</td><td>The Brain, documents, the web</td></tr>
+            <tr><td>Model</td><td><code>gpt-6-sol</code> (fallback <code>gpt-4o</code>)</td><td><code>gpt-6-sol</code> (fallback <code>gpt-4o</code>), setting <code>sparring_chat_model</code></td></tr>
+            <tr><td>Daily briefing</td><td>What came in, where it went, what to explore</td><td>None: it waits for your idea</td></tr>
+          </tbody>
+        </table>
+        <h3>Talking it through with Sparring</h3>
+        <ol class="steps-doc">
+          <li><p>Open the <b>SPARRING</b> panel (click its title bar), then press <kbd>F9</kbd> for a live conversation, or
+            hold <kbd>F8</kbd> for one sentence at a time. Ideal in the car: talk for twenty minutes.</p></li>
+          <li><p>Ask for what you need: « rassure-moi », « challenge-moi honnêtement », « joue l'avocat du diable »,
+            « qu'est-ce que j'ai déjà là-dessus dans mon Brain ? », « cherche ce qui se fait ailleurs ».</p></li>
+          <li><p>When the idea is ripe: « <b>synthétise-moi tout ça</b> ». Sparring writes a synthesis of what was decided or
+            clarified (not every sentence): the idea, the arguments kept, objections and answers, open questions, next leads.
+            It shows in full in its panel, marked <i>not saved yet</i>.</p></li>
+          <li><p>Approve: « oui, sauvegarde », or the <b>Save to the Brain</b> button. The Archivist files it like any item,
+            with Undo. Want changes? « change la partie sur… », or <b>Change it…</b>. In one go: « synthétise et enregistre ».</p></li>
+        </ol>
+        <p>The engine enforces it: Sparring has no tool that moves, links or deletes, and saving is refused unless your
+          message asks for it or approves the draft. A live conversation lasts at most 20 minutes and $1 by default
+          (Voice settings: <code>live_max_minutes</code>, <code>live_session_cap_usd</code>).</p>
       </section>
 
       <section class="doc" id="voice">

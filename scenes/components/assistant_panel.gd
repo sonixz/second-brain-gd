@@ -31,9 +31,16 @@ var spoken_history: Array[String] = []
 var last_review := ""
 var replayed := ""
 
-func setup(a: SbApp, b: Control) -> AssistantPanel:
+signal activated(agent: String)       # the user typed, spoke or clicked here: F8/F9 now go to this agent
+
+var agent := "archivist"             # archivist | sparring (engine/assistant/agents.py)
+var draft_box: VBoxContainer         # Sparring's synthesis waiting for approval
+
+
+func setup(a: SbApp, b: Control, who: String = "archivist") -> AssistantPanel:
 	app = a
 	brain = b
+	agent = who
 	add_theme_constant_override("separation", 8)
 	size_flags_vertical = Control.SIZE_EXPAND_FILL
 	var head := HBoxContainer.new()
@@ -52,7 +59,9 @@ func setup(a: SbApp, b: Control) -> AssistantPanel:
 	live_button.text = "Live"
 	live_button.tooltip_text = "A spoken conversation with the archivist (F9 to start and end)"
 	live_button.toggle_mode = false
-	live_button.pressed.connect(func() -> void: brain.call("toggle_live"))
+	live_button.pressed.connect(func() -> void:
+		activated.emit(agent)
+		brain.call("toggle_live"))
 	head.add_child(live_button)
 	app.live.state_changed.connect(_on_live_state)
 	_on_live_state(app.live.state)
@@ -72,7 +81,8 @@ func setup(a: SbApp, b: Control) -> AssistantPanel:
 	row.add_theme_constant_override("separation", 6)
 	add_child(row)
 	input = LineEdit.new()
-	input.placeholder_text = "Ask or tell the archivist…"
+	input.placeholder_text = "Think out loud with Sparring…" if agent == "sparring" else "Ask or tell the archivist…"
+	input.focus_entered.connect(func() -> void: activated.emit(agent))
 	input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	input.custom_minimum_size = Vector2(0, 40)
 	input.text_submitted.connect(func(t: String) -> void: send(t))
@@ -82,7 +92,9 @@ func setup(a: SbApp, b: Control) -> AssistantPanel:
 	mic_button.custom_minimum_size = Vector2(40, 40)
 	mic_button.tooltip_text = "Talk to the archivist (click, speak, click again)"
 	mic_button.set_meta("sfx", "none")
-	mic_button.pressed.connect(func() -> void: brain.call("toggle_voice", "chat"))
+	mic_button.pressed.connect(func() -> void:
+		activated.emit(agent)
+		brain.call("toggle_voice", "chat"))
 	row.add_child(mic_button)
 	send_button = Button.new()
 	send_button.text = "↑"
@@ -106,7 +118,7 @@ func start() -> void:
 	if not configured:
 		_add_bubble("assistant", "Hi! I'm your archivist. Give me anything (a thought, a link, a PDF, your voice): I file it, link it and find it again. I need your OpenAI key first: click the microphone or open the engine room's Voice card.", [], [])
 		return
-	var hist := await app.backend.api.call_api("/assistant/history?limit=40")
+	var hist := await app.backend.api.call_api("/assistant/history?limit=40&agent=" + agent)
 	var had_briefing := false
 	if hist["ok"]:
 		var msgs: Array = (hist["data"] as Dictionary).get("messages", [])
@@ -117,6 +129,12 @@ func start() -> void:
 			_add_bubble(role, str(m["content"]), meta.get("actions", []), meta.get("cited", []), meta.get("sources", []))
 			if str(m["role"]) == "briefing":
 				had_briefing = true
+	if agent == "sparring":  # no briefing: a thinking partner waits for your idea
+		if messages_shown == 0:
+			_add_bubble("assistant", "I'm Sparring. Tell me an idea you're chewing on: I'll ask questions, challenge it or reassure you, "
+				+ "and bring in what your Brain already holds. I don't change anything; when you're done, ask me to sum it up "
+				+ "and I'll save the synthesis once you approve it.", [], [])
+		return
 	if not had_briefing:
 		_set_busy(true)
 		var b := await app.backend.api.call_api("/assistant/briefing", true, HTTPClient.METHOD_POST)
@@ -144,7 +162,8 @@ func send(text: String, spoken: bool = false) -> void:
 		return
 	_add_bubble("user", t, [], [])
 	_set_busy(true)
-	var payload := {"text": t, "spoken": spoken}
+	activated.emit(agent)
+	var payload := {"text": t, "spoken": spoken, "agent": agent}
 	var open_note: Dictionary = brain.get("current_note")
 	if not open_note.is_empty() and (brain.get("inspector") as Control).visible:
 		payload["open_note"] = str(open_note.get("id", ""))
@@ -176,6 +195,46 @@ func send(text: String, spoken: bool = false) -> void:
 		say(last_reply, spoken)
 	if not ui.is_empty():
 		ui_requested.emit(ui)
+
+
+## Sparring drafted a synthesis: it is shown in full, with a button to save it (or say « oui, sauvegarde »).
+func show_draft() -> void:
+	var res := await app.backend.api.call_api("/assistant/draft")
+	if not res["ok"] or not is_inside_tree():
+		return
+	var d: Variant = (res["data"] as Dictionary).get("draft")
+	if not d is Dictionary:
+		return
+	if draft_box != null and is_instance_valid(draft_box):
+		draft_box.get_parent().get_parent().queue_free()
+	var lines: Array[String] = []
+	for line in str(d.get("body", "")).split("\n"):  # markdown headings read as plain capitals here
+		lines.append(line.lstrip("#").strip_edges().to_upper() if line.begins_with("#") else line)
+	_add_bubble("draft", str(d.get("title", "")).to_upper() + "\n\n" + "\n".join(lines), [], [])
+	var bubble: Control = list.get_child(list.get_child_count() - 1)
+	draft_box = bubble.get_child(bubble.get_child_count() - 1).get_child(0) as VBoxContainer
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	draft_box.add_child(row)
+	var save_b := Button.new()
+	save_b.text = "Save to the Brain"
+	save_b.theme_type_variation = "PrimaryButton"
+	save_b.pressed.connect(func() -> void:
+		save_b.disabled = true
+		send("Oui, sauvegarde cette synthèse dans le Brain."))
+	row.add_child(save_b)
+	var change := Button.new()
+	change.text = "Change it…"
+	change.theme_type_variation = "GhostButton"
+	change.pressed.connect(func() -> void:
+		input.text = "Change la synthèse: "
+		input.grab_focus()
+		input.caret_column = input.text.length())
+	row.add_child(change)
+	last_draft = str(d.get("title", ""))
+
+
+var last_draft := ""
 
 
 ## Guided weekly review: generated from the week's facts, shown and read aloud.
@@ -268,7 +327,7 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 	wrap.alignment = BoxContainer.ALIGNMENT_END if mine else BoxContainer.ALIGNMENT_BEGIN
 	list.add_child(wrap)
 	var bubble := PanelContainer.new()
-	var special := role in ["briefing", "review", "receipt", "waiting"]
+	var special := role in ["briefing", "review", "receipt", "waiting", "draft"]
 	var col := SbTheme.MINT if mine else (SbTheme.WARM if role in ["briefing", "waiting"] else (SbTheme.INFO if role in ["review", "receipt"] else SbTheme.PANEL_2))
 	bubble.add_theme_stylebox_override("panel", SbTheme.box(Color(col, 0.22 if mine or special else 0.9), 14,
 		Color(col, 0.35), 1, 12))
@@ -283,7 +342,8 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 	bubble.add_child(inner)
 	if special:
 		var over := Label.new()
-		over.text = {"briefing": "TODAY", "review": "WEEKLY REVIEW", "receipt": "FILED", "waiting": "IN THE INBOX · WAITING"}.get(role, "")
+		over.text = {"briefing": "TODAY", "review": "WEEKLY REVIEW", "receipt": "FILED", "waiting": "IN THE INBOX · WAITING",
+			"draft": "SYNTHESIS · NOT SAVED YET"}.get(role, "")
 		over.theme_type_variation = "Overline"
 		over.add_theme_color_override("font_color", col)
 		inner.add_child(over)
