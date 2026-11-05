@@ -241,7 +241,7 @@ static func origin_label(it: Dictionary) -> String:
 		"url":
 			return "Web page"
 		"file":
-			return "Document"
+			return "File"
 		"voice":
 			return "Spoken"
 		_:

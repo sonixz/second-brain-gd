@@ -227,13 +227,13 @@ func show_draft() -> void:
 	save_b.theme_type_variation = "PrimaryButton"
 	save_b.pressed.connect(func() -> void:
 		save_b.disabled = true
-		send("Oui, sauvegarde cette synthèse dans le Brain."))
+		send(said("save_synthesis")))
 	row.add_child(save_b)
 	var change := Button.new()
 	change.text = "Change it…"
 	change.theme_type_variation = "GhostButton"
 	change.pressed.connect(func() -> void:
-		input.text = "Change la synthèse: "
+		input.text = said("change_synthesis")
 		input.grab_focus()
 		input.caret_column = input.text.length())
 	row.add_child(change)
@@ -274,13 +274,13 @@ func show_agent_draft() -> void:
 	go.theme_type_variation = "PrimaryButton"
 	go.pressed.connect(func() -> void:
 		go.disabled = true
-		send("Oui, applique ces changements." if update else "Oui, crée-le."))
+		send(said("apply_agent") if update else said("create_agent")))
 	row.add_child(go)
 	var change := Button.new()
 	change.text = "Change it…"
 	change.theme_type_variation = "GhostButton"
 	change.pressed.connect(func() -> void:
-		input.text = "Change: "
+		input.text = said("change_agent")
 		input.grab_focus()
 		input.caret_column = input.text.length())
 	row.add_child(change)
@@ -481,6 +481,25 @@ func _on_link(meta: Variant) -> void:
 			OS.shell_open(m)
 	else:
 		note_requested.emit(m)
+
+
+## What the app says on your behalf (a button that approves, the rail's « + »…), in the language you speak to the
+## agents: settings voice/language, "fr" (default) or "en".
+const SAID := {
+	"save_synthesis": {"fr": "Oui, sauvegarde cette synthèse dans le Brain.", "en": "Yes, save this synthesis to the Brain."},
+	"change_synthesis": {"fr": "Change la synthèse: ", "en": "Change the synthesis: "},
+	"apply_agent": {"fr": "Oui, applique ces changements.", "en": "Yes, apply these changes."},
+	"create_agent": {"fr": "Oui, crée-le.", "en": "Yes, create it."},
+	"change_agent": {"fr": "Change: ", "en": "Change: "},
+	"new_agent": {"fr": "Je veux créer un nouvel agent.", "en": "I want to create a new agent."},
+	"modify_agent": {"fr": "Je veux modifier l'agent %s.", "en": "I want to change the agent %s."},
+}
+
+
+static func said(key: String) -> String:
+	var lang := str(SbSettings.get_value("voice", "language", "fr"))
+	var d: Dictionary = SAID.get(key, {})
+	return str(d.get(lang, d.get("fr", "")))
 
 
 static func _host(url: String) -> String:

@@ -42,7 +42,7 @@ class ArchivistTests(unittest.TestCase):
         self.assertIn("Ressources › Recette", out["receipt"])
         item = out["item"]
         self.assertTrue(item["filed"])
-        self.assertEqual(item["place"], "Ressources › Recette")
+        self.assertEqual(item["place"], "Resources › Recette")  # the interface is in English; the receipt follows the item
         self.assertIn("recette", item["themes"])
         # the next related item reuses the place instead of creating another
         nid2 = self.capture("Recette de brioche", "Beurre et oeufs")

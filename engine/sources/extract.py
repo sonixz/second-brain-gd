@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import html
 import ipaddress
+import os
 import re
 import socket
 import urllib.parse
@@ -137,14 +138,22 @@ def from_url_raw(url: str, timeout: float = 20.0) -> tuple[str, str, str, int, b
     parts = urllib.parse.urlparse(url.strip())
     if parts.scheme not in ("http", "https") or not parts.hostname:
         raise ExtractError("only http(s) links are supported")
-    if not _public_host(parts.hostname):
-        raise ExtractError("this address points to a local or private network")
-    req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "text/html,text/plain,application/pdf"})
-    try:
+
+    def download() -> tuple[str, bytes, str]:
+        if not _public_host(parts.hostname or ""):
+            raise ExtractError("this address points to a local or private network")
+        req = urllib.request.Request(url, headers={"User-Agent": UA, "Accept": "text/html,text/plain,application/pdf"})
         with urllib.request.urlopen(req, timeout=timeout) as resp:
-            mime = (resp.headers.get_content_type() or "").lower()
-            data = resp.read(MAX_BYTES + 1)
-            charset = resp.headers.get_content_charset() or "utf-8"
+            return ((resp.headers.get_content_type() or "").lower(), resp.read(MAX_BYTES + 1),
+                    resp.headers.get_content_charset() or "utf-8")
+
+    try:
+        if os.environ.get("SBGD_ASSISTANT_PROVIDER") in ("record", "replay"):  # the How-to guides keep the pages
+            from engine.assistant import recording
+
+            mime, data, charset = recording.fetch(url, download)
+        else:
+            mime, data, charset = download()
     except OSError as exc:
         raise ExtractError(f"cannot download the page: {exc}") from exc
     if len(data) > MAX_BYTES:

@@ -2,7 +2,8 @@
 
 Windows uses the OCR engine built into Windows 10/11 (Windows.Media.Ocr, through PowerShell: nothing to install,
 nothing leaves the machine). Linux uses Tesseract when it is installed (`tesseract` on PATH, with `fra`).
-SBGD_OCR=fake (tests) returns a fixed text; SBGD_OCR=off disables local OCR.
+SBGD_OCR=fake (tests) returns a fixed text; SBGD_OCR=off disables local OCR; SBGD_OCR=recorded (the How-to guides)
+replays the pages a real Windows OCR read, from the JSON file SBGD_OCR_PAGES.
 """
 from __future__ import annotations
 
@@ -29,8 +30,8 @@ def engine_name() -> str | None:
     mode = os.environ.get("SBGD_OCR", "").strip().lower()
     if mode == "off":
         return None
-    if mode == "fake":
-        return "fake"
+    if mode in ("fake", "recorded"):
+        return mode
     if sys.platform == "win32" and shutil.which("powershell"):
         return "windows"
     if shutil.which("tesseract"):
@@ -56,6 +57,16 @@ def read_images(paths: list[Path], lang: str = "", on_page: Progress | None = No
         out = []
         for i in range(n):
             out.append(f"Texte lu par OCR local (image {i + 1}) : Guide du compost, alterner matières vertes et brunes.")
+            tick("ocr", i + 1, n)
+        return out
+    if engine == "recorded":
+        import time
+
+        pages = json.loads(Path(os.environ["SBGD_OCR_PAGES"]).read_text(encoding="utf-8"))["pages"]
+        out = []
+        for i in range(n):
+            time.sleep(0.8)  # a real page takes about a second: the progress line has time to show
+            out.append(pages[i] if i < len(pages) else "")
             tick("ocr", i + 1, n)
         return out
     if engine == "windows":

@@ -354,7 +354,7 @@ func show_agent_info(id: String) -> void:
 	close_agent_settings()
 	agent_settings = SbAgentSettings.new().setup(app, id, prof, data.get("capabilities", {}), data.get("models", []))
 	agent_settings.changed.connect(func() -> void: refresh_agents())
-	agent_settings.ask_builder.connect(func(n: String) -> void: open_agent("builder", "Je veux modifier l'agent %s." % n))
+	agent_settings.ask_builder.connect(func(n: String) -> void: open_agent("builder", AssistantPanel.said("modify_agent") % n))
 	agent_settings.close_requested.connect(close_agent_settings)
 	var w := 560.0
 	agent_settings_panel = SbFloatingPanel.new().setup("agent-settings", "%s · SETTINGS" % str(prof.get("name", id)).to_upper(),
@@ -387,6 +387,10 @@ func _on_panel_edges(left: float, right: float) -> void:
 	filters_bar.offset_left = panel_layer.margin_side + left
 	graph.screen_offset = Vector2((left - right) * 0.5, 0)
 	graph.legend_x = panel_layer.margin_side + left
+	for v in [captures_view, today_view, projects_view, agents_view]:  # the lists stay clear of docked panels
+		if v != null:
+			(v as Control).offset_left = panel_layer.margin_side + left
+			(v as Control).offset_right = -(panel_layer.margin_side + right)
 
 
 func _every(s: float, fn: Callable) -> void:
@@ -539,7 +543,7 @@ func _build_left_panel() -> void:
 	panel_layer = SbPanelLayer.new()
 	add_child(panel_layer)
 	panel_layer.edges_changed.connect(_on_panel_edges)
-	panel_layer.create_requested.connect(func() -> void: open_agent("builder", "Je veux créer un nouvel agent."))
+	panel_layer.create_requested.connect(func() -> void: open_agent("builder", AssistantPanel.said("new_agent")))
 	assistant_panel = _make_agent("archivist", "Archivist", "A", "", false)
 	archivist_panel = agent_panels["archivist"]
 	sparring_chat = _make_agent("sparring", "Sparring", "S", "", true)

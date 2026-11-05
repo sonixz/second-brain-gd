@@ -1,0 +1,100 @@
+{
+ "calls": [
+  {
+   "kind": "json:Tu es l'ARCHIVISTE d'un second cerveau (méthode CODE: Capture, Organize, Distill",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "user",
+     "content": "{\"item\": {\"title\": \"Ask Northwind if the heat pump quote includes the smart thermostat\", \"content\": \"\", \"origin\": \"typed\", \"uri\": null}, \"places\": [{\"id\": \"inbox\", \"name\": \"Inbox\", \"kind\": \"inbox\", \"items\": 3, \"examples\": [\"Heat pump rebate\", \"The book Julie recommended\"]}, {\"id\": \"4fcd6e19cd5c4fa4\", \"name\": \"Kitchen renovation\", \"kind\": \"project\", \"items\": 7, \"examples\": [\"Tile samples: the matte green wins\", \"Call with Marc about the electrical panel\", \"Contractor quote — Brightline Renovations\"], \"goal\": \"New kitchen before the holidays\", \"area\": \"Home\"}, {\"id\": \"b0c41f1e3a4d435e\", \"name\": \"Talk: local-first software\", \"kind\": \"project\", \"items\": 4, \"examples\": [\"Opening story for the talk\", \"Talk outline\", \"Demo: unplug the network on stage\"], \"goal\": \"A 20-minute talk at the local meetup\"}, {\"id\": \"6e87ebb44a2c4837\", \"name\": \"Learn Japanese\", \"kind\": \"project\", \"items\": 4, \"examples\": [\"Phrases for ordering at a café\", \"Komorebi\", \"Daily routine for Japanese\"]}, {\"id\": \"5fb805e0b1e74961\", \"name\": \"Health\", \"kind\": \"area\", \"items\": 5, \"examples\": [\"Ran 5 km under 30 minutes\", \"Sleep log: seven hours average\", \"Physio exercises for the left knee\"]}, {\"id\": \"4703240f70fd4d0f\", \"name\": \"Finances\", \"kind\": \"area\", \"items\": 3, \"examples\": [\"Renovation budget\", \"Subscriptions to cancel\", \"Tax documents checklist\"]}, {\"id\": \"01c4196c9bc141ad\", \"name\": \"Home\", \"kind\": \"area\", \"items\": 2, \"examples\": [\"Snow removal contact from the neighbour\", \"Furnace filter every three months\"]}, {\"id\": \"c530052a51414438\", \"name\": \"Local-first software\", \"kind\": \"resource\", \"items\": 7, \"examples\": [\"Sync as a plugin, never a requirement\", \"Chat with Priya about offline-first mobile apps\", \"CRDTs in plain words\"]}, {\"id\": \"83f07568064544e3\", \"name\": \"Cooking\", \"kind\": \"resource\", \"items\": 4, \"examples\": [\"Meal plan this week\", \"Mom's tomato sauce, the way she says it\", \"No-knead bread\"]}, {\"id\": \"e3df276d905e406c\", \"name\": \"Productivity\", \"kind\": \"resource\", \"items\": 5, \"examples\": [\"Capture by voice on walks\", \"Weekly review checklist\", \"Spaced repetition, explained\"]}, {\"id\": \"64cbe0993f214004\", \"name\": \"Apartment move 2025\", \"kind\": \"archive\", \"items\": 2, \"examples\": [\"Change-of-address list\", \"Movers contact and invoice\"]}], \"themes\": [\"local-first\", \"talk\", \"crdt\", \"design\", \"budget\", \"moving\", \"capture\", \"recipe\", \"running\", \"para\", \"pkm\", \"review\", \"pantry\", \"meal-plan\", \"family\", \"bread\", \"mobile\", \"file-formats\", \"sqlite\", \"library\", \"winter\", \"maintenance\", \"taxes\", \"appointments\", \"knee\", \"sleep\", \"learning\", \"memory\", \"vocabulary\", \"routine\", \"speaking\", \"kana\", \"demo\", \"countertops\", \"appliances\", \"electrical\", \"bl-2611\", \"quote\"], \"candidates\": [{\"id\": \"6c81c50d085843bd\", \"title\": \"Heat pump rebate\"}]}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"title\": \"Ask Northwind if the heat pump quote includes the smart thermostat\",\n  \"item_type\": \"note\",\n  \"language\": \"en\",\n  \"summary\": null,\n  \"key_points\": [],\n  \"entities\": {\n    \"people\": [],\n    \"organizations\": [\"Northwind\"],\n    \"concepts\": [\"heat pump\", \"quote\", \"smart thermostat\"],\n    \"places\": [],\n    \"dates\": []\n  },\n  \"place\": {\"space_id\": \"01c4196c9bc141ad\"},\n  \"themes\": [\"quote\", \"maintenance\"],\n  \"link_ids\": [\"6c81c50d085843bd\"],\n  \"confidence\": 0.94,\n  \"question\": null,\n  \"receipt\": \"A question about a heat pump quote, filed in Areas › Home and linked to the heat pump rebate.\"\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 1552,
+    "completion_tokens": 185,
+    "total_tokens": 1737,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "cache_write_tokens": 1549,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "json:Tu prépares une fiche de référence pour un second cerveau. Réponds en JSON avec:",
+   "model": "gpt-4o",
+   "seen": [
+    {
+     "role": "user",
+     "content": "{\"title\": \"heat-pump-quote\", \"text\": \"Northwind Climate Inc.\\nQuote Q-2026-311 · November 3, 2026\\nCold-climate heat pump, installed\\nDucted unit, 3 tons, HSPF2 9.5, works down to -30 °C\\nEquipment                                              $9,850\\nInstallation and commissioning                         $3,200\\nElectrical: new 40 A breaker and wiring                $  690\\nRemoval of the old oil furnace                         $  950\\nTotal before taxes                                    $14,690\\nRebates: the provincial rebate covers up to $5,000 if the old oil\\nheating is removed. We file the paperwork for you.\\nLead time: 3 weeks. Valid until December 15, 2026.\"}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "{\"title\": \"Heat Pump Quote - English\", \"summary\": \"This document is a quote from Northwind Climate Inc. for the installation of a cold-climate heat pump. The heat pump is a ducted unit with a capacity of 3 tons and an HSPF2 rating of 9.5, capable of operating in temperatures as low as -30 °C. The total cost before taxes is $14,690, which includes equipment, installation, electrical work, and removal of the old oil furnace. There is a potential rebate of up to $5,000 available if the old oil heating system is removed, and the company will handle the paperwork. The quote is valid until December 15, 2026, with a lead time of 3 weeks for installation.\", \"key_points\": [\"Cold-climate heat pump, 3 tons, HSPF2 9.5\", \"Operates down to -30 °C\", \"Total cost before taxes: $14,690\", \"Potential rebate up to $5,000\", \"Quote valid until December 15, 2026\", \"Lead time: 3 weeks\"], \"tags\": [\"heat-pump\", \"installation\", \"rebate\"]}",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 310,
+    "completion_tokens": 250,
+    "total_tokens": 560,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "json:Tu es l'ARCHIVISTE d'un second cerveau (méthode CODE: Capture, Organize, Distill",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "user",
+     "content": "{\"item\": {\"title\": \"Heat Pump Quote - English\", \"content\": \"This document is a quote from Northwind Climate Inc. for the installation of a cold-climate heat pump. The heat pump is a ducted unit with a capacity of 3 tons and an HSPF2 rating of 9.5, capable of operating in temperatures as low as -30 °C. The total cost before taxes is $14,690, which includes equipment, installation, electrical work, and removal of the old oil furnace. There is a potential rebate of up to $5,000 available if the old oil heating system is removed, and the company will handle the paperwork. The quote is valid until December 15, 2026, with a lead time of 3 weeks for installation.\\n\\n- Cold-climate heat pump, 3 tons, HSPF2 9.5\\n- Operates down to -30 °C\\n- Total cost before taxes: $14,690\\n- Potential rebate up to $5,000\\n- Quote valid until December 15, 2026\\n- Lead time: 3 weeks\\n\\nSource: /mnt/c/git-2026/second-brain-gd/tools/howto/files/heat-pump-quote.pdf\\n\\n#heat-pump #installation #rebate\", \"origin\": \"file\", \"uri\": \"/mnt/c/git-2026/second-brain-gd/tools/howto/files/heat-pump-quote.pdf\", \"original_excerpt\": \"Northwind Climate Inc.\\nQuote Q-2026-311 · November 3, 2026\\nCold-climate heat pump, installed\\nDucted unit, 3 tons, HSPF2 9.5, works down to -30 °C\\nEquipment                                              $9,850\\nInstallation and commissioning                         $3,200\\nElectrical: new 40 A breaker and wiring                $  690\\nRemoval of the old oil furnace                         $  950\\nTotal before taxes                                    $14,690\\nRebates: the provincial rebate covers up to $5,000 if the old oil\\nheating is removed. We file the paperwork for you.\\nLead time: 3 weeks. Valid until December 15, 2026.\"}, \"places\": [{\"id\": \"inbox\", \"name\": \"Inbox\", \"kind\": \"inbox\", \"items\": 3, \"examples\": [\"Heat pump rebate\", \"The book Julie recommended\"]}, {\"id\": \"4fcd6e19cd5c4fa4\", \"name\": \"Kitchen renovation\", \"kind\": \"project\", \"items\": 7, \"examples\": [\"Tile samples: the matte green wins\", \"Call with Marc about the electrical panel\", \"Contractor quote — Brightline Renovations\"], \"goal\": \"New kitchen before the holidays\", \"area\": \"Home\"}, {\"id\": \"b0c41f1e3a4d435e\", \"name\": \"Talk: local-first software\", \"kind\": \"project\", \"items\": 4, \"examples\": [\"Opening story for the talk\", \"Talk outline\", \"Demo: unplug the network on stage\"], \"goal\": \"A 20-minute talk at the local meetup\"}, {\"id\": \"6e87ebb44a2c4837\", \"name\": \"Learn Japanese\", \"kind\": \"project\", \"items\": 4, \"examples\": [\"Phrases for ordering at a café\", \"Komorebi\", \"Daily routine for Japanese\"]}, {\"id\": \"5fb805e0b1e74961\", \"name\": \"Health\", \"kind\": \"area\", \"items\": 5, \"examples\": [\"Ran 5 km under 30 minutes\", \"Sleep log: seven hours average\", \"Physio exercises for the left knee\"]}, {\"id\": \"4703240f70fd4d0f\", \"name\": \"Finances\", \"kind\": \"area\", \"items\": 3, \"examples\": [\"Renovation budget\", \"Subscriptions to cancel\", \"Tax documents checklist\"]}, {\"id\": \"01c4196c9bc141ad\", \"name\": \"Home\", \"kind\": \"area\", \"items\": 3, \"examples\": [\"Ask Northwind if the heat pump quote includes the smart thermostat\", \"Snow removal contact from the neighbour\", \"Furnace filter every three months\"]}, {\"id\": \"c530052a51414438\", \"name\": \"Local-first software\", \"kind\": \"resource\", \"items\": 7, \"examples\": [\"Sync as a plugin, never a requirement\", \"Chat with Priya about offline-first mobile apps\", \"CRDTs in plain words\"]}, {\"id\": \"83f07568064544e3\", \"name\": \"Cooking\", \"kind\": \"resource\", \"items\": 4, \"examples\": [\"Meal plan this week\", \"Mom's tomato sauce, the way she says it\", \"No-knead bread\"]}, {\"id\": \"e3df276d905e406c\", \"name\": \"Productivity\", \"kind\": \"resource\", \"items\": 5, \"examples\": [\"Capture by voice on walks\", \"Weekly review checklist\", \"Spaced repetition, explained\"]}, {\"id\": \"64cbe0993f214004\", \"name\": \"Apartment move 2025\", \"kind\": \"archive\", \"items\": 2, \"examples\": [\"Change-of-address list\", \"Movers contact and invoice\"]}], \"themes\": [\"local-first\", \"talk\", \"crdt\", \"design\", \"budget\", \"moving\", \"capture\", \"recipe\", \"maintenance\", \"running\", \"quote\", \"installation\", \"heat-pump\", \"rebate\", \"para\", \"pkm\", \"review\", \"pantry\", \"meal-plan\", \"family\", \"bread\", \"mobile\", \"file-formats\", \"sqlite\", \"library\", \"winter\", \"taxes\", \"appointments\", \"knee\", \"sleep\", \"learning\", \"memory\", \"vocabulary\", \"routine\", \"speaking\", \"kana\", \"demo\", \"countertops\", \"appliances\", \"electrical\"], \"candidates\": [{\"id\": \"21e15605486946fd\", \"title\": \"Ask Northwind if the heat pump quote includes the smart thermostat\"}, {\"id\": \"6c81c50d085843bd\", \"title\": \"Heat pump rebate\"}]}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"title\": \"Northwind cold-climate heat pump quote\",\n  \"item_type\": \"document\",\n  \"language\": \"en\",\n  \"summary\": \"Northwind Climate Inc. quoted $14,690 before taxes to install a ducted, 3-ton cold-climate heat pump and remove the old oil furnace. The unit has an HSPF2 rating of 9.5 and operates down to -30 °C. A provincial rebate of up to $5,000 may apply if the oil heating is removed; Northwind will file the paperwork. The quote is valid until December 15, 2026, and the installation lead time is three weeks.\",\n  \"key_points\": [\n    \"Equipment: $9,850; installation and commissioning: $3,200\",\n    \"Electrical work: $690; oil furnace removal: $950\",\n    \"Quote Q-2026-311, dated November 3, 2026\"\n  ],\n  \"entities\": {\n    \"people\": [],\n    \"organizations\": [\"Northwind Climate Inc.\"],\n    \"concepts\": [\"cold-climate heat pump\", \"HSPF2\", \"provincial rebate\", \"oil furnace removal\"],\n    \"places\": [],\n    \"dates\": [\"November 3, 2026\", \"December 15, 2026\"]\n  },\n  \"place\": {\"space_id\": \"01c4196c9bc141ad\"},\n  \"themes\": [\"heat-pump\", \"quote\", \"rebate\"],\n  \"link_ids\": [\"21e15605486946fd\", \"6c81c50d085843bd\"],\n  \"confidence\": 0.98,\n  \"question\": null,\n  \"receipt\": \"A heat pump installation quote, filed in Areas › Home and linked to 2 related items.\"\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 2037,
+    "completion_tokens": 384,
+    "total_tokens": 2421,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "cache_write_tokens": 2034,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  }
+ ],
+ "web": []
+}

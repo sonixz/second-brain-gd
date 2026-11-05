@@ -32,15 +32,19 @@ Réponds en JSON strict avec:
 - title: titre court et clair, dans la langue de l'élément
 - item_type: note | idea | article | document | reference | quote | list | journal
 - language: code ISO (fr, en, ...)
-- summary: 2 à 4 phrases factuelles en français si l'élément est long (> 400 caractères) ou est une source; sinon null
-- key_points: 0 à 6 points courts en français (vide pour une note courte)
+- summary: 2 à 4 phrases factuelles dans la langue de l'élément si l'élément est long (> 400 caractères) ou est une source; sinon null
+- key_points: 0 à 6 points courts dans la langue de l'élément (vide pour une note courte)
 - entities: {"people": [], "organizations": [], "concepts": [], "places": [], "dates": []} (seulement ce qui est dans le texte)
 - place: {"space_id": "<id existant>"} OU {"new_space": {"name": "...", "kind": "resource|project|area"}}
 - themes: 1 à 3 thèmes courts en minuscules, mots reliés par des tirets; réutilise les thèmes existants quand ils conviennent
 - link_ids: 0 à 3 ids parmi candidates, seulement s'ils sont vraiment liés
 - confidence: 0 à 1 (ta certitude sur le classement)
-- question: null, ou UNE question courte seulement si tu ne peux vraiment pas classer sans réponse
-- receipt: une phrase factuelle en français: ce que c'est et où c'est classé (ex. « Article sur X, classé dans Ressources › IA & agents, relié à 2 éléments. »)
+- question: null, ou UNE question courte (dans la langue de l'élément) seulement si tu ne peux vraiment pas classer sans réponse
+- receipt: une phrase factuelle dans la langue de l'élément: ce que c'est et où c'est classé (ex. en français « Article sur X,
+  classé dans Ressources › IA & agents, relié à 2 éléments. »; en anglais « An article on X, filed in Resources › AI & agents,
+  linked to 2 items. »)
+Langue: un élément en anglais reçoit titre, résumé, points, question et reçu en anglais (même si son résumé
+existant ou ces consignes sont en français); un élément en français, en français. Juge la langue sur le texte original.
 N'invente rien qui n'est pas dans l'élément."""
 
 ITEM_TYPES = ("note", "idea", "article", "document", "reference", "quote", "list", "journal")
@@ -48,6 +52,7 @@ NOTE_KIND = {"note": "note", "idea": "idea", "journal": "journal", "list": "note
              "article": "reference", "document": "reference", "reference": "reference"}
 SPACE_COLORS = ["#a6dcff", "#ffd2a1", "#c8b6ff", "#a9f0c7", "#ffb3c6", "#f5e6a3", "#9fd8d0", "#d8c3a5"]
 KIND_LABEL = {"project": "Projets", "area": "Domaines", "resource": "Ressources", "archive": "Archives", "inbox": "Inbox"}
+KIND_LABEL_EN = {"project": "Projects", "area": "Areas", "resource": "Resources", "archive": "Archives", "inbox": "Inbox"}
 
 
 def _json_list(v: Any, n: int, size: int = 120) -> list[str]:
@@ -153,11 +158,12 @@ def get_meta(conn: sqlite3.Connection, note_id: str) -> dict[str, Any] | None:
     return d
 
 
-def place_label(conn: sqlite3.Connection, space_id: str) -> str:
+def place_label(conn: sqlite3.Connection, space_id: str, lang: str | None = "fr") -> str:
     row = conn.execute("SELECT name, kind FROM spaces WHERE id = ?", (space_id,)).fetchone()
     if row is None:
         return "?"
-    return row["name"] if row["kind"] == "inbox" else f"{KIND_LABEL.get(row['kind'], row['kind'])} › {row['name']}"
+    labels = KIND_LABEL_EN if (lang or "").startswith("en") else KIND_LABEL
+    return row["name"] if row["kind"] == "inbox" else f"{labels.get(row['kind'], row['kind'])} › {row['name']}"
 
 
 def file_item(conn: sqlite3.Connection, client: Any, note_id: str, min_confidence: float = 0.6) -> dict[str, Any]:
@@ -228,11 +234,12 @@ def file_item(conn: sqlite3.Connection, client: Any, note_id: str, min_confidenc
         common.update(origin=src["kind"], origin_uri=src["uri"])
     placeable = proposal["space_id"] is not None or proposal["new_space"] is not None
     if confidence < min_confidence or not placeable:
-        q = proposal["question"] or "Où veux-tu que je le classe?"
-        save_meta(conn, note_id, filed=0, question=q,
-                  receipt=f"Reçu « {proposal['title']} ». Je le laisse dans l'Inbox: {q}", **common)
-        return {"applied": False, "proposal": proposal, "question": q, "item": item(conn, note_id),
-                "receipt": f"Reçu « {proposal['title']} ». Je le laisse dans l'Inbox: {q}"}
+        en = (proposal["language"] or "").startswith("en")
+        q = proposal["question"] or ("Where should I file it?" if en else "Où veux-tu que je le classe?")
+        waiting = (f"Got “{proposal['title']}”. It stays in the Inbox: {q}" if en
+                   else f"Reçu « {proposal['title']} ». Je le laisse dans l'Inbox: {q}")
+        save_meta(conn, note_id, filed=0, question=q, receipt=waiting, **common)
+        return {"applied": False, "proposal": proposal, "question": q, "item": item(conn, note_id), "receipt": waiting}
 
     before = _snapshot(conn, note_id)
     created_space = None
@@ -250,10 +257,12 @@ def file_item(conn: sqlite3.Connection, client: Any, note_id: str, min_confidenc
     for other in proposal["link_ids"]:
         conn.execute("INSERT OR IGNORE INTO links (from_note, to_note, kind, created_by, created_at)"
                      " VALUES (?, ?, 'related', 'assistant', ?)", (note_id, other, now))
-    where = place_label(conn, proposal["space_id"])
-    receipt = proposal["receipt"] or f"« {proposal['title']} » classé dans {where}."
-    if created_space and "nouvel" not in receipt.lower():
-        receipt += " Nouvelle place créée."
+    en = (proposal["language"] or "").startswith("en")
+    where = place_label(conn, proposal["space_id"], proposal["language"])
+    receipt = proposal["receipt"] or (f"“{proposal['title']}” filed in {where}." if en
+                                      else f"« {proposal['title']} » classé dans {where}.")
+    if created_space and "nouvel" not in receipt.lower() and "new place" not in receipt.lower():
+        receipt += " New place created." if en else " Nouvelle place créée."
     save_meta(conn, note_id, filed=1, question=None, receipt=receipt, **common)
     after = _snapshot(conn, note_id)
     after["created_space"] = created_space
@@ -268,7 +277,7 @@ def item(conn: sqlite3.Connection, note_id: str, with_body: bool = False) -> dic
     m = get_meta(conn, note_id) or {}
     src = conn.execute("SELECT id, kind, uri, chunks, mime, pages, original, original_bytes FROM sources WHERE note_id = ?",
                        (note_id,)).fetchone()
-    return {"id": n["id"], "title": n["title"], "space_id": n["space_id"], "place": place_label(conn, n["space_id"]),
+    return {"id": n["id"], "title": n["title"], "space_id": n["space_id"], "place": place_label(conn, n["space_id"], "en"),  # the interface is in English
             "kind": n["kind"], "tags": n.get("tags", []), "created_at": n["created_at"],
             "item_type": m.get("item_type", "note"), "origin": (src["kind"] if src else m.get("origin", n.get("source"))),
             "origin_uri": src["uri"] if src else m.get("origin_uri"), "summary": m.get("summary"),

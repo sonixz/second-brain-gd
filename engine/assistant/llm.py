@@ -440,8 +440,8 @@ class FakeChat:
 
 
 def is_fake() -> bool:
-    """A scripted provider, no network: "fake" (tests) or "showcase" (website screenshots)."""
-    return os.environ.get("SBGD_ASSISTANT_PROVIDER") in ("fake", "showcase")
+    """A provider that needs no key: "fake" (tests), "showcase" (website screenshots), "replay" (How-to guides)."""
+    return os.environ.get("SBGD_ASSISTANT_PROVIDER") in ("fake", "showcase", "replay")
 
 
 def make_client(key: str | None) -> OpenAIChat | FakeChat:
@@ -451,6 +451,14 @@ def make_client(key: str | None) -> OpenAIChat | FakeChat:
         return ShowcaseChat()
     if os.environ.get("SBGD_ASSISTANT_PROVIDER") == "fake":
         return FakeChat()
+    if os.environ.get("SBGD_ASSISTANT_PROVIDER") == "replay":
+        from engine.assistant.recording import ReplayChat
+
+        return ReplayChat()
     if not key:
         raise PermissionError("no OpenAI key configured")
+    if os.environ.get("SBGD_ASSISTANT_PROVIDER") == "record":
+        from engine.assistant.recording import RecordingChat
+
+        return RecordingChat(key)
     return OpenAIChat(key)

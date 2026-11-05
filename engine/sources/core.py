@@ -49,8 +49,11 @@ def delete_source(conn: sqlite3.Connection, source_id: str, with_note: bool = Tr
 
 def _summarise(client: Any, model: str, title: str, text: str) -> dict[str, Any]:
     system = ("Tu prépares une fiche de référence pour un second cerveau. Réponds en JSON avec: title (titre clair, "
-              "langue du document), summary (3 à 5 phrases en français), key_points (3 à 6 points courts en français), "
-              "tags (0 à 3 mots-clés en minuscules, tirets entre les mots). N'invente rien.")
+              "langue du document), summary (3 à 5 phrases dans la langue du document), key_points (3 à 6 points courts "
+              "dans la langue du document), "
+              "tags (0 à 3 mots-clés en minuscules, tirets entre les mots). N'invente rien. Langue: écris title, summary et "
+              "key_points dans la MÊME langue que le texte du document (document en anglais: tout en anglais; en "
+              "français: tout en français), même si ces consignes sont en français.")
     excerpt = text[:12000]
     res = client.complete(model, [{"role": "system", "content": system},
                                   {"role": "user", "content": json.dumps({"title": title, "text": excerpt}, ensure_ascii=False)}],
@@ -260,7 +263,7 @@ def ingest_file(conn: sqlite3.Connection, client: Any | None, path: str, space_i
         text = f"Image: {p.name}\n\n{desc or 'Pas encore de description (ajoute ta clé OpenAI).'}"
         if seen:
             text += "\n\nTexte dans l'image :\n" + seen
-            text_engine = "ocr-" + str(ocr.engine_name())
+            text_engine = "ocr-" + ("windows" if ocr.engine_name() == "recorded" else str(ocr.engine_name()))  # recorded = a Windows OCR reading
     return ingest(conn, client, "file", str(p), title, text, mime, p.stat().st_size, space_id, original=kept, pages=pages,
                   text_engine=text_engine)
 
@@ -293,7 +296,7 @@ def read_pdf_images(conn: sqlite3.Connection, client: Any | None, path: Path, pa
             text = ocr.read_pdf(path, pages, on_progress=progress.report)
             _record(conn, "ok", f"Read {pages} scanned page(s) locally ({local} OCR)", engine=local, pages=pages)
             if len(text.strip()) >= 20:
-                return text, "ocr-" + local
+                return text, "ocr-" + ("windows" if local == "recorded" else local)  # recorded = a Windows OCR reading
             problem = "local OCR found no text"
         except (ocr.OcrError, OSError) as exc:
             problem = str(exc)
