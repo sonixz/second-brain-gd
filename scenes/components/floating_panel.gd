@@ -1,8 +1,9 @@
 class_name SbFloatingPanel
 extends PanelContainer
-## A panel you can move (drag its title bar), dock against an edge (left, right, bottom: it snaps when dropped
-## near one), shrink to its title bar (–, or double-click the title), and resize (bottom-right corner).
-## Its place is remembered in the settings ("panels" section), per panel id. An SbPanelLayer arranges docked panels.
+## A panel you can move (drag its title bar: the place it will land lights up), dock against an edge (left, right,
+## bottom), shrink into the icon rail (–, double-click the title, or Ctrl+number), and resize (bottom-right corner;
+## the line between two stacked panels is a splitter). Its place is remembered in the settings ("panels" section).
+## An SbPanelLayer arranges docked panels, animates the moves and holds the rail.
 
 signal layout_changed
 signal focused                     # its title bar was pressed
@@ -15,7 +16,9 @@ var panel_id := ""
 var dock := "left"           # left | right | bottom | free
 var dock_size := 340.0       # width when docked left/right, height when docked bottom
 var free_rect := Rect2(420, 120, 360, 420)
-var minimized := false
+var minimized := false        # shrunk into the rail (hidden); reveal() brings it back where it was
+var weight := 1.0             # share of the edge when stacked with other panels (the splitter changes it)
+var icon_text := ""           # its letter on the rail
 var header: HBoxContainer
 var title_label: Label
 var extra: HBoxContainer      # room for the panel's own small controls, left of the minimize button
@@ -61,7 +64,7 @@ func setup(id: String, title: String, content: Control, defaults: Dictionary) ->
 	min_button = Button.new()
 	min_button.text = "–"
 	min_button.theme_type_variation = "GhostButton"
-	min_button.tooltip_text = "Shrink to the title bar"
+	min_button.tooltip_text = "Shrink into the rail on the left"
 	min_button.pressed.connect(func() -> void: set_minimized(not minimized))
 	header.add_child(min_button)
 	body = content
@@ -87,15 +90,12 @@ func setup(id: String, title: String, content: Control, defaults: Dictionary) ->
 
 func set_minimized(on: bool) -> void:
 	minimized = on
-	body.visible = not on
-	footer.visible = not on
-	min_button.text = "▢" if on else "–"
-	min_button.tooltip_text = "Open" if on else "Shrink to the title bar"
+	visible = not on  # the rail shows it while it is shrunk
 	_save()
 	layout_changed.emit()
 
 
-## Opens it if it was shrunk (e.g. F8 talks to the archivist).
+## Opens it if it was shrunk or closed (e.g. F8 talks to the archivist).
 func reveal() -> void:
 	if minimized:
 		set_minimized(false)
@@ -103,11 +103,15 @@ func reveal() -> void:
 
 
 func reset() -> void:
+	var closed := not visible and not minimized  # a closed panel (the item tile with nothing open) stays closed
 	dock = str(_defaults.get("dock", "left"))
+	weight = 1.0
 	dock_size = float(_defaults.get("size", 340.0))
 	free_rect = _defaults.get("free", Rect2(420, 120, 360, 420))
 	minimized = bool(_defaults.get("minimized", false))
 	set_minimized(minimized)
+	if closed and not minimized:
+		visible = false
 
 
 func _on_header_input(event: InputEvent) -> void:
@@ -125,19 +129,40 @@ func _on_header_input(event: InputEvent) -> void:
 				get_parent().move_child(self, -1)  # in front of the other panels
 		elif _dragging:
 			_dragging = false
+			if get_parent() != null and get_parent().has_method("show_drop"):
+				get_parent().call("show_drop", self, "")
 			_drop(mb.global_position - _parent_origin())
 		accept_event()
+	elif event is InputEventMouseMotion and _dragging and get_parent() != null and get_parent().has_method("show_drop"):
+		get_parent().call("show_drop", self, _target((event as InputEventMouseMotion).global_position - _parent_origin()))
+		_drag_move(event as InputEventMouseMotion)
 	elif event is InputEventMouseMotion and _dragging:
-		if dock != "free":  # leaving a dock: back to a window-sized panel under the cursor
-			var fsize: Rect2 = _defaults.get("free", Rect2(0, 0, 360, 480))
-			free_rect.size = Vector2(maxf(free_rect.size.x, MIN_SIZE.x), maxf(free_rect.size.y, MIN_SIZE.y)) \
-				if free_rect.size.y < 700.0 else fsize.size
-			size = free_rect.size
-			_grab = Vector2(minf(_grab.x, free_rect.size.x - 40.0), _grab.y)
-			dock = "free"
-		position = (event as InputEventMouseMotion).global_position - _grab - _parent_origin()
-		free_rect.position = position
-		accept_event()
+		_drag_move(event as InputEventMouseMotion)
+
+
+func _drag_move(event: InputEventMouseMotion) -> void:
+	if dock != "free":  # leaving a dock: back to a window-sized panel under the cursor
+		var fsize: Rect2 = _defaults.get("free", Rect2(0, 0, 360, 480))
+		free_rect.size = Vector2(maxf(free_rect.size.x, MIN_SIZE.x), maxf(free_rect.size.y, MIN_SIZE.y)) \
+			if free_rect.size.y < 700.0 else fsize.size
+		size = free_rect.size
+		_grab = Vector2(minf(_grab.x, free_rect.size.x - 40.0), _grab.y)
+		dock = "free"
+	position = event.global_position - _grab - _parent_origin()
+	free_rect.position = position
+	accept_event()
+
+
+## Where a drop with the cursor here would dock it.
+func _target(cursor: Vector2) -> String:
+	var area: Rect2 = get_parent().call("area") if get_parent() != null and get_parent().has_method("area") else get_viewport_rect()
+	if cursor.x < area.position.x + SNAP_PX:
+		return "left"
+	if cursor.x > area.end.x - SNAP_PX:
+		return "right"
+	if cursor.y > area.end.y - SNAP_PX:
+		return "bottom"
+	return "free"
 
 
 func _on_grip_input(event: InputEvent) -> void:
@@ -164,15 +189,13 @@ func _on_grip_input(event: InputEvent) -> void:
 
 ## Dropped: with the cursor near an edge it docks there, otherwise it floats where it was left.
 func _drop(cursor: Vector2) -> void:
-	var area: Rect2 = get_parent().call("area") if get_parent() != null and get_parent().has_method("area") else get_viewport_rect()
 	var r := Rect2(position, size)
-	if cursor.x < area.position.x + SNAP_PX:
-		dock = "left"
+	var t := _target(cursor)
+	if t == "left" or t == "right":
+		dock = t
 		dock_size = clampf(r.size.x, MIN_SIZE.x, 520.0)
-	elif cursor.x > area.end.x - SNAP_PX:
-		dock = "right"
-		dock_size = clampf(r.size.x, MIN_SIZE.x, 520.0)
-	elif cursor.y > area.end.y - SNAP_PX:
+		weight = 1.0
+	elif t == "bottom":
 		dock = "bottom"
 		dock_size = clampf(minf(r.size.y, 320.0), MIN_SIZE.y, 420.0)
 	else:
@@ -199,11 +222,12 @@ func _load() -> void:
 		fr = Rect2(float(d["x"]), float(d["y"]), float(d.get("w", 360)), float(d.get("h", 420)))
 	free_rect = fr
 	minimized = bool(d.get("min", _defaults.get("minimized", false)))
-	body.visible = not minimized
-	footer.visible = not minimized
-	min_button.text = "▢" if minimized else "–"
+	weight = clampf(float(d.get("weight", 1.0)), 0.15, 6.0)
+	icon_text = str(_defaults.get("icon", title_label.text.left(1)))
+	if minimized:
+		visible = false
 
 
 func _save() -> void:
 	SbSettings.set_value("panels", panel_id, {"dock": dock, "size": dock_size, "x": free_rect.position.x, "y": free_rect.position.y,
-		"w": free_rect.size.x, "h": free_rect.size.y, "min": minimized})
+		"w": free_rect.size.x, "h": free_rect.size.y, "min": minimized, "weight": weight})

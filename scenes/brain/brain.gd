@@ -196,6 +196,41 @@ func _watch_browser() -> void:
 	_browser_rev = rev
 
 
+## Ctrl+1 Archivist, Ctrl+2 Sparring, Ctrl+3 Places, Ctrl+4 the item tile: opens it (and talks to that agent),
+## or shrinks it into the rail if it is already open.
+func toggle_panel(index: int) -> void:
+	var p: SbFloatingPanel = [archivist_panel, sparring_panel, places_panel, inspector][clampi(index, 0, 3)]
+	if p.visible and not p.minimized:
+		p.set_minimized(true)
+		return
+	if p == inspector and current_note.is_empty():
+		show_toast("No item open: click one in the graph.")
+		return
+	p.reveal()
+	if p == archivist_panel or p == sparring_panel:
+		set_agent("sparring" if p == sparring_panel else "archivist")
+		chat_panel().input.grab_focus()
+
+
+## Tab: the graph alone. Every open panel shrinks into the rail; Tab again brings back exactly those.
+var _focus_restore: Array = []
+
+
+func toggle_focus_mode() -> void:
+	if _focus_restore.is_empty():
+		for p in panel_layer.panels():
+			if p.visible and not p.minimized:
+				_focus_restore.append(p)
+				p.set_minimized(true)
+		if not _focus_restore.is_empty():
+			show_toast("Graph only · Tab brings the panels back")
+	else:
+		for p in _focus_restore:
+			if is_instance_valid(p):
+				(p as SbFloatingPanel).reveal()
+		_focus_restore.clear()
+
+
 ## The agent F8 and F9 talk to: the one whose panel you last typed in, spoke to or grabbed.
 func set_agent(who: String) -> void:
 	active_agent = "sparring" if who == "sparring" else "archivist"
@@ -1450,7 +1485,7 @@ func open_note(id: String, focus: bool = false) -> void:
 	if focus:
 		graph.focus_on(id)
 	if not inspector.visible:
-		inspector.visible = true
+		(inspector as SbFloatingPanel).reveal()
 		inspector.modulate.a = 0.0
 		inspector.position.x += 30
 		var tw := create_tween().set_parallel()
@@ -1789,6 +1824,13 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		accept_event()
 	elif k.keycode == KEY_M and k.ctrl_pressed:
 		toggle_voice()
+		accept_event()
+	elif k.ctrl_pressed and k.keycode in [KEY_1, KEY_2, KEY_3, KEY_4]:
+		toggle_panel(int(k.keycode - KEY_1))
+		accept_event()
+	elif k.keycode == KEY_TAB and not k.ctrl_pressed and view == "graph" \
+			and not (get_viewport().gui_get_focus_owner() is LineEdit or get_viewport().gui_get_focus_owner() is TextEdit):
+		toggle_focus_mode()
 		accept_event()
 	elif k.keycode == KEY_ESCAPE:
 		graph.select("")
