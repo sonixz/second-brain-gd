@@ -60,3 +60,33 @@ def resolve(root: Path, rel: str | None) -> Path | None:
     if base not in p.parents or not p.is_file():
         return None
     return p
+
+
+def forget_unused(conn: sqlite3.Connection, rels: list[str]) -> int:
+    """Deletes kept originals that no document refers to any more (after an item is deleted)."""
+    root = data_root(conn)
+    gone = 0
+    for rel in rels:
+        if conn.execute("SELECT 1 FROM sources WHERE original = ?", (rel,)).fetchone():
+            continue  # the same file is still used by another document
+        path = resolve(root, rel)
+        if path is not None and path.is_file():
+            try:
+                path.unlink()
+                gone += 1
+            except OSError:
+                pass
+    return gone
+
+
+def purge_orphans(conn: sqlite3.Connection) -> dict[str, int]:
+    """Documents whose item was deleted before deletions cascaded (up to 2026-11-04): their passages and files go too."""
+    rows = conn.execute("SELECT id, original FROM sources WHERE note_id IS NULL OR note_id NOT IN (SELECT id FROM notes)").fetchall()
+    if not rows:
+        return {"sources": 0, "files": 0}
+    ids = [r["id"] for r in rows]
+    marks = ",".join("?" * len(ids))
+    conn.execute(f"DELETE FROM source_chunks WHERE source_id IN ({marks})", ids)
+    conn.execute(f"DELETE FROM sources WHERE id IN ({marks})", ids)
+    files = forget_unused(conn, [r["original"] for r in rows if r["original"]])
+    return {"sources": len(ids), "files": files}

@@ -127,7 +127,8 @@ def search_chunks(conn: sqlite3.Connection, query: str, limit: int = 8) -> list[
     rows = conn.execute(
         "SELECT c.id, c.source_id, c.idx, s.title, s.uri, s.note_id, snippet(chunks_fts, 0, '[', ']', '…', 24) AS snippet,"
         " bm25(chunks_fts) AS score FROM chunks_fts JOIN source_chunks c ON c.id = chunks_fts.rowid"
-        " JOIN sources s ON s.id = c.source_id WHERE chunks_fts MATCH ? ORDER BY score LIMIT ?", (q, limit)).fetchall()
+        " JOIN sources s ON s.id = c.source_id JOIN notes n ON n.id = s.note_id AND n.status != 'archived'"  # trashed items stay out
+        " WHERE chunks_fts MATCH ? ORDER BY score LIMIT ?", (q, limit)).fetchall()
     return [dict(r) for r in rows]
 
 

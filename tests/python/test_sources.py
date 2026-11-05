@@ -150,6 +150,51 @@ class OriginalTests(unittest.TestCase):
         self.assertEqual(originals.keep_file(self.root, copy)[0], rel)  # same content, same original
         self.assertEqual(len(list((self.root / "originals").rglob("*.md"))), 1)
 
+    def test_deleting_an_item_deletes_its_document_passages_and_file(self):
+        from engine.sources import originals
+        f = self.root / "cv.md"
+        f.write_text("# CV\n\n" + "Architecte infonuagique Azure, automatisation. " * 40, encoding="utf-8")
+        src = core.ingest_file(self.conn, self.client, str(f))
+        row = core.get_source(self.conn, src["id"])
+        kept = originals.resolve(self.root, row["original"])
+        self.assertTrue(core.search_chunks(self.conn, "infonuagique"))
+        brain.delete_note(self.conn, row["note_id"])
+        self.assertIsNone(self.conn.execute("SELECT 1 FROM sources WHERE id = ?", (src["id"],)).fetchone())
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) FROM source_chunks").fetchone()[0], 0)
+        self.assertEqual(core.search_chunks(self.conn, "infonuagique"), [])  # the full-text index forgot it too
+        self.assertFalse(kept.exists())
+        again = core.ingest_file(self.conn, self.client, str(f))  # adding it again works (no phantom duplicate)
+        self.assertFalse(again["duplicate"])
+
+    def test_a_shared_original_survives_until_its_last_document(self):
+        from engine.sources import originals
+        f = self.root / "a.md"
+        f.write_text("Compost " * 50, encoding="utf-8")
+        one = core.ingest_file(self.conn, self.client, str(f))
+        rel = core.get_source(self.conn, one["id"])["original"]
+        self.conn.execute("INSERT INTO sources (id, kind, uri, title, mime, bytes, content_hash, status, created_at, updated_at, original)"
+                          " VALUES ('other', 'file', 'x', 'x', 'text/plain', 1, 'h2', 'ready', 'x', 'x', ?)", (rel,))
+        brain.delete_note(self.conn, core.get_source(self.conn, one["id"])["note_id"])
+        self.assertTrue(originals.resolve(self.root, rel).exists())
+
+    def test_leftovers_of_old_deletions_are_purged(self):
+        from engine.sources import originals
+        f = self.root / "old.md"
+        f.write_text("Ancien CV " * 50, encoding="utf-8")
+        src = core.ingest_file(self.conn, self.client, str(f))
+        rel = core.get_source(self.conn, src["id"])["original"]
+        self.conn.execute("DELETE FROM notes WHERE id = ?", (core.get_source(self.conn, src["id"])["note_id"],))  # the old way
+        self.assertEqual(originals.purge_orphans(self.conn), {"sources": 1, "files": 1})
+        self.assertFalse((self.root / rel).exists())
+        self.assertEqual(originals.purge_orphans(self.conn), {"sources": 0, "files": 0})
+
+    def test_trashed_items_leave_document_search(self):
+        f = self.root / "t.md"
+        f.write_text("Lettre pour Beneva " * 30, encoding="utf-8")
+        src = core.ingest_file(self.conn, self.client, str(f))
+        brain.update_note(self.conn, core.get_source(self.conn, src["id"])["note_id"], status="archived")
+        self.assertEqual(core.search_chunks(self.conn, "Beneva"), [])
+
     def test_resolve_refuses_paths_outside_originals(self):
         from engine.sources import originals
         (self.root / "secret.txt").write_text("x")

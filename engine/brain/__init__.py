@@ -184,8 +184,21 @@ def update_note(conn: sqlite3.Connection, note_id: str, **fields: Any) -> dict[s
 
 
 def delete_note(conn: sqlite3.Connection, note_id: str) -> None:
+    """Deleting an item deletes everything behind it: its document, the indexed passages (search and meaning)
+    and the kept original file, unless another document still uses the same file."""
     _note_row(conn, note_id)
+    from engine.sources import originals
+
+    files = [r["original"] for r in conn.execute("SELECT original FROM sources WHERE note_id = ?", (note_id,)) if r["original"]]
+    conn.execute("DELETE FROM source_chunks WHERE source_id IN (SELECT id FROM sources WHERE note_id = ?)", (note_id,))
+    conn.execute("DELETE FROM sources WHERE note_id = ?", (note_id,))
     conn.execute("DELETE FROM notes WHERE id = ?", (note_id,))
+    conn.execute("DELETE FROM graph_positions WHERE node_id = ?", (note_id,)) if _has_table(conn, "graph_positions") else None
+    originals.forget_unused(conn, files)
+
+
+def _has_table(conn: sqlite3.Connection, name: str) -> bool:
+    return conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (name,)).fetchone() is not None
 
 
 def _sync_links_and_tags(conn: sqlite3.Connection, note_id: str) -> None:

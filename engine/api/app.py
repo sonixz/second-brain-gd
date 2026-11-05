@@ -43,6 +43,13 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
     async def lifespan(_app: FastAPI) -> AsyncIterator[None]:
         with database.session(layout.database) as conn:
             seed_for_app(conn)
+            from engine.sources import originals
+
+            purged = originals.purge_orphans(conn)
+            if purged["sources"]:
+                database.record_event(conn, {"timestamp": utc_now(), "component": "sources", "stage": "cleanup", "status": "ok",
+                                             "message": f"Removed {purged['sources']} document(s) left by deleted items "
+                                                        f"({purged['files']} original file(s))", "details": purged})
         worker = meaning.Worker(layout.database, client_or_none)
         worker.start()
         app.state.meaning_worker = worker
