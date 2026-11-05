@@ -66,21 +66,6 @@ def get_space(conn: sqlite3.Connection, space_id: str) -> dict[str, Any]:
 
 
 # ------------------------------------------------------------------- notes
-def save_positions(conn: sqlite3.Connection, positions: dict[str, list[float]]) -> int:
-    """Where the user put items and places (edit mode). Node ids: an item id, or "space:<id>"."""
-    now = utc_now()
-    for node_id, xy in positions.items():
-        conn.execute("INSERT INTO graph_positions (node_id, x, y, updated_at) VALUES (?, ?, ?, ?)"
-                     " ON CONFLICT(node_id) DO UPDATE SET x = excluded.x, y = excluded.y, updated_at = excluded.updated_at",
-                     (str(node_id)[:80], float(xy[0]), float(xy[1]), now))
-    return len(positions)
-
-
-def clear_positions(conn: sqlite3.Connection) -> int:
-    """« Tidy »: the automatic layout takes over again."""
-    return conn.execute("DELETE FROM graph_positions").rowcount
-
-
 def remove_space(conn: sqlite3.Connection, space_id: str) -> dict[str, Any]:
     """A place leaves the graph: its items go back to the Inbox (nothing is lost), its projects lose this area.
     The place is archived, not deleted, so restore_space() can bring everything back."""
@@ -193,12 +178,8 @@ def delete_note(conn: sqlite3.Connection, note_id: str) -> None:
     conn.execute("DELETE FROM source_chunks WHERE source_id IN (SELECT id FROM sources WHERE note_id = ?)", (note_id,))
     conn.execute("DELETE FROM sources WHERE note_id = ?", (note_id,))
     conn.execute("DELETE FROM notes WHERE id = ?", (note_id,))
-    conn.execute("DELETE FROM graph_positions WHERE node_id = ?", (note_id,)) if _has_table(conn, "graph_positions") else None
     originals.forget_unused(conn, files)
 
-
-def _has_table(conn: sqlite3.Connection, name: str) -> bool:
-    return conn.execute("SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = ?", (name,)).fetchone() is not None
 
 
 def _sync_links_and_tags(conn: sqlite3.Connection, note_id: str) -> None:
@@ -293,10 +274,6 @@ def graph(conn: sqlite3.Connection) -> dict[str, Any]:
     from engine.brain.meaning import related_edges
 
     edges.extend(related_edges(conn))
-    saved = {r["node_id"]: [r["x"], r["y"]] for r in conn.execute("SELECT node_id, x, y FROM graph_positions")}
-    for n in nodes:
-        if n["id"] in saved:
-            n["saved_pos"] = saved[n["id"]]
     return {"nodes": nodes, "edges": edges}
 
 

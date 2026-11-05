@@ -86,14 +86,14 @@ class LiveTests(unittest.TestCase):
         self.run_turns(1)
         t = self.rec.types()
         self.assertIn("speech_started", t)
-        self.assertIn({"type": "user_text", "text": "Montre-moi ma journée."}, self.rec.msgs)
+        self.assertIn({"type": "user_text", "text": "Montre-moi mes projets."}, self.rec.msgs)
         ui = next(m for m in self.rec.msgs if m["type"] == "ui_actions")
-        self.assertEqual(ui["actions"], [{"action": "open_view", "view": "today"}])
+        self.assertEqual(ui["actions"], [{"action": "open_view", "view": "projects"}])
         out = next(e for e in self.up.sent if e["type"] == "conversation.item.create")
         self.assertEqual(out["item"]["type"], "function_call_output")
         self.assertTrue(json.loads(out["item"]["output"])["done"])
         self.assertEqual(self.up.sent[-1]["type"], "response.create")
-        self.assertIn({"type": "assistant_text", "text": "C'est ouvert, voici ta journée."}, self.rec.msgs)
+        self.assertIn({"type": "assistant_text", "text": "C'est ouvert, voici tes projets."}, self.rec.msgs)
         self.assertGreater(self.rec.audio, 10000)  # the assistant's voice reached Godot
         self.assertLess(t.index("audio_start"), t.index("audio_done"))
         costs = [m for m in self.rec.msgs if m["type"] == "cost"]
@@ -104,7 +104,7 @@ class LiveTests(unittest.TestCase):
         with database.session(self.db) as conn:
             h = core.history(conn, core.today_conversation(), 10)
         self.assertEqual([(m["role"], m["content"]) for m in h][-2:],
-                         [("user", "Montre-moi ma journée."), ("assistant", "C'est ouvert, voici ta journée.")])
+                         [("user", "Montre-moi mes projets."), ("assistant", "C'est ouvert, voici tes projets.")])
         self.assertTrue(h[-1]["meta"]["live"])
 
     def test_goodbye_ends_the_conversation(self):

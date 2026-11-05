@@ -188,8 +188,8 @@ class HandsFreeTests(unittest.TestCase):
         self.tmp.cleanup()
 
     def test_open_view_by_voice_returns_ui_action(self):
-        out = core.chat(self.conn, self.client, "Ouvre ma journée d'aujourd'hui")
-        self.assertEqual(out["ui_actions"], [{"action": "open_view", "view": "today"}])
+        out = core.chat(self.conn, self.client, "Ouvre mes projets")
+        self.assertEqual(out["ui_actions"], [{"action": "open_view", "view": "projects"}])
         self.assertEqual(out["actions"], [])  # nothing changed in the brain
         again = core.chat(self.conn, self.client, "bonjour")
         self.assertEqual(again["ui_actions"], [])  # actions never leak into the next turn

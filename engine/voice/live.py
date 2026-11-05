@@ -143,8 +143,8 @@ def _tone(seconds: float, freq: float = 440.0) -> bytes:
 class FakeUpstream:
     """A scripted Realtime server (SBGD_VOICE_PROVIDER=fake): same events, no network, no cost.
 
-    After each second of microphone audio it behaves like one user turn: « montre-moi ma journée »
-    -> a ui_open_view(today) call -> after the tool result, a short spoken answer. A turn whose
+    After each second of microphone audio it behaves like one user turn: « montre-moi mes projets »
+    -> a ui_open_view(projects) call -> after the tool result, a short spoken answer. A turn whose
     transcript would be the 3rd says goodbye and calls end_conversation.
     """
 
@@ -184,7 +184,7 @@ class FakeUpstream:
         elif t == "conversation.item.create" and (ev.get("item") or {}).get("type") == "function_call_output":
             self._pending_output = True
         elif t == "response.create":
-            await self._answer("C'est ouvert, voici ta journée.")
+            await self._answer("C'est ouvert, voici tes projets.")
         elif t == "response.cancel":
             await self._q.put({"type": "response.done", "response": {"status": "cancelled", "output": [],
                                                                      "usage": await self._usage(0)}})
@@ -195,7 +195,7 @@ class FakeUpstream:
         await self._q.put({"type": "input_audio_buffer.speech_stopped", "item_id": item})
         await self._q.put({"type": "input_audio_buffer.committed", "item_id": item})
         bye = self._turns >= 3
-        text = "Merci, c'est tout." if bye else "Montre-moi ma journée."
+        text = "Merci, c'est tout." if bye else "Montre-moi mes projets."
         await self._q.put({"type": "conversation.item.input_audio_transcription.completed", "item_id": item,
                            "transcript": text})
         if bye:
@@ -203,7 +203,7 @@ class FakeUpstream:
             await self._answer("Bonne journée!", extra=[call])
             return
         call = {"type": "function_call", "name": "ui_open_view", "call_id": self._id("call"),
-                "arguments": json.dumps({"view": "today"})}
+                "arguments": json.dumps({"view": "projects"})}
         await self._q.put({"type": "response.function_call_arguments.done", "name": call["name"],
                            "call_id": call["call_id"], "arguments": call["arguments"]})
         await self._q.put({"type": "response.done", "response": {"status": "completed", "output": [call],

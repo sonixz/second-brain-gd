@@ -28,10 +28,6 @@ class NoteIn(BaseModel):
     source: Literal["typed", "voice", "import", "agent"] = "typed"
 
 
-class PositionsIn(BaseModel):
-    positions: dict[str, list[float]] = Field(max_length=5000)
-
-
 class SpacePatch(BaseModel):
     name: str | None = Field(default=None, max_length=120)
     kind: Literal["project", "area", "resource", "archive"] | None = None
@@ -216,15 +212,6 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     @r.get("/spaces/{space_id}/card")
     def get_card(space_id: str) -> dict[str, Any]:
         return run(structure.card, space_id)
-
-    @r.put("/positions")
-    def put_positions(body: PositionsIn) -> dict[str, Any]:
-        clean = {k: v[:2] for k, v in body.positions.items() if len(v) >= 2}
-        return {"saved": run(brain.save_positions, clean)}
-
-    @r.delete("/positions")
-    def delete_positions() -> dict[str, Any]:
-        return {"cleared": run(brain.clear_positions)}
 
     @r.delete("/spaces/{space_id}")
     def delete_space(space_id: str) -> dict[str, Any]:

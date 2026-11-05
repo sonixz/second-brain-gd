@@ -234,7 +234,7 @@ class FakeChat:
                     "usage": usage, "model": model}
         text = str(last.get("content", ""))
         low = text.lower()
-        views = {"aujourd": "today", "today": "today", "projet": "projects", "agent": "agents", "graph": "graph"}
+        views = {"projet": "projects", "capture": "captures", "graph": "graph"}
         if low.startswith("comment ") and " relié à " in low and tools:
             a, b = text[len("comment "):].split(" est relié à " if " est relié à " in text else " relié à ", 1)
             call = {"id": "call_path", "type": "function", "function": {"name": "find_path", "arguments": json.dumps(
@@ -248,10 +248,6 @@ class FakeChat:
         if low.startswith("cherche à l'écran") and tools:
             call = {"id": "call_srch", "type": "function", "function": {"name": "ui_search", "arguments": json.dumps(
                 {"query": text.split("écran", 1)[1].strip(" .!")})}}
-            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
-        if ("mode édition" in low or "termine l'édition" in low or "range le graphe" in low) and tools:
-            mode = "tidy" if "range" in low else ("off" if "termine" in low else "on")
-            call = {"id": "call_edit", "type": "function", "function": {"name": "ui_edit_mode", "arguments": json.dumps({"mode": mode})}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if ("chronologi" in low or "retour aux zones" in low) and tools:
             call = {"id": "call_layout", "type": "function", "function": {"name": "ui_layout", "arguments": json.dumps(

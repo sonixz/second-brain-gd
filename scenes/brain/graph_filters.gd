@@ -5,8 +5,6 @@ extends HBoxContainer
 
 signal changed(filter: Dictionary)
 signal layout_changed(mode: String)
-signal edit_toggled(on: bool)
-signal tidy_requested
 signal legend_toggled(on: bool)
 
 const TYPES := [["note", "Notes"], ["idea", "Ideas"], ["article", "Articles"], ["document", "Documents"],
@@ -18,8 +16,6 @@ var filter: Dictionary = {}
 var summary: Label
 var clear_button: Button
 var timeline_button: Button
-var edit_button: Button
-var tidy_button: Button
 var legend_button: Button
 var popup: PopupPanel
 var _checks: Dictionary = {}
@@ -51,21 +47,6 @@ func _ready() -> void:
 	timeline_button.tooltip_text = "Show items on a time axis, one lane per place"
 	timeline_button.toggled.connect(func(on: bool) -> void: layout_changed.emit("timeline" if on else "zones"))
 	add_child(timeline_button)
-	edit_button = Button.new()
-	edit_button.text = "Edit"
-	edit_button.toggle_mode = true
-	edit_button.tooltip_text = "Edit mode (E): the graph stops moving; drag items or whole places where you want them,\ndrop items into a place to refile them. Everything stays where you put it. Ctrl+Z undoes."
-	edit_button.toggled.connect(func(on: bool) -> void:
-		tidy_button.visible = on
-		edit_toggled.emit(on))
-	add_child(edit_button)
-	tidy_button = Button.new()
-	tidy_button.text = "Tidy"
-	tidy_button.theme_type_variation = "GhostButton"
-	tidy_button.tooltip_text = "Forget every placement and let the graph arrange itself again"
-	tidy_button.visible = false
-	tidy_button.pressed.connect(func() -> void: tidy_requested.emit())
-	add_child(tidy_button)
 	legend_button = Button.new()
 	legend_button.text = "?"
 	legend_button.toggle_mode = true

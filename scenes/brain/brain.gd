@@ -68,8 +68,9 @@ var _toast_timer: Timer
 # Views
 var view := "graph"   # graph | today | projects
 var captures_view: CapturesView
-var modules_button: Button
-const MODULE_VIEWS := ["today", "projects", "agents"]
+# Today and Agents are set aside (2026-11-04): the Brain is the graph, its data and their relations.
+# Their views stay in the code, unreachable from the interface, until they come back as modules.
+const NAV_VIEWS := [["graph", "Graph"], ["captures", "Captures"], ["projects", "Projects"]]
 var today_view: TodayView
 var projects_view: ProjectsView
 var agents_view: AgentsView
@@ -98,10 +99,7 @@ func _ready() -> void:
 	filters_bar.offset_right = -24
 	filters_bar.offset_top = 92
 	add_child(filters_bar)
-	filters_bar.edit_toggled.connect(set_edit_mode)
-	filters_bar.tidy_requested.connect(tidy_graph)
 	filters_bar.legend_toggled.connect(func(on: bool) -> void: graph.show_legend = on)
-	graph.positions_changed.connect(_save_positions)
 	filters_bar.layout_changed.connect(func(mode: String) -> void:
 		graph.set_layout(mode)
 		app.state["graph_layout"] = mode)
@@ -204,7 +202,7 @@ func _build_top_bar() -> void:
 	seg.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(seg)
 	var group := ButtonGroup.new()
-	for pair in [["graph", "Graph"], ["captures", "Captures"], ["today", "Today"], ["projects", "Projects"], ["agents", "Agents"]]:
+	for pair in NAV_VIEWS:
 		var b := Button.new()
 		b.text = str(pair[1])
 		b.toggle_mode = true
@@ -215,18 +213,6 @@ func _build_top_bar() -> void:
 		b.pressed.connect(func() -> void: set_view(key))
 		seg.add_child(b)
 		view_buttons[key] = b
-	# The Brain comes first: Today, Projects and Agents are modules, hidden until switched on.
-	modules_button = Button.new()
-	modules_button.text = "Modules"
-	modules_button.toggle_mode = true
-	modules_button.theme_type_variation = "GhostButton"
-	modules_button.tooltip_text = "Show the optional modules: Today, Projects, Agents"
-	modules_button.button_pressed = bool(SbSettings.get_value("ui", "modules", false))
-	modules_button.toggled.connect(func(on: bool) -> void:
-		SbSettings.set_value("ui", "modules", on)
-		_show_modules(on))
-	seg.add_child(modules_button)
-	_show_modules(modules_button.button_pressed)
 	search_edit = LineEdit.new()
 	search_edit.theme_type_variation = "SearchEdit"
 	search_edit.placeholder_text = "Search your brain   ( / )"
@@ -256,11 +242,6 @@ func _build_top_bar() -> void:
 	status_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	prow.add_child(status_label)
 	pill.custom_minimum_size = Vector2(196, 40)
-
-
-func _show_modules(on: bool) -> void:
-	for key in MODULE_VIEWS:
-		(view_buttons[key] as Button).visible = on or view == key
 
 
 func _build_views() -> void:
@@ -318,8 +299,6 @@ func set_view(name: String) -> void:
 	graph.mouse_filter = Control.MOUSE_FILTER_STOP if name == "graph" else Control.MOUSE_FILTER_IGNORE
 	for key in view_buttons:
 		(view_buttons[key] as Button).button_pressed = key == name
-	if modules_button != null:
-		_show_modules(modules_button.button_pressed)  # a module opened by voice shows its tab while open
 	if name == "captures":
 		await captures_view.refresh()
 	elif name == "today":
@@ -647,12 +626,6 @@ func run_ui_actions(actions: Array) -> void:
 				await refresh_graph()
 				graph.set_path(a.get("ids", []), a.get("steps", []))
 				path_active = true
-			"edit_mode":
-				await set_view("graph")
-				if str(a.get("mode", "")) == "tidy":
-					await tidy_graph()
-				else:
-					set_edit_mode(str(a.get("mode", "")) == "on")
 			"layout":
 				await set_view("graph")
 				filters_bar.timeline_button.button_pressed = str(a.get("mode", "zones")) == "timeline"
@@ -852,38 +825,6 @@ func move_to_place(note_id: String, space_id: String) -> bool:
 	if not current_note.is_empty() and str(current_note["id"]) == note_id:
 		open_note(note_id)
 	return true
-
-
-## Edit mode (button Edit, key E, « mode édition »): the graph freezes and keeps what you place.
-func set_edit_mode(on: bool) -> void:
-	if graph.edit_mode == on:
-		return
-	graph.set_edit_mode(on)
-	filters_bar.edit_button.set_pressed_no_signal(on)
-	filters_bar.tidy_button.visible = on
-	show_toast("Edit mode: drag items or whole places · drop an item into a place to refile it · Ctrl+Z undoes · E to finish"
-		if on else "Layout saved. What you placed stays there.")
-
-
-func tidy_graph() -> void:
-	graph.tidy()
-	await app.backend.api.call_api("/brain/positions", true, HTTPClient.METHOD_DELETE)
-	show_toast("Tidied: the graph arranges itself again.")
-
-
-var _pending_positions: Dictionary = {}
-
-
-func _save_positions(changes: Dictionary) -> void:
-	for id in changes:
-		var v: Vector2 = changes[id]
-		_pending_positions[id] = [snappedf(v.x, 0.1), snappedf(v.y, 0.1)]
-	await get_tree().create_timer(0.4).timeout
-	if _pending_positions.is_empty() or not is_inside_tree():
-		return
-	var batch := _pending_positions
-	_pending_positions = {}
-	await app.backend.api.call_api("/brain/positions", true, HTTPClient.METHOD_PUT, JSON.stringify({"positions": batch}))
 
 
 ## No place chosen (or only the Inbox selected): the archivist decides where a new item goes.
@@ -1785,21 +1726,6 @@ func _unhandled_key_input(event: InputEvent) -> void:
 		accept_event()
 	elif k.keycode == KEY_M and k.ctrl_pressed:
 		toggle_voice()
-		accept_event()
-	elif view == "graph" and k.keycode == KEY_E and not k.ctrl_pressed and not k.alt_pressed \
-			and not (get_viewport().gui_get_focus_owner() is LineEdit or get_viewport().gui_get_focus_owner() is TextEdit):
-		set_edit_mode(not graph.edit_mode)
-		accept_event()
-	elif k.keycode == KEY_Z and k.ctrl_pressed and graph.edit_mode \
-			and not (get_viewport().gui_get_focus_owner() is LineEdit or get_viewport().gui_get_focus_owner() is TextEdit):
-		var back := graph.undo_move()
-		if back.is_empty():
-			show_toast("Nothing to undo.")
-		else:
-			_save_positions(back)
-		accept_event()
-	elif k.keycode == KEY_ESCAPE and graph.edit_mode:
-		set_edit_mode(false)
 		accept_event()
 	elif k.keycode == KEY_ESCAPE:
 		graph.select("")

@@ -364,9 +364,9 @@ func _e2e() -> void:
 	check(heard, "the transcript of 1.5 s of audio arrived intact")
 	check(int(brain.get("voice_notes")) == 1, "the note is recorded as a voice capture")
 	# Hands-free (Loop 7a): the assistant drives the interface, and F8 push-to-talk reaches her.
-	await ap.send("Ouvre ma journée d'aujourd'hui")
-	var opened := await wait_until(func() -> bool: return str(brain.get("view")) == "today", 10.0)
-	check(opened, "« ouvre ma journée » opens the Today view (%s)" % str(ap.last_ui_actions))
+	await ap.send("Ouvre mes projets")
+	var opened := await wait_until(func() -> bool: return str(brain.get("view")) == "projects", 10.0)
+	check(opened, "« ouvre mes projets » opens the Projects view (%s)" % str(ap.last_ui_actions))
 	await brain.call("run_ui_actions", [{"action": "open_view", "view": "graph"}, {"action": "set_volume", "change": "down"}])
 	check(str(brain.get("view")) == "graph", "ui actions switch views back to the graph")
 	var replies_before := ap.messages_shown
@@ -458,69 +458,20 @@ func _e2e() -> void:
 		"a place can be removed")
 	var inbox_kept: Dictionary = await app.backend.api.call_api("/brain/spaces/inbox", true, HTTPClient.METHOD_DELETE)
 	check(not inbox_kept["ok"], "the Inbox cannot be removed")
-	# Edit mode (2026-11-04): frozen layout, a place moves with its items, placements are saved, Ctrl+Z, Tidy.
-	await brain.call("set_view", "graph")
-	await refresh_and_wait(brain)
-	await ap.send("Mode édition", true)
-	check(graph.edit_mode and filters_bar_of(brain).edit_button.button_pressed, "« mode édition » freezes the graph")
-	graph.size = Vector2(1280, 800)  # headless windows are tiny: the minimap would cover the whole graph
-	var place_id := ""
-	for id in graph.nodes:  # a place whose centre is clear (no item lying on it), so the press grabs the place
-		if str(id).begins_with("space:") and str(id) != "space:inbox" and not graph._members(str(id)).is_empty() \
-				and graph.node_at(graph.world_to_screen(graph.nodes[id]["pos"])) == str(id):
-			place_id = str(id)
+	# The legend and the lines' tooltips; the navigation is Graph, Captures, Projects.
+	var gv: GraphView = brain.get("graph")
+	var some_note := ""
+	for id in gv.nodes:
+		if str((gv.nodes[id] as Dictionary)["type"]) == "note":
+			some_note = str(id)
 			break
-	var member: String = graph._members(place_id)[0]
-	var before_member: Vector2 = graph.nodes[member]["pos"]
-	var before_place: Vector2 = graph.nodes[place_id]["pos"]
-	graph._process(0.1)
-	check(graph.nodes[member]["pos"] == before_member, "nothing moves by itself in edit mode")
-	var screen_a: Vector2 = graph.world_to_screen(before_place)
-	var press := InputEventMouseButton.new()
-	press.button_index = MOUSE_BUTTON_LEFT
-	press.pressed = true
-	press.position = screen_a
-	graph._gui_input(press)
-	var motion := InputEventMouseMotion.new()
-	motion.button_mask = MOUSE_BUTTON_MASK_LEFT
-	motion.position = screen_a + Vector2(60, 40)
-	graph._gui_input(motion)
-	var release := InputEventMouseButton.new()
-	release.button_index = MOUSE_BUTTON_LEFT
-	release.pressed = false
-	release.position = screen_a + Vector2(60, 40)
-	graph._gui_input(release)
-	var moved_by: Vector2 = (graph.nodes[member]["pos"] as Vector2) - before_member
-	check(moved_by.length() > 20.0, "dragging a place moves its items with it (%.0f px)" % moved_by.length())
-	var has_saved := false
-	var gdata: Dictionary = {}
-	for attempt in 30:
-		await create_timer(0.2).timeout
-		gdata = (await app.backend.api.call_api("/brain/graph"))["data"]
-		for nd in gdata.get("nodes", []):
-			if str((nd as Dictionary)["id"]) == member and (nd as Dictionary).has("saved_pos"):
-				has_saved = true
-		if has_saved:
-			break
-	check(has_saved, "the placement is saved by the engine")
-	var undone: Dictionary = graph.undo_move()
-	check(undone.has(member) and graph.nodes[member]["pos"] == before_member, "Ctrl+Z puts the place and its items back")
-	await ap.send("Range le graphe", true)
-	await create_timer(0.3).timeout
-	gdata = (await app.backend.api.call_api("/brain/graph"))["data"]
-	check(not (gdata.get("nodes", []) as Array).any(func(x: Variant) -> bool: return (x as Dictionary).has("saved_pos")),
-		"« range le graphe » forgets every placement")
-	await ap.send("Termine l'édition", true)
-	check(not graph.edit_mode, "« termine l'édition » leaves edit mode")
-	graph.show_legend = true
-	graph.queue_redraw()
-	await process_frame
-	check(graph.edge_text({"from": member, "to": place_id, "type": "space"}).contains("belongs to"), "a line explains itself on hover")
-	graph.show_legend = false
+	check(gv.edge_text({"from": some_note, "to": "space:inbox", "type": "space"}).contains("belongs to"), "a line explains itself on hover")
+	var nav: Dictionary = brain.get("view_buttons")
+	check(nav.keys() == ["graph", "captures", "projects"], "the tabs are Graph, Captures, Projects (%s)" % [nav.keys()])
 	# Graph first, semantic zoom (Loop 10).
 	await brain.call("set_view", "graph")
 	var vb: Dictionary = brain.get("view_buttons")
-	check(not (vb["today"] as Button).visible and (vb["captures"] as Button).visible, "modules (Today, Projects, Agents) are hidden; Graph and Captures stay")
+	check(not vb.has("today") and not vb.has("agents") and (vb["projects"] as Button).visible, "Today and Agents are set aside; Graph, Captures and Projects stay")
 	graph.zoom = 0.3
 	check(graph.lod() == "far", "zoomed out, places become named clusters")
 	var target_id := graph.find_node("Links make constellations")
@@ -628,9 +579,9 @@ func _e2e() -> void:
 	for c in range(0, second.size(), 4800):
 		lc.capture.feed_frames(second.slice(c, c + 4800), 48000.0)
 		await process_frame
-	var turned := await wait_until(func() -> bool: return str(brain.get("view")) == "today" \
+	var turned := await wait_until(func() -> bool: return str(brain.get("view")) == "projects" \
 		and ap.last_reply.begins_with("C'est ouvert"), 15.0)
-	check(turned, "a spoken request opens Today and the answer joins the conversation (%s)" % ap.last_reply.left(40))
+	check(turned, "a spoken request opens Projects and the answer joins the conversation (%s)" % ap.last_reply.left(40))
 	check(ap.messages_shown >= bubbles_before + 2, "what you said and what she answered both appear")
 	check(lc.player._pushed > 0 or lc.player.buffered_frames() > 0, "her voice streams into the player")
 	check(lc.cost_usd != null and float(lc.cost_usd) > 0.0 and lc._meter.text.contains("$"),
@@ -785,12 +736,8 @@ func _drop_check() -> void:
 	g.drop_item("n1", b_pos + Vector2(20, 0))
 	check(moved == [["n1", "b"]], "an item dropped in another place's zone asks to move there")
 	g.drop_item("n1", Vector2(5000, 5000))
-	check(moved.size() == 1 and bool((g.nodes["n1"] as Dictionary)["pinned"]), "an item dropped outside any zone stays where it was put")
+	check(moved.size() == 1 and not bool((g.nodes["n1"] as Dictionary)["pinned"]), "an item dropped outside any zone floats back (nothing is pinned)")
 	g.queue_free()
-
-
-func filters_bar_of(brain: Control) -> GraphFilters:
-	return brain.get("filters_bar")
 
 
 func refresh_and_wait(brain: Control) -> void:

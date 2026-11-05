@@ -27,12 +27,9 @@ func pause(s: float) -> void:
 	await create_timer(s).timeout
 
 
-## The showcase is taken "in the morning", like its theme; the Modules tab is set aside for now.
+## The showcase is taken "in the morning", like its theme.
 func stage() -> void:
 	(b.get("greeting") as Label).text = "Good morning"
-	var mb: Button = b.get("modules_button")
-	if mb != null:
-		mb.visible = false
 
 
 func _install() -> bool:
@@ -254,15 +251,6 @@ func _run() -> void:
 	g.zoom_to(0.5, Vector2(-60, 0), 0.3)
 	await pause(3.0)
 	await shot("15-evening")
-
-	# 16. Edit mode: the layout is frozen and yours; the legend says what each line means.
-	b.call("set_edit_mode", true)
-	(b.get("filters_bar") as GraphFilters).legend_button.button_pressed = true
-	g.zoom_to(0.75, Vector2(-60, 0), 0.3)
-	await pause(1.5)
-	await shot("16-edit-legend")
-	(b.get("filters_bar") as GraphFilters).legend_button.button_pressed = false
-	b.call("set_edit_mode", false)
 
 	SbSettings.set_value("ui", "theme", "auto")
 	await app.backend.shutdown_engine(3.0)

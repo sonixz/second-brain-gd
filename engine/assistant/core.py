@@ -91,7 +91,7 @@ Règles:
   contenu à enregistrer avec create_note.
 - Tu pilotes aussi l'interface: l'utilisateur peut tout faire à la voix, sans cliquer. Dès qu'il dit
   « montre, ouvre, affiche, va dans, lance, mets », APPELLE l'outil d'interface correspondant:
-  une vue (graph, captures, today, projects, agents) = ui_open_view; un projet ou une place = ui_open_project (id via
+  une vue (graph, captures, projects) = ui_open_view; un projet ou une place = ui_open_project (id via
   get_structure); un élément = ui_open_note (trouve son id avec search_notes d'abord); thème = ui_set_theme;
   son = ui_set_volume; « annule ça » = undo_last_action;
   « relis-moi ça / répète » = ui_replay (rien d'autre à dire); « parle plus vite / moins vite » = ui_set_voice_speed;
@@ -103,8 +103,6 @@ Règles:
   « ouvre l'original » = ui_open_original; « ferme le document » = ui_close_document.
   « montre seulement les articles sur l'IA / ce que j'ai ajouté cette semaine » = ui_filter; « enlève les filtres » =
   ui_filter(clear); « replie / déplie <place> » = ui_fold (place * = toutes).
-  « mode édition / je veux placer les choses moi-même » = ui_edit_mode(on); « termine l'édition » = ui_edit_mode(off);
-  « range le graphe » = ui_edit_mode(tidy).
   « vue chronologique / montre la chronologie » = ui_layout(timeline); « retour aux zones » = ui_layout(zones);
   « ce que j'ai ajouté cette semaine » = ui_filter(since_days 7) puis ui_layout(timeline).
   « cherche X » (à l'écran) = ui_search; « comment X est relié à Y » = find_path, puis décris le chemin en une phrase;
@@ -345,10 +343,10 @@ TOOLS = [
 ]
 
 # Interface tools: the engine validates them, Godot performs them (hands-free control, Loop 7a).
-UI_VIEWS = ["graph", "captures", "today", "projects", "agents"]
+UI_VIEWS = ["graph", "captures", "projects"]  # Today and Agents are set aside (2026-11-04)
 UI_THEMES = ["morning", "focus", "evening", "forest", "auto"]
 UI_TOOLS = [
-    {"type": "function", "function": {"name": "ui_open_view", "description": "Show a view of the app: graph (the knowledge map), captures (everything added, newest first), today, projects, agents.",
+    {"type": "function", "function": {"name": "ui_open_view", "description": "Show a view of the app: graph (the knowledge map), captures (everything added, newest first), projects.",
      "parameters": {"type": "object", "properties": {"view": {"type": "string", "enum": UI_VIEWS}}, "required": ["view"]}}},
     {"type": "function", "function": {"name": "ui_open_project", "description": "Open a project's card on screen.",
      "parameters": {"type": "object", "properties": {"space_id": {"type": "string"}}, "required": ["space_id"]}}},
@@ -383,8 +381,6 @@ UI_TOOLS = [
     {"type": "function", "function": {"name": "ui_filter", "description": "Show only some items in the graph. types: note, idea, article, document, image, reference, quote, list, journal. origins: typed, voice, url (web), file, pack. text: a word or theme. since_days: 1, 7, 30. clear: show everything again.",
      "parameters": {"type": "object", "properties": {"types": {"type": "array", "items": {"type": "string"}}, "origins": {"type": "array", "items": {"type": "string"}},
                                                      "text": {"type": "string"}, "since_days": {"type": "integer"}, "clear": {"type": "boolean"}}}}},
-    {"type": "function", "function": {"name": "ui_edit_mode", "description": "Graph edit mode: « mode édition » (on: the graph freezes, the user places things by hand), « termine l'édition » (off), « range le graphe » (tidy: forget placements, automatic layout again).",
-        "parameters": {"type": "object", "properties": {"mode": {"type": "string", "enum": ["on", "off", "tidy"]}}, "required": ["mode"]}}},
     {"type": "function", "function": {"name": "ui_layout", "description": "Arrange the graph: timeline (items on a time axis, one lane per place) or zones (the organised graph).",
      "parameters": {"type": "object", "properties": {"mode": {"type": "string", "enum": ["timeline", "zones"]}}, "required": ["mode"]}}},
     {"type": "function", "function": {"name": "ui_fold", "description": "Fold a place in the graph (its items gather into it) or unfold it. place: the place's name, or * for all.",
@@ -467,11 +463,6 @@ def _ui_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any]) -> dict[
             if int(args.get("since_days") or 0) > 0:
                 f["since_days"] = int(args["since_days"])
             act = {"action": "filter", "filter": f}
-    elif name == "ui_edit_mode":
-        mode = str(args.get("mode", ""))
-        if mode not in ("on", "off", "tidy"):
-            return {"error": "mode must be on, off or tidy"}
-        act = {"action": "edit_mode", "mode": mode}
     elif name == "ui_layout":
         mode = str(args.get("mode", ""))
         if mode not in ("timeline", "zones"):
