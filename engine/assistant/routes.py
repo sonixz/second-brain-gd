@@ -34,6 +34,7 @@ class SettingsIn(BaseModel):
     voice: str | None = Field(default=None, max_length=30)
     auto_classify: bool | None = None
     ocr_mode: Literal["local", "ai"] | None = None
+    web_access: bool | None = None
 
 
 def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
@@ -67,7 +68,7 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
             for field, key in (("chat_model", "assistant_chat_model"), ("classify_model", "assistant_classify_model"),
                                ("review_model", "assistant_review_model"), ("review_effort", "assistant_review_effort"),
                                ("voice", "assistant_voice"), ("auto_classify", "assistant_auto_classify"),
-                               ("ocr_mode", "ocr_mode")):
+                               ("ocr_mode", "ocr_mode"), ("web_access", "web_access")):
                 v = getattr(body, field)
                 if v is not None:
                     database.set_setting(conn, key, v)

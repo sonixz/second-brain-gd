@@ -458,6 +458,13 @@ func _e2e() -> void:
 		"a place can be removed")
 	var inbox_kept: Dictionary = await app.backend.api.call_api("/brain/spaces/inbox", true, HTTPClient.METHOD_DELETE)
 	check(not inbox_kept["ok"], "the Inbox cannot be removed")
+	# Internet: a web search answers with its sources as links under the reply; a link opens in the browser.
+	await ap.send("Cherche sur le web des offres DevSecOps à Montréal")
+	check(ap.last_reply.begins_with("Sur le web") and ap.last_sources.size() == 2, "a web search answers with its sources (%d)" % ap.last_sources.size())
+	ap._on_link("https://example.com/emplois/devsecops")
+	check(ap.last_opened_url == "https://example.com/emplois/devsecops", "a source opens in the browser")
+	var web_linked: String = ap._linkify("Voir https://example.org/guide et [[Atlas risks]]")
+	check(web_linked.contains("[url=https://example.org/guide]") and web_linked.contains("[url=Atlas risks]"), "web addresses and item titles both become links")
 	# The legend and the lines' tooltips; the navigation is Graph, Captures, Projects.
 	var gv: GraphView = brain.get("graph")
 	var some_note := ""

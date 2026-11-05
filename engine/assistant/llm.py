@@ -7,6 +7,7 @@ translation happens here, so the assistant code does not change.
 from __future__ import annotations
 
 import json
+import re
 import os
 import urllib.error
 import urllib.request
@@ -153,6 +154,35 @@ class OpenAIChat:
         return _post("/audio/speech", self.key, {"model": model, "voice": voice, "input": text,
                                                   "instructions": instructions, "response_format": "mp3"}, 90.0)
 
+    def web_search(self, model: str, query: str) -> dict[str, Any]:
+        """OpenAI's hosted web search (Responses API): a short answer and the pages it cites."""
+        data = json.loads(_post("/responses", self.key, {"model": model, "tools": [{"type": "web_search"}], "store": False,
+                                                         "input": query}, timeout=120.0))
+        return parse_web_search(data, model)
+
+
+def clean_url(url: str) -> str:
+    return re.sub(r"[?&]utm_source=openai$", "", re.sub(r"utm_source=openai&", "", url or ""))
+
+
+def parse_web_search(data: dict[str, Any], model: str) -> dict[str, Any]:
+    texts: list[str] = []
+    sources: list[dict[str, str]] = []
+    for item in data.get("output", []):
+        if item.get("type") != "message":
+            continue
+        for c in item.get("content", []):
+            texts.append(c.get("text", ""))
+            for a in c.get("annotations", []):
+                if a.get("type") == "url_citation" and a.get("url"):
+                    url = clean_url(a["url"])
+                    if url not in [s["url"] for s in sources]:
+                        sources.append({"title": str(a.get("title") or url)[:200], "url": url})
+    u = data.get("usage") or {}
+    usage = {"prompt_tokens": u.get("input_tokens", 0), "completion_tokens": u.get("output_tokens", 0)}
+    text = re.sub(r"\s*\(\[[^\]]*\]\([^)]*\)\)", "", " ".join(texts)).strip()  # citations go to sources, not the text
+    return {"text": text, "sources": sources, "usage": usage, "model": data.get("model", model)}
+
 
 class FakeChat:
     """Deterministic stand-in, enabled only with SBGD_ASSISTANT_PROVIDER=fake (tests)."""
@@ -163,6 +193,12 @@ class FakeChat:
         pass
 
     last_messages: list[dict[str, Any]] = []
+
+    def web_search(self, model: str, query: str) -> dict[str, Any]:
+        return {"text": f"Deux résultats pour « {query} » : une offre chez Exemple Inc. et un article de fond.",
+                "sources": [{"title": "Offre DevSecOps — Exemple Inc.", "url": "https://example.com/emplois/devsecops"},
+                            {"title": "Guide DevSecOps", "url": "https://example.org/guide"}],
+                "usage": {"prompt_tokens": 100, "completion_tokens": 30}, "model": model}
 
     def complete(self, model: str, messages: list[dict[str, Any]], tools: list[dict[str, Any]] | None = None,
                  json_mode: bool = False, temperature: float = 0.4, effort: str | None = None) -> dict[str, Any]:
@@ -215,6 +251,10 @@ class FakeChat:
                    "tags": ["fake"], "link_ids": [c["id"] for c in ctx["candidates"][:1]],
                    "confidence": 0.9 if space else 0.3, "reason": "fake classifier"}
             return {"message": {"role": "assistant", "content": json.dumps(out)}, "usage": usage, "model": model}
+        if last["role"] == "tool" and "answer_from_the_web" in str(last.get("content", "")):
+            found = json.loads(last["content"])
+            return {"message": {"role": "assistant", "content": "Sur le web: " + found["answer_from_the_web"]},
+                    "usage": usage, "model": model}
         if last["role"] == "tool":
             found = json.loads(last["content"])
             if "context" in found and found.get("done"):
@@ -244,6 +284,10 @@ class FakeChat:
             other = text.split(" avec ", 1)[1].strip(" .!") if " avec " in text else ""
             call = {"id": "call_rel", "type": "function", "function": {"name": "related_idea", "arguments": json.dumps(
                 {"action": "keep" if low.startswith("garde") else "dismiss", "other": other})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if low.startswith(("cherche sur le web", "cherche sur internet")) and tools:
+            q = text.split(" ", 4)[-1].strip(" .!?") if len(text.split()) > 4 else text
+            call = {"id": "call_web", "type": "function", "function": {"name": "web_search", "arguments": json.dumps({"query": q})}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if low.startswith("cherche à l'écran") and tools:
             call = {"id": "call_srch", "type": "function", "function": {"name": "ui_search", "arguments": json.dumps(

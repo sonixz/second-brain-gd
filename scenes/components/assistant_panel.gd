@@ -114,7 +114,7 @@ func start() -> void:
 			var m: Dictionary = item
 			var meta: Dictionary = m["meta"] if m.get("meta") is Dictionary else {}
 			var role := "review" if str(meta.get("kind", "")) == "weekly_review" else str(m["role"])
-			_add_bubble(role, str(m["content"]), meta.get("actions", []), meta.get("cited", []))
+			_add_bubble(role, str(m["content"]), meta.get("actions", []), meta.get("cited", []), meta.get("sources", []))
 			if str(m["role"]) == "briefing":
 				had_briefing = true
 	if not had_briefing:
@@ -130,6 +130,10 @@ func start() -> void:
 
 
 ## spoken = true when the message came by voice: the reply is read aloud even if reading is off.
+var last_sources: Array = []        # web pages behind the last answer (tests, « ouvre la source »)
+var last_opened_url := ""
+
+
 func send(text: String, spoken: bool = false) -> void:
 	var t := text.strip_edges()
 	if t == "" or busy:
@@ -158,7 +162,7 @@ func send(text: String, spoken: bool = false) -> void:
 	var d: Dictionary = res["data"]
 	last_reply = str(d.get("reply", ""))
 	var actions: Array = d.get("actions", [])
-	_add_bubble("assistant", last_reply, actions, d.get("cited", []))
+	_add_bubble("assistant", last_reply, actions, d.get("cited", []), d.get("sources", []))
 	app.audio.play("notification", 0.0, -8.0)
 	if not actions.is_empty():
 		app.audio.play("note_create", 0.04)
@@ -257,7 +261,7 @@ func add_live(role: String, text: String) -> void:
 	scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)
 
 
-func _add_bubble(role: String, text: String, actions: Array, cited: Array) -> void:
+func _add_bubble(role: String, text: String, actions: Array, cited: Array, sources: Array = []) -> void:
 	messages_shown += 1
 	var mine := role == "user"
 	var wrap := HBoxContainer.new()
@@ -292,8 +296,26 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array) -> vo
 	rt.add_theme_color_override("default_color", SbTheme.TEXT)
 	rt.add_theme_font_size_override("normal_font_size", 14)
 	rt.text = _linkify(text)
-	rt.meta_clicked.connect(func(meta: Variant) -> void: note_requested.emit(str(meta)))
+	rt.meta_clicked.connect(_on_link)
 	inner.add_child(rt)
+	if not sources.is_empty():  # the web pages behind this answer, opened in the browser
+		var src := RichTextLabel.new()
+		src.bbcode_enabled = true
+		src.fit_content = true
+		src.custom_minimum_size = Vector2(200, 0)
+		src.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		src.add_theme_font_size_override("normal_font_size", 12)
+		src.add_theme_color_override("default_color", SbTheme.MUTED)
+		var lines: Array[String] = ["SOURCES"]
+		for item in sources:
+			var sd: Dictionary = item
+			var url := str(sd.get("url", ""))
+			lines.append("↗ [url=%s][color=#%s]%s[/color][/url]  [color=#%s]%s[/color]" % [url, SbTheme.MINT.to_html(false),
+				_bb(str(sd.get("title", url)).left(70)), SbTheme.MUTED.to_html(false), _bb(_host(url))])
+		src.text = "\n".join(lines)
+		src.meta_clicked.connect(_on_link)
+		inner.add_child(src)
+		last_sources = sources
 	if not mine and text.strip_edges() != "":
 		spoken_history.append(text)
 		if role == "review":
@@ -315,7 +337,9 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array) -> vo
 		inner.add_child(line)
 		var l := Label.new()
 		l.theme_type_variation = "Muted"
-		l.text = ("✚ Created " if str(a.get("kind")) == "create_note" else ("⇢ Filed " if str(a.get("kind")) == "classify" else "✎ Updated ")) + "« %s »" % str(a.get("title", ""))
+		l.text = str({"create_note": "✚ Created ", "classify": "⇢ Filed ", "move": "⇢ Moved ", "trash": "✕ Deleted ",
+			"web_page": "✚ Added from the web ", "remove_place": "✕ Removed place ", "link": "— Linked ", "unlink": "✕ Unlinked ",
+			"untag": "✕ Tag removed "}.get(str(a.get("kind")), "✎ Updated ")) + "« %s »" % str(a.get("title", ""))
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		l.clip_text = true
@@ -337,9 +361,36 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array) -> vo
 		scroll.scroll_vertical = int(scroll.get_v_scroll_bar().max_value)
 
 
-## [[Title]] -> clickable link (meta = title)
+## A web link opens in the browser; anything else is an item title ([[Title]]).
+func _on_link(meta: Variant) -> void:
+	var m := str(meta)
+	if m.begins_with("http://") or m.begins_with("https://"):
+		last_opened_url = m
+		if OS.get_environment("SBGD_TEST_NO_SHELL") != "1":
+			OS.shell_open(m)
+	else:
+		note_requested.emit(m)
+
+
+static func _host(url: String) -> String:
+	var h := url.get_slice("://", 1).get_slice("/", 0)
+	return h.trim_prefix("www.")
+
+
+static func _bb(t: String) -> String:
+	return t.replace("[", "(").replace("]", ")")
+
+
+## [[Title]] -> clickable item; [label](https://…) and bare https://… -> clickable web links
 static func _linkify(text: String) -> String:
 	var safe := text.replace("[", "\u0001").replace("]", "\u0002")
+	var mint := SbTheme.MINT.to_html(false)
+	var md := RegEx.create_from_string("\u0001([^\u0001\u0002]+)\u0002\\((https?://[^\\s)]+)\\)")
+	safe = md.sub(safe, "\u0003$2\u0004$1\u0005", true)
+	var bare := RegEx.create_from_string("(?<![\u0003\\w/])(https?://[^\\s\u0001\u0002\u0003\u0004\u0005)]+)")
+	safe = bare.sub(safe, "\u0003$1\u0004$1\u0005", true)
 	var re := RegEx.create_from_string("\u0001\u0001([^\u0001\u0002|]+)(?:\\|[^\u0001\u0002]*)?\u0002\u0002")
-	var out := re.sub(safe, "[url=$1][color=#%s]$1[/color][/url]" % SbTheme.MINT.to_html(false), true)
+	var out := re.sub(safe, "[url=$1][color=#%s]$1[/color][/url]" % mint, true)
+	var web := RegEx.create_from_string("\u0003([^\u0004]+)\u0004([^\u0005]*)\u0005")
+	out = web.sub(out, "[url=$1][color=#%s]$2[/color][/url]" % mint, true)
 	return out.replace("\u0001", "[lb]").replace("\u0002", "[rb]")

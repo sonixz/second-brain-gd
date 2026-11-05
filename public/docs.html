@@ -50,6 +50,7 @@
         </ul>
         <h4>Integrate</h4>
         <ul>
+          <li><a href="#internet">Internet</a></li>
           <li><a href="#browser">From your browser</a></li>
           <li><a href="#api">Local HTTP API</a></li>
           <li><a href="#packs">Brain packs</a></li>
@@ -321,6 +322,26 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
       </section>
 
       <!-- INTEGRATE -->
+      <section class="doc" id="internet">
+        <p class="kicker">Use</p>
+        <h2>Internet</h2>
+        <p>The assistant can search the web and read pages, then add what you choose to the Brain. Ask with
+          <kbd>F8</kbd>: « cherche sur internet des offres DevSecOps à Montréal », « lis-moi la deuxième »,
+          « ajoute la première dans Recherche d'emploi ».</p>
+        <ul>
+          <li><b>Search</b> uses OpenAI's hosted web search (<code>gpt-4o-mini</code>, about two seconds): your query goes to
+            OpenAI. The reply names the sites; the pages are listed as links under it and open in your browser.</li>
+          <li><b>Reading a page</b> happens from your computer, with the same guards as a pasted link: public addresses
+            only, size and time limits.</li>
+          <li><b>Nothing enters the Brain unless you ask.</b> An added page is kept, summarised, indexed and filed like any
+            link, with Undo.</li>
+          <li><b>Sites that refuse automatic reading</b> (many job boards do) are respected: the page becomes a
+            <i>reference card</i> with what the search said and the link, and the reply says so.</li>
+          <li>What comes from the web is <b>data</b>: the assistant never follows instructions found in a page.</li>
+          <li>Turn it off: <code>PATCH /assistant/settings {"web_access": false}</code>.</li>
+        </ul>
+      </section>
+
       <section class="doc" id="browser">
         <p class="kicker">Integrate · tutorial</p>
         <h2>Send pages from your browser</h2>
