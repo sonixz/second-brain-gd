@@ -46,7 +46,8 @@ MAX_TOOL_ROUNDS = 8
 # A reply that claims an interface action or an undo, in a turn where no tool ran, gets one nudge
 # (measured 2026-11-03: gpt-4o sometimes said « j'annule » or « la revue est lancée » without the tool).
 CLAIM_RE = re.compile(r"\b(j'annule|c'est annulé|annulée?s?\b|je l'ouvre|j'ouvre|j'ai ouvert|ouverte?\b|"
-                      r"c'est affiché|j'affiche|affichée?\b|est lancée?|je lance|j'ai lancé|activée?\b|baissé|monté)",
+                      r"c'est affiché|j'affiche|affichée?\b|est lancée?|je lance|j'ai lancé|activée?\b|baissé|monté"
+                      r"|I(?:'ve| have)? (?:undone|undid|opened)|I'm opening|is now (?:open|shown)|I've started)",
                       re.IGNORECASE)
 CLAIM_NUDGE = ("Tu viens d'affirmer une action sans appeler d'outil dans ce tour. Si l'utilisateur la demande, "
                "appelle maintenant l'outil (ui_* ou undo_last_action). Sinon, corrige ta réponse sans prétendre "
@@ -54,12 +55,14 @@ CLAIM_NUDGE = ("Tu viens d'affirmer une action sans appeler d'outil dans ce tour
 HISTORY = 20
 # The clipboard is captured only when the user talks about it (2026-11-04: a « what do you mean? » captured a CV).
 CLIPBOARD_RE = re.compile(r"presse[- ]?papier|clipboard|copi[ée]|ce que j'ai copi|\bcolle|ctrl|"
-                          r"ajoute[rz]? (ça|ca|ceci|cela|ce lien|ce texte)\b", re.IGNORECASE)
+                          r"ajoute[rz]? (ça|ca|ceci|cela|ce lien|ce texte)\b|\bcopied\b|\bpaste|add (this|that|it)\b", re.IGNORECASE)
 # A reply that reports a change to the brain, in a turn where nothing really changed, gets corrected
 # (2026-11-04: « les deux CV ont été détachés » after two updates that changed nothing).
 # Past participles only (« classé », not the « classe » of a note title); quoted and [[cited]] titles are ignored.
 CHANGE_RE = re.compile(r"\b(classée?s?|déplacée?s?|détachée?s?|ajoutée?s?|rangée?s?|mise?s? dans|supprimée?s?|reliée?s?|"
-                       r"retirée?s?|enlevée?s?|créée?s?|modifiée?s?)(?!\w)", re.IGNORECASE)
+                       r"retirée?s?|enlevée?s?|créée?s?|modifiée?s?)(?!\w)"
+                       r"|\b(?:I've|I have|has been|have been|was|were|is now|are now)\s+(?:\w+\s+)?"
+                       r"(?:filed|moved|detached|added|removed|deleted|linked|unlinked|created|trashed|renamed)\b", re.IGNORECASE)
 QUOTED_RE = re.compile(r"\[\[.*?\]\]|«.*?»|\".*?\"")
 CHANGE_NUDGE = ("Vérification du moteur: AUCUN changement réel n'a été fait dans ta base pendant ce tour (aucun outil n'a "
                 "rien modifié). Ne dis pas que c'est fait. Si l'utilisateur demande un changement, fais-le maintenant avec "

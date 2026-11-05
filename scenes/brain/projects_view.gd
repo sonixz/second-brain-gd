@@ -167,7 +167,7 @@ func show_card(space_id: String) -> void:
 	ask.text = "Ask the assistant"
 	ask.theme_type_variation = "PrimaryButton"
 	ask.pressed.connect(func() -> void:
-		ask_assistant.emit(space_id, "Où en est « %s »? Qu'est-ce qui serait la prochaine étape la plus utile?" % c["name"]))
+		ask_assistant.emit(space_id, "Où en est “%s”? Qu'est-ce qui serait la prochaine étape la plus utile?" % c["name"]))
 	top.add_child(ask)
 	var name := LineEdit.new()
 	name.text = str(c["name"])
@@ -236,7 +236,7 @@ func show_card(space_id: String) -> void:
 			changed.emit())
 		stack.add_child(cb)
 	var add := LineEdit.new()
-	add.placeholder_text = "+ Next action…  (add a date with « @2026-11-20 »)"
+	add.placeholder_text = "+ Next action…  (add a date with “@2026-11-20”)"
 	add.text_submitted.connect(func(text: String) -> void: add_task(space_id, text))
 	stack.add_child(add)
 	var projects: Array = c.get("projects", [])

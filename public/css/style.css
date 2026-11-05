@@ -180,6 +180,10 @@ p { margin: 0 0 1em; }
 .feature { display: grid; grid-template-columns: 1fr 1.25fr; gap: clamp(24px, 4vw, 56px); align-items: center; }
 .feature + .feature { margin-top: clamp(56px, 8vw, 96px); }
 .feature.flip .feature-text { order: 2; }
+.cards + .feature { margin-top: clamp(48px, 7vw, 80px); }
+.agent-card { border-top: 3px solid var(--ag); }
+.agent-letter { display: inline-grid; place-items: center; width: 40px; height: 40px; border-radius: 12px; margin-bottom: 12px;
+  background: color-mix(in srgb, var(--ag) 18%, transparent); color: var(--ag); font-weight: 800; font-size: 1.2rem; }
 .feature-text p { color: var(--muted); }
 .feature-text ul { color: var(--muted); padding-left: 1.1em; margin: 0 0 1em; }
 .feature-text li { margin: .3em 0; }
@@ -221,7 +225,7 @@ kbd { font-family: var(--mono); font-size: .85em; background: var(--panel-2); bo
 .rail button:hover .dot, .rail button:focus-visible .dot { transform: scale(1.35); }
 .rail button:hover { color: var(--text); }
 .rail button.dim { opacity: .3; }
-.phase-graph { --ph: #a9d4ff; } .phase-brain { --ph: #ffd2a1; } .phase-voice { --ph: #9fe3c4; } .phase-modules { --ph: #c8b6ff; } .phase-foundation { --ph: #8196ae; }
+.phase-graph { --ph: #a9d4ff; } .phase-brain { --ph: #ffd2a1; } .phase-voice { --ph: #9fe3c4; } .phase-modules { --ph: #c8b6ff; } .phase-foundation { --ph: #8196ae; } .phase-agents { --ph: #ffd27a; }
 .phases { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 22px; }
 .phases button { font: inherit; font-size: .9rem; color: var(--muted); background: var(--panel); border: 1px solid var(--border); border-radius: 999px; padding: 6px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; }
 .phases button::before { content: ""; width: 9px; height: 9px; border-radius: 50%; background: var(--ph, var(--mint)); }

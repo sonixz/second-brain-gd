@@ -207,3 +207,24 @@ class AgentBuilderTests(unittest.TestCase):
     def test_the_archivist_hands_over_to_the_builder(self):
         out = core.chat(self.conn, FakeChat(), "Crée-moi un agent pour mes entrevues")
         self.assertEqual(out["ui_actions"][0], {"action": "open_agent", "agent": "builder"})
+
+
+class EnglishApprovalTest(unittest.TestCase):
+    """The website shows English phrases: approvals and refusals work in English as in French."""
+
+    def test_synthesis_approval_in_both_languages(self):
+        for yes in ("yes, save it", "Looks good", "perfect, save it", "Sum it up and save it", "oui, sauvegarde", "parfait"):
+            self.assertTrue(agents.approved(yes), yes)
+        for no in ("no, not yet", "change the part about risks", "wait", "non, pas encore", "change la partie sur…"):
+            self.assertFalse(agents.approved(no), no)
+
+    def test_agent_creation_approval_in_both_languages(self):
+        for yes in ("yes, create it", "create it", "apply it", "oui, crée-le", "applique"):
+            self.assertTrue(agents.BUILD_OK_RE.search(yes) and not agents.REFUSE_RE.search(yes), yes)
+        for no in ("not yet", "no, make it tougher first", "pas encore"):
+            self.assertTrue(agents.REFUSE_RE.search(no) or not agents.BUILD_OK_RE.search(no), no)
+
+    def test_an_english_false_success_is_caught(self):
+        self.assertTrue(core.CHANGE_RE.search("The two CVs have been detached."))
+        self.assertTrue(core.CHANGE_RE.search("I've moved it to Job search."))
+        self.assertFalse(core.CHANGE_RE.search("This note is linked to the kitchen project."))

@@ -58,7 +58,7 @@
           <li><a href="#packs">Brain packs</a></li>
           <li><a href="#files">Files and originals</a></li>
           <li><a href="#costs">Real AI costs</a></li>
-          <li><a href="#agents">Agent room (parked)</a></li>
+          <li><a href="#agents">Codex agent room (parked)</a></li>
         </ul>
         <h4>Develop</h4>
         <ul>
@@ -193,8 +193,8 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             <tr><td>A web page</td><td>Paste its URL in the same bar: it is fetched, kept, summarised and indexed.</td></tr>
             <tr><td>A file</td><td>Drop it on the window: PDF, Word, Markdown, text, HTML, CSV, JSON, PNG, JPG, WebP, GIF.</td></tr>
             <tr><td>Your voice</td><td>Hold <kbd>F8</kbd>, speak, release. The receipt is spoken back.</td></tr>
-            <tr><td>The clipboard</td><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>, or say « ajoute ça au Brain ».</td></tr>
-            <tr><td>Your browser</td><td>The « Envoyer au Brain » bookmark (see <a href="#browser">From your browser</a>).</td></tr>
+            <tr><td>The clipboard</td><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>, or say “add this to the Brain”.</td></tr>
+            <tr><td>Your browser</td><td>The “Send to Brain” bookmark (see <a href="#browser">From your browser</a>).</td></tr>
             <tr><td>Your scripts</td><td>The <a href="#api">local HTTP API</a>.</td></tr>
           </tbody>
         </table>
@@ -229,11 +229,11 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             organisations, concepts, places and dates; a place (existing or new); 1–3 themes; links; a confidence
             score; and a one-line receipt.</li>
           <li><b>When unsure:</b> below the confidence threshold the item stays in the Inbox with its question.</li>
-          <li><b>Undo:</b> every filing is journaled. Use the receipt's Undo or say « annule ça »; a place the
+          <li><b>Undo:</b> every filing is journaled. Use the receipt's Undo or say “undo that”; a place the
             archivist had just created is removed too if it is empty again.</li>
         </ul>
         <h3>Working context</h3>
-        <p>Say « je veux structurer le projet Rénovation »: the project is created if needed and the next items are
+        <p>Say “I want to structure the Renovation project”: the project is created if needed and the next items are
           filed with it in mind. Say it with no name to clear it.</p>
       </section>
 
@@ -255,15 +255,15 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         <h3>Organise the view</h3>
         <ul>
           <li><b>Zones</b> are stable: each place keeps its spot around the Inbox.</li>
-          <li><b>Fold</b> a place (double-click it, or « replie Recettes ») into a <code>+N</code> badge.</li>
-          <li><b>Filter</b> by type, origin, date, word, theme or pack (« montre seulement les articles sur l'IA »,
-            « enlève les filtres »).</li>
-          <li><b>Timeline</b>: the toggle, or « montre la chronologie », lays items along time, one lane per place.</li>
-          <li><b>Paths</b>: « comment X est relié à Y ? » draws the shortest meaningful path.</li>
+          <li><b>Fold</b> a place (double-click it, or “fold Recipes”) into a <code>+N</code> badge.</li>
+          <li><b>Filter</b> by type, origin, date, word, theme or pack (“show only the articles about AI”,
+            “clear the filters”).</li>
+          <li><b>Timeline</b>: the toggle, or “show the timeline”, lays items along time, one lane per place.</li>
+          <li><b>Paths</b>: “how is X connected to Y?” draws the shortest meaningful path.</li>
           <li><b>Related ideas</b>: dashed lines suggested by meaning. Keep one as a real link (✓) or dismiss it (✕).</li>
           <li><b>Move items between places</b>: drag an item into another place's zone to file it there. Dropped
             anywhere else, the graph takes it back: the layout stays alive.</li>
-          <li><b>Remove a place</b>: ✕ next to it in <i>Spaces &amp; briefing</i>, or « supprime la place X ». Its items go back to the Inbox; Undo restores it.</li>
+          <li><b>Remove a place</b>: ✕ next to it in <i>Spaces &amp; briefing</i>, or “delete the place X”. Its items go back to the Inbox; Undo restores it.</li>
         </ul>
         <h3>What the lines mean</h3>
         <p>The <b>?</b> button shows the legend, and hovering a line says what it is.</p>
@@ -274,7 +274,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             <tr><td>Dashed, warm</td><td>Suggested by meaning, not confirmed (✓ keeps it, ✕ dismisses it)</td></tr>
             <tr><td>Thin, pale</td><td>The item belongs to this place (or a project to its area)</td></tr>
             <tr><td>Thin, faint grey</td><td>The item carries this #theme</td></tr>
-            <tr><td>Thick, golden</td><td>The answer to « how is X connected to Y? », shown for a moment</td></tr>
+            <tr><td>Thick, golden</td><td>The answer to “how is X connected to Y?”, shown for a moment</td></tr>
           </tbody>
         </table>
       </section>
@@ -310,7 +310,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             <tr><td>Browser</td><td>open a tab, close the tabs it opened</td></tr>
             <tr><td>Capture</td><td>add notes, web pages, the page in your browser, the clipboard</td></tr>
             <tr><td>Organise the graph</td><td>file, move, link, unlink, delete, places, packs, undo</td></tr>
-            <tr><td>Approved synthesis</td><td>save a synthesis of the conversation, only after your « yes »</td></tr>
+            <tr><td>Approved synthesis</td><td>save a synthesis of the conversation, only after your “yes”</td></tr>
             <tr><td>Drive the interface</td><td>zoom, filter, open views, items and documents, voice speed</td></tr>
           </tbody>
         </table>
@@ -320,17 +320,17 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           <code>POST /assistant/agents/{id}/reset</code>, <code>DELETE /assistant/agents/{id}</code>; chat and live take
           <code>agent</code>. Shortcuts <kbd>Ctrl</kbd>+<kbd>5</kbd>… open the custom agents.</p>
         <h3>Creating an agent with the Agent Builder</h3>
-        <p>You never write instructions yourself. Click <b>+</b> on the rail, or tell the Archivist « crée-moi un agent »:
+        <p>You never write instructions yourself. Click <b>+</b> on the rail, or tell the Archivist “create an agent for me”:
           the <b>Agent Builder</b> (B) opens and interviews you, one short question at a time, by voice or keyboard: what the
           agent is for, its tone, how it should behave, what to avoid, which places of your Brain it should know, what it may
           do, and an example or two. It then writes rich, structured instructions (role, tone and format, how it works, what
           to avoid, its ground, examples), a first sentence and its capabilities, and shows the draft in full, marked
-          <i>NEW AGENT · NOT CREATED YET</i>. Adjust it out loud (« plus exigeant », « enlève la synthèse »), then
-          « oui, crée-le » or <b>Create it</b>: the agent gets its panel, its letter on the rail and its own conversation.</p>
-        <p>To change an agent: « rends Sparring moins répétitif » to the Builder; it reads the agent, drafts the changes
+          <i>NEW AGENT · NOT CREATED YET</i>. Adjust it out loud (“more demanding”, “drop the synthesis”), then
+          “yes, create it” or <b>Create it</b>: the agent gets its panel, its letter on the rail and its own conversation.</p>
+        <p>To change an agent: “make Sparring less repetitive” to the Builder; it reads the agent, drafts the changes
           (<i>CHANGES · NOT APPLIED YET</i>) and applies them on your yes. A new agent only reads unless you ask otherwise;
           organising the graph is given only when you say so. Checked with the real model: a three-question interview
-          produced a « Coach Entrevue » for DevSecOps and Azure interviews, made for the car.</p>
+          produced a “Interview Coach” for DevSecOps and Azure interviews, made for the car.</p>
         <h3>Arranging the panels</h3>
         <ul>
           <li><b>Move</b> a panel by its title bar (⠿). Near the left, right or bottom edge, the place it will land lights up;
@@ -347,13 +347,13 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         <ol class="steps-doc">
           <li><p>Open the <b>SPARRING</b> panel (click its title bar), then press <kbd>F9</kbd> for a live conversation, or
             hold <kbd>F8</kbd> for one sentence at a time. Ideal in the car: talk for twenty minutes.</p></li>
-          <li><p>Ask for what you need: « rassure-moi », « challenge-moi honnêtement », « joue l'avocat du diable »,
-            « qu'est-ce que j'ai déjà là-dessus dans mon Brain ? », « cherche ce qui se fait ailleurs ».</p></li>
-          <li><p>When the idea is ripe: « <b>synthétise-moi tout ça</b> ». Sparring writes a synthesis of what was decided or
+          <li><p>Ask for what you need: “reassure me”, “challenge me honestly”, “play devil's advocate”,
+            “what do I already have on this in my Brain?”, “look at what others do”.</p></li>
+          <li><p>When the idea is ripe: “<b>sum it all up</b>”. Sparring writes a synthesis of what was decided or
             clarified (not every sentence): the idea, the arguments kept, objections and answers, open questions, next leads.
             It shows in full in its panel, marked <i>not saved yet</i>.</p></li>
-          <li><p>Approve: « oui, sauvegarde », or the <b>Save to the Brain</b> button. The Archivist files it like any item,
-            with Undo. Want changes? « change la partie sur… », or <b>Change it…</b>. In one go: « synthétise et enregistre ».</p></li>
+          <li><p>Approve: “yes, save it”, or the <b>Save to the Brain</b> button. The Archivist files it like any item,
+            with Undo. Want changes? “change the part about…”, or <b>Change it…</b>. In one go: “sum it up and save it”.</p></li>
         </ol>
         <p>The engine enforces it: Sparring has no tool that moves, links or deletes, and saving is refused unless your
           message asks for it or approves the draft. A live conversation lasts at most 20 minutes and $1 by default
@@ -364,31 +364,31 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         <p class="kicker">Use</p>
         <h2>Voice commands</h2>
         <p>Hold <kbd>F8</kbd> to speak one thought or command; press <kbd>F9</kbd> for a live conversation you can
-          interrupt (F9 again, or « merci, c'est tout », to end). The phrases below are examples, not a fixed
+          interrupt (F9 again, or “thanks, that's all”, to end). The phrases below are examples, not a fixed
           grammar: the model understands paraphrases and other languages.</p>
         <div class="callout"><p><b>Two microphones, two jobs.</b> The microphone in the <b>capture bar</b> (bottom,
           <kbd>Ctrl</kbd>+<kbd>M</kbd>) dictates <b>content</b>: what you say becomes an item in the Brain. <kbd>F8</kbd>,
-          <kbd>F9</kbd> and the microphone in the <b>assistant panel</b> are for <b>requests</b>: « classe mes CV » is
+          <kbd>F9</kbd> and the microphone in an <b>agent's panel</b> are for <b>requests</b>: “file my CVs” is
           carried out, not stored.</p></div>
-        <h3>How the assistant acts on your graph</h3>
+        <h3>How the Archivist acts on your graph</h3>
         <p>It is an agent with tools that run on your real database: it finds items by what you call them
           (<code>find_items</code>), then acts (<code>move_items</code>, <code>link_items</code>, <code>unlink_items</code>,
           <code>remove_tag</code>, <code>trash_items</code>…). Each tool reports exactly what changed, what was already in
           place, and what was not found or ambiguous; the engine checks that a reply never claims a change that did not
-          happen. Every change has an Undo. Items have <b>one place</b>: « take it out of the Inbox » means moving it to its
+          happen. Every change has an Undo. Items have <b>one place</b>: “take it out of the Inbox” means moving it to its
           place; lines to a #tag or another item are not places. <code>tools/assistant_bench.py</code> replays real
           requests on a throwaway brain to compare models.</p>
         <table>
           <thead><tr><th>Goal</th><th>Say</th></tr></thead>
           <tbody>
-            <tr><td>Capture</td><td>« ajoute ça au Brain » · « note que… » · « je veux structurer le projet X »</td></tr>
-            <tr><td>Organise</td><td>« mets mes quatre CV dans Recherche d'emploi » · « qu'est-ce qui attend dans l'Inbox ? » · « enlève le lien entre X et Y » · « relie X à Y » · « supprime la note X » · « supprime la place X » (its items go back to the Inbox)</td></tr>
-            <tr><td>Navigate</td><td>« ouvre les captures » · « zoome sur X » · « replie X » · « montre la chronologie »</td></tr>
-            <tr><td>Filter</td><td>« montre seulement les articles sur l'IA » · « enlève les filtres »</td></tr>
-            <tr><td>Find</td><td>« cherche l'article sur… » · « comment X est relié à Y ? »</td></tr>
-            <tr><td>Documents</td><td>« ouvre le document X » · « page suivante » · « ouvre l'original » · « ferme le document »</td></tr>
-            <tr><td>Packs</td><td>« exporte le projet X » · « exporte tout » · « importe un pack » · « désactive / fusionne / retire le pack X »</td></tr>
-            <tr><td>Voice</td><td>« relis-moi ça » · « parle plus vite » · « annule ça »</td></tr>
+            <tr><td>Capture</td><td>“add this to the Brain” · “note that…” · “I want to structure the X project”</td></tr>
+            <tr><td>Organise</td><td>“put my four CVs in Job search” · “what is waiting in the Inbox?” · “remove the link between X and Y” · “link X to Y” · “delete the note X” · “delete the place X” (its items go back to the Inbox)</td></tr>
+            <tr><td>Navigate</td><td>“open the captures” · “zoom into X” · “fold X” · “show the timeline”</td></tr>
+            <tr><td>Filter</td><td>“show only the articles about AI” · “clear the filters”</td></tr>
+            <tr><td>Find</td><td>“find the article about…” · “how is X connected to Y?”</td></tr>
+            <tr><td>Documents</td><td>“open the document X” · “next page” · “open the original” · “close the document”</td></tr>
+            <tr><td>Packs</td><td>“export the X project” · “export everything” · “import a pack” · “switch off / merge / remove the pack X”</td></tr>
+            <tr><td>Voice</td><td>“read that again” · “speak faster” · “undo that”</td></tr>
           </tbody>
         </table>
         <table>
@@ -409,9 +409,9 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
       <section class="doc" id="internet">
         <p class="kicker">Use</p>
         <h2>Internet</h2>
-        <p>The assistant can search the web and read pages, then add what you choose to the Brain. Ask with
-          <kbd>F8</kbd>: « cherche sur internet des offres DevSecOps à Montréal », « lis-moi la deuxième »,
-          « ajoute la première dans Recherche d'emploi ».</p>
+        <p>The Archivist (and any agent with the Internet capability) can search the web and read pages, then add what you choose to the Brain. Ask with
+          <kbd>F8</kbd>: “search the web for DevSecOps jobs in Montreal”, “read me the second one”,
+          “add the first one to Job search”.</p>
         <ul>
           <li><b>Search</b> uses OpenAI's hosted web search (<code>gpt-4o-mini</code>, about two seconds): your query goes to
             OpenAI. The reply names the sites; the pages are listed as links under it and open in your browser.</li>
@@ -421,7 +421,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             link, with Undo.</li>
           <li><b>Sites that refuse automatic reading</b> (many job boards do) are respected: the page becomes a
             <i>reference card</i> with what the search said and the link, and the reply says so.</li>
-          <li>What comes from the web is <b>data</b>: the assistant never follows instructions found in a page.</li>
+          <li>What comes from the web is <b>data</b>: no agent ever follows instructions found in a page.</li>
           <li>Turn it off: <code>PATCH /assistant/settings {"web_access": false}</code>.</li>
         </ul>
       </section>
@@ -430,9 +430,9 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         <p class="kicker">Integrate · tutorial</p>
         <h2>Browser extension (Edge, Chrome)</h2>
         <p>The extension connects <b>your</b> browser to your Brain. Send the page you are reading, or just a passage,
-          in one click; and let the assistant open pages for you, add them once you have checked them, and close them,
+          in one click; and let the Archivist open pages for you, add them once you have checked them, and close them,
           by voice. It sends the page <b>as your browser shows it</b>: after your login, the page's scripts and any
-          « I am not a robot » check. Nothing is downloaded a second time, so sites that block robots (many job boards)
+          “I am not a robot” check. Nothing is downloaded a second time, so sites that block robots (many job boards)
           are not a problem.</p>
         <div class="callout"><p><b>Local and private.</b> The extension is a folder of the project
           (<code>browser-extension/</code>), loaded in your own browser. No store, no account, no publication. It talks only
@@ -454,8 +454,8 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           <li><p>In the app: <b>Captures → Send from browser… → Pair a browser</b>. A code like <code>K7Q2-M9XD</code> and the
             engine's port appear. The code works <b>once</b>, for 10 minutes, and dies after 5 wrong attempts.</p></li>
           <li><p>Click the extension's icon, type the code (and the port if it is not 8765), keep
-            « Also let the Brain read the pages it opens » ticked, and press <b>Pair</b>.</p></li>
-          <li><p>The browser asks for the permission to read pages: accept it to use voice commands such as « injecte-la »
+            “Also let the Brain read the pages it opens” ticked, and press <b>Pair</b>.</p></li>
+          <li><p>The browser asks for the permission to read pages: accept it to use voice commands such as “add it”
             (see the permissions below). The app's dialog then shows <b>● Connected: Edge 130</b>.</p></li>
         </ol>
         <p>Pair several browsers if you want (Edge and Chrome, up to five). <b>Unpair all browsers</b> in the same dialog
@@ -466,21 +466,21 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           <thead><tr><th>You</th><th>What happens</th></tr></thead>
           <tbody>
             <tr><td>Click the icon → <b>Send this page</b>, or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></td>
-              <td>The page you see is kept (its HTML as the original), its text indexed, summarised and filed by the archivist. A ✓ appears on the icon; the app shows « From your browser: … » and refreshes the graph.</td></tr>
+              <td>The page you see is kept (its HTML as the original), its text indexed, summarised and filed by the archivist. A ✓ appears on the icon; the app shows “From your browser: …” and refreshes the graph.</td></tr>
             <tr><td>Select text → right-click → <b>Send the selection to the Brain</b></td>
               <td>Only that passage enters, as a quote, with the page as its source.</td></tr>
-            <tr><td>« ouvre la première offre » (<kbd>F8</kbd>)</td>
+            <tr><td>“open the first job offer” (<kbd>F8</kbd>)</td>
               <td>The Brain opens the page in a new tab of your browser and remembers it.</td></tr>
-            <tr><td>« injecte-la » / « ajoute-la »</td>
+            <tr><td>“add it” / “put it in the Brain”</td>
               <td>The page the Brain opened is added as your browser shows it, after your check.</td></tr>
-            <tr><td>« ajoute cette page »</td><td>The tab in front of you is added.</td></tr>
-            <tr><td>« garde juste le passage sélectionné »</td><td>Only your selection on that page is added.</td></tr>
-            <tr><td>« ferme-la » / « ferme les onglets que tu as ouverts »</td>
+            <tr><td>“add this page”</td><td>The tab in front of you is added.</td></tr>
+            <tr><td>“keep just the selected passage”</td><td>Only your selection on that page is added.</td></tr>
+            <tr><td>“close it” / “close the tabs you opened”</td>
               <td>The last tab the Brain opened, or all of them, close. <b>Your own tabs are never closed.</b></td></tr>
           </tbody>
         </table>
-        <p>Without the extension, « ouvre-la » still opens the page in your default browser, but the Brain cannot read or
-          close that tab; « ajoute-la » then downloads the page itself, and a site that refuses robots gives a reference
+        <p>Without the extension, “open it” still opens the page in your default browser, but the Brain cannot read or
+          close that tab; “add it” then downloads the page itself, and a site that refuses robots gives a reference
           card (title, summary, link) instead of the full page.</p>
 
         <h3>Permissions, and why</h3>
@@ -492,7 +492,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             <tr><td><code>activeTab</code>, <code>scripting</code></td><td>Read the page you send by clicking (the icon, the shortcut, the right-click menu): access to that one tab, at that moment.</td></tr>
             <tr><td><code>contextMenus</code></td><td>The right-click entries.</td></tr>
             <tr><td><code>storage</code>, <code>alarms</code></td><td>Keep the port and token; wake up and reconnect when the browser stopped the extension.</td></tr>
-            <tr><td><i>Optional:</i> read pages on all sites</td><td>Only for voice commands (« injecte-la »), where you do not click.
+            <tr><td><i>Optional:</i> read pages on all sites</td><td>Only for voice commands (“add it”), where you do not click.
               The extension itself only reads a tab the Brain opened or the one you name; it never browses your history, cookies or passwords. You can refuse it: clicking Send keeps working.</td></tr>
           </tbody>
         </table>
@@ -524,7 +524,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             your OpenAI key. Unpair revokes it.</li>
           <li><b>Only 127.0.0.1.</b> Nothing goes to a server. Searching the web (see <a href="#internet">Internet</a>) is
             separate and goes through OpenAI.</li>
-          <li><b>Pages are data.</b> Whatever a page says, the assistant never follows instructions found in it.</li>
+          <li><b>Pages are data.</b> Whatever a page says, no agent ever follows instructions found in it.</li>
           <li><b>Limited reach.</b> Commands act only on tabs the Brain opened, or on the tab in front when you ask for it;
             browser pages (<code>edge://</code>, <code>chrome://</code>, the stores) cannot be read at all.</li>
         </ul>
@@ -533,11 +533,11 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         <table>
           <thead><tr><th>Symptom</th><th>Fix</th></tr></thead>
           <tbody>
-            <tr><td>The icon's dot is orange: « Paired, not connected »</td><td>Open the app (the engine must run). It reconnects within 30 seconds; or click <b>Reconnect</b> in the extension's settings.</td></tr>
-            <tr><td>« The Brain is not reachable on 127.0.0.1:8765 »</td><td>The engine uses another port: read it in the pairing dialog and enter it when pairing.</td></tr>
-            <tr><td>« wrong code » or « no pairing code is active »</td><td>Ask for a new code (it lasts 10 minutes and works once).</td></tr>
-            <tr><td>« the extension may not read pages yet »</td><td>Open the extension and click <b>Allow reading the pages the Brain opens</b>, or send by clicking instead.</td></tr>
-            <tr><td>« this page cannot be sent »</td><td>Browser and store pages are off limits; for a PDF, the engine downloads it.</td></tr>
+            <tr><td>The icon's dot is orange: “Paired, not connected”</td><td>Open the app (the engine must run). It reconnects within 30 seconds; or click <b>Reconnect</b> in the extension's settings.</td></tr>
+            <tr><td>“The Brain is not reachable on 127.0.0.1:8765”</td><td>The engine uses another port: read it in the pairing dialog and enter it when pairing.</td></tr>
+            <tr><td>“wrong code” or “no pairing code is active”</td><td>Ask for a new code (it lasts 10 minutes and works once).</td></tr>
+            <tr><td>“the extension may not read pages yet”</td><td>Open the extension and click <b>Allow reading the pages the Brain opens</b>, or send by clicking instead.</td></tr>
+            <tr><td>“this page cannot be sent”</td><td>Browser and store pages are off limits; for a PDF, the engine downloads it.</td></tr>
             <tr><td>The extension asks to pair again</td><td>It was unpaired from the app (or the token was revoked): pair again.</td></tr>
           </tbody>
         </table>
@@ -565,7 +565,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           itself, so pages behind a login or a robot check may be refused.</p>
         <ol class="steps-doc">
           <li><p>In the app, open <b>Captures</b> and press <b>Send from browser…</b>.</p></li>
-          <li><p>Copy the link it shows, then add a bookmark named « Envoyer au Brain » to your bookmarks bar with that
+          <li><p>Copy the link it shows, then add a bookmark named “Send to Brain” to your bookmarks bar with that
             link as its address.</p></li>
           <li><p>On any page, click the bookmark. Without a selection, the page is fetched, kept as an original,
             summarised and filed. With a selection, the selection becomes a quote with the page as its source.</p></li>
@@ -661,7 +661,7 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
         <figure class="shot doc-shot"><img src="assets/showcase/packs.webp" alt="The Brain packs dialog exporting one place" loading="lazy" width="1280" height="800"><figcaption>Captures → Packs…: export one place, with a preview.</figcaption></figure>
         <h3>Export</h3>
         <ol class="steps-doc">
-          <li><p>Open <b>Captures → Packs…</b> (or say « exporte le projet Rénovation »).</p></li>
+          <li><p>Open <b>Captures → Packs…</b> (or say “export the Renovation project”).</p></li>
           <li><p>Choose what leaves: everything, a place, a theme, a search, or chosen items. The preview lists
             exactly what will be written before anything is.</p></li>
           <li><p>Add a title, author, licence and description, tick <b>include originals</b> if you want the PDFs and
@@ -670,7 +670,7 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
 <pre><code>curl -s "${auth[@]}" -d '{"selection":{"place":"Kitchen renovation"},"title":"Kitchen renovation",
   "author":"me","licence":"CC BY 4.0","include_originals":true}' "$API/packs/export"</code></pre>
         <h3>Import</h3>
-        <p>Drop a <code>.brain</code> on the window, use the Packs dialog, say « importe un pack », or
+        <p>Drop a <code>.brain</code> on the window, use the Packs dialog, say “import a pack”, or
           <code>POST /packs/import {"path": "…"}</code>. Then manage layers from the dialog, by voice, or with
           <code>GET /packs/layers</code>, <code>PATCH /packs/layers/{id} {"enabled": false}</code>,
           <code>POST /packs/layers/{id}/merge</code> and <code>DELETE /packs/layers/{id}</code>.</p>
@@ -711,7 +711,7 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
           <li><b>PDF pages</b> are rendered with PDFium at 320, 640, 1024, 1600 or 2400 px, cached in <code>runtime/pages</code>, and shown sharper as you zoom.</li>
           <li><b>HTML, .docx and text files</b> open in a reading view of their full text; <b>Open original</b> opens
             the kept file in your usual app (the browser for HTML).</li>
-          <li>« ouvre l'original » shows the kept original.</li>
+          <li>“open the original” shows the kept original.</li>
         </ul>
         <h3>Scanned PDFs: local OCR first</h3>
         <p>Some PDFs only contain pictures of pages: a scan, or an export that saved each page as an image. To check
@@ -722,11 +722,11 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
           <tbody>
             <tr><td>Windows 10 / 11</td><td>The OCR engine built into Windows (<code>Windows.Media.Ocr</code>), called through PowerShell</td>
               <td>Nothing to install. It reads the languages installed in Windows (Settings → Time &amp; language → Language).</td></tr>
-            <tr><td>Linux</td><td>Tesseract</td><td><code>sudo apt install tesseract-ocr tesseract-ocr-fra</code> (optional)</td></tr>
+            <tr><td>Linux</td><td>Tesseract</td><td><code>sudo apt install tesseract-ocr</code> (optional; add a language pack such as <code>tesseract-ocr-fra</code> for French)</td></tr>
           </tbody>
         </table>
         <p>Pages are rendered at 2400 px wide before reading, which matters for small print. On a 9-page CV, Windows
-          OCR took about 2 seconds, with a handful of l/I confusions (« Open<b>Al</b> »). Nothing leaves your machine
+          OCR took about 2 seconds, with a handful of l/I confusions (“Open<b>Al</b>”). Nothing leaves your machine
           and it is free.</p>
         <ul>
           <li><b>Re-read with AI:</b> in the document viewer, a PDF read by the local OCR offers <b>Re-read with AI</b>.
@@ -754,10 +754,10 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
 
       <section class="doc" id="agents">
         <p class="kicker">Integrate · parked</p>
-        <h2>Agent room (parked)</h2>
+        <h2>Codex agent room (parked)</h2>
         <div class="callout parked"><p>Built and tested, set aside while the graph comes first. It stays in the
           code and will come back as a module.</p></div>
-        <p>The agent room runs OpenAI Codex agents in folders you choose. The Codex app-server package is
+        <p>Not to be confused with the <a href="#agents-profiles">agents</a> above: the Codex agent room runs OpenAI Codex agents in folders you choose. The Codex app-server package is
           downloaded from the official release, verified against a pinned SHA-256 and unpacked safely. Agents work
           read-only by default, every command or file change waits for your approval, and <b>Decline</b> is
           always offered.</p>

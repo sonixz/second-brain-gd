@@ -1284,19 +1284,19 @@ func edge_text(e: Dictionary) -> String:
 	var b := str((nodes[e["to"]] as Dictionary)["label"])
 	match str(e["type"]):
 		"space":
-			return "« %s » belongs to the place « %s »" % [a, b]
+			return "“%s” belongs to the place “%s”" % [a, b]
 		"area":
-			return "« %s » is part of « %s »" % [a, b]
+			return "“%s” is part of “%s”" % [a, b]
 		"tag":
-			return "« %s » carries %s" % [a, b]
+			return "“%s” carries %s" % [a, b]
 		"related":
-			return "Suggested by meaning (dashed): « %s » ≈ « %s »\nOpen the item to keep (✓) or dismiss (✕) it" % [a, b]
-	return "Link: « %s » — « %s »" % [a, b]
+			return "Suggested by meaning (dashed): “%s” ≈ “%s”\nOpen the item to keep (✓) or dismiss (✕) it" % [a, b]
+	return "Link: “%s” — “%s”" % [a, b]
 
 
 const LEGEND := [["link", "Link: you wrote [[…]], the archivist linked, or you kept a suggestion"],
 	["related", "Suggested by meaning, not confirmed yet"],
-	["space", "Belongs to this place"], ["tag", "Carries this #theme"], ["path", "Answer to « how is X connected to Y? »"]]
+	["space", "Belongs to this place"], ["tag", "Carries this #theme"], ["path", "Answer to “how is X connected to Y?”"]]
 
 
 func _draw_legend() -> void:

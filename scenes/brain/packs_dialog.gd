@@ -203,7 +203,7 @@ func import_path(path: String) -> Dictionary:
 		app.audio.play("error")
 		return res
 	var c: Dictionary = (res["data"] as Dictionary).get("counts", {})
-	result_label.text = "Imported « %s »: %d items, %d already in your Brain." % [str(res["data"].get("title", "")),
+	result_label.text = "Imported “%s”: %d items, %d already in your Brain." % [str(res["data"].get("title", "")),
 		int(c.get("items", 0)), int(c.get("duplicates", 0))]
 	app.audio.play("note_create")
 	changed.emit()

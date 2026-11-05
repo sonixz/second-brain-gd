@@ -53,6 +53,15 @@ func _install() -> bool:
 	return app.current_screen == "brain"
 
 
+## Sends a message in an agent's panel and waits for its answer (and any draft card).
+func ask(panel: AssistantPanel, text: String) -> void:
+	await panel.send(text)
+	var end := Time.get_ticks_msec() + 20000
+	while panel.busy and Time.get_ticks_msec() < end:
+		await pause(0.2)
+	await pause(1.2)
+
+
 ## No item focused or highlighted: the graph at rest.
 func calm() -> void:
 	g.selected = ""
@@ -241,6 +250,80 @@ func _run() -> void:
 	SbSettings.set_value("voice", "headphones", false)
 	await pause(1.0)
 
+	# 17. Internet: the archivist searches the web and answers with its sources as links.
+	b.call("_update_capture_hint")
+	g.zoom_to(0.62, Vector2(-40, 0), 0.3)
+	await pause(1.5)
+	calm()
+	await ask(ap, "Search the web for the circuit an induction cooktop needs")
+	await pause(1.0)
+	await shot("17-web-search")
+
+	# 18. Sparring, docked on the right: it challenges the idea, then drafts a synthesis to approve.
+	var sp: SbFloatingPanel = b.call("agent_panel", "sparring")
+	await b.call("open_agent", "sparring")
+	sp.dock = "right"
+	sp.dock_size = 470.0
+	sp.layout_changed.emit()
+	var spc: AssistantPanel = b.call("chat_panel", "sparring")
+	await ask(spc, "I want to open my local-first talk with a story and no slides. Challenge me.")
+	await ask(spc, "Instead of the diagram: a shared recipe card that everyone edits at once.")
+	await ask(spc, "Good. Sum it up.")
+	await pause(1.5)
+	calm()
+	await shot("18-sparring")
+
+	# 19. The Agent Builder interviews, then shows the new agent in full before creating it.
+	sp.set_minimized(true)
+	var bp: SbFloatingPanel = null
+	await b.call("open_agent", "builder")
+	bp = b.call("agent_panel", "builder")
+	bp.dock = "right"
+	bp.dock_size = 470.0
+	bp.layout_changed.emit()
+	var bc: AssistantPanel = b.call("chat_panel", "builder")
+	await ask(bc, "I'd like a coach to rehearse my talk.")
+	await ask(bc, "Tough but kind, short answers. It should know my talk.")
+	await pause(1.5)
+	await shot("19-agent-builder")
+	bp.set_minimized(true)
+
+	# 20. Panels: dragging one shows where it will land; shrunk panels wait on the rail.
+	sp.set_minimized(false)
+	await pause(0.6)
+	sp.dock = "free"
+	sp.free_rect = Rect2(root.size.x * 0.52, 150, 420, 520)
+	sp.layout_changed.emit()
+	await pause(0.8)
+	var layer: SbPanelLayer = b.get("panel_layer")
+	layer.show_drop(sp, "right")
+	await shot("20-panels")
+	layer.show_drop(sp, "")
+	sp.reset()
+	await pause(0.5)
+
+	# 21. The browser: the extension's pairing code (and the bookmark, without the extension).
+	await b.call("set_view", "captures")
+	await pause(0.8)
+	await cv.show_bookmarklet()
+	await pause(0.8)
+	var dlg: AcceptDialog = null
+	for c in cv.get_children():
+		if c is AcceptDialog:
+			dlg = c
+	if dlg != null:
+		for btn in dlg.find_children("*", "Button", true, false):
+			if (btn as Button).text == "Pair a browser":
+				(btn as Button).pressed.emit()
+		await pause(1.5)
+		for l in dlg.find_children("*", "Label", true, false):  # the showcase engine runs on a test port; show the default
+			if (l as Label).text.contains("port "):
+				(l as Label).text = (l as Label).text.get_slice("port ", 0) + "port 8765"
+		await shot("21-browser")
+		dlg.queue_free()
+	await b.call("set_view", "graph")
+	await pause(1.0)
+
 	# 15. The same Brain in the evening theme.
 	app.set_theme_choice("evening")
 	await pause(6.0)
@@ -252,7 +335,7 @@ func _run() -> void:
 	await pause(3.0)
 	await shot("15-evening")
 
-	# 16. An agent's settings (ⓘ): capabilities to tick, model, instructions.
+	# 16. An agent's settings (ⓘ), in a tile: on/off capabilities, model, instructions.
 	await b.call("show_agent_info", "sparring")
 	await pause(1.0)
 	await shot("16-agent-settings")

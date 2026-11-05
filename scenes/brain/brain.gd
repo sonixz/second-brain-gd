@@ -192,7 +192,7 @@ func _watch_browser() -> void:
 	if _browser_rev >= 0 and rev != _browser_rev:
 		var last: Dictionary = browser_status.get("last_added", {})
 		app.audio.play("note_create", 0.04)
-		show_toast("From your browser: « %s » → %s" % [str(last.get("title", "")).left(60), str(last.get("place", "Inbox"))])
+		show_toast("From your browser: “%s” → %s" % [str(last.get("title", "")).left(60), str(last.get("place", "Inbox"))])
 		await refresh_graph()
 		await refresh_spaces()
 		if view == "captures":
@@ -725,11 +725,11 @@ func _ingest(path: String, payload: Dictionary) -> bool:
 		return false
 	var src: Dictionary = res["data"]
 	if bool(src.get("duplicate", false)):
-		show_toast("Already in your brain: « %s »" % src.get("title", ""))
+		show_toast("Already in your brain: “%s”" % src.get("title", ""))
 		return true
 	sources_added += 1
 	app.audio.play("note_create", 0.04)
-	show_toast("Added « %s » · %d passages indexed" % [src.get("title", ""), int(src.get("chunks", 0))])
+	show_toast("Added “%s” · %d passages indexed" % [src.get("title", ""), int(src.get("chunks", 0))])
 	var born := await refresh_graph()
 	if not born.is_empty():
 		graph.focus_on(born[0])
@@ -886,7 +886,7 @@ func run_ui_actions(actions: Array) -> void:
 				var target := str(a.get("target", ""))
 				var hit := graph.find_node(target) if target != "" else ""
 				if target != "" and hit == "":
-					show_toast("Nothing called « %s » in the graph." % target)
+					show_toast("Nothing called “%s” in the graph." % target)
 				graph.zoom_level(str(a.get("level", "closer")), hit)
 				if hit != "" and str(a.get("level", "")) == "read":
 					graph.select(hit)
@@ -906,7 +906,7 @@ func run_ui_actions(actions: Array) -> void:
 				var made := str(a.get("agent", ""))
 				if agent_panels.has(made):
 					(agent_panels[made] as SbFloatingPanel).reveal()
-				show_toast("« %s » is ready: talk to it in its panel (its letter is on the rail)." % str(a.get("name", made)))
+				show_toast("“%s” is ready: talk to it in its panel (its letter is on the rail)." % str(a.get("name", made)))
 			"synthesis_draft":
 				var drafter := str(a.get("agent", "sparring"))
 				agent_panel(drafter).reveal()
@@ -1318,7 +1318,7 @@ func fold_place(name_or_id: String, on: bool) -> bool:
 			var hit := graph.find_node(name_or_id)
 			id = hit if hit.begins_with("space:") else ""
 	if id == "":
-		show_toast("No place called « %s »." % name_or_id)
+		show_toast("No place called “%s”." % name_or_id)
 		return false
 	graph.fold(id, on)
 	var f: Dictionary = app.state.get("graph_folded", {})
@@ -1374,7 +1374,7 @@ func refresh_spaces() -> void:
 func _confirm_remove_place(sid: String, sname: String, count: int) -> void:
 	var dlg := ConfirmationDialog.new()
 	dlg.title = "Remove a place"
-	dlg.dialog_text = "Remove « %s »?\n%s" % [sname, ("Its %d item(s) go back to the Inbox; nothing is deleted." % count) if count > 0
+	dlg.dialog_text = "Remove “%s”?\n%s" % [sname, ("Its %d item(s) go back to the Inbox; nothing is deleted." % count) if count > 0
 		else "It is empty."]
 	dlg.ok_button_text = "Remove"
 	dlg.confirmed.connect(func() -> void: remove_place(sid))
@@ -1399,7 +1399,7 @@ func remove_place(sid: String) -> bool:
 		current_space = ""
 	var n := (out.get("moved_to_inbox", []) as Array).size()
 	app.audio.play("whoosh")
-	show_toast("« %s » removed%s." % [str(out.get("removed", "")), (", %d item(s) back in the Inbox" % n) if n > 0 else ""],
+	show_toast("“%s” removed%s." % [str(out.get("removed", "")), (", %d item(s) back in the Inbox" % n) if n > 0 else ""],
 		int(out.get("action_id", 0)))
 	await refresh_graph()
 	await refresh_spaces()
@@ -1867,7 +1867,7 @@ func _render_results(query: String, hits: Array) -> void:
 	panel_node.visible = query != "" and view == "graph"
 	var head := Label.new()
 	head.theme_type_variation = "Overline"
-	head.text = "%d RESULT%s FOR « %s »" % [hits.size(), "" if hits.size() == 1 else "S", query.to_upper()]
+	head.text = "%d RESULT%s FOR “%s”" % [hits.size(), "" if hits.size() == 1 else "S", query.to_upper()]
 	results_box.add_child(head)
 	for h in hits.slice(0, 8):
 		var hd: Dictionary = h

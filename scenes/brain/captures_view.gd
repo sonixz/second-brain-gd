@@ -99,7 +99,7 @@ func open_packs() -> PacksDialog:
 	return packs_dialog
 
 
-## The « Envoyer au Brain » bookmark: copy it, then add it to the browser's bookmarks bar.
+## The “Send to Brain” bookmark: copy it, then add it to the browser's bookmarks bar.
 func show_bookmarklet() -> void:
 	var res := await app.backend.api.call_api("/brain/capture-link")
 	if not res["ok"] or not is_inside_tree():
@@ -123,7 +123,7 @@ func show_bookmarklet() -> void:
 	box.add_child(alt)
 	var how := Label.new()
 	how.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	how.text = ("1. Copy the link below.\n2. In your browser, add a bookmark named « Envoyer au Brain » and paste it as the address.\n"
+	how.text = ("1. Copy the link below.\n2. In your browser, add a bookmark named “Send to Brain” and paste it as the address.\n"
 		+ "3. On any page, click it: the page (or the text you selected) goes to the archivist, and a small window shows the receipt.\n"
 		+ "The Brain must be open. The link holds a capture key that can only add pages; you can renew it here.")
 	box.add_child(how)
@@ -176,7 +176,7 @@ func _extension_section(box: VBoxContainer) -> void:
 	steps.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	steps.theme_type_variation = "Muted"
 	steps.text = ("Install it once: in the browser open edge://extensions (or chrome://extensions), turn on Developer mode, "
-		+ "click « Load unpacked » and choose the folder browser-extension in the project. Then pair it: click below, "
+		+ "click “Load unpacked” and choose the folder browser-extension in the project. Then pair it: click below, "
 		+ "and type the code in the extension (its icon in the toolbar). It talks only to this computer.")
 	box.add_child(steps)
 	var code_label := Label.new()
@@ -203,7 +203,7 @@ func _extension_section(box: VBoxContainer) -> void:
 		var paired: Array = d.get("paired", [])
 		if bool(d.get("connected", false)):
 			state.text = "● Connected: %s (extension %s)%s" % [str(d.get("browser", "")), str(d.get("extension_version", "")),
-				"" if bool(d.get("can_read_tabs", false)) else ". Voice « injecte-la » needs « Allow reading the pages the Brain opens » in the extension."]
+				"" if bool(d.get("can_read_tabs", false)) else ". Voice commands such as “add it” need “Also let the Brain read the pages it opens” in the extension."]
 		elif not paired.is_empty():
 			state.text = "○ Paired (%s), not connected right now. The extension reconnects by itself while the app is open." % \
 				", ".join(paired.map(func(x: Variant) -> String: return str((x as Dictionary).get("browser", "browser"))))
@@ -222,7 +222,7 @@ func _extension_section(box: VBoxContainer) -> void:
 		code_label.text = "%s     port %d" % [pair_code, int(d.get("port", 8765))]
 		code_label.visible = true
 		pair.text = "New code"
-		steps.text = "Type this code in the extension within 10 minutes (it works once). Then this window shows « Connected »."
+		steps.text = "Type this code in the extension within 10 minutes (it works once). Then this window shows “Connected”."
 		for i in 60:  # watch for the extension for two minutes
 			await get_tree().create_timer(2.0).timeout
 			if not is_instance_valid(state):

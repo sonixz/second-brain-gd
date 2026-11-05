@@ -95,7 +95,7 @@ func refresh() -> void:
 		var calm := Label.new()
 		calm.theme_type_variation = "Muted"
 		calm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		calm.text = "Nothing due. Add a task by typing it below, or ask the assistant: « ajoute une tâche… »."
+		calm.text = "Nothing due. Add a task by typing it below, or ask the assistant: “ajoute une tâche…”."
 		left.add_child(calm)
 	var lists: Array = data.get("checklists", [])
 	for item in lists:
@@ -214,7 +214,7 @@ func _checklist_card(cl: Dictionary) -> PanelContainer:
 	if items.is_empty():
 		var empty := Label.new()
 		empty.theme_type_variation = "Muted"
-		empty.text = "Empty. Say « ajoute du lait à l'épicerie »."
+		empty.text = "Empty. Say “ajoute du lait à l'épicerie”."
 		col.add_child(empty)
 	var add := LineEdit.new()
 	add.placeholder_text = "Add items (comma separated)…"

@@ -260,7 +260,10 @@ func show_agent_draft() -> void:
 		("Capabilities: " + ", ".join(caps)) if not caps.is_empty() else "Capabilities unchanged"]
 	if str(d.get("intro", "")) != "":
 		head += "First words: " + str(d.get("intro", "")) + "\n\n"
-	_add_bubble("agent_draft_update" if update else "agent_draft", head + str(d.get("instructions", "")), [], [])
+	var lines: Array[String] = []
+	for line in str(d.get("instructions", "")).split("\n"):  # markdown headings read as plain capitals here
+		lines.append(line.lstrip("#").strip_edges().to_upper() if line.begins_with("#") else line)
+	_add_bubble("agent_draft_update" if update else "agent_draft", head + "\n".join(lines), [], [])
 	var wrap: Control = list.get_child(list.get_child_count() - 1)
 	var inner := wrap.get_child(wrap.get_child_count() - 1).get_child(0) as VBoxContainer
 	var row := HBoxContainer.new()
@@ -447,7 +450,7 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 		l.theme_type_variation = "Muted"
 		l.text = str({"create_note": "✚ Created ", "classify": "⇢ Filed ", "move": "⇢ Moved ", "trash": "✕ Deleted ",
 			"web_page": "✚ Added from the web ", "remove_place": "✕ Removed place ", "link": "— Linked ", "unlink": "✕ Unlinked ",
-			"untag": "✕ Tag removed "}.get(str(a.get("kind")), "✎ Updated ")) + "« %s »" % str(a.get("title", ""))
+			"untag": "✕ Tag removed "}.get(str(a.get("kind")), "✎ Updated ")) + "“%s”" % str(a.get("title", ""))
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		l.clip_text = true

@@ -140,7 +140,7 @@ static func describe(f: Dictionary) -> String:
 	if f.has("origins"):
 		parts.append("from " + ", ".join((f["origins"] as Array).map(func(t: Variant) -> String: return str(labels.get(str(t), t)))))
 	if f.has("text"):
-		parts.append("« %s »" % str(f["text"]))
+		parts.append("“%s”" % str(f["text"]))
 	if int(f.get("since_days", 0)) > 0:
 		parts.append("today" if int(f["since_days"]) == 1 else "last %d days" % int(f["since_days"]))
 	return "Showing " + " · ".join(parts)

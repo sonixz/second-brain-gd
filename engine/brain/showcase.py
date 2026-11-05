@@ -216,11 +216,102 @@ class ShowcaseChat(FakeChat):
         if json_mode and "ARCHIVISTE" in system:
             return {"message": {"role": "assistant", "content": json.dumps(_file(json.loads(last["content"])))},
                     "usage": usage, "model": model}
+        scripted = _scripted(system, messages, [t["function"]["name"] for t in tools or []])
+        if scripted is not None:
+            return {"message": scripted, "usage": usage, "model": model}
         res = super().complete(model, messages, tools, json_mode, temperature, effort)
         content = res["message"].get("content")
         if isinstance(content, str) and not res["message"].get("tool_calls"):
             res["message"]["content"] = _english(content)
         return res
+
+
+    def web_search(self, model: str, query: str) -> dict[str, Any]:
+        return {"text": WEB_ANSWER, "sources": WEB_SOURCES, "usage": {"prompt_tokens": 100, "completion_tokens": 60},
+                "model": model}
+
+
+# ---------------------------------------------------------------- scripted conversations (English, for the website)
+# They go through the real engine and tools (web_search, draft_synthesis, draft_agent); only the model is scripted.
+# The wording follows what the real model answered in the owner's own tests.
+WEB_ANSWER = ("Most electrical codes put an induction cooktop on its own dedicated 240 V circuit, usually 40 A for a "
+              "standard 30-inch unit and 50 A for larger ones; the installation manual gives the exact rating.")
+WEB_SOURCES = [{"title": "Induction cooktop circuit requirements — Electrical Safety Guide",
+                "url": "https://example.org/guides/induction-cooktop-circuit"},
+               {"title": "How to wire a cooktop: breaker and wire sizes", "url": "https://example.com/wiring/cooktop"}]
+SYNTHESIS = {"title": "Talk opening: tell it as a story, no slides",
+             "body": "## The idea\nOpen the local-first talk with the plane story, no slides for the first three minutes.\n"
+                     "## Kept\n- The story makes the problem felt before it is explained\n"
+                     "- The shared recipe card replaces the CRDT diagram\n"
+                     "## Objections and answers\n- Without a diagram people lose the thread: the recipe-card analogy, "
+                     "then one simple drawing\n"
+                     "## Open questions\n- Does the analogy work for people outside tech?\n"
+                     "## Next\n- Try the opening on two friends this week\n- Rehearse the network-unplug demo"}
+TALK_COACH = ("You are Talk Coach. Your role: help the user rehearse the talk in [[Talk: local-first software]] until it "
+              "flows without notes.\n\n"
+              "## Tone and format\n- Demanding but kind: say what does not work, then how to fix it\n"
+              "- Short spoken answers, two or three sentences, no lists out loud\n\n"
+              "## How you work\n- Ask the user to deliver one part out loud, then react to it\n"
+              "- Time each part against the 20-minute slot\n- Suggest one concrete improvement at a time\n\n"
+              "## Avoid\n- Rewriting the whole talk for the user\n- Generic advice about public speaking\n\n"
+              "## Your ground in the Brain\n- The place Talk: local-first software, and Local-first software for facts\n\n"
+              "## Examples\n- \"Run me through the opening, I'll time it.\"\n"
+              "- \"That demo transition was abrupt: say why you are unplugging the network before you do it.\"")
+SPARRING_TURNS = [
+    "Bold, and it can work: your [[Opening story for the talk]] already makes people feel the problem. The weak spot is "
+    "the CRDT part, where a diagram usually carries the room. Without a slide, what will hold their attention there?",
+    "A shared recipe card everyone edits at once is a good image: everyone has fought over one. I would still try it on "
+    "someone outside tech first, because if the analogy needs explaining, it costs you the minute it was meant to save.",
+]
+BUILDER_TURNS = [
+    "Happy to. What should its tone be: a demanding rehearsal coach, or an encouraging one? For example: "
+    "\"tough but kind, short answers\".",
+]
+
+
+def _tool(name: str, args: dict[str, Any]) -> dict[str, Any]:
+    return {"role": "assistant", "content": None,
+            "tool_calls": [{"id": "call_" + name, "type": "function", "function": {"name": name, "arguments": json.dumps(args)}}]}
+
+
+def _say(text: str) -> dict[str, Any]:
+    return {"role": "assistant", "content": text}
+
+
+def _scripted(system: str, messages: list[dict[str, Any]], names: list[str]) -> dict[str, Any] | None:
+    """English answers for the website's conversations: web search, Sparring, the Agent Builder."""
+    last = messages[-1]
+    users = [str(m.get("content", "")) for m in messages if m.get("role") == "user"]
+    low = users[-1].lower() if users else ""
+    if last.get("role") == "tool":
+        found = json.loads(str(last.get("content") or "{}"))
+        if "answer_from_the_web" in found:
+            return _say("From the web: a dedicated 240 V circuit, usually 40 A for a standard 30-inch cooktop and 50 A "
+                        "for larger ones. Check the rating in its manual. Two sources below; want me to add one to your "
+                        "kitchen project?")
+        if found.get("draft_ready") and found.get("mode"):
+            return _say("Here is Talk Coach: a demanding but kind rehearsal coach that knows your talk and times each part. "
+                        "Shall I create it?")
+        if found.get("draft_ready"):
+            return _say("Here is the synthesis: the story opening, the recipe card instead of the diagram, and one test "
+                        "this week. Shall I save it to your Brain?")
+        return None
+    if last.get("role") != "user":
+        return None
+    if "web_search" in names and low.startswith("search the web"):
+        return _tool("web_search", {"query": users[-1].split(" for ", 1)[-1].strip(" ?.")})
+    if "Tu es Sparring" in system:
+        if "draft_synthesis" in names and ("sum it up" in low or "synthes" in low):
+            return _tool("draft_synthesis", SYNTHESIS)
+        turn = sum(1 for u in users[:-1] if u.strip()) % len(SPARRING_TURNS)
+        return _say(SPARRING_TURNS[turn])
+    if "Agent Builder" in system and "draft_agent" in names:
+        if "tough" in low or "kind" in low:
+            return _tool("draft_agent", {"name": "Talk Coach", "instructions": TALK_COACH,
+                                         "capabilities": ["read_brain", "interface"],
+                                         "intro": "Ready to rehearse? Tell me which part, and I'll time it."})
+        return _say(BUILDER_TURNS[0])
+    return None
 
 
 STOP = set("""about after again also back because been before being between both could does doing during each every
