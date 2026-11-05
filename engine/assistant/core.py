@@ -5,7 +5,7 @@ import hashlib
 import json
 import re
 import sqlite3
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
@@ -929,26 +929,16 @@ def briefing(conn: sqlite3.Connection, client: Any, force: bool = False) -> dict
         return {**cached, "cached": True}
     s = settings(conn)
     since = database.get_setting(conn, "assistant_last_briefing_at") or "1970-01-01T00:00:00Z"
-    new = [r["title"] for r in conn.execute("SELECT title FROM notes WHERE created_at > ? AND status != 'archived'"
-                                            " ORDER BY created_at DESC LIMIT 10", (since,))]
-    tasks = [dict(r) for r in conn.execute("SELECT title, space_id, updated_at FROM notes WHERE kind = 'task'"
-                                           " AND status = 'active' ORDER BY updated_at LIMIT 8")]
-    inbox = conn.execute("SELECT COUNT(*) FROM notes WHERE space_id = 'inbox' AND status = 'active'").fetchone()[0]
-    dormant = [dict(r) for r in conn.execute("SELECT title, updated_at FROM notes WHERE kind = 'idea' AND status = 'active'"
-                                             " ORDER BY updated_at LIMIT 3")]
-    spaces = [{"name": sp["name"], "notes": sp["note_count"]} for sp in brain.list_spaces(conn)]
-    td = structure.today(conn)
-    slim = lambda xs: [{"title": x["title"], "project": x.get("space_name"), "due": x.get("due_date")} for x in xs]
-    facts = {"now": datetime.now().strftime("%A %d %B %Y, %H:%M"), "new_since_last_briefing": new,
-             "overdue": slim(td["overdue"]), "due_today": slim(td["today"]), "due_this_week": slim(td["soon"]),
-             "next_action_per_project": [{"project": x["project"], "next": x["title"]} for x in td["next_actions"]],
-             "projects_without_next_action": [p["name"] for p in td["projects_without_next_action"]],
-             "checklists": [{"name": c["name"], "open_items": sum(1 for i in c["items"] if not i["done"])} for c in td["checklists"]],
-             "inbox_count": inbox, "oldest_ideas": dormant, "spaces": spaces}
-    system = (PERSONA + "\nTu écris le briefing du matin qui sera LU À VOIX HAUTE. 60 à 110 mots, ton parlé, "
-              "pas de listes ni de crochets ni d'emojis. Salue selon l'heure, résume ce qui compte aujourd'hui "
-              "(retards et échéances, prochaines actions, projets sans prochaine action, nouveautés, Inbox), rappelle au plus une idée qui dort, puis propose par quoi commencer "
-              "avec une question. N'invente rien: utilise seulement les faits fournis.")
+    facts = knowledge_facts(conn, since)
+    system = (PERSONA + "\nTu écris le briefing de l'archiviste, qui sera LU À VOIX HAUTE: 50 à 100 mots, ton parlé, "
+              "pas de listes, de crochets ni d'emojis. Le Brain sert à ACCUEILLIR de l'information et à en tirer des "
+              "idées; ce n'est PAS un gestionnaire de tâches: ne parle jamais de retards, d'échéances, de tâches, de "
+              "to-do ni de prochaines actions. Salue selon l'heure. Dis ce qui est entré depuis la dernière visite et où "
+              "c'est allé; mentionne sans pression ce qui attend d'être classé; signale au plus UNE chose intéressante "
+              "(une connexion entre deux idées, un thème qui grandit, ou un élément à redécouvrir). Puis propose 2 ou 3 "
+              "pistes concrètes tirées des faits: explorer une portion du Brain (une place), brainstormer un projet, "
+              "clarifier des liens. Termine par une question ouverte. Si le Brain est presque vide, invite à y verser de "
+              "l'information (un lien, un PDF, une idée dictée, une page envoyée depuis le navigateur). N'invente rien.")
     res = client.complete(s["assistant_chat_model"], [{"role": "system", "content": system},
                                                       {"role": "user", "content": json.dumps(facts, ensure_ascii=False)}])
     cost = _usage_event(conn, "briefing", res["model"], res["usage"], client.provider)
@@ -958,6 +948,54 @@ def briefing(conn: sqlite3.Connection, client: Any, force: bool = False) -> dict
     database.set_setting(conn, "assistant_last_briefing_at", utc_now())
     _save(conn, today_conversation(), "briefing", text, {"estimated_cost_usd": cost})
     return {**out, "cached": False}
+
+
+def knowledge_facts(conn: sqlite3.Connection, since: str) -> dict[str, Any]:
+    """What the briefing talks about: what came in and where it went, what waits to be filed, what is growing,
+    a connection worth a look, something to rediscover, and the places. Never tasks or deadlines."""
+    from engine.assistant.actions import place_name
+
+    week = (datetime.now(timezone.utc) - timedelta(days=7)).strftime("%Y-%m-%dT%H:%M:%S")
+    mine = "n.status != 'archived' AND n.source != 'seed'"
+    new = conn.execute(f"SELECT n.title, n.space_id, n.source FROM notes n WHERE {mine} AND n.created_at > ?"
+                       " ORDER BY n.created_at DESC", (since,)).fetchall()
+    by_place: dict[str, int] = {}
+    for r in new:
+        by_place[place_name(conn, r["space_id"])] = by_place.get(place_name(conn, r["space_id"]), 0) + 1
+    origins = {r["o"]: r["c"] for r in conn.execute(
+        f"SELECT COALESCE(m.origin, n.source) AS o, COUNT(*) AS c FROM notes n LEFT JOIN item_meta m ON m.note_id = n.id"
+        f" WHERE {mine} AND n.created_at > ? GROUP BY o", (since,))}
+    inbox = [r["title"] for r in conn.execute(f"SELECT n.title FROM notes n WHERE {mine} AND n.space_id = 'inbox'"
+                                              " ORDER BY n.created_at DESC LIMIT 5")]
+    active = [{"place": place_name(conn, r["space_id"]), "items_this_week": r["c"]} for r in conn.execute(
+        f"SELECT n.space_id, COUNT(*) AS c FROM notes n WHERE {mine} AND n.space_id != 'inbox' AND"
+        " (n.created_at > ? OR n.updated_at > ?) GROUP BY n.space_id ORDER BY c DESC LIMIT 3", (week, week))]
+    themes = [{"theme": "#" + r["name"], "new_items": r["c"]} for r in conn.execute(
+        f"SELECT t.name, COUNT(*) AS c FROM note_tags nt JOIN tags t ON t.id = nt.tag_id JOIN notes n ON n.id = nt.note_id"
+        f" WHERE {mine} AND n.created_at > ? GROUP BY t.name HAVING c >= 2 ORDER BY c DESC LIMIT 3", (week,))]
+    pair = conn.execute(
+        "SELECT a.title AS a, b.title AS b, r.score FROM note_related r JOIN notes a ON a.id = r.owner JOIN notes b ON b.id = r.other"
+        " WHERE a.status != 'archived' AND b.status != 'archived' AND a.source != 'seed' AND b.source != 'seed' AND r.owner < r.other"
+        " AND NOT EXISTS (SELECT 1 FROM related_choices c WHERE c.a = r.owner AND c.b = r.other)"
+        " AND NOT EXISTS (SELECT 1 FROM links l WHERE (l.from_note = r.owner AND l.to_note = r.other) OR (l.from_note = r.other AND l.to_note = r.owner))"
+        " ORDER BY r.score DESC LIMIT 1").fetchone()
+    old = (datetime.now(timezone.utc) - timedelta(days=14)).strftime("%Y-%m-%dT%H:%M:%S")
+    resurface = conn.execute(f"SELECT n.title, n.space_id FROM notes n WHERE {mine} AND n.space_id != 'inbox' AND n.updated_at < ?"
+                             " ORDER BY RANDOM() LIMIT 1", (old,)).fetchone()
+    total = conn.execute(f"SELECT COUNT(*) FROM notes n WHERE {mine}").fetchone()[0]
+    return {
+        "now": datetime.now().strftime("%A %d %B %Y, %H:%M"),
+        "items_in_the_brain": total,
+        "new_since_last_visit": {"count": len(new), "by_place": by_place, "by_origin": origins,
+                                 "examples": [{"title": r["title"], "place": place_name(conn, r["space_id"])} for r in new[:5]]},
+        "waiting_in_the_inbox": inbox,
+        "most_active_places_this_week": active,
+        "growing_themes": themes,
+        "connection_worth_a_look": {"a": pair["a"], "b": pair["b"], "similarity": round(float(pair["score"]), 2)} if pair else None,
+        "to_rediscover": {"title": resurface["title"], "place": place_name(conn, resurface["space_id"])} if resurface else None,
+        "places": [{"name": place_name(conn, sp["id"]), "items": sp["note_count"]} for sp in brain.list_spaces(conn)
+                   if sp["id"] != "inbox"],
+    }
 
 
 def _model_refused(exc: Exception) -> bool:

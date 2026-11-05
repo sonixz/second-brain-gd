@@ -294,3 +294,25 @@ class ClaimGuardTests(unittest.TestCase):
                 "message": {"role": "assistant", "content": "Bonjour! Comment je peux t'aider?"}, "usage": {}, "model": "m"}) as m:
             core.chat(self.conn, FakeChat(), "salut")
         self.assertEqual(m.call_count, 1)
+
+
+class BriefingFactsTests(unittest.TestCase):
+    """2026-11-04: the briefing is about what the Brain holds, never tasks or deadlines."""
+
+    def test_facts_are_about_knowledge_not_tasks(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            db = Path(tmp) / "b.sqlite3"
+            database.migrate(db)
+            conn = database.connect(db)
+            seed_if_empty(conn)
+            job = brain.create_space(conn, "Recherche d'emploi")
+            brain.create_note(conn, "CV Azure", "x #carriere", job["id"])
+            brain.create_note(conn, "Offre Beneva", "x #carriere", job["id"])
+            brain.create_note(conn, "Idée en vrac", "x")
+            f = core.knowledge_facts(conn, "1970-01-01T00:00:00Z")
+            self.assertEqual(f["new_since_last_visit"]["count"], 3)  # the welcome notes do not count
+            self.assertEqual(f["waiting_in_the_inbox"], ["Idée en vrac"])
+            self.assertEqual(f["growing_themes"][0]["theme"], "#carriere")
+            for word in ("overdue", "due", "task", "next_action"):
+                self.assertNotIn(word, " ".join(f.keys()))
+            conn.close()
