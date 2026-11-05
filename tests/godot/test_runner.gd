@@ -477,8 +477,8 @@ func _e2e() -> void:
 	layer.reset_all()
 	layer.relayout()
 	check(arch.dock == "left" and arch.visible and places.minimized and spar.minimized and arch.size.y > 600.0,
-		"the archivist has the left edge; Places and Sparring wait on the rail (%.0f px tall)" % arch.size.y)
-	check(layer.rail_buttons().size() == 2, "the rail shows the shrunk panels (%d)" % layer.rail_buttons().size())
+		"the archivist has the left edge; the others wait on the rail (%.0f px tall)" % arch.size.y)
+	check(layer.rail_buttons().size() == 3, "the rail shows the shrunk panels: Sparring, Places, the Agent Builder (%d)" % layer.rail_buttons().size())
 	check(is_equal_approx(float((brain.get("filters_bar") as Control).offset_left), layer.margin_side + SbPanelLayer.RAIL_W + layer.left_extent),
 		"the graph's toolbar moves aside for the rail and the docked panels")
 	var drag := func(panel: SbFloatingPanel, to: Vector2, release: bool = true) -> void:
@@ -558,6 +558,21 @@ func _e2e() -> void:
 	await app.backend.api.call_api("/assistant/agents/coach-test", true, HTTPClient.METHOD_DELETE)
 	await brain.call("refresh_agents")
 	check(not (brain.get("agent_panels") as Dictionary).has("coach-test"), "a deleted agent's panel goes away")
+	# The Agent Builder (Loop 3): « + » on the rail opens it; it drafts, shows the draft, creates the agent on yes.
+	(brain.get("panel_layer") as SbPanelLayer).create_requested.emit()
+	var bld: AssistantPanel = (brain.get("agent_chats") as Dictionary).get("builder")
+	var builder_open := await wait_until(func() -> bool: return str(brain.get("active_agent")) == "builder" \
+		and not bld.busy and bld.last_reply.begins_with("Avec plaisir"), 10.0)
+	check(builder_open, "« + » on the rail opens the Agent Builder and it asks the first question")
+	await bld.send("Un coach pour préparer mes entrevues, direct mais bienveillant.")
+	var shown_draft := await wait_until(func() -> bool: return bld.last_agent_draft == "Coach entrevue", 10.0)
+	check(shown_draft, "the new agent's instructions show in full before anything is created")
+	await bld.send("Oui, crée-le.")
+	var created := await wait_until(func() -> bool: return (brain.get("agent_panels") as Dictionary).has("coach-entrevue"), 10.0)
+	check(created, "on yes the agent exists, with its own panel")
+	await app.backend.api.call_api("/assistant/agents/coach-entrevue", true, HTTPClient.METHOD_DELETE)
+	await brain.call("refresh_agents")
+	brain.call("set_agent", "archivist")
 	# The legend and the lines' tooltips; the navigation is Graph, Captures, Projects.
 	var gv: GraphView = brain.get("graph")
 	var some_note := ""

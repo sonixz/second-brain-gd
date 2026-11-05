@@ -100,6 +100,13 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
             return {"agents": agents.profiles(conn),
                     "capabilities": {k: {"label": v["label"], "description": v["description"]} for k, v in agents.CAPABILITIES.items()}}
 
+    @r.get("/agent-draft")
+    def get_agent_draft() -> dict[str, Any]:
+        """The Agent Builder's draft waiting for approval (shown on screen in full)."""
+        with database.session(layout.database) as conn:
+            return {"draft": agents.pending_agent(conn),
+                    "capabilities": {k: v["label"] for k, v in agents.CAPABILITIES.items()}}
+
     @r.post("/agents", status_code=201)
     def create_agent(body: AgentIn) -> dict[str, Any]:
         with database.session(layout.database) as conn:

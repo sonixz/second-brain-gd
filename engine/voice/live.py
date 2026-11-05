@@ -294,7 +294,7 @@ class LiveSession:
 
         conn = self._db()
         try:
-            return realtime_tools(agents.tools(conn, self.agent, core.TOOLS + agents.SYNTHESIS_TOOLS))
+            return realtime_tools(agents.tools(conn, self.agent, agents.all_tools(core.TOOLS)))
         finally:
             conn.close()
 

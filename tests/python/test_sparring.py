@@ -160,3 +160,50 @@ class AgentProfileTests(unittest.TestCase):
         self.assertIn("entrevues", m.call_args[0][1][0]["content"])
         agents.delete(self.conn, "coach-entrevue")
         self.assertEqual(agents.name(self.conn, "coach-entrevue"), "archivist")  # unknown agents fall back to the archivist
+
+
+class AgentBuilderTests(unittest.TestCase):
+    """Loop 3: the Agent Builder interviews, drafts rich instructions, and creates or changes an agent on « yes »."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db = Path(self.tmp.name) / "b.sqlite3"
+        database.migrate(self.db)
+        self.conn = database.connect(self.db)
+        seed_if_empty(self.conn)
+
+    def tearDown(self):
+        self.conn.close()
+        self.tmp.cleanup()
+
+    def test_builder_is_an_agent_with_the_agents_capability_only(self):
+        p = agents.profile(self.conn, "builder")
+        self.assertEqual(p["capabilities"], ["read_brain", "agents", "interface"])
+        self.assertNotIn("agents", agents.profile(self.conn, "archivist")["capabilities"])
+        self.assertIn("draft_agent", p["tools"])
+
+    def test_interview_draft_and_create_on_yes(self):
+        c = FakeChat()
+        first = core.chat(self.conn, c, "Je veux créer un nouvel agent.", agent="builder")
+        self.assertIn("À quoi", first["reply"])
+        drafted = core.chat(self.conn, c, "Un coach pour préparer mes entrevues, direct mais bienveillant.", agent="builder")
+        self.assertIn({"action": "agent_draft"}, drafted["ui_actions"])
+        self.assertNotIn("coach-entrevue", [p["id"] for p in agents.profiles(self.conn)])  # nothing created yet
+        self.assertEqual(agents.save_agent(self.conn, "non, change le ton")["changed"], 0)
+        done = core.chat(self.conn, c, "Oui, crée-le.", agent="builder")
+        made = agents.profile(self.conn, "coach-entrevue")
+        self.assertEqual((made["name"], made["capabilities"]), ("Coach entrevue", ["read_brain", "internet"]))
+        self.assertIn({"action": "agents_changed", "agent": "coach-entrevue", "name": "Coach entrevue"}, done["ui_actions"])
+
+    def test_changing_an_existing_agent_needs_approval_and_rich_text(self):
+        self.assertIn("error", agents.draft_agent(self.conn, {"agent_id": "sparring", "instructions": "trop court"}))
+        rich = "Tu es Sparring, version plus directe. " * 10
+        self.assertTrue(agents.draft_agent(self.conn, {"agent_id": "sparring", "instructions": rich})["draft_ready"])
+        self.assertEqual(agents.save_agent(self.conn, "hmm, je ne sais pas")["changed"], 0)
+        out = agents.save_agent(self.conn, "Oui, applique")
+        self.assertEqual((out["mode"], out["agent"]), ("update", "sparring"))
+        self.assertTrue(agents.profile(self.conn, "sparring")["modified"])
+
+    def test_the_archivist_hands_over_to_the_builder(self):
+        out = core.chat(self.conn, FakeChat(), "Crée-moi un agent pour mes entrevues")
+        self.assertEqual(out["ui_actions"][0], {"action": "open_agent", "agent": "builder"})

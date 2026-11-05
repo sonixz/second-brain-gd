@@ -316,6 +316,18 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           API: <code>GET /assistant/agents</code>, <code>POST /assistant/agents</code>, <code>PATCH /assistant/agents/{id}</code>,
           <code>POST /assistant/agents/{id}/reset</code>, <code>DELETE /assistant/agents/{id}</code>; chat and live take
           <code>agent</code>. Shortcuts <kbd>Ctrl</kbd>+<kbd>5</kbd>… open the custom agents.</p>
+        <h3>Creating an agent with the Agent Builder</h3>
+        <p>You never write instructions yourself. Click <b>+</b> on the rail, or tell the Archivist « crée-moi un agent »:
+          the <b>Agent Builder</b> (B) opens and interviews you, one short question at a time, by voice or keyboard: what the
+          agent is for, its tone, how it should behave, what to avoid, which places of your Brain it should know, what it may
+          do, and an example or two. It then writes rich, structured instructions (role, tone and format, how it works, what
+          to avoid, its ground, examples), a first sentence and its capabilities, and shows the draft in full, marked
+          <i>NEW AGENT · NOT CREATED YET</i>. Adjust it out loud (« plus exigeant », « enlève la synthèse »), then
+          « oui, crée-le » or <b>Create it</b>: the agent gets its panel, its letter on the rail and its own conversation.</p>
+        <p>To change an agent: « rends Sparring moins répétitif » to the Builder; it reads the agent, drafts the changes
+          (<i>CHANGES · NOT APPLIED YET</i>) and applies them on your yes. A new agent only reads unless you ask otherwise;
+          organising the graph is given only when you say so. Checked with the real model: a three-question interview
+          produced a « Coach Entrevue » for DevSecOps and Azure interviews, made for the car.</p>
         <h3>Arranging the panels</h3>
         <ul>
           <li><b>Move</b> a panel by its title bar (⠿). Near the left, right or bottom edge, the place it will land lights up;

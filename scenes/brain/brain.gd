@@ -259,6 +259,18 @@ func agent_panel(who: String = "") -> SbFloatingPanel:
 	return agent_panels.get(id, archivist_panel)
 
 
+## Opens an agent's panel, makes it the one F8/F9 talk to, and optionally says something to it.
+func open_agent(id: String, say_first: String = "") -> void:
+	if not agent_chats.has(id):
+		await refresh_agents()
+	if not agent_chats.has(id):
+		return
+	(agent_panels[id] as SbFloatingPanel).reveal()
+	set_agent(id)
+	if say_first != "":
+		await (agent_chats[id] as AssistantPanel).send(say_first)
+
+
 ## One agent: its conversation panel inside a floating panel, Voice/Live and ⓘ in the title bar.
 func _make_agent(id: String, agent_name: String, letter: String, intro: String, shrunk: bool) -> AssistantPanel:
 	var chat := AssistantPanel.new().setup(app, self, id)
@@ -557,6 +569,7 @@ func _build_left_panel() -> void:
 	panel_layer = SbPanelLayer.new()
 	add_child(panel_layer)
 	panel_layer.edges_changed.connect(_on_panel_edges)
+	panel_layer.create_requested.connect(func() -> void: open_agent("builder", "Je veux créer un nouvel agent."))
 	assistant_panel = _make_agent("archivist", "Archivist", "A", "", false)
 	archivist_panel = agent_panels["archivist"]
 	sparring_chat = _make_agent("sparring", "Sparring", "S", "", true)
@@ -913,6 +926,17 @@ func run_ui_actions(actions: Array) -> void:
 			"pack_exported":
 				show_toast("Pack saved: %s" % str(a.get("path", "")).get_file())
 				last_pack_export = str(a.get("path", ""))
+			"open_agent":
+				open_agent(str(a.get("agent", "archivist")))
+			"agent_draft":
+				agent_panel("builder").reveal()
+				await chat_panel("builder").show_agent_draft()
+			"agents_changed":
+				await refresh_agents()
+				var made := str(a.get("agent", ""))
+				if agent_panels.has(made):
+					(agent_panels[made] as SbFloatingPanel).reveal()
+				show_toast("« %s » is ready: talk to it in its panel (its letter is on the rail)." % str(a.get("name", made)))
 			"synthesis_draft":
 				var drafter := str(a.get("agent", "sparring"))
 				agent_panel(drafter).reveal()

@@ -240,6 +240,47 @@ func show_draft() -> void:
 
 
 var last_draft := ""
+var last_agent_draft := ""
+
+
+## The Agent Builder drafted an agent (or changes to one): shown in full, with Create / Apply and Change.
+func show_agent_draft() -> void:
+	var res := await app.backend.api.call_api("/assistant/agent-draft")
+	if not res["ok"] or not is_inside_tree():
+		return
+	var data: Dictionary = res["data"]
+	var d: Variant = data.get("draft")
+	if not d is Dictionary:
+		return
+	var labels: Dictionary = data.get("capabilities", {})
+	var update := str(d.get("mode", "")) == "update"
+	var caps: Array = (d.get("capabilities", []) as Array).map(func(c: Variant) -> String: return str(labels.get(str(c), c)))
+	var head := "%s\n%s\n\n" % [str(d.get("name", d.get("agent_id", ""))).to_upper(),
+		("Capabilities: " + ", ".join(caps)) if not caps.is_empty() else "Capabilities unchanged"]
+	if str(d.get("intro", "")) != "":
+		head += "First words: " + str(d.get("intro", "")) + "\n\n"
+	_add_bubble("agent_draft_update" if update else "agent_draft", head + str(d.get("instructions", "")), [], [])
+	var wrap: Control = list.get_child(list.get_child_count() - 1)
+	var inner := wrap.get_child(wrap.get_child_count() - 1).get_child(0) as VBoxContainer
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	inner.add_child(row)
+	var go := Button.new()
+	go.text = "Apply it" if update else "Create it"
+	go.theme_type_variation = "PrimaryButton"
+	go.pressed.connect(func() -> void:
+		go.disabled = true
+		send("Oui, applique ces changements." if update else "Oui, crée-le."))
+	row.add_child(go)
+	var change := Button.new()
+	change.text = "Change it…"
+	change.theme_type_variation = "GhostButton"
+	change.pressed.connect(func() -> void:
+		input.text = "Change: "
+		input.grab_focus()
+		input.caret_column = input.text.length())
+	row.add_child(change)
+	last_agent_draft = str(d.get("name", d.get("agent_id", "")))
 
 
 ## Guided weekly review: generated from the week's facts, shown and read aloud.
@@ -332,7 +373,7 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 	wrap.alignment = BoxContainer.ALIGNMENT_END if mine else BoxContainer.ALIGNMENT_BEGIN
 	list.add_child(wrap)
 	var bubble := PanelContainer.new()
-	var special := role in ["briefing", "review", "receipt", "waiting", "draft"]
+	var special := role in ["briefing", "review", "receipt", "waiting", "draft", "agent_draft", "agent_draft_update"]
 	var col := SbTheme.MINT if mine else (SbTheme.WARM if role in ["briefing", "waiting"] else (SbTheme.INFO if role in ["review", "receipt"] else SbTheme.PANEL_2))
 	bubble.add_theme_stylebox_override("panel", SbTheme.box(Color(col, 0.22 if mine or special else 0.9), 14,
 		Color(col, 0.35), 1, 12))
@@ -348,7 +389,8 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 	if special:
 		var over := Label.new()
 		over.text = {"briefing": "TODAY", "review": "WEEKLY REVIEW", "receipt": "FILED", "waiting": "IN THE INBOX · WAITING",
-			"draft": "SYNTHESIS · NOT SAVED YET"}.get(role, "")
+			"draft": "SYNTHESIS · NOT SAVED YET", "agent_draft": "NEW AGENT · NOT CREATED YET",
+			"agent_draft_update": "CHANGES · NOT APPLIED YET"}.get(role, "")
 		over.theme_type_variation = "Overline"
 		over.add_theme_color_override("font_color", col)
 		inner.add_child(over)

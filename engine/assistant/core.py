@@ -36,10 +36,12 @@ DEFAULTS = {
     "web_search_model": "gpt-4o-mini",
     # Sparring, the thinking partner (2026-11-04): fast enough to talk with, good at arguing.
     "sparring_chat_model": "gpt-6-sol",
+    "builder_chat_model": "gpt-6-sol",
 }
 # When a user's OpenAI project lacks a configured model, the job falls back instead of failing.
 FALLBACK_MODELS = {"assistant_classify_model": "gpt-4o-mini", "assistant_review_model": "gpt-4o",
-                   "assistant_chat_model": "gpt-4o", "sparring_chat_model": "gpt-4o"}
+                   "assistant_chat_model": "gpt-4o", "sparring_chat_model": "gpt-4o",
+                   "builder_chat_model": "gpt-4o"}
 MAX_TOOL_ROUNDS = 8
 # A reply that claims an interface action or an undo, in a turn where no tool ran, gets one nudge
 # (measured 2026-11-03: gpt-4o sometimes said « j'annule » or « la revue est lancée » without the tool).
@@ -97,6 +99,9 @@ Règles:
   capture_browser_tab(tab active); « garde juste le passage sélectionné » = selection_only; « ferme-la » =
   close_browser_tabs(last); « ferme les onglets que tu as ouverts » = close_browser_tabs(all). Si l'extension
   n'est pas connectée, dis-le en une phrase et indique où la jumeler.
+- AGENTS: pour créer ou modifier un agent (« crée-moi un agent », « rends Sparring moins répétitif »), appelle
+  ui_open_agent(builder) et dis en une phrase que l'Agent Builder prend le relais. « Passe-moi Sparring » =
+  ui_open_agent(sparring).
 - AGIR SUR LE GRAPHE (classer, déplacer, relier, supprimer): d'abord find_items pour identifier les éléments exacts
   (ex. place « Inbox » pour ce qui n'est pas classé), puis l'outil d'action avec leurs titres exacts. Un élément a UNE
   seule place: « détacher de l'Inbox » = le déplacer dans sa place (move_items). Des lignes vers un #thème ou une autre
@@ -411,6 +416,8 @@ UI_TOOLS = [
     {"type": "function", "function": {"name": "ui_filter", "description": "Show only some items in the graph. types: note, idea, article, document, image, reference, quote, list, journal. origins: typed, voice, url (web), file, pack. text: a word or theme. since_days: 1, 7, 30. clear: show everything again.",
      "parameters": {"type": "object", "properties": {"types": {"type": "array", "items": {"type": "string"}}, "origins": {"type": "array", "items": {"type": "string"}},
                                                      "text": {"type": "string"}, "since_days": {"type": "integer"}, "clear": {"type": "boolean"}}}}},
+    {"type": "function", "function": {"name": "ui_open_agent", "description": "Open another agent's panel and make it the one the user talks to (« passe-moi Sparring », « je veux créer un agent » = builder).",
+        "parameters": {"type": "object", "properties": {"agent": {"type": "string", "description": "agent id: archivist, sparring, builder, or a custom one"}}, "required": ["agent"]}}},
     {"type": "function", "function": {"name": "ui_layout", "description": "Arrange the graph: timeline (items on a time axis, one lane per place) or zones (the organised graph).",
      "parameters": {"type": "object", "properties": {"mode": {"type": "string", "enum": ["timeline", "zones"]}}, "required": ["mode"]}}},
     {"type": "function", "function": {"name": "ui_fold", "description": "Fold a place in the graph (its items gather into it) or unfold it. place: the place's name, or * for all.",
@@ -494,6 +501,15 @@ def _ui_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any]) -> dict[
             if int(args.get("since_days") or 0) > 0:
                 f["since_days"] = int(args["since_days"])
             act = {"action": "filter", "filter": f}
+    elif name == "ui_open_agent":
+        from engine.assistant import agents
+
+        who = str(args.get("agent") or "").strip().lower()
+        ids = {p["id"]: p for p in agents.profiles(conn)}
+        match = who if who in ids else next((i for i, p in ids.items() if who and who in str(p["name"]).lower()), "")
+        if not match:
+            return {"error": "no such agent", "agents": [p["name"] for p in ids.values()]}
+        act = {"action": "open_agent", "agent": match}
     elif name == "ui_layout":
         mode = str(args.get("mode", ""))
         if mode not in ("timeline", "zones"):
@@ -644,6 +660,28 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
         out = undo(conn, int(row["id"]))
         if out.get("undone"):
             _UI["actions"].append({"action": "refresh"})
+        return out
+    if name in ("list_agents", "get_agent", "draft_agent", "save_agent"):
+        from engine.assistant import agents
+
+        if name == "list_agents":
+            return {"agents": [{"id": p["id"], "name": p["name"], "capabilities": p["capabilities"], "builtin": p["builtin"],
+                                "adjusted": p["modified"]} for p in agents.profiles(conn)]}
+        if name == "get_agent":
+            p = agents.profile(conn, str(args.get("agent") or ""))
+            return {k: p.get(k) for k in ("id", "name", "instructions", "capabilities", "model", "intro", "builtin")}
+        if name == "draft_agent":
+            out = agents.draft_agent(conn, args)
+            if out.get("draft_ready"):
+                _UI["actions"].append({"action": "agent_draft"})
+            return out
+        try:
+            out = agents.save_agent(conn, _CONTEXT.get("user_text") or "")
+        except (ValueError, KeyError) as exc:
+            return {"error": str(exc), "changed": 0}
+        if out.get("changed"):
+            _UI["actions"].append({"action": "agents_changed", "agent": out["agent"], "name": out["name"]})
+            actions.append({"action_id": 0, "kind": "agent", "note_id": None, "title": out["name"]})
         return out
     if name in ("draft_synthesis", "save_synthesis"):
         from engine.assistant import agents
@@ -889,7 +927,7 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
     nudged = False
     change_nudged = False
     for _ in range(MAX_TOOL_ROUNDS):
-        res = complete_agent(conn, client, prof, messages, tools=agents.tools(conn, agent, TOOLS + agents.SYNTHESIS_TOOLS))
+        res = complete_agent(conn, client, prof, messages, tools=agents.tools(conn, agent, agents.all_tools(TOOLS)))
         cost += _usage_event(conn, "chat", res["model"], res["usage"], client.provider)
         msg = res["message"]
         calls = msg.get("tool_calls") or []

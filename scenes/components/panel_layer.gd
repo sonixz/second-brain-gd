@@ -8,6 +8,7 @@ extends Control
 ## - Free panels stay inside the screen. Tells the screen how much of each side edge is taken (edges_changed).
 
 signal edges_changed(left: float, right: float)
+signal create_requested                # the rail's « + »: create an agent with the Agent Builder
 
 const RAIL_W := 44.0
 const SPLIT_H := 10.0
@@ -63,7 +64,7 @@ func shrunk() -> Array[SbFloatingPanel]:
 
 ## The room panels may use (below the top bar, above the capture bar, right of the rail).
 func area() -> Rect2:
-	var rail_w := RAIL_W if not shrunk().is_empty() else 0.0
+	var rail_w := RAIL_W  # the rail is always there: shrunk panels, and « + » to create an agent
 	return Rect2(Vector2(margin_side + rail_w, margin_top),
 		size - Vector2(margin_side * 2.0 + rail_w, margin_top + margin_bottom))
 
@@ -241,7 +242,7 @@ func _build_rail() -> void:
 	for c in rail.get_children():
 		c.queue_free()
 	var list := shrunk()
-	rail.visible = not list.is_empty()
+	rail.visible = true
 	rail.position = Vector2(margin_side * 0.5, margin_top)
 	rail.size = Vector2(RAIL_W - 8.0, 0)
 	for p in list:
@@ -252,10 +253,17 @@ func _build_rail() -> void:
 		b.set_meta("panel", p)
 		b.pressed.connect(func() -> void: p.reveal())
 		rail.add_child(b)
+	var plus := Button.new()
+	plus.text = "+"
+	plus.custom_minimum_size = Vector2(RAIL_W - 8.0, RAIL_W - 8.0)
+	plus.theme_type_variation = "GhostButton"
+	plus.tooltip_text = "Create an agent: the Agent Builder interviews you and writes its instructions"
+	plus.pressed.connect(func() -> void: create_requested.emit())
+	rail.add_child(plus)
 
 
-func rail_buttons() -> Array:
-	return rail.get_children().filter(func(c: Node) -> bool: return not c.is_queued_for_deletion())
+func rail_buttons() -> Array:  # the shrunk panels (not « + »)
+	return rail.get_children().filter(func(c: Node) -> bool: return not c.is_queued_for_deletion() and c.has_meta("panel"))
 
 
 func reset_all() -> void:

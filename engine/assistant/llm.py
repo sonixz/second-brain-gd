@@ -263,6 +263,10 @@ class FakeChat:
                         "usage": usage, "model": model}
             if "explanation" in found:
                 return {"message": {"role": "assistant", "content": found["explanation"]}, "usage": usage, "model": model}
+            if found.get("mode") and found.get("agent"):
+                return {"message": {"role": "assistant", "content": f"C'est fait: {found['name']} est prêt."}, "usage": usage, "model": model}
+            if found.get("draft_ready") and found.get("mode"):
+                return {"message": {"role": "assistant", "content": "Voici le brouillon de l'agent. Je le crée?"}, "usage": usage, "model": model}
             if found.get("draft_ready"):
                 return {"message": {"role": "assistant", "content": "Voici la synthèse. Je l'enregistre dans le Brain?"}, "usage": usage, "model": model}
             if "saved" in found:
@@ -297,6 +301,22 @@ class FakeChat:
         if "draft_synthesis" in names and ("résume" in low or "synthétise" in low):
             call = {"id": "call_draft", "type": "function", "function": {"name": "draft_synthesis", "arguments": json.dumps(
                 {"title": "Synthèse de test", "body": "## L'idée\nUne idée de test.\n## Décidé\nOn garde l'essentiel."})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if "draft_agent" in names and "entrevue" in low:
+            ins = ("Tu es Coach entrevue. Rôle: préparer l'utilisateur à ses entrevues d'embauche. " * 3
+                   + "Ton et format: direct, bienveillant, phrases courtes à l'oral. Comment tu travailles: une question à la fois. " * 2)
+            call = {"id": "call_dagent", "type": "function", "function": {"name": "draft_agent", "arguments": json.dumps(
+                {"name": "Coach entrevue", "instructions": ins, "capabilities": ["read_brain", "internet"],
+                 "intro": "Prêt pour ta prochaine entrevue?"})}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if "save_agent" in names and low.startswith("oui"):
+            call = {"id": "call_sagent", "type": "function", "function": {"name": "save_agent", "arguments": "{}"}}
+            return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
+        if "draft_agent" in names and ("nouvel agent" in low or "crée-moi un agent" in low):
+            return {"message": {"role": "assistant", "content": "Avec plaisir. À quoi doit-il servir, par exemple préparer tes entrevues?"},
+                    "usage": usage, "model": model}
+        if "ui_open_agent" in names and "draft_agent" not in names and ("crée-moi un agent" in low or "nouvel agent" in low):
+            call = {"id": "call_oagent", "type": "function", "function": {"name": "ui_open_agent", "arguments": json.dumps({"agent": "builder"})}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if "save_synthesis" in names and low.startswith("oui"):
             call = {"id": "call_save", "type": "function", "function": {"name": "save_synthesis", "arguments": "{}"}}
