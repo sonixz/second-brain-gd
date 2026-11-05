@@ -48,8 +48,8 @@ def delete_source(conn: sqlite3.Connection, source_id: str, with_note: bool = Tr
 
 
 def _summarise(client: Any, model: str, title: str, text: str) -> dict[str, Any]:
-    system = ("Tu prépares une fiche de référence pour un second cerveau. Réponds en JSON avec: title (titre clair, "
-              "langue du document), summary (3 à 5 phrases dans la langue du document), key_points (3 à 6 points courts "
+    system = ("Tu prépares une fiche de référence pour un second cerveau. Réponds en JSON avec: title (titre clair et court, "
+              "sans mention de langue ni de format), summary (3 à 5 phrases dans la langue du document), key_points (3 à 6 points courts "
               "dans la langue du document), "
               "tags (0 à 3 mots-clés en minuscules, tirets entre les mots). N'invente rien. Langue: écris title, summary et "
               "key_points dans la MÊME langue que le texte du document (document en anglais: tout en anglais; en "

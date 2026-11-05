@@ -641,7 +641,9 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
             out = connect.path(conn, a, b)
             if out["found"]:
                 _UI["actions"].append({"action": "path", "ids": out["ids"], "steps": out["steps"]})
-            return {"found": out["found"], "explanation": out["explanation"], "shown_to_user": {"action": "path"}}
+            return {"found": out["found"], "explanation": out["explanation"], "shown_to_user": {"action": "path"},
+                    "path": [n["label"] for n in out.get("nodes", [])],
+                    "language": "the explanation is written in French: tell it in the language the user wrote in"}
         item = connect.resolve(conn, str(args.get("item") or ""), client) if args.get("item") else _CONTEXT.get("open_note")
         other = connect.resolve(conn, str(args.get("other", "")), client)
         if not item or not other:
@@ -684,7 +686,8 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
             return {"error": str(exc), "changed": 0}
         if out.get("changed"):
             _UI["actions"].append({"action": "agents_changed", "agent": out["agent"], "name": out["name"]})
-            actions.append({"action_id": 0, "kind": "agent", "note_id": None, "title": out["name"]})
+            actions.append({"action_id": 0, "kind": "agent_created" if out.get("mode") == "create" else "agent_changed",
+                            "note_id": None, "title": out["name"]})  # no Undo: Delete or Back to the original in ⓘ
         return out
     if name in ("draft_synthesis", "save_synthesis"):
         from engine.assistant import agents

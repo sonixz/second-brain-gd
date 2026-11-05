@@ -387,6 +387,8 @@ func _on_panel_edges(left: float, right: float) -> void:
 	filters_bar.offset_left = panel_layer.margin_side + left
 	graph.screen_offset = Vector2((left - right) * 0.5, 0)
 	graph.legend_x = panel_layer.margin_side + left
+	graph.right_inset = right
+	graph.queue_redraw()
 	for v in [captures_view, today_view, projects_view, agents_view]:  # the lists stay clear of docked panels
 		if v != null:
 			(v as Control).offset_left = panel_layer.margin_side + left
@@ -910,7 +912,7 @@ func run_ui_actions(actions: Array) -> void:
 				var made := str(a.get("agent", ""))
 				if agent_panels.has(made):
 					(agent_panels[made] as SbFloatingPanel).reveal()
-				show_toast("“%s” is ready: talk to it in its panel (its letter is on the rail)." % str(a.get("name", made)))
+				show_toast("“%s” is ready: talk to it in its own panel." % str(a.get("name", made)))
 			"synthesis_draft":
 				var drafter := str(a.get("agent", "sparring"))
 				agent_panel(drafter).reveal()
@@ -1610,6 +1612,10 @@ func open_note(id: String, focus: bool = false) -> void:
 		graph.focus_on(id)
 	if not inspector.visible:
 		(inspector as SbFloatingPanel).reveal()
+		var glide := panel_layer.animate
+		panel_layer.animate = false
+		panel_layer.relayout()  # its place first, at once: the slide-in starts from there, not from the corner
+		panel_layer.animate = glide
 		inspector.modulate.a = 0.0
 		inspector.position.x += 30
 		var tw := create_tween().set_parallel()

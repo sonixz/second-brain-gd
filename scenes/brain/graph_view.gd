@@ -61,6 +61,7 @@ var custom_anchors: Dictionary = {}  # zones the user moved by dragging a place
 var zone_reach: Dictionary = {}      # space node id -> its zone's radius in world units, as last drawn
 var show_legend := false
 var legend_x := 388.0          # left edge of the free area (docked panels move it)
+var right_inset := 0.0         # width taken by panels docked on the right: the minimap stays clear of them
 var folded: Dictionary = {}          # space node id -> true when its items are folded in
 var filter: Dictionary = {}
 var filtered_out: Dictionary = {}          # node id -> true when filtered out or folded in
@@ -1172,7 +1173,7 @@ func _draw_card(n: Dictionary, p: Vector2, reading: bool) -> void:
 
 ## A small map of the whole graph with the visible area, bottom right. Click it to jump.
 func minimap_rect() -> Rect2:
-	return Rect2(size - Vector2(178, 196), Vector2(162, 112))  # above the music button
+	return Rect2(size - Vector2(178 + right_inset, 196), Vector2(162, 112))  # above the music button, left of docked panels
 
 
 func _minimap_transform() -> Array:

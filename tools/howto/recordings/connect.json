@@ -1,0 +1,249 @@
+{
+ "calls": [
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "How is the opening story for my talk connected to Automerge?"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+     {
+      "id": "call_ZgZdZSVUQUHaretKqVSvTBqL",
+      "type": "function",
+      "function": {
+       "name": "search_notes",
+       "arguments": "{\"query\": \"opening story talk Automerge local-first software connection\"}"
+      }
+     },
+     {
+      "id": "call_O0orFyIwvUh44UMZXAN6dXu9",
+      "type": "function",
+      "function": {
+       "name": "search_sources",
+       "arguments": "{\"query\": \"opening story talk Automerge local-first software connection\"}"
+      }
+     }
+    ],
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 4327,
+    "completion_tokens": 63,
+    "total_tokens": 4390,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "cache_write_tokens": 4324,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "How is the opening story for my talk connected to Automerge?"
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_ZgZdZSVUQUHaretKqVSvTBqL",
+       "type": "function",
+       "function": {
+        "name": "search_notes",
+        "arguments": "{\"query\": \"opening story talk Automerge local-first software connection\"}"
+       }
+      },
+      {
+       "id": "call_O0orFyIwvUh44UMZXAN6dXu9",
+       "type": "function",
+       "function": {
+        "name": "search_sources",
+        "arguments": "{\"query\": \"opening story talk Automerge local-first software connection\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_ZgZdZSVUQUHaretKqVSvTBqL",
+     "content": "{\"results\": [{\"id\": \"fd601020a4d44f18\", \"title\": \"Talk outline\", \"space_id\": \"53da81531ae64748\", \"kind\": \"note\", \"snippet\": \"1. Story: the day the café Wi-Fi died\\n2. What local-first means, see [[Local-first software: you own your data]]\\n3. [[CRDTs in plain words]]\\n4. Live demo, see [[Demo: unplug the network on stage]]\\n5. \", \"match\": \"meaning\", \"place\": \"Projets › Talk: local-first software\"}, {\"id\": \"a4f4b9a103084262\", \"title\": \"Opening story for the talk\", \"space_id\": \"53da81531ae64748\", \"kind\": \"idea\", \"snippet\": \"Start with the train ride: I wrote half a chapter with no signal and it all synced when we came out of the tunnel. Nobody noticed, and that is the point. Thirty seconds, then the first slide. #talk\", \"match\": \"meaning\", \"place\": \"Projets › Talk: local-first software\"}, {\"id\": \"2daa24bccaaa4cc6\", \"title\": \"Local-first software: you own your data\", \"space_id\": \"889d43ad540c45c1\", \"kind\": \"reference\", \"snippet\": \"…https://www.inkandswitch.com/[local-first]/\", \"match\": \"words\", \"place\": \"Ressources › Local-first software\"}, {\"id\": \"c15ff41b15e3489a\", \"title\": \"You own your data, in spite of the cloud\", \"space_id\": \"889d43ad540c45c1\", \"kind\": \"reference\", \"snippet\": \"…cloud.\\\" Subtitle of [[[Local-first] [software]: you own your data]]. #[local-first]\", \"match\": \"words\", \"place\": \"Ressources › Local-first software\"}, {\"id\": \"90abd2f8a3194f38\", \"title\": \"Automerge\", \"space_id\": \"889d43ad540c45c1\", \"kind\": \"reference\", \"snippet\": \"…https://[automerge].org/docs/hello/\", \"match\": \"words\", \"place\": \"Ressources › Local-first software\"}, {\"id\": \"80866fdb6ae44160\", \"title\": \"CRDTs in plain words\", \"space_id\": \"889d43ad540c45c1\", \"kind\": \"note\", \"snippet\": \"…Used by [[[Automerge]]]. #crdt\", \"match\": \"words\", \"place\": \"Ressources › Local-first software\"}, {\"id\": \"a74cbd15e9b84e1f\", \"title\": \"Sync as a plugin, never a requirement\", \"space_id\": \"889d43ad540c45c1\", \"kind\": \"idea\", \"snippet\": \"…Good point for the [[[Talk] outline]]. #[local-first]\", \"match\": \"words\", \"place\": \"Ressources › Local-first software\"}, {\"id\": \"bb88b5c74aa147d4\", \"title\": \"Chat with Priya about offline-first mobile apps\", \"space_id\": \"889d43ad540c45c1\", \"kind\": \"note\", \"snippet\": \"…Worth a slide. #[local-first] #mobile\", \"match\": \"words\", \"place\": \"Ressources › Local-first software\"}], \"scope\": \"everything\"}"
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_O0orFyIwvUh44UMZXAN6dXu9",
+     "content": "{\"results\": [{\"document\": \"Zone 2 training, the basics\", \"note_title\": \"Zone 2 training, the basics\", \"excerpt\": \"…sessions stay short.\\n\\n- Roughly 60–70 % of max heart rate\\n- You can still [talk] in full sentences\\n- Three to four sessions a week\\n\\n#running\", \"match\": \"words\"}, {\"document\": \"Local-first software: you own your data\", \"note_title\": \"Local-first software: you own your data\", \"excerpt\": \"…fast, multi-device, offline, collaboration, longevity, privacy, user control\\n- Cloud apps trade ownership for convenience\\n- CRDTs make merging without a server possible\\n\\n#[local-first]…\", \"match\": \"words\"}]}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+     {
+      "id": "call_6z8ojGsIZ2FmEOqdzWbgKlZ1",
+      "type": "function",
+      "function": {
+       "name": "find_path",
+       "arguments": "{\"from\":\"Opening story for the talk\",\"to\":\"Automerge\"}"
+      }
+     }
+    ],
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 5324,
+    "completion_tokens": 27,
+    "total_tokens": 5351,
+    "prompt_tokens_details": {
+     "cached_tokens": 4324,
+     "cache_write_tokens": 997,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "How is the opening story for my talk connected to Automerge?"
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_ZgZdZSVUQUHaretKqVSvTBqL",
+       "type": "function",
+       "function": {
+        "name": "search_notes",
+        "arguments": "{\"query\": \"opening story talk Automerge local-first software connection\"}"
+       }
+      },
+      {
+       "id": "call_O0orFyIwvUh44UMZXAN6dXu9",
+       "type": "function",
+       "function": {
+        "name": "search_sources",
+        "arguments": "{\"query\": \"opening story talk Automerge local-first software connection\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_ZgZdZSVUQUHaretKqVSvTBqL",
+     "content": "{\"results\": [{\"id\": \"fd601020a4d44f18\", \"title\": \"Talk outline\", \"space_id\": \"53da81531ae64748\", \"kind\": \"note\", \"snippet\": \"1. Story: the day the café Wi-Fi died\\n2. What local-first means, see [[Local-first software: you own your data]]\\n3. [[CRDTs in plain words]]\\n4. Live demo, see [[Demo: unplug the network on stage]]\\n5. \", \"match\": \"meaning\", \"place\": \"Projets › Talk: local-first software\"}, {\"id\": \"a4f4b9a103084262\", \"title\": \"Opening story for the talk\", \"space_id\": \"53da81531ae64748\", \"kind\": \"idea\", \"snippet\": \"Start with the train ride: I wrote half a chapter with no signal and it all synced when we came out of the tunnel. Nobody noticed, and that is the point. Thirty seconds, then the first slide. #talk\", \"match\": \"meaning\", \"place\": \"Projets › Talk: local-first software\"}, {\"id\": \"2daa24bccaaa4cc6\", \"title\": \"Local-first software: you own your data\", \"space_id\": \"889d43ad540c45c1\", \"kind\": \"reference\", \"snippet\": \"…https://www.inkandswitch.com/[local-first]/\", \"match\": \"words\", \"place\": \"Ressources › Local-first software\"}, {\"id\": \"c15ff41b15e3489a\", \"title\": \"You own your data, in spite of the cloud\", \"space_id\": \"889d43ad540c45c1\", \"kind\": \"reference\", \"snippet\": \"…cloud.\\\" Subtitle of [[[Local-first] [software]: you own your data]]. #[local-first]\", \"match\": \"words\", \"place\": \"Ressources › Local-first software\"}, {\"id\": \"90abd2f8a3194f38\", \"title\": \"Automerge\", \"space_id\": \"889d43ad540c45c1\", \"kind\": \"reference\", \"snippet\": \"…https://[automerge].org/docs/hello/\", \"match\": \"words\", \"place\": \"Ressources › Local-first software\"}, {\"id\": \"80866fdb6ae44160\", \"title\": \"CRDTs in plain words\", \"space_id\": \"889d43ad540c45c1\", \"kind\": \"note\", \"snippet\": \"…Used by [[[Automerge]]]. #crdt\", \"match\": \"words\", \"place\": \"Ressources › Local-first software\"}, {\"id\": \"a74cbd15e9b84e1f\", \"title\": \"Sync as a plugin, never a requirement\", \"space_id\": \"889d43ad540c45c1\", \"kind\": \"idea\", \"snippet\": \"…Good point for the [[[Talk] outline]]. #[local-first]\", \"match\": \"words\", \"place\": \"Ressources › Local-first software\"}, {\"id\": \"bb88b5c74aa147d4\", \"title\": \"Chat with Priya about offline-first mobile apps\", \"space_id\": \"889d43ad540c45c1\", \"kind\": \"note\", \"snippet\": \"…Worth a slide. #[local-first] #mobile\", \"match\": \"words\", \"place\": \"Ressources › Local-first software\"}], \"scope\": \"everything\"}"
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_O0orFyIwvUh44UMZXAN6dXu9",
+     "content": "{\"results\": [{\"document\": \"Zone 2 training, the basics\", \"note_title\": \"Zone 2 training, the basics\", \"excerpt\": \"…sessions stay short.\\n\\n- Roughly 60–70 % of max heart rate\\n- You can still [talk] in full sentences\\n- Three to four sessions a week\\n\\n#running\", \"match\": \"words\"}, {\"document\": \"Local-first software: you own your data\", \"note_title\": \"Local-first software: you own your data\", \"excerpt\": \"…fast, multi-device, offline, collaboration, longevity, privacy, user control\\n- Cloud apps trade ownership for convenience\\n- CRDTs make merging without a server possible\\n\\n#[local-first]…\", \"match\": \"words\"}]}"
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_6z8ojGsIZ2FmEOqdzWbgKlZ1",
+       "type": "function",
+       "function": {
+        "name": "find_path",
+        "arguments": "{\"from\":\"Opening story for the talk\",\"to\":\"Automerge\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_6z8ojGsIZ2FmEOqdzWbgKlZ1",
+     "content": "{\"found\": true, \"explanation\": \"« Opening story for the talk » rejoint « Automerge » en 4 étapes : le thème #talk, puis « Talk outline », puis un lien vers « CRDTs in plain words », puis un lien vers « Automerge ».\", \"shown_to_user\": {\"action\": \"path\"}, \"path\": [\"Opening story for the talk\", \"#talk\", \"Talk outline\", \"CRDTs in plain words\", \"Automerge\"], \"language\": \"the explanation is written in French: tell it in the language the user wrote in\"}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "[[Opening story for the talk]] connects through the #talk theme to [[Talk outline]], which links to [[CRDTs in plain words]], then to [[Automerge]]. The story’s offline writing and later sync gives you a concrete lead-in to that technical explanation.",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 5482,
+    "completion_tokens": 58,
+    "total_tokens": 5540,
+    "prompt_tokens_details": {
+     "cached_tokens": 5321,
+     "cache_write_tokens": 158,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  }
+ ],
+ "web": [],
+ "fetch": []
+}

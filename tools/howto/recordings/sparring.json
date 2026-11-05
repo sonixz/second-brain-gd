@@ -1,0 +1,480 @@
+{
+ "calls": [
+  {
+   "kind": "chat:Tu es Sparring, le partenaire de réflexion de l'utilisateur dans son Second Brai",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "user",
+     "content": "I want to open my local-first talk with a story and no slides for the first three minutes. Challenge me honestly."
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "Honestly, three minutes without slides can work—but only if the story creates tension fast. The risk is spending those minutes on atmosphere while the audience still doesn’t know why local-first matters. I’d open with a moment when someone couldn’t access or control something they thought was theirs, then land on the question your talk will answer. What’s the specific moment you’re thinking of telling?",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 2294,
+    "completion_tokens": 80,
+    "total_tokens": 2374,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "cache_write_tokens": 2291,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es Sparring, le partenaire de réflexion de l'utilisateur dans son Second Brai",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "user",
+     "content": "I want to open my local-first talk with a story and no slides for the first three minutes. Challenge me honestly."
+    },
+    {
+     "role": "assistant",
+     "content": "Honestly, three minutes without slides can work—but only if the story creates tension fast. The risk is spending those minutes on atmosphere while the audience still doesn’t know why local-first matters. I’d open with a moment when someone couldn’t access or control something they thought was theirs, then land on the question your talk will answer. What’s the specific moment you’re thinking of telling?"
+    },
+    {
+     "role": "user",
+     "content": "Instead of a diagram for CRDTs, I'd use a shared recipe card that everyone edits at once."
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "The recipe card is more inviting than a CRDT diagram, but it could teach the wrong lesson: if two people change “1 cup” to different amounts, the audience may assume CRDTs decide which recipe is right. They don’t; they help replicas converge under defined rules. Could the demo show two people editing different parts while offline, then reconnecting—and leave the conflicting ingredient as the question that leads into the technical explanation?",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 2402,
+    "completion_tokens": 90,
+    "total_tokens": 2492,
+    "prompt_tokens_details": {
+     "cached_tokens": 2291,
+     "cache_write_tokens": 108,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es Sparring, le partenaire de réflexion de l'utilisateur dans son Second Brai",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "user",
+     "content": "I want to open my local-first talk with a story and no slides for the first three minutes. Challenge me honestly."
+    },
+    {
+     "role": "assistant",
+     "content": "Honestly, three minutes without slides can work—but only if the story creates tension fast. The risk is spending those minutes on atmosphere while the audience still doesn’t know why local-first matters. I’d open with a moment when someone couldn’t access or control something they thought was theirs, then land on the question your talk will answer. What’s the specific moment you’re thinking of telling?"
+    },
+    {
+     "role": "user",
+     "content": "Instead of a diagram for CRDTs, I'd use a shared recipe card that everyone edits at once."
+    },
+    {
+     "role": "assistant",
+     "content": "The recipe card is more inviting than a CRDT diagram, but it could teach the wrong lesson: if two people change “1 cup” to different amounts, the audience may assume CRDTs decide which recipe is right. They don’t; they help replicas converge under defined rules. Could the demo show two people editing different parts while offline, then reconnecting—and leave the conflicting ingredient as the question that leads into the technical explanation?"
+    },
+    {
+     "role": "user",
+     "content": "Good. Sum it up."
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+     {
+      "id": "call_MX0Z23402DbQQM9PE04uB64V",
+      "type": "function",
+      "function": {
+       "name": "draft_synthesis",
+       "arguments": "{\"title\":\"Opening a local-first talk with a story and a shared recipe card\",\"body\":\"## Idea\\nOpen the local-first talk with a story and no slides for the first three minutes. Later, introduce CRDTs through a shared recipe card that multiple people edit, rather than starting with a diagram.\\n\\n## Clarified\\n- The opening story needs tension quickly: a concrete moment when someone could not access or control something they thought was theirs. It should lead to the question the talk will answer about local-first software.\\n- The recipe-card demo can make concurrent editing approachable. Show people editing different parts while offline, then reconnecting.\\n\\n## Objections and responses\\n- Three minutes without slides could feel like atmosphere without a point. Anchor the story in a specific incident and make its relevance clear early.\\n- A recipe conflict could imply that CRDTs decide which version is correct. They do not: they make replicas converge according to defined rules. Use a conflicting ingredient as a question that leads into the technical explanation, not as proof that the recipe is right.\\n\\n## Open questions and next leads\\n- Choose the specific incident for the opening story and the question it sets up.\\n- Design the recipe-card sequence, including which edits happen offline and how the conflicting ingredient is explained.\"}"
+      }
+     }
+    ],
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 2505,
+    "completion_tokens": 280,
+    "total_tokens": 2785,
+    "prompt_tokens_details": {
+     "cached_tokens": 2399,
+     "cache_write_tokens": 103,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es Sparring, le partenaire de réflexion de l'utilisateur dans son Second Brai",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "user",
+     "content": "I want to open my local-first talk with a story and no slides for the first three minutes. Challenge me honestly."
+    },
+    {
+     "role": "assistant",
+     "content": "Honestly, three minutes without slides can work—but only if the story creates tension fast. The risk is spending those minutes on atmosphere while the audience still doesn’t know why local-first matters. I’d open with a moment when someone couldn’t access or control something they thought was theirs, then land on the question your talk will answer. What’s the specific moment you’re thinking of telling?"
+    },
+    {
+     "role": "user",
+     "content": "Instead of a diagram for CRDTs, I'd use a shared recipe card that everyone edits at once."
+    },
+    {
+     "role": "assistant",
+     "content": "The recipe card is more inviting than a CRDT diagram, but it could teach the wrong lesson: if two people change “1 cup” to different amounts, the audience may assume CRDTs decide which recipe is right. They don’t; they help replicas converge under defined rules. Could the demo show two people editing different parts while offline, then reconnecting—and leave the conflicting ingredient as the question that leads into the technical explanation?"
+    },
+    {
+     "role": "user",
+     "content": "Good. Sum it up."
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_MX0Z23402DbQQM9PE04uB64V",
+       "type": "function",
+       "function": {
+        "name": "draft_synthesis",
+        "arguments": "{\"title\":\"Opening a local-first talk with a story and a shared recipe card\",\"body\":\"## Idea\\nOpen the local-first talk with a story and no slides for the first three minutes. Later, introduce CRDTs through a shared recipe card that multiple people edit, rather than starting with a diagram.\\n\\n## Clarified\\n- The opening story needs tension quickly: a concrete moment when someone could not access or control something they thought was theirs. It should lead to the question the talk will answer about local-first software.\\n- The recipe-card demo can make concurrent editing approachable. Show people editing different parts while offline, then reconnecting.\\n\\n## Objections and responses\\n- Three minutes without slides could feel like atmosphere without a point. Anchor the story in a specific incident and make its relevance clear early.\\n- A recipe conflict could imply that CRDTs decide which version is correct. They do not: they make replicas converge according to defined rules. Use a conflicting ingredient as a question that leads into the technical explanation, not as proof that the recipe is right.\\n\\n## Open questions and next leads\\n- Choose the specific incident for the opening story and the question it sets up.\\n- Design the recipe-card sequence, including which edits happen offline and how the conflicting ingredient is explained.\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_MX0Z23402DbQQM9PE04uB64V",
+     "content": "{\"draft_ready\": true, \"title\": \"Opening a local-first talk with a story and a shared recipe card\", \"chars\": 1258, \"shown_to_user\": true, \"next\": \"Summarise it in two sentences and ask whether to save it in the Brain.\"}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "Open with a specific moment when someone loses access to something they thought was theirs, so the first three minutes give the audience a reason to care about local-first. Then use the shared recipe card to show offline edits coming together—but don’t imply that CRDTs can decide which conflicting ingredient is right. Want me to save the full synthesis in your Brain?",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 2857,
+    "completion_tokens": 74,
+    "total_tokens": 2931,
+    "prompt_tokens_details": {
+     "cached_tokens": 2502,
+     "cache_write_tokens": 352,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es Sparring, le partenaire de réflexion de l'utilisateur dans son Second Brai",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "user",
+     "content": "I want to open my local-first talk with a story and no slides for the first three minutes. Challenge me honestly."
+    },
+    {
+     "role": "assistant",
+     "content": "Honestly, three minutes without slides can work—but only if the story creates tension fast. The risk is spending those minutes on atmosphere while the audience still doesn’t know why local-first matters. I’d open with a moment when someone couldn’t access or control something they thought was theirs, then land on the question your talk will answer. What’s the specific moment you’re thinking of telling?"
+    },
+    {
+     "role": "user",
+     "content": "Instead of a diagram for CRDTs, I'd use a shared recipe card that everyone edits at once."
+    },
+    {
+     "role": "assistant",
+     "content": "The recipe card is more inviting than a CRDT diagram, but it could teach the wrong lesson: if two people change “1 cup” to different amounts, the audience may assume CRDTs decide which recipe is right. They don’t; they help replicas converge under defined rules. Could the demo show two people editing different parts while offline, then reconnecting—and leave the conflicting ingredient as the question that leads into the technical explanation?"
+    },
+    {
+     "role": "user",
+     "content": "Good. Sum it up."
+    },
+    {
+     "role": "assistant",
+     "content": "Open with a specific moment when someone loses access to something they thought was theirs, so the first three minutes give the audience a reason to care about local-first. Then use the shared recipe card to show offline edits coming together—but don’t imply that CRDTs can decide which conflicting ingredient is right. Want me to save the full synthesis in your Brain?\n(Interface: synthesis_draft )"
+    },
+    {
+     "role": "user",
+     "content": "Yes, save it."
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+     {
+      "id": "call_2EHJ62UeV9ScOGT9X3giyGDX",
+      "type": "function",
+      "function": {
+       "name": "draft_synthesis",
+       "arguments": "{\"title\":\"Local-first talk: opening story and CRDT recipe card\",\"body\":\"## Idea\\nOpen the local-first talk with a story and no slides for the first three minutes, then use a shared recipe card instead of a CRDT diagram.\\n\\n## Clarified approach\\n- Start with a specific moment when someone cannot access or control something they thought was theirs. Establish the stakes quickly and end the opening with the question the talk will answer: why local-first matters.\\n- Use the recipe card to show two people editing different parts while offline, then reconnecting and seeing their changes come together.\\n\\n## Objections and responses\\n- Three minutes without slides risks becoming atmosphere without a clear reason to care. Give the story tension early and connect it explicitly to local-first.\\n- A recipe-card demo could imply that CRDTs decide which conflicting edit is correct. They do not; they help replicas converge according to defined rules. Leave a conflicting ingredient as the question that leads into the technical explanation.\\n\\n## Open questions and next leads\\n- Choose the exact opening incident and the question it will land on.\\n- Script the offline-edit demo and decide how to explain the conflicting ingredient without overstating what CRDTs solve.\"}"
+      }
+     }
+    ],
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 2598,
+    "completion_tokens": 266,
+    "total_tokens": 2864,
+    "prompt_tokens_details": {
+     "cached_tokens": 2502,
+     "cache_write_tokens": 93,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es Sparring, le partenaire de réflexion de l'utilisateur dans son Second Brai",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "user",
+     "content": "I want to open my local-first talk with a story and no slides for the first three minutes. Challenge me honestly."
+    },
+    {
+     "role": "assistant",
+     "content": "Honestly, three minutes without slides can work—but only if the story creates tension fast. The risk is spending those minutes on atmosphere while the audience still doesn’t know why local-first matters. I’d open with a moment when someone couldn’t access or control something they thought was theirs, then land on the question your talk will answer. What’s the specific moment you’re thinking of telling?"
+    },
+    {
+     "role": "user",
+     "content": "Instead of a diagram for CRDTs, I'd use a shared recipe card that everyone edits at once."
+    },
+    {
+     "role": "assistant",
+     "content": "The recipe card is more inviting than a CRDT diagram, but it could teach the wrong lesson: if two people change “1 cup” to different amounts, the audience may assume CRDTs decide which recipe is right. They don’t; they help replicas converge under defined rules. Could the demo show two people editing different parts while offline, then reconnecting—and leave the conflicting ingredient as the question that leads into the technical explanation?"
+    },
+    {
+     "role": "user",
+     "content": "Good. Sum it up."
+    },
+    {
+     "role": "assistant",
+     "content": "Open with a specific moment when someone loses access to something they thought was theirs, so the first three minutes give the audience a reason to care about local-first. Then use the shared recipe card to show offline edits coming together—but don’t imply that CRDTs can decide which conflicting ingredient is right. Want me to save the full synthesis in your Brain?\n(Interface: synthesis_draft )"
+    },
+    {
+     "role": "user",
+     "content": "Yes, save it."
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_2EHJ62UeV9ScOGT9X3giyGDX",
+       "type": "function",
+       "function": {
+        "name": "draft_synthesis",
+        "arguments": "{\"title\":\"Local-first talk: opening story and CRDT recipe card\",\"body\":\"## Idea\\nOpen the local-first talk with a story and no slides for the first three minutes, then use a shared recipe card instead of a CRDT diagram.\\n\\n## Clarified approach\\n- Start with a specific moment when someone cannot access or control something they thought was theirs. Establish the stakes quickly and end the opening with the question the talk will answer: why local-first matters.\\n- Use the recipe card to show two people editing different parts while offline, then reconnecting and seeing their changes come together.\\n\\n## Objections and responses\\n- Three minutes without slides risks becoming atmosphere without a clear reason to care. Give the story tension early and connect it explicitly to local-first.\\n- A recipe-card demo could imply that CRDTs decide which conflicting edit is correct. They do not; they help replicas converge according to defined rules. Leave a conflicting ingredient as the question that leads into the technical explanation.\\n\\n## Open questions and next leads\\n- Choose the exact opening incident and the question it will land on.\\n- Script the offline-edit demo and decide how to explain the conflicting ingredient without overstating what CRDTs solve.\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_2EHJ62UeV9ScOGT9X3giyGDX",
+     "content": "{\"draft_ready\": true, \"title\": \"Local-first talk: opening story and CRDT recipe card\", \"chars\": 1185, \"shown_to_user\": true, \"next\": \"Summarise it in two sentences and ask whether to save it in the Brain.\"}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+     {
+      "id": "call_OCOwILhlsKFJpznTWzCIionR",
+      "type": "function",
+      "function": {
+       "name": "save_synthesis",
+       "arguments": "{}"
+      }
+     }
+    ],
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 2934,
+    "completion_tokens": 14,
+    "total_tokens": 2948,
+    "prompt_tokens_details": {
+     "cached_tokens": 2595,
+     "cache_write_tokens": 336,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "json:Tu es l'ARCHIVISTE d'un second cerveau (méthode CODE: Capture, Organize, Distill",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "user",
+     "content": "{\"item\": {\"title\": \"Local-first talk: opening story and CRDT recipe card\", \"content\": \"## Idea\\nOpen the local-first talk with a story and no slides for the first three minutes, then use a shared recipe card instead of a CRDT diagram.\\n\\n## Clarified approach\\n- Start with a specific moment when someone cannot access or control something they thought was theirs. Establish the stakes quickly and end the opening with the question the talk will answer: why local-first matters.\\n- Use the recipe card to show two people editing different parts while offline, then reconnecting and seeing their changes come together.\\n\\n## Objections and responses\\n- Three minutes without slides risks becoming atmosphere without a clear reason to care. Give the story tension early and connect it explicitly to local-first.\\n- A recipe-card demo could imply that CRDTs decide which conflicting edit is correct. They do not; they help replicas converge according to defined rules. Leave a conflicting ingredient as the question that leads into the technical explanation.\\n\\n## Open questions and next leads\\n- Choose the exact opening incident and the question it will land on.\\n- Script the offline-edit demo and decide how to explain the conflicting ingredient without overstating what CRDTs solve.\\n\\n— Synthèse d'une conversation avec Sparring, 2026-11-05.\", \"origin\": \"agent\", \"uri\": null}, \"places\": [{\"id\": \"inbox\", \"name\": \"Inbox\", \"kind\": \"inbox\", \"items\": 3, \"examples\": [\"Heat pump rebate\", \"The book Julie recommended\"]}, {\"id\": \"9b96cb1709f94f7e\", \"name\": \"Kitchen renovation\", \"kind\": \"project\", \"items\": 7, \"examples\": [\"Tile samples: the matte green wins\", \"Call with Marc about the electrical panel\", \"Contractor quote — Brightline Renovations\"], \"goal\": \"New kitchen before the holidays\", \"area\": \"Home\"}, {\"id\": \"773e74a8cb2d4949\", \"name\": \"Talk: local-first software\", \"kind\": \"project\", \"items\": 4, \"examples\": [\"Opening story for the talk\", \"Talk outline\", \"Demo: unplug the network on stage\"], \"goal\": \"A 20-minute talk at the local meetup\"}, {\"id\": \"3859e10b19924126\", \"name\": \"Learn Japanese\", \"kind\": \"project\", \"items\": 4, \"examples\": [\"Phrases for ordering at a café\", \"Komorebi\", \"Daily routine for Japanese\"]}, {\"id\": \"94c73af34a274b63\", \"name\": \"Health\", \"kind\": \"area\", \"items\": 5, \"examples\": [\"Ran 5 km under 30 minutes\", \"Sleep log: seven hours average\", \"Physio exercises for the left knee\"]}, {\"id\": \"fa89114713374a17\", \"name\": \"Finances\", \"kind\": \"area\", \"items\": 3, \"examples\": [\"Renovation budget\", \"Subscriptions to cancel\", \"Tax documents checklist\"]}, {\"id\": \"f81e6f27bfd94166\", \"name\": \"Home\", \"kind\": \"area\", \"items\": 2, \"examples\": [\"Snow removal contact from the neighbour\", \"Furnace filter every three months\"]}, {\"id\": \"0497bb8666dc4fb4\", \"name\": \"Local-first software\", \"kind\": \"resource\", \"items\": 7, \"examples\": [\"Sync as a plugin, never a requirement\", \"Chat with Priya about offline-first mobile apps\", \"CRDTs in plain words\"]}, {\"id\": \"117e37a70eee4b0a\", \"name\": \"Cooking\", \"kind\": \"resource\", \"items\": 4, \"examples\": [\"Meal plan this week\", \"Mom's tomato sauce, the way she says it\", \"No-knead bread\"]}, {\"id\": \"8016489d00b440fb\", \"name\": \"Productivity\", \"kind\": \"resource\", \"items\": 5, \"examples\": [\"Capture by voice on walks\", \"Weekly review checklist\", \"Spaced repetition, explained\"]}, {\"id\": \"d217cd9f4b7248e0\", \"name\": \"Apartment move 2025\", \"kind\": \"archive\", \"items\": 2, \"examples\": [\"Change-of-address list\", \"Movers contact and invoice\"]}], \"themes\": [\"local-first\", \"talk\", \"crdt\", \"design\", \"budget\", \"moving\", \"capture\", \"recipe\", \"running\", \"para\", \"pkm\", \"review\", \"pantry\", \"meal-plan\", \"family\", \"bread\", \"mobile\", \"file-formats\", \"sqlite\", \"library\", \"winter\", \"maintenance\", \"taxes\", \"appointments\", \"knee\", \"sleep\", \"learning\", \"memory\", \"vocabulary\", \"routine\", \"speaking\", \"kana\", \"demo\", \"countertops\", \"appliances\", \"electrical\", \"bl-2611\", \"quote\"], \"candidates\": [{\"id\": \"ee7fc39575bc40dd\", \"title\": \"Talk outline\"}, {\"id\": \"9e00e61b681b4f72\", \"title\": \"Opening story for the talk\"}]}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "{\"title\":\"Local-first talk: opening story and CRDT recipe card\",\"item_type\":\"idea\",\"language\":\"en\",\"summary\":\"The talk would open with a three-minute story without slides about someone losing access to or control over something they thought was theirs. A shared recipe card would then illustrate two people editing offline and seeing their changes come together after reconnecting. A conflicting ingredient would introduce the technical explanation: CRDTs help replicas converge under defined rules but do not decide which edit is correct.\",\"key_points\":[\"Choose a specific opening incident and connect it to why local-first matters.\",\"Script the offline recipe-card demo.\",\"Use a conflicting ingredient to lead into the limits of CRDTs.\"],\"entities\":{\"people\":[],\"organizations\":[],\"concepts\":[\"local-first\",\"CRDTs\",\"offline editing\",\"replica convergence\"],\"places\":[],\"dates\":[\"2026-11-05\"]},\"place\":{\"space_id\":\"773e74a8cb2d4949\"},\"themes\":[\"local-first\",\"talk\",\"crdt\"],\"link_ids\":[\"ee7fc39575bc40dd\",\"9e00e61b681b4f72\"],\"confidence\":0.99,\"question\":null,\"receipt\":\"An idea for the local-first talk’s opening and CRDT demo, filed in Projects › Talk: local-first software, linked to 2 items.\"}",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 1825,
+    "completion_tokens": 279,
+    "total_tokens": 2104,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "cache_write_tokens": 1822,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es Sparring, le partenaire de réflexion de l'utilisateur dans son Second Brai",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "user",
+     "content": "I want to open my local-first talk with a story and no slides for the first three minutes. Challenge me honestly."
+    },
+    {
+     "role": "assistant",
+     "content": "Honestly, three minutes without slides can work—but only if the story creates tension fast. The risk is spending those minutes on atmosphere while the audience still doesn’t know why local-first matters. I’d open with a moment when someone couldn’t access or control something they thought was theirs, then land on the question your talk will answer. What’s the specific moment you’re thinking of telling?"
+    },
+    {
+     "role": "user",
+     "content": "Instead of a diagram for CRDTs, I'd use a shared recipe card that everyone edits at once."
+    },
+    {
+     "role": "assistant",
+     "content": "The recipe card is more inviting than a CRDT diagram, but it could teach the wrong lesson: if two people change “1 cup” to different amounts, the audience may assume CRDTs decide which recipe is right. They don’t; they help replicas converge under defined rules. Could the demo show two people editing different parts while offline, then reconnecting—and leave the conflicting ingredient as the question that leads into the technical explanation?"
+    },
+    {
+     "role": "user",
+     "content": "Good. Sum it up."
+    },
+    {
+     "role": "assistant",
+     "content": "Open with a specific moment when someone loses access to something they thought was theirs, so the first three minutes give the audience a reason to care about local-first. Then use the shared recipe card to show offline edits coming together—but don’t imply that CRDTs can decide which conflicting ingredient is right. Want me to save the full synthesis in your Brain?\n(Interface: synthesis_draft )"
+    },
+    {
+     "role": "user",
+     "content": "Yes, save it."
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_2EHJ62UeV9ScOGT9X3giyGDX",
+       "type": "function",
+       "function": {
+        "name": "draft_synthesis",
+        "arguments": "{\"title\":\"Local-first talk: opening story and CRDT recipe card\",\"body\":\"## Idea\\nOpen the local-first talk with a story and no slides for the first three minutes, then use a shared recipe card instead of a CRDT diagram.\\n\\n## Clarified approach\\n- Start with a specific moment when someone cannot access or control something they thought was theirs. Establish the stakes quickly and end the opening with the question the talk will answer: why local-first matters.\\n- Use the recipe card to show two people editing different parts while offline, then reconnecting and seeing their changes come together.\\n\\n## Objections and responses\\n- Three minutes without slides risks becoming atmosphere without a clear reason to care. Give the story tension early and connect it explicitly to local-first.\\n- A recipe-card demo could imply that CRDTs decide which conflicting edit is correct. They do not; they help replicas converge according to defined rules. Leave a conflicting ingredient as the question that leads into the technical explanation.\\n\\n## Open questions and next leads\\n- Choose the exact opening incident and the question it will land on.\\n- Script the offline-edit demo and decide how to explain the conflicting ingredient without overstating what CRDTs solve.\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_2EHJ62UeV9ScOGT9X3giyGDX",
+     "content": "{\"draft_ready\": true, \"title\": \"Local-first talk: opening story and CRDT recipe card\", \"chars\": 1185, \"shown_to_user\": true, \"next\": \"Summarise it in two sentences and ask whether to save it in the Brain.\"}"
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_OCOwILhlsKFJpznTWzCIionR",
+       "type": "function",
+       "function": {
+        "name": "save_synthesis",
+        "arguments": "{}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_OCOwILhlsKFJpznTWzCIionR",
+     "content": "{\"changed\": 1, \"saved\": \"Local-first talk: opening story and CRDT recipe card\", \"place\": \"Projets › Talk: local-first software\", \"receipt\": \"An idea for the local-first talk’s opening and CRDT demo, filed in Projects › Talk: local-first software, linked to 2 items.\"}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "Saved in your Brain under “Talk: local-first software.” The synthesis keeps the opening story, the offline recipe-card demo, and the warning that CRDTs don’t decide which conflicting edit is right.",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 3030,
+    "completion_tokens": 44,
+    "total_tokens": 3074,
+    "prompt_tokens_details": {
+     "cached_tokens": 2931,
+     "cache_write_tokens": 96,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  }
+ ],
+ "web": [],
+ "fetch": []
+}

@@ -60,6 +60,9 @@ func _run() -> void:
 	var apic: Node = load("res://scripts/monitoring/api_client.gd").new()
 	check(apic.timeout_for("/sources/file", HTTPClient.METHOD_POST) >= 300.0, "reading a document may take minutes (OCR of many pages)")
 	check(apic.timeout_for("/sources", HTTPClient.METHOD_GET) <= 5.0, "a plain request still fails fast")
+	check(apic.timeout_for("/sources/abc/reread?job=1-2", HTTPClient.METHOD_POST) >= 300.0, "re-reading with AI may take minutes (its job id in the query)")
+	check(AssistantPanel._linkify("renews on **December 1**.").contains("[b]December 1[/b]") and AssistantPanel.spoken("**$1,284**") == "$1,284",
+		"a reply's **bold** shows as bold and is read without the stars")
 	apic.free()
 	var brain_script: GDScript = load("res://scenes/brain/brain.gd")
 	check(brain_script.progress_text({"stage": "ocr", "done": 3, "total": 9}) == "page 3 / 9 read (local OCR)"
@@ -319,6 +322,17 @@ func _e2e() -> void:
 			rel_id = str(id)
 	var rres: Dictionary = await app.backend.api.call_api("/brain/notes/" + rel_id.uri_encode() + "/related")
 	check(rres["ok"] and (rres["data"] as Dictionary).has("related"), "a note's related ideas are served")
+	var small := brain.size
+	brain.size = Vector2(1600, 1000)  # headless windows are tiny: room for the panels
+	await process_frame
+	await brain.call("open_note", rel_id, false)
+	await create_timer(0.6).timeout
+	var tile: SbFloatingPanel = brain.get("inspector")
+	var arch_panel: SbFloatingPanel = brain.get("archivist_panel")
+	check(tile.visible and tile.position.x > arch_panel.position.x + arch_panel.size.x,
+		"the item tile opens on the right, not over the Archivist (x %.0f)" % tile.position.x)
+	brain.call("_close_inspector")
+	brain.size = small
 	# Agent room: a folder, a session against the fake app-server, an approval, the change applied.
 	brain.call("set_view", "agents")
 	var av: AgentsView = brain.get("agents_view")

@@ -59,6 +59,16 @@ class MeaningTests(unittest.TestCase):
         self.assertNotIn(b, [r["id"] for r in meaning.related(self.conn, a)])
         self.assertEqual(self.conn.execute("SELECT COUNT(*) FROM note_embeddings WHERE note_id = ?", (b,)).fetchone()[0], 0)
 
+    def test_already_linked_items_are_not_suggested(self):
+        a = self.note("Sommeil", "dormir tôt repos sommeil fatigue")
+        b = self.note("Repos", "dormir tôt repos sommeil soir")
+        meaning.embed_notes(self.conn, self.client, M)
+        self.assertIn(b, [r["id"] for r in meaning.related(self.conn, a)])
+        self.conn.execute("INSERT INTO links (from_note, to_note, kind, created_by, created_at) VALUES (?, ?, 'wiki', 'user', '2026-11-05')",
+                          (a, b))
+        self.assertNotIn(b, [r["id"] for r in meaning.related(self.conn, a)])  # keeping it would only double the link
+        self.assertNotIn(tuple(sorted((a, b))), {tuple(sorted((e["from"], e["to"]))) for e in meaning.related_edges(self.conn)})
+
     def test_new_note_becomes_closest_of_older_note(self):
         a = self.note("Atlas", "migration atlas bascule dimanche tables")
         meaning.embed_notes(self.conn, self.client, M)

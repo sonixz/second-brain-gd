@@ -841,6 +841,16 @@ SBGD_SHOT_SIZE=1600x1000 ./tools/showcase.sh     # the website screenshots, from
         <p>The showcase seeds an example brain (ten places, about forty-five items over three weeks, a PDF and a sketch kept
           as originals) with a scripted stand-in model, so it never calls OpenAI and never touches your own data. Convert the
           results for the site with <code>godot --headless --path . --script res://tools/web_images.gd -- in.png=out.webp@1280</code>.</p>
+        <h3>The How-to guides</h3>
+        <p>Each <a href="howto.html">guide</a> is a scenario played on the real app (<code>tools/howto.gd</code>), one screenshot
+          per step; its text lives in <code>tools/howto/guides.py</code> and <code>tools/howto/build_page.py</code> writes
+          <code>public/howto.html</code>. Guides marked <i>Real answers</i> are recorded once with the real model, then replayed:</p>
+<pre><code>./tools/howto.sh                    # every guide, recorded answers replayed: no network, no key, no cost
+./tools/howto.sh --record web       # the real model answers again (OPENAI_API_KEY through dotenvx)</code></pre>
+        <p>A recording keeps the model's answers, web searches and downloaded pages
+          (<code>tools/howto/recordings/</code>); item ids are mapped to the new ones on each run. A guide whose steps no
+          longer play, or whose screenshots do not match its steps, makes the run fail, so the guides double as end-to-end
+          tests. After a recorded run, the tokens used are checked against a cap per guide.</p>
       </section>
 
       <section class="doc" id="contributing">

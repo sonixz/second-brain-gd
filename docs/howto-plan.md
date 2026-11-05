@@ -61,7 +61,22 @@ Each loop: build, capture, look at every screenshot, test, document, commit and 
 - **H5, review**: re-run every guide from scratch, check every screenshot and sentence against the app, a test
   that fails if a guide breaks, timing and cost of a full refresh noted in this file.
 
+## Status (2026-11-05)
+
+Done: the frame (H1), guides 1, 2, 3, 4, 5, 7, 8, 9, 10, 11 (ten guides, seven with real answers).
+Recording all real guides used about 240,000 tokens (mostly gpt-6-sol, whose price the engine does not list),
+three web searches and a few cents of gpt-4o / gpt-4o-mini; replaying is free.
+
+Found and fixed thanks to the real runs: English items got French receipts and summaries; a path explanation came
+back in French; "Re-read with AI" timed out after 4 s; the item tile slid in over the Archivist; the Captures list
+slid under the docked panel; replies showed raw **bold**; an agent's creation read "Updated" with an Undo that
+could not work.
+
+Left: guide 6 (the browser) needs a real Edge window, see below.
+
 ## Decisions to confirm with the owner
 
-- Guide 6: render the extension's popup alone, or the owner takes two browser screenshots once.
-- The cost cap per recorded guide (proposed: $0.25, about $2 for all of them).
+- Guide 6: the owner wants Edge shown for real (no screenshots from them). That needs a visible Edge window with a
+  throwaway profile (no sign-in, no sync), the extension loaded from the folder, for a few minutes: run only with
+  the owner's go, at a moment that suits them.
+- Budget: approved by the owner ("pas de problème").

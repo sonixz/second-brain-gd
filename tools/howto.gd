@@ -254,8 +254,165 @@ func guide_packs() -> void:
 	await b.call("set_view", "graph")
 	await pause(1.0)
 	await b.call("refresh_graph")
-	await settle(10.0)
+	await settle(30.0)
 	g.zoom_to(0.45, Vector2(-60, 0), 0.3)
 	await pause(2.0)
 	calm()
 	await step("its items join the graph, in their own place")
+
+
+# ---------------------------------------------------------------- 4. Find how two ideas connect (real answers)
+func guide_connect() -> void:
+	await overview()
+	await b.call("show_search", "countertops")
+	await pause(2.0)
+	await step("search: hits light up, each with why it matched")
+	b.get("search_edit").text = ""
+	await b.call("_on_search_changed", "")
+	await pause(0.8)
+	var ap: AssistantPanel = b.get("assistant_panel")
+	await ask(ap, "How is the opening story for my talk connected to Automerge?")
+	await pause(2.0)
+	calm()
+	await step("ask how two ideas connect: the path is drawn", true)
+	g.clear_path()
+	# A note written straight into a place (no filing, so nothing links it yet): close in meaning to the CRDT notes.
+	var made: Dictionary = await app.backend.api.call_api("/brain/notes", true, HTTPClient.METHOD_POST, JSON.stringify({
+		"title": "Merging edits without a server", "space_id": _space_id("Local-first software"),
+		"body": "Two people edit the same document offline. When they reconnect, the edits merge to the same result and "
+			+ "no server decides who wins. Automerge does this with CRDTs, plain words for the talk."}))
+	var pick := str((made["data"] as Dictionary).get("id", "")) if made["ok"] else ""
+	await _wait_meaning()
+	await b.call("refresh_graph")
+	await settle(8.0)
+	await b.call("open_note", pick, true)
+	await pause(2.5)
+	await step("open an item: related ideas are suggested")
+	var related: Control = b.get("related_box")
+	var kept := false
+	for btn in related.find_children("*", "Button", true, false):
+		if not kept and (btn as Button).text.contains("✓"):
+			(btn as Button).pressed.emit()
+			kept = true
+	await pause(1.5)
+	await step("✓ keeps a suggestion as a real link", true)
+
+
+# ---------------------------------------------------------------- 5. Search the web and keep a page (real answers)
+func guide_web() -> void:
+	await overview()
+	var ap: AssistantPanel = b.get("assistant_panel")
+	await ask(ap, "Search the web: what size of circuit does an induction cooktop need?")
+	await pause(1.0)
+	await step("a question about the world: an answer with its sources")
+	var before := int(b.get("classified"))
+	await ask(ap, "Add the first source to Kitchen renovation.")
+	await wait_until(func() -> bool: return int(b.get("classified")) > before or not ap.busy, 60.0)
+	await pause(2.0)
+	await step("add it: the page is kept, summarised and filed", true)
+	await b.call("refresh_graph")
+	await settle(10.0)
+	var page := await newest_source_note()
+	if page != "":
+		g.zoom_level("read", page)
+		await pause(3.0)
+	await step("the page in the graph, kept for good")
+
+
+# ---------------------------------------------------------------- 11. Organise by voice (real answers)
+func guide_organise() -> void:
+	await overview()
+	var ap: AssistantPanel = b.get("assistant_panel")
+	await ask(ap, "What is still waiting in the Inbox?")
+	await step("ask what is waiting")
+	await ask(ap, "Put the heat pump rebate note in Finances.")
+	await pause(1.5)
+	await step("move an item by its name", true)
+	await ask(ap, "Link the heat pump rebate to the renovation budget.")
+	await pause(1.5)
+	await step("link two items", true)
+	await ask(ap, "Undo that.")
+	await pause(1.5)
+	await step("undo the last change", true)
+
+
+# ---------------------------------------------------------------- 7. Think an idea through with Sparring (real answers)
+func guide_sparring() -> void:
+	await overview()
+	var sp: SbFloatingPanel = b.call("agent_panel", "sparring")
+	await b.call("open_agent", "sparring")
+	sp.dock = "right"
+	sp.dock_size = 470.0
+	sp.layout_changed.emit()
+	await pause(1.2)
+	await step("open Sparring: it waits for your idea")
+	var spc: AssistantPanel = b.call("chat_panel", "sparring")
+	await ask(spc, "I want to open my local-first talk with a story and no slides for the first three minutes. Challenge me honestly.")
+	calm()
+	await step("say the idea: it reacts, and asks one question")
+	await ask(spc, "Instead of a diagram for CRDTs, I'd use a shared recipe card that everyone edits at once.")
+	calm()
+	await step("answer: it pushes further, using what your Brain holds")
+	await ask(spc, "Good. Sum it up.")
+	await wait_until(func() -> bool: return spc.last_draft != "", 30.0)
+	await pause(1.5)
+	calm()
+	await step("“sum it up”: the synthesis, shown in full, not saved yet")
+	var before := int(b.get("classified"))
+	await ask(spc, "Yes, save it.")
+	await wait_until(func() -> bool: return int(b.get("classified")) > before, 30.0)
+	await pause(1.5)
+	calm()
+	await step("“yes, save it”: the Archivist files it", true)
+
+
+# ---------------------------------------------------------------- 8. Create your own agent (real answers)
+func guide_own_agent() -> void:
+	await overview()
+	var layer: SbPanelLayer = b.get("panel_layer")
+	layer.create_requested.emit()  # the rail's « + »
+	await wait_until(func() -> bool:
+		var c: AssistantPanel = b.call("chat_panel", "builder")
+		return c != null and c.messages_shown >= 3 and not c.busy, 60.0)
+	var bc: AssistantPanel = b.call("chat_panel", "builder")
+	var bp: SbFloatingPanel = b.call("agent_panel", "builder")
+	bp.dock = "right"
+	bp.dock_size = 470.0
+	bp.layout_changed.emit()
+	await pause(1.2)
+	await step("+ on the rail: the Agent Builder asks what the agent is for")
+	await ask(bc, "A coach to rehearse my local-first talk out loud before the meetup. It should know my talk.")
+	await step("answer in a sentence or two: it asks the next question")
+	var answers := ["Demanding but kind, short spoken answers, no lists. It times each part against the 20 minutes.",
+		"It only reads my Brain, it never changes anything. That's all, write it."]
+	for a in answers:
+		if bc.last_agent_draft != "":
+			break
+		await ask(bc, a)
+	var tries := 0
+	while bc.last_agent_draft == "" and tries < 2:
+		await ask(bc, "That's everything I need. Please write the draft now.")
+		tries += 1
+	await pause(1.5)
+	await step("the draft, in full: role, tone, how it works, what to avoid")
+	await ask(bc, "Yes, create it.")
+	await b.call("refresh_agents")
+	await pause(2.0)
+	await step("“yes, create it”: its letter joins the rail", true)
+	var made := ""
+	for id in (b.get("agent_chats") as Dictionary).keys():
+		if not str(id) in ["archivist", "sparring", "builder"]:
+			made = str(id)
+	if made != "":
+		bp.set_minimized(true)
+		await b.call("open_agent", made)
+		var mp: SbFloatingPanel = b.call("agent_panel", made)
+		mp.dock = "right"
+		mp.dock_size = 470.0
+		mp.layout_changed.emit()
+		var mc: AssistantPanel = b.call("chat_panel", made)
+		await ask(mc, "Let's start with the opening. Here it goes: last year, on a plane, I lost a whole afternoon of notes because my app needed the cloud.")
+		await step("talk to it in its own panel")
+		await b.call("show_agent_info", made)
+		await pause(1.2)
+		await step("ⓘ its settings: switches, model, instructions")

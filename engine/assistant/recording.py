@@ -59,8 +59,19 @@ def _kind(messages: list[dict[str, Any]], json_mode: bool) -> str:
     return ("json:" if json_mode else "chat:") + re.sub(r"\s+", " ", system[:80])
 
 
+def _slim(value: Any) -> Any:
+    """Pictures sent to the vision model are not needed to replay (only ids are matched): kept as a marker."""
+    if isinstance(value, str):
+        return "<image>" if value.startswith("data:") or len(value) > 50_000 else value
+    if isinstance(value, list):
+        return [_slim(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _slim(v) for k, v in value.items()}
+    return value
+
+
 def _seen(messages: list[dict[str, Any]]) -> list[dict[str, Any]]:
-    return [m for m in messages if m.get("role") != "system"]
+    return [_slim(m) for m in messages if m.get("role") != "system"]
 
 
 def _walk(old: Any, new: Any, ids: dict[str, str]) -> None:
@@ -165,6 +176,7 @@ class ReplayChat:
 def fetch(url: str, download: Any) -> tuple[str, bytes, str]:
     """A web page the guide downloads: kept while recording, served from the recording when replaying (no network)."""
     import base64
+    import gzip
 
     if os.environ.get("SBGD_ASSISTANT_PROVIDER") == "replay":
         with _LOCK:
@@ -175,7 +187,8 @@ def fetch(url: str, download: Any) -> tuple[str, bytes, str]:
                     used.add(i)
                     if f.get("error"):
                         raise OSError(f["error"])
-                    return f["mime"], base64.b64decode(f["data"]), f["charset"]
+                    raw = base64.b64decode(f["data"])
+                    return f["mime"], (gzip.decompress(raw) if f.get("gzip") else raw), f["charset"]
         raise OSError("replay: this page was not downloaded when the guide was recorded")
     try:
         mime, raw, charset = download()
@@ -185,7 +198,7 @@ def fetch(url: str, download: Any) -> tuple[str, bytes, str]:
             _save()
         raise
     with _LOCK:
-        _load().setdefault("fetch", []).append({"url": url, "mime": mime, "charset": charset,
-                                                "data": base64.b64encode(raw).decode("ascii")})
+        _load().setdefault("fetch", []).append({"url": url, "mime": mime, "charset": charset, "gzip": True,
+                                                "data": base64.b64encode(gzip.compress(raw)).decode("ascii")})
         _save()
     return mime, raw, charset

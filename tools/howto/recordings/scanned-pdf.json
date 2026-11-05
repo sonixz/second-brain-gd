@@ -1,0 +1,322 @@
+{
+ "calls": [
+  {
+   "kind": "json:Tu prépares une fiche de référence pour un second cerveau. Réponds en JSON avec:",
+   "model": "gpt-4o",
+   "seen": [
+    {
+     "role": "user",
+     "content": "{\"title\": \"insurance-renewal-scan\", \"text\": \"Maple Mutual Insurance\\nHome insurance: renewal notice\\nPolicy HM-48213-QC\\nDear policyholder,\\nRenewal date: December 1, 2026\\nYour home insurance policy renews on December 1, 2026 for one year.\\nYour new annual premium is $1,284, up from $1,176 last year (+9.2%).\\nWhat changed this year:\\n- Water damage cover now includes sewer backup up to $25,000.\\n- The deductible for water damage rises from $l,ooo to $1,500.\\nA 10% discount applies if a water leak detector is installed.\\nTo keep the discount, send a photo of the installed detector\\nbefore November 20, 2026.\\n\\nCoverage summary\\nDwelling\\nContents\\nAdditional living expenses\\nCivil liability\\nPayment options\\n$480,ooo\\n$160,ooo\\n$96,ooo\\n$2,ooo,ooo\\nMonthly: 12 payments of $107.00, starting December 1.\\nAnnual: one payment of $1,284 before December 1.\\nQuestions? Call 1-800-555-0148, Monday to Friday, 8 a.m. to 8 p.m.\\nMaple Mutual Insurance, 200 Harbour Street, Halifax\"}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "{\n    \"title\": \"Home Insurance Renewal Notice\",\n    \"summary\": \"Maple Mutual Insurance has issued a renewal notice for home insurance policy HM-48213-QC, effective December 1, 2026. The annual premium has increased by 9.2% to $1,284. Notable changes include the addition of sewer backup coverage up to $25,000 and an increased deductible for water damage. A 10% discount is available for policyholders who install a water leak detector. Payment options include monthly or annual payments.\",\n    \"key_points\": [\n        \"Renewal date: December 1, 2026\",\n        \"Annual premium increased to $1,284\",\n        \"Sewer backup coverage added up to $25,000\",\n        \"Water damage deductible increased to $1,500\",\n        \"10% discount with water leak detector installation\",\n        \"Payment options: monthly or annual\"\n    ],\n    \"tags\": [\"insurance\", \"home-renewal\", \"policy-update\"]\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 432,
+    "completion_tokens": 208,
+    "total_tokens": 640,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "json:Tu es l'ARCHIVISTE d'un second cerveau (méthode CODE: Capture, Organize, Distill",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "user",
+     "content": "{\"item\": {\"title\": \"Home Insurance Renewal Notice\", \"content\": \"Maple Mutual Insurance has issued a renewal notice for home insurance policy HM-48213-QC, effective December 1, 2026. The annual premium has increased by 9.2% to $1,284. Notable changes include the addition of sewer backup coverage up to $25,000 and an increased deductible for water damage. A 10% discount is available for policyholders who install a water leak detector. Payment options include monthly or annual payments.\\n\\n- Renewal date: December 1, 2026\\n- Annual premium increased to $1,284\\n- Sewer backup coverage added up to $25,000\\n- Water damage deductible increased to $1,500\\n- 10% discount with water leak detector installation\\n- Payment options: monthly or annual\\n\\nSource: /mnt/c/git-2026/second-brain-gd/tools/howto/files/insurance-renewal-scan.pdf\\n\\n#insurance #home-renewal #policy-update\", \"origin\": \"file\", \"uri\": \"/mnt/c/git-2026/second-brain-gd/tools/howto/files/insurance-renewal-scan.pdf\", \"original_excerpt\": \"Maple Mutual Insurance\\nHome insurance: renewal notice\\nPolicy HM-48213-QC\\nDear policyholder,\\nRenewal date: December 1, 2026\\nYour home insurance policy renews on December 1, 2026 for one year.\\nYour new annual premium is $1,284, up from $1,176 last year (+9.2%).\\nWhat changed this year:\\n- Water damage cover now includes sewer backup up to $25,000.\\n- The deductible for water damage rises from $l,ooo to $1,500.\\nA 10% discount applies if a water leak detector is installed.\\nTo keep the discount, send a photo of the installed detector\\nbefore November 20, 2026.\\n\\nCoverage summary\\nDwelling\\nContents\\nAdditional living expenses\\nCivil liability\\nPayment options\\n$480,ooo\\n$160,ooo\\n$96,ooo\\n$2,ooo,ooo\\nMonthly: 12 payments of $107.00, starting December 1.\\nAnnual: one payment of $1,284 before December 1.\\nQuestions? Call 1-800-555-0148, Monday to Friday, 8 a.m. to 8 p.m.\\nMaple Mutual Insurance, 200 Harbour Street, Halifax\"}, \"places\": [{\"id\": \"inbox\", \"name\": \"Inbox\", \"kind\": \"inbox\", \"items\": 3, \"examples\": [\"Heat pump rebate\", \"The book Julie recommended\"]}, {\"id\": \"8d5f95e45d064688\", \"name\": \"Kitchen renovation\", \"kind\": \"project\", \"items\": 7, \"examples\": [\"Tile samples: the matte green wins\", \"Call with Marc about the electrical panel\", \"Contractor quote — Brightline Renovations\"], \"goal\": \"New kitchen before the holidays\", \"area\": \"Home\"}, {\"id\": \"90d6cef4d267455c\", \"name\": \"Talk: local-first software\", \"kind\": \"project\", \"items\": 4, \"examples\": [\"Opening story for the talk\", \"Talk outline\", \"Demo: unplug the network on stage\"], \"goal\": \"A 20-minute talk at the local meetup\"}, {\"id\": \"a015d936f1c64636\", \"name\": \"Learn Japanese\", \"kind\": \"project\", \"items\": 4, \"examples\": [\"Phrases for ordering at a café\", \"Komorebi\", \"Daily routine for Japanese\"]}, {\"id\": \"eb09a1e0d86d4e39\", \"name\": \"Health\", \"kind\": \"area\", \"items\": 5, \"examples\": [\"Ran 5 km under 30 minutes\", \"Sleep log: seven hours average\", \"Physio exercises for the left knee\"]}, {\"id\": \"e7610a3858d74b12\", \"name\": \"Finances\", \"kind\": \"area\", \"items\": 3, \"examples\": [\"Renovation budget\", \"Subscriptions to cancel\", \"Tax documents checklist\"]}, {\"id\": \"4d486388d9764d05\", \"name\": \"Home\", \"kind\": \"area\", \"items\": 2, \"examples\": [\"Snow removal contact from the neighbour\", \"Furnace filter every three months\"]}, {\"id\": \"465c57e6bba74e34\", \"name\": \"Local-first software\", \"kind\": \"resource\", \"items\": 7, \"examples\": [\"Sync as a plugin, never a requirement\", \"Chat with Priya about offline-first mobile apps\", \"CRDTs in plain words\"]}, {\"id\": \"1625e936e4634484\", \"name\": \"Cooking\", \"kind\": \"resource\", \"items\": 4, \"examples\": [\"Meal plan this week\", \"Mom's tomato sauce, the way she says it\", \"No-knead bread\"]}, {\"id\": \"547d471615d846b9\", \"name\": \"Productivity\", \"kind\": \"resource\", \"items\": 5, \"examples\": [\"Capture by voice on walks\", \"Weekly review checklist\", \"Spaced repetition, explained\"]}, {\"id\": \"24d063f36f76400a\", \"name\": \"Apartment move 2025\", \"kind\": \"archive\", \"items\": 2, \"examples\": [\"Change-of-address list\", \"Movers contact and invoice\"]}], \"themes\": [\"local-first\", \"talk\", \"crdt\", \"design\", \"budget\", \"moving\", \"capture\", \"recipe\", \"running\", \"insurance\", \"home-renewal\", \"policy-update\", \"pkm\", \"para\", \"review\", \"pantry\", \"meal-plan\", \"family\", \"bread\", \"mobile\", \"sqlite\", \"file-formats\", \"library\", \"winter\", \"maintenance\", \"taxes\", \"appointments\", \"knee\", \"sleep\", \"learning\", \"memory\", \"vocabulary\", \"routine\", \"speaking\", \"kana\", \"demo\", \"countertops\", \"appliances\", \"electrical\", \"bl-2611\"], \"candidates\": []}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"title\": \"Home Insurance Renewal Notice\",\n  \"item_type\": \"document\",\n  \"language\": \"en\",\n  \"summary\": \"Maple Mutual Insurance issued a notice renewing home insurance policy HM-48213-QC for one year starting December 1, 2026. The annual premium is $1,284, up from $1,176 (+9.2%). The policy adds sewer backup coverage up to $25,000 and raises the water damage deductible to $1,500. A 10% discount is available if a water leak detector is installed and a photo is sent before November 20, 2026.\",\n  \"key_points\": [\n    \"Renewal date: December 1, 2026.\",\n    \"Annual premium: $1,284; monthly option: 12 payments of $107.\",\n    \"Sewer backup coverage: up to $25,000.\",\n    \"Water damage deductible: $1,500.\",\n    \"Discount documentation deadline: November 20, 2026.\"\n  ],\n  \"entities\": {\n    \"people\": [],\n    \"organizations\": [\"Maple Mutual Insurance\"],\n    \"concepts\": [\"home insurance\", \"sewer backup coverage\", \"water damage deductible\", \"water leak detector\"],\n    \"places\": [\"Halifax\"],\n    \"dates\": [\"November 20, 2026\", \"December 1, 2026\"]\n  },\n  \"place\": {\"space_id\": \"4d486388d9764d05\"},\n  \"themes\": [\"insurance\", \"home-renewal\", \"policy-update\"],\n  \"link_ids\": [],\n  \"confidence\": 0.98,\n  \"question\": null,\n  \"receipt\": \"Home insurance renewal notice filed in Areas › Home.\"\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 2035,
+    "completion_tokens": 369,
+    "total_tokens": 2404,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "cache_write_tokens": 2032,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "When does my home insurance renew, and what is the new premium?"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+     {
+      "id": "call_ztdpqkTe0ZYDcXM3T7Lq6Bqx",
+      "type": "function",
+      "function": {
+       "name": "search_notes",
+       "arguments": "{\"query\": \"home insurance renewal date new premium\"}"
+      }
+     },
+     {
+      "id": "call_Z0pgu2ORsJqVejUAV06WHQRl",
+      "type": "function",
+      "function": {
+       "name": "search_sources",
+       "arguments": "{\"query\": \"home insurance renewal date new premium\"}"
+      }
+     }
+    ],
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 4328,
+    "completion_tokens": 57,
+    "total_tokens": 4385,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "cache_write_tokens": 4325,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "When does my home insurance renew, and what is the new premium?"
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_ztdpqkTe0ZYDcXM3T7Lq6Bqx",
+       "type": "function",
+       "function": {
+        "name": "search_notes",
+        "arguments": "{\"query\": \"home insurance renewal date new premium\"}"
+       }
+      },
+      {
+       "id": "call_Z0pgu2ORsJqVejUAV06WHQRl",
+       "type": "function",
+       "function": {
+        "name": "search_sources",
+        "arguments": "{\"query\": \"home insurance renewal date new premium\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_ztdpqkTe0ZYDcXM3T7Lq6Bqx",
+     "content": "{\"results\": [{\"id\": \"445dd6d2ba144fae\", \"title\": \"Home Insurance Renewal Notice\", \"space_id\": \"4d486388d9764d05\", \"kind\": \"reference\", \"snippet\": \"Maple Mutual Insurance has issued a renewal notice for home insurance policy HM-48213-QC, effective December 1, 2026. The annual premium has increased by 9.2% to $1,284. Notable changes include the ad\", \"match\": \"meaning\", \"place\": \"Domaines › Home\"}, {\"id\": \"32228c9ac38247a2\", \"title\": \"Tax documents checklist\", \"space_id\": \"e7610a3858d74b12\", \"kind\": \"note\", \"snippet\": \"- Employer slips\\n- Childcare receipts\\n- Donation receipts\\n- [Home] office hours #taxes\", \"match\": \"words\", \"place\": \"Domaines › Finances\"}, {\"id\": \"34a9f765538b4b15\", \"title\": \"Meal plan this week\", \"space_id\": \"1625e936e4634484\", \"kind\": \"note\", \"snippet\": \"…Thursday: sheet-pan chicken\\n- Friday: [homemade] pizza on the [[No-knead bread…\", \"match\": \"words\", \"place\": \"Ressources › Cooking\"}, {\"id\": \"1a22e80007e1444e\", \"title\": \"Kitchen layout sketch\", \"space_id\": \"8d5f95e45d064688\", \"kind\": \"reference\", \"snippet\": \"A hand-drawn floor plan titled “Kitchen — [new] layout, v2”: counters and…\", \"match\": \"words\", \"place\": \"Projets › Kitchen renovation\"}], \"scope\": \"everything\"}"
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_Z0pgu2ORsJqVejUAV06WHQRl",
+     "content": "{\"results\": [{\"document\": \"Home Insurance Renewal Notice\", \"note_title\": \"Home Insurance Renewal Notice\", \"excerpt\": \"Maple Mutual Insurance\\nHome insurance: renewal notice\\nPolicy HM-48213-QC\\nDear policyholder,\\nRenewal date: December 1, 2026\\nYour home insurance policy renews on December 1, 2026 for one year.\\nYour new annual premium is $1,284, up from $1,176 last year (+9.2%).\\nWhat changed this year:\\n- Water damage c\", \"match\": \"meaning\"}, {\"document\": \"Kitchen layout sketch\", \"note_title\": \"Kitchen layout sketch\", \"excerpt\": \"Image: layout-sketch.png\\n\\nA hand-drawn floor plan titled “Kitchen — new layout, v2”: counters and cabinets along the top wall with the sink and an induction cooktop, a pantry wall on the left, a 4 × 6 island with three stools in the middle, a door on the right and a note “fridge here?”. Notes say 1.\", \"match\": \"meaning\"}, {\"document\": \"Contractor quote — Brightline Renovations\", \"note_title\": \"Contractor quote — Brightline Renovations\", \"excerpt\": \"…14 Maple Street\\nFull remodel of an 11 × 13 ft kitchen: [new] cabinets on two walls, quartz countertops, an island with\\nseating for three…\", \"match\": \"words\"}, {\"document\": \"Contractor quote — Brightline Renovations\", \"note_title\": \"Contractor quote — Brightline Renovations\", \"excerpt\": \"…Brightline Renovations Client signature and [date]\", \"match\": \"words\"}]}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "Your home insurance renews on **December 1, 2026**. The new annual premium is **$1,284**, up from $1,176 last year, according to [[Home Insurance Renewal Notice]].",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 5142,
+    "completion_tokens": 47,
+    "total_tokens": 5189,
+    "prompt_tokens_details": {
+     "cached_tokens": 4325,
+     "cache_write_tokens": 814,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:",
+   "model": "gpt-4o-mini",
+   "seen": [
+    {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "Cette image est une page d'un document PDF numérisé. Transcris fidèlement tout le texte visible, dans sa langue d'origine, en gardant l'ordre de lecture, les titres et les listes. N'ajoute aucun commentaire. Si la page ne contient pas de texte, décris-la en une phrase entre crochets."
+      },
+      {
+       "type": "image_url",
+       "image_url": {
+        "url": "<image>"
+       }
+      }
+     ]
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "Maple Mutual Insurance\n\nHome insurance: renewal notice  \nPolicy HM-48213-QC  Renewal date: December 1, 2026\n\nDear policyholder,\n\nYour home insurance policy renews on December 1, 2026 for one year.  \nYour new annual premium is $1,284, up from $1,176 last year (+9.2%).\n\nWhat changed this year:  \n- Water damage cover now includes sewer backup up to $25,000.  \n- The deductible for water damage rises from $1,000 to $1,500.  \n- A 10% discount applies if a water leak detector is installed.\n\nTo keep the discount, send a photo of the installed detector before November 20, 2026.",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 25575,
+    "completion_tokens": 153,
+    "total_tokens": 25728,
+    "prompt_tokens_details": {
+     "cached_tokens": 19968,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:",
+   "model": "gpt-4o-mini",
+   "seen": [
+    {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "Cette image est une page d'un document PDF numérisé. Transcris fidèlement tout le texte visible, dans sa langue d'origine, en gardant l'ordre de lecture, les titres et les listes. N'ajoute aucun commentaire. Si la page ne contient pas de texte, décris-la en une phrase entre crochets."
+      },
+      {
+       "type": "image_url",
+       "image_url": {
+        "url": "<image>"
+       }
+      }
+     ]
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "Coverage summary  \nDwelling  $480,000  \nContents  $160,000  \nAdditional living expenses  $96,000  \nCivil liability  $2,000,000  \n\nPayment options  \nMonthly: 12 payments of $107.00, starting December 1.  \nAnnual: one payment of $1,284 before December 1.  \n\nQuestions? Call 1-800-555-0148, Monday to Friday, 8 a.m. to 8 p.m.  \nMaple Mutual Insurance, 200 Harbour Street, Halifax",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 25575,
+    "completion_tokens": 112,
+    "total_tokens": 25687,
+    "prompt_tokens_details": {
+     "cached_tokens": 19968,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "json:Tu prépares une fiche de référence pour un second cerveau. Réponds en JSON avec:",
+   "model": "gpt-4o",
+   "seen": [
+    {
+     "role": "user",
+     "content": "{\"title\": \"Home Insurance Renewal Notice\", \"text\": \"Maple Mutual Insurance\\n\\nHome insurance: renewal notice  \\nPolicy HM-48213-QC  Renewal date: December 1, 2026\\n\\nDear policyholder,\\n\\nYour home insurance policy renews on December 1, 2026 for one year.  \\nYour new annual premium is $1,284, up from $1,176 last year (+9.2%).\\n\\nWhat changed this year:  \\n- Water damage cover now includes sewer backup up to $25,000.  \\n- The deductible for water damage rises from $1,000 to $1,500.  \\n- A 10% discount applies if a water leak detector is installed.\\n\\nTo keep the discount, send a photo of the installed detector before November 20, 2026.\\n\\nCoverage summary  \\nDwelling  $480,000  \\nContents  $160,000  \\nAdditional living expenses  $96,000  \\nCivil liability  $2,000,000  \\n\\nPayment options  \\nMonthly: 12 payments of $107.00, starting December 1.  \\nAnnual: one payment of $1,284 before December 1.  \\n\\nQuestions? Call 1-800-555-0148, Monday to Friday, 8 a.m. to 8 p.m.  \\nMaple Mutual Insurance, 200 Harbour Street, Halifax\"}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "{\n    \"title\": \"Home Insurance Renewal Notice\",\n    \"summary\": \"The home insurance policy from Maple Mutual Insurance is set to renew on December 1, 2026, with a new annual premium of $1,284, reflecting a 9.2% increase from the previous year. Key changes include expanded water damage coverage to include sewer backup and an increased deductible for water damage. A 10% discount is available for policyholders who install a water leak detector and provide proof by November 20, 2026. Coverage includes dwelling, contents, additional living expenses, and civil liability. Payment can be made monthly or annually, with customer service available for inquiries.\",\n    \"key_points\": [\n        \"Renewal date: December 1, 2026\",\n        \"New annual premium: $1,284 (+9.2%)\",\n        \"Water damage coverage now includes sewer backup\",\n        \"Deductible for water damage increased to $1,500\",\n        \"10% discount for installing a water leak detector\",\n        \"Payment options: monthly or annual\"\n    ],\n    \"tags\": [\n        \"insurance\",\n        \"home-policy\",\n        \"renewal\"\n    ]\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 464,
+    "completion_tokens": 243,
+    "total_tokens": 707,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  }
+ ],
+ "web": [],
+ "fetch": []
+}

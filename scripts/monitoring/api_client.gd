@@ -13,7 +13,8 @@ func base_url() -> String:
 
 ## Reading a document (local OCR of many pages, then a summary) can take minutes; AI calls up to 90 s;
 ## everything else answers at once.
-func timeout_for(path: String, method: int) -> float:
+func timeout_for(path_and_query: String, method: int) -> float:
+	var path := path_and_query.get_slice("?", 0)  # « /sources/<id>/reread?job=… » is still a long reading
 	if method == HTTPClient.METHOD_POST and (path.begins_with("/sources/file") or path.begins_with("/sources/url")
 			or path.ends_with("/reread")):
 		return 600.0

@@ -326,7 +326,7 @@ func say(text: String, force: bool = false) -> void:
 	if not (speak_toggle.button_pressed or force) or app.audio.muted or text.strip_edges() == "":
 		return
 	var res := await app.backend.api.call_api("/assistant/speak", true, HTTPClient.METHOD_POST,
-		JSON.stringify({"text": text, "theme": SbTheme.current}), true)
+		JSON.stringify({"text": spoken(text), "theme": SbTheme.current}), true)
 	if res["ok"] and is_inside_tree():
 		app.audio.play_voice(res["bytes"])
 
@@ -450,15 +450,18 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 		l.theme_type_variation = "Muted"
 		l.text = str({"create_note": "✚ Created ", "classify": "⇢ Filed ", "move": "⇢ Moved ", "trash": "✕ Deleted ",
 			"web_page": "✚ Added from the web ", "remove_place": "✕ Removed place ", "link": "— Linked ", "unlink": "✕ Unlinked ",
-			"untag": "✕ Tag removed "}.get(str(a.get("kind")), "✎ Updated ")) + "“%s”" % str(a.get("title", ""))
+			"untag": "✕ Tag removed ", "agent_created": "✚ Created the agent ", "agent_changed": "✎ Changed the agent "}.get(
+				str(a.get("kind")), "✎ Updated ")) + "“%s”" % str(a.get("title", ""))
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		l.clip_text = true
 		line.add_child(l)
+		var aid := int(a.get("action_id", 0))
+		if aid <= 0:  # not journaled (an agent created or changed: ⓘ has Delete and Back to the original)
+			continue
 		var undo := Button.new()
 		undo.text = "Undo"
 		undo.theme_type_variation = "GhostButton"
-		var aid := int(a.get("action_id", 0))
 		undo.pressed.connect(func() -> void:
 			var r := await app.backend.api.call_api("/assistant/actions/%d/undo" % aid, true, HTTPClient.METHOD_POST)
 			if r["ok"]:
@@ -523,4 +526,11 @@ static func _linkify(text: String) -> String:
 	var out := re.sub(safe, "[url=$1][color=#%s]$1[/color][/url]" % mint, true)
 	var web := RegEx.create_from_string("\u0003([^\u0004]+)\u0004([^\u0005]*)\u0005")
 	out = web.sub(out, "[url=$1][color=#%s]$2[/color][/url]" % mint, true)
+	# Agents are asked for plain text, but a model sometimes writes **bold** anyway: show it as bold, never the stars.
+	out = RegEx.create_from_string("\\*\\*([^*\n]+)\\*\\*").sub(out, "[b]$1[/b]", true)
 	return out.replace("\u0001", "[lb]").replace("\u0002", "[rb]")
+
+
+## What is read aloud: the same text without Markdown marks.
+static func spoken(text: String) -> String:
+	return RegEx.create_from_string("\\*\\*([^*\n]+)\\*\\*").sub(text, "$1", true)

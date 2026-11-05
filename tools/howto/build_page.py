@@ -166,8 +166,11 @@ def page(ready: list[dict]) -> str:
 
 
 if __name__ == "__main__":
-    ready = [g for g in guides.GUIDES
-             if len(list((SHOTS / g["id"]).glob("*.png"))) == len(g["steps"]) and all(d for d, _ in g["steps"])]
+    def captured(g: dict) -> bool:  # this run's PNGs, or the WebP already on the site (a fresh clone has no PNGs)
+        n = len(g["steps"])
+        return len(list((SHOTS / g["id"]).glob("*.png"))) == n or len(list((ASSETS / g["id"]).glob("*.webp"))) == n
+
+    ready = [g for g in guides.GUIDES if captured(g) and all(d for d, _ in g["steps"])]
     convert(ready)
     PAGE.write_text(page(ready), encoding="utf-8")
     print(f"page: {len(ready)} of {len(guides.GUIDES)} guides in public/howto.html")

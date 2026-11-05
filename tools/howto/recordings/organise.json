@@ -1,0 +1,888 @@
+{
+ "calls": [
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "What is still waiting in the Inbox?"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+     {
+      "id": "call_1wrRkEceUStuqQDa8Jfs4nr2",
+      "type": "function",
+      "function": {
+       "name": "search_notes",
+       "arguments": "{\"query\": \"Inbox items waiting for answer unclassified pending\"}"
+      }
+     },
+     {
+      "id": "call_Mi8Vx2eAbjZgWLlXRsehFSJY",
+      "type": "function",
+      "function": {
+       "name": "search_sources",
+       "arguments": "{\"query\": \"Inbox items waiting for answer unclassified pending\"}"
+      }
+     },
+     {
+      "id": "call_VPV6BRKEqishH839vcgq5QgO",
+      "type": "function",
+      "function": {
+       "name": "find_items",
+       "arguments": "{\"place\": \"Inbox\"}"
+      }
+     }
+    ],
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 4322,
+    "completion_tokens": 75,
+    "total_tokens": 4397,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "cache_write_tokens": 4319,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "What is still waiting in the Inbox?"
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_1wrRkEceUStuqQDa8Jfs4nr2",
+       "type": "function",
+       "function": {
+        "name": "search_notes",
+        "arguments": "{\"query\": \"Inbox items waiting for answer unclassified pending\"}"
+       }
+      },
+      {
+       "id": "call_Mi8Vx2eAbjZgWLlXRsehFSJY",
+       "type": "function",
+       "function": {
+        "name": "search_sources",
+        "arguments": "{\"query\": \"Inbox items waiting for answer unclassified pending\"}"
+       }
+      },
+      {
+       "id": "call_VPV6BRKEqishH839vcgq5QgO",
+       "type": "function",
+       "function": {
+        "name": "find_items",
+        "arguments": "{\"place\": \"Inbox\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_1wrRkEceUStuqQDa8Jfs4nr2",
+     "content": "{\"results\": [{\"id\": \"058911b499014c77\", \"title\": \"Weekly review checklist\", \"space_id\": \"65d1a3a01419403d\", \"kind\": \"note\", \"snippet\": \"- [Inbox] to zero\\n- Look at every project\\n- Pick three outcomes for the…\", \"match\": \"words\", \"place\": \"Ressources › Productivity\"}, {\"id\": \"2187dc6f53a54c35\", \"title\": \"Capture by voice on walks\", \"space_id\": \"65d1a3a01419403d\", \"kind\": \"idea\", \"snippet\": \"…Review the [Inbox] on Sunday with the [[Weekly review checklist]]. #capture\", \"match\": \"words\", \"place\": \"Ressources › Productivity\"}], \"scope\": \"everything\"}"
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_Mi8Vx2eAbjZgWLlXRsehFSJY",
+     "content": "{\"results\": []}"
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_VPV6BRKEqishH839vcgq5QgO",
+     "content": "{\"place\": \"Inbox\", \"items\": [{\"id\": \"1379e18267944676\", \"title\": \"Heat pump rebate\", \"place\": \"Inbox\", \"type\": \"note\"}, {\"id\": \"f26cbc28971b482e\", \"title\": \"The book Julie recommended\", \"place\": \"Inbox\", \"type\": \"note dictée\"}]}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "Two items are still in the Inbox: [[Heat pump rebate]] and [[The book Julie recommended]].",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 4672,
+    "completion_tokens": 23,
+    "total_tokens": 4695,
+    "prompt_tokens_details": {
+     "cached_tokens": 4319,
+     "cache_write_tokens": 350,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "What is still waiting in the Inbox?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items are still in the Inbox: [[Heat pump rebate]] and [[The book Julie recommended]]."
+    },
+    {
+     "role": "user",
+     "content": "Put the heat pump rebate note in Finances."
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+     {
+      "id": "call_jPqzr4gQ7KzM2sD5kRHazWVa",
+      "type": "function",
+      "function": {
+       "name": "find_items",
+       "arguments": "{\"query\": \"Heat pump rebate\"}"
+      }
+     },
+     {
+      "id": "call_NjA4CO6Kpsn071YakWxdt7ui",
+      "type": "function",
+      "function": {
+       "name": "find_items",
+       "arguments": "{\"place\": \"Finances\"}"
+      }
+     }
+    ],
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 4362,
+    "completion_tokens": 50,
+    "total_tokens": 4412,
+    "prompt_tokens_details": {
+     "cached_tokens": 4319,
+     "cache_write_tokens": 40,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "What is still waiting in the Inbox?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items are still in the Inbox: [[Heat pump rebate]] and [[The book Julie recommended]]."
+    },
+    {
+     "role": "user",
+     "content": "Put the heat pump rebate note in Finances."
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_jPqzr4gQ7KzM2sD5kRHazWVa",
+       "type": "function",
+       "function": {
+        "name": "find_items",
+        "arguments": "{\"query\": \"Heat pump rebate\"}"
+       }
+      },
+      {
+       "id": "call_NjA4CO6Kpsn071YakWxdt7ui",
+       "type": "function",
+       "function": {
+        "name": "find_items",
+        "arguments": "{\"place\": \"Finances\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_jPqzr4gQ7KzM2sD5kRHazWVa",
+     "content": "{\"items\": [{\"id\": \"1379e18267944676\", \"title\": \"Heat pump rebate\", \"place\": \"Inbox\", \"type\": \"note\", \"match\": \"meaning\"}]}"
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_NjA4CO6Kpsn071YakWxdt7ui",
+     "content": "{\"place\": \"Domaines › Finances\", \"items\": [{\"id\": \"1d00b1c705d245ee\", \"title\": \"Renovation budget\", \"place\": \"Domaines › Finances\", \"type\": \"note\"}, {\"id\": \"40b8cf1fef3a4953\", \"title\": \"Subscriptions to cancel\", \"place\": \"Domaines › Finances\", \"type\": \"note\"}, {\"id\": \"ea26ef7be5d6403a\", \"title\": \"Tax documents checklist\", \"place\": \"Domaines › Finances\", \"type\": \"note\"}]}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+     {
+      "id": "call_hNGNwIUg4MCwDrQj5LVPc2yk",
+      "type": "function",
+      "function": {
+       "name": "move_items",
+       "arguments": "{\"items\":[\"Heat pump rebate\"],\"place\":\"Finances\"}"
+      }
+     }
+    ],
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 4602,
+    "completion_tokens": 25,
+    "total_tokens": 4627,
+    "prompt_tokens_details": {
+     "cached_tokens": 4359,
+     "cache_write_tokens": 240,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "What is still waiting in the Inbox?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items are still in the Inbox: [[Heat pump rebate]] and [[The book Julie recommended]]."
+    },
+    {
+     "role": "user",
+     "content": "Put the heat pump rebate note in Finances."
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_jPqzr4gQ7KzM2sD5kRHazWVa",
+       "type": "function",
+       "function": {
+        "name": "find_items",
+        "arguments": "{\"query\": \"Heat pump rebate\"}"
+       }
+      },
+      {
+       "id": "call_NjA4CO6Kpsn071YakWxdt7ui",
+       "type": "function",
+       "function": {
+        "name": "find_items",
+        "arguments": "{\"place\": \"Finances\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_jPqzr4gQ7KzM2sD5kRHazWVa",
+     "content": "{\"items\": [{\"id\": \"1379e18267944676\", \"title\": \"Heat pump rebate\", \"place\": \"Inbox\", \"type\": \"note\", \"match\": \"meaning\"}]}"
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_NjA4CO6Kpsn071YakWxdt7ui",
+     "content": "{\"place\": \"Domaines › Finances\", \"items\": [{\"id\": \"1d00b1c705d245ee\", \"title\": \"Renovation budget\", \"place\": \"Domaines › Finances\", \"type\": \"note\"}, {\"id\": \"40b8cf1fef3a4953\", \"title\": \"Subscriptions to cancel\", \"place\": \"Domaines › Finances\", \"type\": \"note\"}, {\"id\": \"ea26ef7be5d6403a\", \"title\": \"Tax documents checklist\", \"place\": \"Domaines › Finances\", \"type\": \"note\"}]}"
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_hNGNwIUg4MCwDrQj5LVPc2yk",
+       "type": "function",
+       "function": {
+        "name": "move_items",
+        "arguments": "{\"items\":[\"Heat pump rebate\"],\"place\":\"Finances\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_hNGNwIUg4MCwDrQj5LVPc2yk",
+     "content": "{\"place\": \"Domaines › Finances\", \"moved\": [\"Heat pump rebate\"], \"already_there\": [], \"not_found\": [], \"ambiguous\": [], \"changed\": 1}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "I moved [[Heat pump rebate]] from the Inbox to Finances.",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 4679,
+    "completion_tokens": 17,
+    "total_tokens": 4696,
+    "prompt_tokens_details": {
+     "cached_tokens": 4599,
+     "cache_write_tokens": 77,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "What is still waiting in the Inbox?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items are still in the Inbox: [[Heat pump rebate]] and [[The book Julie recommended]]."
+    },
+    {
+     "role": "user",
+     "content": "Put the heat pump rebate note in Finances."
+    },
+    {
+     "role": "assistant",
+     "content": "I moved [[Heat pump rebate]] from the Inbox to Finances.\n(Actions déjà effectuées: move « Heat pump rebate »)\n(Interface: refresh )"
+    },
+    {
+     "role": "user",
+     "content": "Link the heat pump rebate to the renovation budget."
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+     {
+      "id": "call_aLisZHKkLh86zhl0p3q5U4L1",
+      "type": "function",
+      "function": {
+       "name": "find_items",
+       "arguments": "{\"query\": \"Heat pump rebate\"}"
+      }
+     },
+     {
+      "id": "call_TrEtQulAuvTbbfv4bKOKrOgx",
+      "type": "function",
+      "function": {
+       "name": "find_items",
+       "arguments": "{\"query\": \"renovation budget\"}"
+      }
+     }
+    ],
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 4414,
+    "completion_tokens": 52,
+    "total_tokens": 4466,
+    "prompt_tokens_details": {
+     "cached_tokens": 4359,
+     "cache_write_tokens": 52,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "What is still waiting in the Inbox?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items are still in the Inbox: [[Heat pump rebate]] and [[The book Julie recommended]]."
+    },
+    {
+     "role": "user",
+     "content": "Put the heat pump rebate note in Finances."
+    },
+    {
+     "role": "assistant",
+     "content": "I moved [[Heat pump rebate]] from the Inbox to Finances.\n(Actions déjà effectuées: move « Heat pump rebate »)\n(Interface: refresh )"
+    },
+    {
+     "role": "user",
+     "content": "Link the heat pump rebate to the renovation budget."
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_aLisZHKkLh86zhl0p3q5U4L1",
+       "type": "function",
+       "function": {
+        "name": "find_items",
+        "arguments": "{\"query\": \"Heat pump rebate\"}"
+       }
+      },
+      {
+       "id": "call_TrEtQulAuvTbbfv4bKOKrOgx",
+       "type": "function",
+       "function": {
+        "name": "find_items",
+        "arguments": "{\"query\": \"renovation budget\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_aLisZHKkLh86zhl0p3q5U4L1",
+     "content": "{\"items\": [{\"id\": \"1379e18267944676\", \"title\": \"Heat pump rebate\", \"place\": \"Domaines › Finances\", \"type\": \"note\", \"match\": \"meaning\"}]}"
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_TrEtQulAuvTbbfv4bKOKrOgx",
+     "content": "{\"items\": [{\"id\": \"1d00b1c705d245ee\", \"title\": \"Renovation budget\", \"place\": \"Domaines › Finances\", \"type\": \"note\", \"match\": \"meaning\"}, {\"id\": \"e08628c766f149f8\", \"title\": \"Contractor quote — Brightline Renovations\", \"place\": \"Projets › Kitchen renovation\", \"type\": \"PDF\", \"match\": \"words\"}]}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+     {
+      "id": "call_mr3PxXkvzfR7W3UgOWRn6qoc",
+      "type": "function",
+      "function": {
+       "name": "link_items",
+       "arguments": "{\"item\":\"Heat pump rebate\",\"other\":\"Renovation budget\"}"
+      }
+     }
+    ],
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 4626,
+    "completion_tokens": 26,
+    "total_tokens": 4652,
+    "prompt_tokens_details": {
+     "cached_tokens": 4411,
+     "cache_write_tokens": 212,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "What is still waiting in the Inbox?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items are still in the Inbox: [[Heat pump rebate]] and [[The book Julie recommended]]."
+    },
+    {
+     "role": "user",
+     "content": "Put the heat pump rebate note in Finances."
+    },
+    {
+     "role": "assistant",
+     "content": "I moved [[Heat pump rebate]] from the Inbox to Finances.\n(Actions déjà effectuées: move « Heat pump rebate »)\n(Interface: refresh )"
+    },
+    {
+     "role": "user",
+     "content": "Link the heat pump rebate to the renovation budget."
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_aLisZHKkLh86zhl0p3q5U4L1",
+       "type": "function",
+       "function": {
+        "name": "find_items",
+        "arguments": "{\"query\": \"Heat pump rebate\"}"
+       }
+      },
+      {
+       "id": "call_TrEtQulAuvTbbfv4bKOKrOgx",
+       "type": "function",
+       "function": {
+        "name": "find_items",
+        "arguments": "{\"query\": \"renovation budget\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_aLisZHKkLh86zhl0p3q5U4L1",
+     "content": "{\"items\": [{\"id\": \"1379e18267944676\", \"title\": \"Heat pump rebate\", \"place\": \"Domaines › Finances\", \"type\": \"note\", \"match\": \"meaning\"}]}"
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_TrEtQulAuvTbbfv4bKOKrOgx",
+     "content": "{\"items\": [{\"id\": \"1d00b1c705d245ee\", \"title\": \"Renovation budget\", \"place\": \"Domaines › Finances\", \"type\": \"note\", \"match\": \"meaning\"}, {\"id\": \"e08628c766f149f8\", \"title\": \"Contractor quote — Brightline Renovations\", \"place\": \"Projets › Kitchen renovation\", \"type\": \"PDF\", \"match\": \"words\"}]}"
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_mr3PxXkvzfR7W3UgOWRn6qoc",
+       "type": "function",
+       "function": {
+        "name": "link_items",
+        "arguments": "{\"item\":\"Heat pump rebate\",\"other\":\"Renovation budget\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_mr3PxXkvzfR7W3UgOWRn6qoc",
+     "content": "{\"changed\": 1, \"linked\": [\"Heat pump rebate\", \"Renovation budget\"]}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "I linked [[Heat pump rebate]] to [[Renovation budget]].",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 4684,
+    "completion_tokens": 17,
+    "total_tokens": 4701,
+    "prompt_tokens_details": {
+     "cached_tokens": 4623,
+     "cache_write_tokens": 58,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "What is still waiting in the Inbox?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items are still in the Inbox: [[Heat pump rebate]] and [[The book Julie recommended]]."
+    },
+    {
+     "role": "user",
+     "content": "Put the heat pump rebate note in Finances."
+    },
+    {
+     "role": "assistant",
+     "content": "I moved [[Heat pump rebate]] from the Inbox to Finances.\n(Actions déjà effectuées: move « Heat pump rebate »)\n(Interface: refresh )"
+    },
+    {
+     "role": "user",
+     "content": "Link the heat pump rebate to the renovation budget."
+    },
+    {
+     "role": "assistant",
+     "content": "I linked [[Heat pump rebate]] to [[Renovation budget]].\n(Actions déjà effectuées: link « Heat pump rebate — Renovation budget »)\n(Interface: refresh )"
+    },
+    {
+     "role": "user",
+     "content": "Undo that."
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+     {
+      "id": "call_glJ0MUDClQ5sOpM9g4Fymkaq",
+      "type": "function",
+      "function": {
+       "name": "undo_last_action",
+       "arguments": "{}"
+      }
+     }
+    ],
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 4464,
+    "completion_tokens": 14,
+    "total_tokens": 4478,
+    "prompt_tokens_details": {
+     "cached_tokens": 4411,
+     "cache_write_tokens": 50,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "What is still waiting in the Inbox?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items are still in the Inbox: [[Heat pump rebate]] and [[The book Julie recommended]]."
+    },
+    {
+     "role": "user",
+     "content": "Put the heat pump rebate note in Finances."
+    },
+    {
+     "role": "assistant",
+     "content": "I moved [[Heat pump rebate]] from the Inbox to Finances.\n(Actions déjà effectuées: move « Heat pump rebate »)\n(Interface: refresh )"
+    },
+    {
+     "role": "user",
+     "content": "Link the heat pump rebate to the renovation budget."
+    },
+    {
+     "role": "assistant",
+     "content": "I linked [[Heat pump rebate]] to [[Renovation budget]].\n(Actions déjà effectuées: link « Heat pump rebate — Renovation budget »)\n(Interface: refresh )"
+    },
+    {
+     "role": "user",
+     "content": "Undo that."
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_glJ0MUDClQ5sOpM9g4Fymkaq",
+       "type": "function",
+       "function": {
+        "name": "undo_last_action",
+        "arguments": "{}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_glJ0MUDClQ5sOpM9g4Fymkaq",
+     "content": "{\"undone\": true, \"kind\": \"link\", \"note_id\": \"1379e18267944676\"}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "Undone: I removed the link between [[Heat pump rebate]] and [[Renovation budget]].",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 4515,
+    "completion_tokens": 23,
+    "total_tokens": 4538,
+    "prompt_tokens_details": {
+     "cached_tokens": 4461,
+     "cache_write_tokens": 51,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  }
+ ],
+ "web": [],
+ "fetch": []
+}

@@ -169,7 +169,10 @@ def _pairs(conn: sqlite3.Connection, where: str = "", args: tuple = ()) -> list[
         seen[key] = max(seen.get(key, 0.0), r["score"])
     # pairs the user already answered (kept as a link, or dismissed) are no longer suggestions
     answered = {(r["a"], r["b"]) for r in conn.execute("SELECT a, b FROM related_choices")}
-    return [(a, b, sc) for (a, b), sc in seen.items() if (a, b) not in answered]
+    # and items already linked (a [[link]], the Archivist's link) have nothing to suggest
+    linked = {tuple(sorted((r["from_note"], r["to_note"]))) for r in conn.execute(
+        "SELECT from_note, to_note FROM links WHERE to_note IS NOT NULL")}
+    return [(a, b, sc) for (a, b), sc in seen.items() if (a, b) not in answered and (a, b) not in linked]
 
 
 def related(conn: sqlite3.Connection, note_id: str, limit: int = RELATED_PER_NOTE) -> list[dict[str, Any]]:
