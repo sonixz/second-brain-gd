@@ -1,0 +1,160 @@
+{
+ "extName": {
+  "message": "Second Brain GD"
+ },
+ "extDescription": {
+  "message": "Envoie des pages et des sélections à ton Second Brain GD local, et laisse-le ouvrir, ajouter et fermer les onglets qu’il ouvre. Ne parle qu’à 127.0.0.1."
+ },
+ "cmdSendPage": {
+  "message": "Envoyer cette page au Brain"
+ },
+ "pairIntro": {
+  "message": "Jumelle ce navigateur avec ton Brain. Dans l’app : <b>Captures → Envoyer du navigateur… → Jumeler un navigateur</b>, puis entre le code ici."
+ },
+ "pairingCode": {
+  "message": "Code de jumelage"
+ },
+ "port": {
+  "message": "Port"
+ },
+ "allowOpened": {
+  "message": "Laisser aussi le Brain lire les pages qu’<i>il</i> ouvre (pour dire « ajoute-la »)"
+ },
+ "pair": {
+  "message": "Jumeler"
+ },
+ "sendPage": {
+  "message": "Envoyer cette page"
+ },
+ "sendSelection": {
+  "message": "Envoyer la sélection"
+ },
+ "allowButton": {
+  "message": "Permettre de lire les pages que le Brain ouvre"
+ },
+ "settings": {
+  "message": "Réglages"
+ },
+ "shortcutHelp": {
+  "message": "Raccourci : <kbd>Alt</kbd>+<kbd>Maj</kbd>+<kbd>B</kbd> envoie la page. Clic droit sur une sélection pour n’envoyer qu’elle."
+ },
+ "reconnect": {
+  "message": "Reconnecter"
+ },
+ "unpair": {
+  "message": "Déjumeler ce navigateur"
+ },
+ "dotConnected": {
+  "message": "Connecté au Brain"
+ },
+ "dotPaired": {
+  "message": "Jumelé, pas connecté (l’app est-elle ouverte?)"
+ },
+ "dotNotPaired": {
+  "message": "Pas jumelé"
+ },
+ "stateConnected": {
+  "message": "Connecté à ton Brain (port $VALUE$).",
+  "placeholders": {
+   "value": {
+    "content": "$1"
+   }
+  }
+ },
+ "stateUnreachable": {
+  "message": "Jumelé, mais le Brain ne répond pas sur le port $VALUE$. Ouvre l’app : la connexion revient toute seule.",
+  "placeholders": {
+   "value": {
+    "content": "$1"
+   }
+  }
+ },
+ "enterCode": {
+  "message": "Entre le code affiché dans l’app."
+ },
+ "pairingFailed": {
+  "message": "Le jumelage a échoué"
+ },
+ "pairingFailedCode": {
+  "message": "Le jumelage a échoué ($VALUE$)",
+  "placeholders": {
+   "value": {
+    "content": "$1"
+   }
+  }
+ },
+ "sending": {
+  "message": "Envoi…"
+ },
+ "alreadyIn": {
+  "message": "Déjà dans ton Brain : « $VALUE$ »",
+  "placeholders": {
+   "value": {
+    "content": "$1"
+   }
+  }
+ },
+ "added": {
+  "message": "Ajouté."
+ },
+ "withoutPermission": {
+  "message": "Sans elle, les commandes vocales ne peuvent pas ajouter les pages que le Brain ouvre; le bouton Envoyer fonctionne quand même."
+ },
+ "unreachablePair": {
+  "message": "Le Brain ne répond pas sur 127.0.0.1:$VALUE$. L’app est-elle ouverte, et le port est-il le bon?",
+  "placeholders": {
+   "value": {
+    "content": "$1"
+   }
+  }
+ },
+ "unreachable": {
+  "message": "Le Brain ne répond pas sur 127.0.0.1:$VALUE$. L’app est-elle ouverte?",
+  "placeholders": {
+   "value": {
+    "content": "$1"
+   }
+  }
+ },
+ "notPairedYet": {
+  "message": "Pas encore jumelé : ouvre cette extension et entre le code affiché dans l’app."
+ },
+ "errorStatus": {
+  "message": "Erreur $VALUE$",
+  "placeholders": {
+   "value": {
+    "content": "$1"
+   }
+  }
+ },
+ "onlyHttpOpen": {
+  "message": "seules les pages http/https peuvent être ouvertes"
+ },
+ "noOpenedPage": {
+  "message": "aucune page ouverte par le Brain n’est ouverte : dis « ajoute cette page » pour l’onglet devant toi"
+ },
+ "noTab": {
+  "message": "aucun onglet à capturer"
+ },
+ "cannotSend": {
+  "message": "cette page ne peut pas être envoyée (seulement des pages web, pas celles du navigateur ou des extensions)"
+ },
+ "mayNotRead": {
+  "message": "l’extension ne peut pas encore lire les pages : ouvre-la et clique « Permettre de lire les pages que le Brain ouvre »"
+ },
+ "nothingSelected": {
+  "message": "rien n’est sélectionné sur la page"
+ },
+ "pictureUnreadable": {
+  "message": "cette image ne peut pas être lue"
+ },
+ "menuImage": {
+  "message": "Envoyer cette image au Brain"
+ },
+ "menuPage": {
+  "message": "Envoyer cette page au Brain"
+ },
+ "menuSelection": {
+  "message": "Envoyer la sélection au Brain"
+ }
+}

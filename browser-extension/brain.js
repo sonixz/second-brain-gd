@@ -2,6 +2,11 @@
 export const DEFAULT_PORT = 8765;
 export const VERSION = chrome.runtime.getManifest().version;
 
+// A message in the browser's language (_locales/en, _locales/fr): t("stateConnected", port).
+export function t(key, ...subs) {
+  return chrome.i18n.getMessage(key, subs.map(String)) || key;
+}
+
 export async function settings() {
   const s = await chrome.storage.local.get(["port", "token"]);
   return { port: Number(s.port) || DEFAULT_PORT, token: s.token || "" };
@@ -26,7 +31,7 @@ export async function canReadTabs() {
 // POST to the engine with the browser token. Returns the JSON, or throws an Error with the engine's reason.
 export async function post(path, body) {
   const { port, token } = await settings();
-  if (!token) throw new Error("Not paired yet: open this extension and enter the code shown in the app.");
+  if (!token) throw new Error(t("notPairedYet"));
   let res;
   try {
     res = await fetch(base(port) + path, {
@@ -35,12 +40,12 @@ export async function post(path, body) {
       body: JSON.stringify(body),
     });
   } catch (e) {
-    throw new Error(`The Brain is not reachable on 127.0.0.1:${port}. Is the app open?`);
+    throw new Error(t("unreachable", port));
   }
   const data = await res.json().catch(() => ({}));
   if (!res.ok) {
     if (res.status === 401) await chrome.storage.local.remove("token");
-    throw new Error(data.detail || `Error ${res.status}`);
+    throw new Error(data.detail || t("errorStatus", res.status));
   }
   return data;
 }

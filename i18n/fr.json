@@ -26,6 +26,7 @@
  "%s · %.1f min · F9 to end": "%s · %.1f min · F9 pour terminer",
  "%s · %d item%s": "%s · %d élément%s",
  "%s · %d items%s": "%s · %d éléments%s",
+ "%s · %s file": "%s · %s fichier",
  "%s · %s files": "%s · %s fichiers",
  "%s · SETTINGS": "%s · RÉGLAGES",
  "%s · similarity %d%%": "%s · similarité %d%%",

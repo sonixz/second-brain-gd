@@ -378,7 +378,7 @@ func _render() -> void:
 	var entry_names := {"database": I18n.t("Database"), "notes": I18n.t("Notes"), "logs": I18n.t("Logs"), "venv": I18n.t("Venv")}
 	for key in ["database", "notes", "logs", "venv"]:
 		var e: Dictionary = storage_entries.get(key, {})
-		srows.append([entry_names[key], I18n.t("%s · %s files") % [SbFormat.bytes(e.get("bytes")), SbFormat.number(e.get("files", 0))] if not e.is_empty() else na])
+		srows.append([entry_names[key], (I18n.t("%s · %s file") if int(e.get("files", 0)) == 1 else I18n.t("%s · %s files")) % [SbFormat.bytes(e.get("bytes")), SbFormat.number(e.get("files", 0))] if not e.is_empty() else na])
 	srows.append([I18n.t("Disk free"), I18n.t("%s of %s") % [SbFormat.bytes(disk.get("free_bytes")), SbFormat.bytes(disk.get("total_bytes"))] if disk.get("free_bytes") != null else na])
 	storage_card.set_rows(srows)
 

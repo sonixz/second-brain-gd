@@ -1,24 +1,49 @@
 {
   "manifest_version": 3,
-  "name": "Second Brain GD",
+  "name": "__MSG_extName__",
   "short_name": "Second Brain",
   "version": "1.0.0",
-  "description": "Send pages and selections to your local Second Brain GD, and let it open, add and close the tabs it opens. Talks only to 127.0.0.1.",
+  "description": "__MSG_extDescription__",
   "minimum_chrome_version": "116",
-  "icons": {"16": "icons/icon-16.png", "32": "icons/icon-32.png", "48": "icons/icon-48.png", "128": "icons/icon-128.png"},
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
   "action": {
     "default_title": "Second Brain GD",
     "default_popup": "popup.html",
-    "default_icon": {"16": "icons/icon-16.png", "32": "icons/icon-32.png"}
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
   },
-  "background": {"service_worker": "background.js", "type": "module"},
-  "permissions": ["tabs", "scripting", "activeTab", "storage", "alarms", "contextMenus"],
-  "host_permissions": ["http://127.0.0.1/*"],
-  "optional_host_permissions": ["<all_urls>"],
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "tabs",
+    "scripting",
+    "activeTab",
+    "storage",
+    "alarms",
+    "contextMenus"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1/*"
+  ],
+  "optional_host_permissions": [
+    "<all_urls>"
+  ],
   "commands": {
     "send-page": {
-      "suggested_key": {"default": "Alt+Shift+B"},
-      "description": "Send this page to the Brain"
+      "suggested_key": {
+        "default": "Alt+Shift+B"
+      },
+      "description": "__MSG_cmdSendPage__"
     }
-  }
+  },
+  "default_locale": "en"
 }

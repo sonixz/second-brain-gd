@@ -37,6 +37,18 @@ func _run() -> void:
 	app.show_console()
 	await pause(6.0)
 	await shot("06-engine-room")
+	var scrolls := app.current().find_children("*", "ScrollContainer", true, false)
+	if not scrolls.is_empty():  # down to the real costs (OpenAI billing)
+		var sc: ScrollContainer = scrolls[0]
+		var top := sc.get_v_scroll_bar().max_value
+		for n in app.current().find_children("*", "", true, false):  # the billing card's top, like the website image
+			var sn: Script = n.get_script()
+			if sn != null and sn.resource_path.ends_with("billing_panel.gd") and n is Control:
+				top = (n as Control).global_position.y - (sc.get_child(0) as Control).global_position.y - 4.0
+				break
+		sc.scroll_vertical = int(top)
+		await pause(1.5)
+		await shot("07-costs")
 	app.show_brain()
 	await pause(2.0)
 	await finish()

@@ -61,9 +61,14 @@ CLIPBOARD_RE = re.compile(r"presse[- ]?papier|clipboard|copi[ée]|ce que j'ai co
                           r"ajoute[rz]? (ça|ca|ceci|cela|ce lien|ce texte)\b|\bcopied\b|\bpaste|add (this|that|it)\b", re.IGNORECASE)
 # A reply that reports a change to the brain, in a turn where nothing really changed, gets corrected
 # (2026-11-04: « les deux CV ont été détachés » after two updates that changed nothing).
-# Past participles only (« classé », not the « classe » of a note title); quoted and [[cited]] titles are ignored.
-CHANGE_RE = re.compile(r"\b(classée?s?|déplacée?s?|détachée?s?|ajoutée?s?|rangée?s?|mise?s? dans|supprimée?s?|reliée?s?|"
-                       r"retirée?s?|enlevée?s?|créée?s?|modifiée?s?)(?!\w)"
+# Past participles only (« classé », not the « classe » of a note title), and only as an action: « j'ai classé »,
+# « ont été détachés », « c'est classé », or opening a sentence (« Classé dans… »). A description such as « des notes
+# reliées entre elles » is not a claim (2026-11-05: it made a good answer get replaced by « aucun changement »).
+# Quoted and [[cited]] titles are ignored.
+_FR_DONE = (r"(?:classée?s?|déplacée?s?|détachée?s?|ajoutée?s?|rangée?s?|mise?s? dans|supprimée?s?|reliée?s?|"
+            r"retirée?s?|enlevée?s?|créée?s?|modifiée?s?)(?!\w)")
+CHANGE_RE = re.compile(r"\b(?:j['’]ai|je l['’]ai|je les ai|on a|a été|ont été|est maintenant|sont maintenant|c['’]est)\s+"
+                       r"(?:\w+\s+)?" + _FR_DONE + r"|(?:^|[.!?:]\s+)" + _FR_DONE +
                        r"|\b(?:I've|I have|has been|have been|was|were|is now|are now)\s+(?:\w+\s+)?"
                        r"(?:filed|moved|detached|added|removed|deleted|linked|unlinked|created|trashed|renamed)\b", re.IGNORECASE)
 QUOTED_RE = re.compile(r"\[\[.*?\]\]|«.*?»|\".*?\"")

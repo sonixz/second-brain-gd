@@ -1,7 +1,7 @@
 # Drives a throwaway Microsoft Edge for the "Connect your browser" How-to guide (tools/howto.sh --edge browser).
 # A separate Edge: its own temporary profile (no sign-in, no sync, nothing from your own Edge), the extension loaded
 # from the project folder, DevTools on 127.0.0.1 only. "close" kills that Edge and deletes the profile.
-#   edge.ps1 launch <extension dir> <url>   |  eval <target url part> <js> [gesture]  |  shot <png>
+#   edge.ps1 launch <extension dir> <url> [lang, en-US by default]  |  eval <target url part> <js> [gesture]  |  shot <png>
 #   edge.ps1 click <button name> [menu]     |  cdp <target> <method> <k=v;k=v>  |  focus  |  targets  |  names  |  close
 param([Parameter(Position = 0)][string]$Cmd, [Parameter(Position = 1)][string]$A = "",
       [Parameter(Position = 2)][string]$B = "", [Parameter(Position = 3)][string]$C = "")
@@ -79,7 +79,7 @@ switch ($Cmd) {
     $args = @("--user-data-dir=$Profile", "--no-first-run", "--no-default-browser-check", "--disable-sync",
       "--disable-features=msImplicitSignin,msEdgeImplicitSignin,DisableLoadExtensionCommandLineSwitch,msEdgeWelcomePage",
       "--remote-debugging-port=$Port", "--remote-allow-origins=http://127.0.0.1:$Port", "--load-extension=$A",
-      "--window-position=80,60", "--window-size=1280,800", "--lang=en-US", "--new-window", $B)
+      "--window-position=80,60", "--window-size=1280,800", "--lang=$(if ($C) { $C } else { 'en-US' })", "--new-window", $B)
     Start-Process -FilePath $Edge -ArgumentList $args | Out-Null
     for ($i = 0; $i -lt 40; $i++) { Start-Sleep -Milliseconds 500; try { Targets | Out-Null; break } catch {} }
     Targets | ForEach-Object { "{0}`t{1}" -f $_.type, $_.url }

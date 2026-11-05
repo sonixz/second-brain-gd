@@ -1,4 +1,9 @@
-import { DEFAULT_PORT, settings } from "./brain.js";
+import { DEFAULT_PORT, settings, t } from "./brain.js";
+
+// The popup's texts, in the browser's language (French in a French Edge).
+for (const el of document.querySelectorAll("[data-i18n]")) el.textContent = t(el.dataset.i18n);
+for (const el of document.querySelectorAll("[data-i18n-html]")) el.innerHTML = t(el.dataset.i18nHtml);  // our own messages
+document.documentElement.lang = chrome.i18n.getUILanguage();
 
 const $ = (id) => document.getElementById(id);
 const show = (id, on) => { $(id).hidden = !on; };
@@ -17,10 +22,9 @@ async function render() {
   show("pair", !st.paired);
   show("ready", st.paired);
   $("dot").className = "dot " + (st.connected ? "on" : st.paired ? "off" : "");
-  $("dot").title = st.connected ? "Connected to the Brain" : st.paired ? "Paired, not connected (is the app open?)" : "Not paired";
+  $("dot").title = st.connected ? t("dotConnected") : st.paired ? t("dotPaired") : t("dotNotPaired");
   if (st.paired) {
-    $("state").textContent = st.connected ? `Connected to your Brain (port ${st.port}).`
-      : `Paired, but the Brain is not reachable on port ${st.port}. Open the app; it reconnects by itself.`;
+    $("state").textContent = st.connected ? t("stateConnected", st.port) : t("stateUnreachable", st.port);
     show("allowBtn", !st.canRead);
   } else {
     const { port } = await settings();
@@ -32,7 +36,7 @@ $("pairBtn").addEventListener("click", async () => {
   error("");
   const code = $("code").value.trim();
   const port = Number($("port").value) || DEFAULT_PORT;
-  if (!code) return error("Enter the code shown in the app.");
+  if (!code) return error(t("enterCode"));
   // Both start at the click: the permission prompt must come straight from it, and it closes this popup, so the
   // pairing itself runs in the service worker and finishes even if the popup is gone.
   const paired = chrome.runtime.sendMessage({ type: "pair", code, port });
@@ -41,7 +45,7 @@ $("pairBtn").addEventListener("click", async () => {
   try {
     await asked.catch(() => false);
     const out = await paired;
-    if (!out || !out.ok) throw new Error((out && out.error) || "Pairing failed");
+    if (!out || !out.ok) throw new Error((out && out.error) || t("pairingFailed"));
     await new Promise((r) => setTimeout(r, 600));
     await render();
   } catch (e) {
@@ -57,12 +61,12 @@ async function sendPage(selectionOnly) {
   const btn = selectionOnly ? $("sendSel") : $("send");
   btn.disabled = true;
   const label = btn.textContent;
-  btn.textContent = "Sending…";
+  btn.textContent = t("sending");
   const out = await chrome.runtime.sendMessage({ type: "send", selectionOnly });
   btn.disabled = false;
   btn.textContent = label;
   if (!out.ok) return error(out.error);
-  $("result").textContent = out.duplicate ? `Already in your Brain: “${out.title}”` : `✓ ${out.receipt || "Added."}`;
+  $("result").textContent = out.duplicate ? t("alreadyIn", out.title) : `✓ ${out.receipt || t("added")}`;
   show("result", true);
 }
 
@@ -70,7 +74,7 @@ $("send").addEventListener("click", () => sendPage(false));
 $("sendSel").addEventListener("click", () => sendPage(true));
 $("allowBtn").addEventListener("click", async () => {
   const ok = await chrome.permissions.request({ origins: ["<all_urls>"] }).catch(() => false);
-  if (!ok) error("Without it, voice commands cannot add the pages the Brain opens; clicking Send still works.");
+  if (!ok) error(t("withoutPermission"));
   render();
 });
 $("reconnect").addEventListener("click", async () => {

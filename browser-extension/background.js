@@ -2,7 +2,7 @@
 // Keeps one WebSocket to the local engine (127.0.0.1) and answers its commands: open a tab, capture a tab,
 // close the tabs it opened. Also sends pages when you click, use the shortcut or the right-click menu.
 // It only reads a page you send yourself or a tab the Brain opened; it never touches your other tabs.
-import { base, browserName, canReadTabs, DEFAULT_PORT, grabPage, pictureData, post, settings, VERSION } from "./brain.js";
+import { base, browserName, canReadTabs, DEFAULT_PORT, grabPage, pictureData, post, settings, t, VERSION } from "./brain.js";
 
 let ws = null;
 let retryMs = 2000;
@@ -113,10 +113,10 @@ async function pair(code, port) {
       body: JSON.stringify({ code, browser: browserName() }),
     });
   } catch {
-    return pairFailed(`The Brain is not reachable on 127.0.0.1:${port}. Is the app open, and is the port right?`);
+    return pairFailed(t("unreachablePair", port));
   }
   const data = await res.json().catch(() => ({}));
-  if (!res.ok || !data.token) return pairFailed(data.detail || `Pairing failed (${res.status})`);
+  if (!res.ok || !data.token) return pairFailed(data.detail || t("pairingFailedCode", res.status));
   await chrome.storage.session.remove("pairError");
   await chrome.storage.local.set({ port, token: data.token });  // the storage listener connects
   return { ok: true };
@@ -130,7 +130,7 @@ async function pairFailed(error) {
 // ---------------------------------------------------------------- commands from the Brain
 async function run(cmd) {
   if (cmd.action === "open") {
-    if (!/^https?:\/\//i.test(cmd.url || "")) throw new Error("only http/https pages can be opened");
+    if (!/^https?:\/\//i.test(cmd.url || "")) throw new Error(t("onlyHttpOpen"));
     const tab = await chrome.tabs.create({ url: cmd.url, active: true });
     const { opened: o } = await opened();
     const ref = String(tab.id);
@@ -153,9 +153,9 @@ async function run(cmd) {
     } else {
       const { opened: o, last } = await opened();
       tabId = o[last] ? Number(last) : undefined;
-      if (tabId === undefined) throw new Error("no page opened by the Brain is open: say “add this page” for the tab in front");
+      if (tabId === undefined) throw new Error(t("noOpenedPage"));
     }
-    if (tabId === undefined) throw new Error("no tab to capture");
+    if (tabId === undefined) throw new Error(t("noTab"));
     return capture(tabId, { selectionOnly: !!cmd.selection_only, place: cmd.place || "", byVoice: true });
   }
   throw new Error(`unknown command ${cmd.action}`);
@@ -175,9 +175,9 @@ async function waitLoaded(tabId, ms = 15000) {
 export async function capture(tabId, { selectionOnly = false, place = "", byVoice = false } = {}) {
   const tab = await waitLoaded(tabId);
   const url = tab.url || "";
-  if (!/^https?:\/\//i.test(url)) throw new Error("this page cannot be sent (only web pages, not browser or extension pages)");
+  if (!/^https?:\/\//i.test(url)) throw new Error(t("cannotSend"));
   if (byVoice && !(await canReadTabs())) {
-    throw new Error("the extension may not read pages yet: open it and click “Allow reading the pages the Brain opens”");
+    throw new Error(t("mayNotRead"));
   }
   let page;
   try {
@@ -187,7 +187,7 @@ export async function capture(tabId, { selectionOnly = false, place = "", byVoic
     page = null;  // a PDF or a protected page: the engine downloads it instead
   }
   if (!page) page = { url, title: tab.title || "", html: "", text: "", selection: "" };
-  if (selectionOnly && !page.selection.trim()) throw new Error("nothing is selected on the page");
+  if (selectionOnly && !page.selection.trim()) throw new Error(t("nothingSelected"));
   const { pictures = [], ...rest } = page;
   const images = [];
   let total = 0;
@@ -229,7 +229,7 @@ async function sendImage(tab, srcUrl) {
       lang = (res && res.result && res.result.lang) || "";
     } catch { /* a page the extension may not read: the picture goes without its alt text */ }
     const data = await pictureData(srcUrl);
-    if (!data && srcUrl.startsWith("data:")) throw new Error("this picture cannot be read");
+    if (!data && srcUrl.startsWith("data:")) throw new Error(t("pictureUnreadable"));
     const out = await post("/browser/image", { page_url: tab.url || "", page_title: tab.title || "",
                                                image_url: srcUrl.startsWith("data:") ? "" : srcUrl, alt, lang, data });
     setBadge(out.duplicate ? "=" : "✓", "#3d8b5a", tab.id);
@@ -242,9 +242,9 @@ async function sendImage(tab, srcUrl) {
 
 function menus() {
   chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({ id: "sbgd-image", title: "Send this image to the Brain", contexts: ["image"] });
-    chrome.contextMenus.create({ id: "sbgd-page", title: "Send this page to the Brain", contexts: ["page"] });  // not on links or pictures: there, the picture item stands alone
-    chrome.contextMenus.create({ id: "sbgd-selection", title: "Send the selection to the Brain", contexts: ["selection"] });
+    chrome.contextMenus.create({ id: "sbgd-image", title: t("menuImage"), contexts: ["image"] });
+    chrome.contextMenus.create({ id: "sbgd-page", title: t("menuPage"), contexts: ["page"] });  // not on links or pictures: there, the picture item stands alone
+    chrome.contextMenus.create({ id: "sbgd-selection", title: t("menuSelection"), contexts: ["selection"] });
   });
 }
 

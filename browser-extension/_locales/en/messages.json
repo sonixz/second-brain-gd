@@ -1,0 +1,160 @@
+{
+ "extName": {
+  "message": "Second Brain GD"
+ },
+ "extDescription": {
+  "message": "Send pages and selections to your local Second Brain GD, and let it open, add and close the tabs it opens. Talks only to 127.0.0.1."
+ },
+ "cmdSendPage": {
+  "message": "Send this page to the Brain"
+ },
+ "pairIntro": {
+  "message": "Pair this browser with your Brain. In the app: <b>Captures → Send from browser… → Pair a browser</b>, then enter the code here."
+ },
+ "pairingCode": {
+  "message": "Pairing code"
+ },
+ "port": {
+  "message": "Port"
+ },
+ "allowOpened": {
+  "message": "Also let the Brain read the pages <i>it</i> opens (so you can say “add it”)"
+ },
+ "pair": {
+  "message": "Pair"
+ },
+ "sendPage": {
+  "message": "Send this page"
+ },
+ "sendSelection": {
+  "message": "Send the selection"
+ },
+ "allowButton": {
+  "message": "Allow reading the pages the Brain opens"
+ },
+ "settings": {
+  "message": "Settings"
+ },
+ "shortcutHelp": {
+  "message": "Shortcut: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> sends the page. Right-click a selection to send just that."
+ },
+ "reconnect": {
+  "message": "Reconnect"
+ },
+ "unpair": {
+  "message": "Unpair this browser"
+ },
+ "dotConnected": {
+  "message": "Connected to the Brain"
+ },
+ "dotPaired": {
+  "message": "Paired, not connected (is the app open?)"
+ },
+ "dotNotPaired": {
+  "message": "Not paired"
+ },
+ "stateConnected": {
+  "message": "Connected to your Brain (port $VALUE$).",
+  "placeholders": {
+   "value": {
+    "content": "$1"
+   }
+  }
+ },
+ "stateUnreachable": {
+  "message": "Paired, but the Brain is not reachable on port $VALUE$. Open the app; it reconnects by itself.",
+  "placeholders": {
+   "value": {
+    "content": "$1"
+   }
+  }
+ },
+ "enterCode": {
+  "message": "Enter the code shown in the app."
+ },
+ "pairingFailed": {
+  "message": "Pairing failed"
+ },
+ "pairingFailedCode": {
+  "message": "Pairing failed ($VALUE$)",
+  "placeholders": {
+   "value": {
+    "content": "$1"
+   }
+  }
+ },
+ "sending": {
+  "message": "Sending…"
+ },
+ "alreadyIn": {
+  "message": "Already in your Brain: “$VALUE$”",
+  "placeholders": {
+   "value": {
+    "content": "$1"
+   }
+  }
+ },
+ "added": {
+  "message": "Added."
+ },
+ "withoutPermission": {
+  "message": "Without it, voice commands cannot add the pages the Brain opens; clicking Send still works."
+ },
+ "unreachablePair": {
+  "message": "The Brain is not reachable on 127.0.0.1:$VALUE$. Is the app open, and is the port right?",
+  "placeholders": {
+   "value": {
+    "content": "$1"
+   }
+  }
+ },
+ "unreachable": {
+  "message": "The Brain is not reachable on 127.0.0.1:$VALUE$. Is the app open?",
+  "placeholders": {
+   "value": {
+    "content": "$1"
+   }
+  }
+ },
+ "notPairedYet": {
+  "message": "Not paired yet: open this extension and enter the code shown in the app."
+ },
+ "errorStatus": {
+  "message": "Error $VALUE$",
+  "placeholders": {
+   "value": {
+    "content": "$1"
+   }
+  }
+ },
+ "onlyHttpOpen": {
+  "message": "only http/https pages can be opened"
+ },
+ "noOpenedPage": {
+  "message": "no page opened by the Brain is open: say “add this page” for the tab in front"
+ },
+ "noTab": {
+  "message": "no tab to capture"
+ },
+ "cannotSend": {
+  "message": "this page cannot be sent (only web pages, not browser or extension pages)"
+ },
+ "mayNotRead": {
+  "message": "the extension may not read pages yet: open it and click “Allow reading the pages the Brain opens”"
+ },
+ "nothingSelected": {
+  "message": "nothing is selected on the page"
+ },
+ "pictureUnreadable": {
+  "message": "this picture cannot be read"
+ },
+ "menuImage": {
+  "message": "Send this image to the Brain"
+ },
+ "menuPage": {
+  "message": "Send this page to the Brain"
+ },
+ "menuSelection": {
+  "message": "Send the selection to the Brain"
+ }
+}

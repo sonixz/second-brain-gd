@@ -19,3 +19,4 @@ Full guide, permissions, security and troubleshooting: `public/docs.html#extensi
 | `background.js` | Service worker: WebSocket to the engine, commands (open, capture, close), clicks and menus |
 | `brain.js` | Shared helpers: settings, calls to the engine, the page reader injected in a tab |
 | `popup.html/.js/.css` | Pairing, status, send page / selection, permission |
+| `_locales/en`, `_locales/fr` | Its texts in English and French: it follows the browser's language |

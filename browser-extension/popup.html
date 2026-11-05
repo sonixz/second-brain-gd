@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en">
+<html>
 <head>
   <meta charset="utf-8">
   <title>Second Brain GD</title>
@@ -9,24 +9,24 @@
   <header><img src="icons/icon-32.png" alt=""><h1>Second Brain</h1><span id="dot" class="dot" title=""></span></header>
 
   <section id="pair" hidden>
-    <p>Pair this browser with your Brain. In the app: <b>Captures → Send from browser… → Pair a browser</b>, then enter the code here.</p>
-    <label>Pairing code <input id="code" placeholder="ABCD-EFGH" autocomplete="off" spellcheck="false"></label>
-    <label>Port <input id="port" type="number" min="1024" max="65535" value="8765"></label>
-    <label class="check"><input id="allow" type="checkbox" checked> <span>Also let the Brain read the pages <i>it</i> opens (so you can say “add it”)</span></label>
-    <button id="pairBtn" class="primary">Pair</button>
+    <p data-i18n-html="pairIntro"></p>
+    <label><span data-i18n="pairingCode"></span> <input id="code" placeholder="ABCD-EFGH" autocomplete="off" spellcheck="false"></label>
+    <label><span data-i18n="port"></span> <input id="port" type="number" min="1024" max="65535" value="8765"></label>
+    <label class="check"><input id="allow" type="checkbox" checked> <span data-i18n-html="allowOpened"></span></label>
+    <button id="pairBtn" class="primary" data-i18n="pair"></button>
   </section>
 
   <section id="ready" hidden>
     <p id="state" class="muted"></p>
-    <button id="send" class="primary">Send this page</button>
-    <button id="sendSel">Send the selection</button>
+    <button id="send" class="primary" data-i18n="sendPage"></button>
+    <button id="sendSel" data-i18n="sendSelection"></button>
     <p id="result" class="result" hidden></p>
-    <button id="allowBtn" class="ghost" hidden>Allow reading the pages the Brain opens</button>
+    <button id="allowBtn" class="ghost" hidden data-i18n="allowButton"></button>
     <details>
-      <summary>Settings</summary>
-      <p class="muted">Shortcut: <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd> sends the page. Right-click a selection to send just that.</p>
-      <button id="reconnect" class="ghost">Reconnect</button>
-      <button id="unpair" class="ghost danger">Unpair this browser</button>
+      <summary data-i18n="settings"></summary>
+      <p class="muted" data-i18n-html="shortcutHelp"></p>
+      <button id="reconnect" class="ghost" data-i18n="reconnect"></button>
+      <button id="unpair" class="ghost danger" data-i18n="unpair"></button>
     </details>
   </section>
 

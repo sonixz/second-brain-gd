@@ -228,3 +228,11 @@ class EnglishApprovalTest(unittest.TestCase):
         self.assertTrue(core.CHANGE_RE.search("The two CVs have been detached."))
         self.assertTrue(core.CHANGE_RE.search("I've moved it to Job search."))
         self.assertFalse(core.CHANGE_RE.search("This note is linked to the kitchen project."))
+
+    def test_a_french_false_success_is_caught_but_not_a_description(self):
+        for claim in ("Les deux CV ont été détachés.", "J'ai classé la note dans Finances.", "C’est classé dans Projets.",
+                      "Classé dans Ressources › Articles.", "Voilà. Ajoutée à ta liste d'épicerie.", "Je les ai déplacés."):
+            self.assertTrue(core.CHANGE_RE.search(claim), claim)
+        for description in ("Le Brain, c’est ton espace pour garder tes idées sous forme de notes reliées entre elles.",
+                            "Tu as trois éléments classés dans Cuisine.", "La note créée hier parle du compost."):
+            self.assertFalse(core.CHANGE_RE.search(description), description)
