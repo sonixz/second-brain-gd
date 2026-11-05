@@ -86,3 +86,12 @@ the receipt toast said “Ressources”; the popup had a French phrase. Recordin
 - Guide 6: the owner wants Edge shown for real (no screenshots from them): done with a throwaway Edge profile, with
   their go (2026-11-05). Re-running it takes the screen for about three minutes: ask first.
 - Budget: approved by the owner ("pas de problème").
+
+## Loop 25: pictures (2026-11-05)
+
+Guide "Keep the pictures that matter" (`tools/howto.sh --record --edge images`), captured in the real Edge: a page sent
+with its main image and figures, the card's picture, the reading view, Edge's own right-click menu (a real right-click
+through DevTools, the menu item clicked through UI Automation), the picture as an item, a question about it. The
+real runs caught: the vision model described English pages in French (now told the page's language, from its
+`<html lang>` or its words); the guides' recorded OCR answered for any picture with the insurance scan's text (it now
+answers only for PDF pages, or for a picture recorded by its hash). About 45,000 tokens per recording.

@@ -30,6 +30,25 @@ class PairIn(BaseModel):
     browser: str = Field(default="", max_length=120)
 
 
+class PictureIn(BaseModel):
+    """One of the few pictures the extension chose on the page, with its bytes (base64), as the browser had it."""
+    url: str = Field(default="", max_length=4000)
+    alt: str = Field(default="", max_length=400)
+    caption: str = Field(default="", max_length=600)
+    data: str = Field(default="", max_length=11_200_000)  # 8 MB once decoded
+
+
+class ImageIn(BaseModel):
+    """A picture the user chose (right-click → Send this image to the Brain)."""
+    page_url: str = Field(min_length=8, max_length=4000)
+    page_title: str = Field(default="", max_length=400)
+    image_url: str = Field(default="", max_length=4000)
+    alt: str = Field(default="", max_length=400)
+    data: str = Field(default="", max_length=11_200_000)  # empty: the engine downloads image_url itself
+    place: str = Field(default="", max_length=120)
+    lang: str = Field(default="", max_length=20)
+
+
 class PageIn(BaseModel):
     url: str = Field(min_length=8, max_length=4000)
     title: str = Field(default="", max_length=400)
@@ -38,6 +57,35 @@ class PageIn(BaseModel):
     selection: str = Field(default="", max_length=20_000)
     selection_only: bool = False
     place: str = Field(default="", max_length=120)
+    images: list[PictureIn] = Field(default_factory=list, max_length=8)
+    lang: str = Field(default="", max_length=20)  # the page's <html lang>: pictures are described in it
+
+
+def _bytes(b64: str) -> bytes:
+    import base64
+    import binascii
+
+    try:
+        return base64.b64decode(b64.split(",", 1)[-1] if b64.startswith("data:") else b64, validate=False)
+    except (binascii.Error, ValueError):
+        return b""
+
+
+def _pictures(given: list[PictureIn]) -> list[dict[str, Any]]:
+    """The page's chosen pictures with their bytes; the ones the extension could not read are downloaded here."""
+    from engine.sources import images
+
+    out = []
+    for p in given[:images.MAX_PER_PAGE]:
+        data = _bytes(p.data) if p.data else b""
+        if not data and p.url.startswith(("http://", "https://")):
+            try:
+                data = images.download(p.url)
+            except Exception:
+                continue
+        if data:
+            out.append({"url": p.url, "alt": p.alt, "caption": p.caption, "data": data})
+    return out
 
 
 def needs_download(page: PageIn) -> bool:
@@ -51,7 +99,6 @@ def needs_download(page: PageIn) -> bool:
 
 def capture(layout: Layout, page: PageIn) -> dict[str, Any]:
     """Adds a page (or the selected passage) sent by the browser, then lets the archivist file it."""
-    from engine.assistant import core
     from engine.assistant.actions import resolve_place
     from engine.brain import archivist
     from engine.sources import core as sources
@@ -63,6 +110,7 @@ def capture(layout: Layout, page: PageIn) -> dict[str, Any]:
         client = None
     with database.session(layout.database) as conn:
         space_id = None
+        kept_images = 0
         if page.place:
             p = resolve_place(conn, page.place)
             space_id = p["id"] if p else None
@@ -74,9 +122,49 @@ def capture(layout: Layout, page: PageIn) -> dict[str, Any]:
         elif needs_download(page):  # a PDF or a protected tab: download it instead
             src = sources.ingest_url(conn, client, page.url, space_id)
             note_id, duplicate, title = src.get("note_id"), bool(src.get("duplicate")), src.get("title", "")
+            kept_images = int((src.get("images") or {}).get("kept", 0))
         else:
-            src = sources.ingest_page(conn, client, page.url, page.title, page.html, page.text, space_id)
+            pictures = _pictures(page.images)
+            src = sources.ingest_page(conn, client, page.url, page.title, page.html, page.text, space_id, pictures, page.lang)
             note_id, duplicate, title = src.get("note_id"), bool(src.get("duplicate")), src.get("title", "")
+            kept_images = int((src.get("images") or {}).get("kept", 0))
+    return _finish(layout, client, note_id, duplicate, title, space_id, page.url, kept_images)
+
+
+def capture_image(layout: Layout, pic: ImageIn) -> dict[str, Any]:
+    """A picture the user chose on a page: an item of its own, filed by the archivist like anything else."""
+    from engine.assistant.actions import resolve_place
+    from engine.sources import core as sources
+    from engine.sources import images
+
+    key, _ = secrets.get(layout, "openai")
+    try:
+        client = make_client(key)
+    except PermissionError:
+        client = None
+    data = _bytes(pic.data) if pic.data else b""
+    if not data:  # the extension could not read it (no permission for that site): the engine downloads it
+        try:
+            data = images.download(pic.image_url)
+        except OSError as exc:
+            from engine.sources.extract import ExtractError
+
+            raise ExtractError(f"cannot download this picture: {exc}") from exc
+    with database.session(layout.database) as conn:
+        space_id = None
+        if pic.place:
+            p = resolve_place(conn, pic.place)
+            space_id = p["id"] if p else None
+        src = sources.ingest_image(conn, client, data, pic.page_url, pic.page_title, pic.alt, pic.image_url, space_id, pic.lang)
+    return _finish(layout, client, src.get("note_id"), bool(src.get("duplicate")), src.get("title", ""), space_id,
+                   pic.image_url or pic.page_url)
+
+
+def _finish(layout: Layout, client: Any, note_id: str | None, duplicate: bool, title: str, space_id: str | None,
+            url: str, kept_images: int = 0) -> dict[str, Any]:
+    from engine.assistant import core
+    from engine.brain import archivist
+
     receipt = ""
     if note_id and not duplicate and client is not None and space_id is None:
         with database.session(layout.database) as conn:
@@ -87,9 +175,12 @@ def capture(layout: Layout, page: PageIn) -> dict[str, Any]:
                                       "en") if note_id else ""  # shown in the app and the popup, which are in English
         database.record_event(conn, {"timestamp": utc_now(), "component": "browser", "stage": "capture", "status": "ok",
                                      "message": f"From the browser: {title}" + (" (already in the Brain)" if duplicate else ""),
-                                     "details": {"url": page.url[:300]}})
-    out = {"note_id": note_id, "title": title, "duplicate": duplicate, "place": place,
-           "receipt": receipt or ("Already in your Brain." if duplicate else f"Added to {place or 'the Inbox'}.")}
+                                     "details": {"url": url[:300]}})
+    receipt = receipt or ("Already in your Brain." if duplicate else f"Added to {place or 'the Inbox'}.")
+    if kept_images:
+        receipt += f" {kept_images} image{'s' if kept_images > 1 else ''} from the page kept with it."
+    out = {"note_id": note_id, "title": title, "duplicate": duplicate, "place": place, "images": kept_images,
+           "receipt": receipt}
     if not duplicate:
         HUB.note_added({"note_id": note_id, "title": title, "place": place})
     return out
@@ -146,6 +237,15 @@ def make_router(layout: Layout, auth: Callable[..., None], port: int) -> APIRout
 
         try:
             return capture(layout, body)
+        except ExtractError as exc:
+            raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @r.post("/image")
+    def post_image(body: ImageIn, _t: dict = Depends(browser_auth)) -> dict[str, Any]:
+        from engine.sources.extract import ExtractError
+
+        try:
+            return capture_image(layout, body)
         except ExtractError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
 

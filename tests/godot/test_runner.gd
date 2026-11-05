@@ -65,6 +65,10 @@ func _run() -> void:
 		"a reply's **bold** shows as bold and is read without the stars")
 	check(AssistantPanel.one_line("Improving\nEnergy  Performance\n in Canada") == "Improving Energy Performance in Canada",
 		"a source title with line breaks shows on one line")
+	var webp_img := Image.create(32, 24, false, Image.FORMAT_RGBA8)
+	webp_img.fill(Color(0.2, 0.5, 0.8))
+	var webp_tex := DocumentViewer.texture_from(webp_img.save_webp_to_buffer(), "text/html")
+	check(webp_tex != null and webp_tex.get_width() == 32, "a page's WebP main image shows on its card (recognised by its bytes)")
 	apic.free()
 	var brain_script: GDScript = load("res://scenes/brain/brain.gd")
 	check(brain_script.progress_text({"stage": "ocr", "done": 3, "total": 9}) == "page 3 / 9 read (local OCR)"

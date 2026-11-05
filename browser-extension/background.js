@@ -2,7 +2,7 @@
 // Keeps one WebSocket to the local engine (127.0.0.1) and answers its commands: open a tab, capture a tab,
 // close the tabs it opened. Also sends pages when you click, use the shortcut or the right-click menu.
 // It only reads a page you send yourself or a tab the Brain opened; it never touches your other tabs.
-import { base, browserName, canReadTabs, DEFAULT_PORT, grabPage, post, settings, VERSION } from "./brain.js";
+import { base, browserName, canReadTabs, DEFAULT_PORT, grabPage, pictureData, post, settings, VERSION } from "./brain.js";
 
 let ws = null;
 let retryMs = 2000;
@@ -188,7 +188,15 @@ export async function capture(tabId, { selectionOnly = false, place = "", byVoic
   }
   if (!page) page = { url, title: tab.title || "", html: "", text: "", selection: "" };
   if (selectionOnly && !page.selection.trim()) throw new Error("nothing is selected on the page");
-  return post("/browser/capture", { ...page, selection_only: selectionOnly, place });
+  const { pictures = [], ...rest } = page;
+  const images = [];
+  let total = 0;
+  for (const p of selectionOnly ? [] : pictures) {  // its main image and figures, as the browser has them
+    const data = total < 20 * 1024 * 1024 ? await pictureData(p.url) : "";
+    total += data.length;
+    images.push({ ...p, data });  // no data: the engine downloads that one itself
+  }
+  return post("/browser/capture", { ...rest, images, selection_only: selectionOnly, place });
 }
 
 // ---------------------------------------------------------------- clicks, shortcut, right-click
@@ -209,15 +217,41 @@ async function sendFromUser(tab, selectionOnly) {
   }
 }
 
+// A picture the user chose: an item of its own, that remembers the page it came from.
+async function sendImage(tab, srcUrl) {
+  try {
+    let alt = "", lang = "";
+    try {
+      const [res] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, args: [srcUrl],
+        func: (src) => { const i = [...document.images].find((x) => x.currentSrc === src || x.src === src);
+                         return { alt: i ? (i.alt || "") : "", lang: document.documentElement.lang || "" }; } });
+      alt = (res && res.result && res.result.alt) || "";
+      lang = (res && res.result && res.result.lang) || "";
+    } catch { /* a page the extension may not read: the picture goes without its alt text */ }
+    const data = await pictureData(srcUrl);
+    if (!data && srcUrl.startsWith("data:")) throw new Error("this picture cannot be read");
+    const out = await post("/browser/image", { page_url: tab.url || "", page_title: tab.title || "",
+                                               image_url: srcUrl.startsWith("data:") ? "" : srcUrl, alt, lang, data });
+    setBadge(out.duplicate ? "=" : "✓", "#3d8b5a", tab.id);
+    return { ok: true, ...out };
+  } catch (e) {
+    setBadge("!", "#b4572e", tab.id);
+    return { ok: false, error: String(e.message || e) };
+  }
+}
+
 function menus() {
   chrome.contextMenus.removeAll(() => {
-    chrome.contextMenus.create({ id: "sbgd-page", title: "Send this page to the Brain", contexts: ["page", "link", "image"] });
+    chrome.contextMenus.create({ id: "sbgd-image", title: "Send this image to the Brain", contexts: ["image"] });
+    chrome.contextMenus.create({ id: "sbgd-page", title: "Send this page to the Brain", contexts: ["page"] });  // not on links or pictures: there, the picture item stands alone
     chrome.contextMenus.create({ id: "sbgd-selection", title: "Send the selection to the Brain", contexts: ["selection"] });
   });
 }
 
 chrome.contextMenus.onClicked.addListener((info, tab) => {
-  if (tab) sendFromUser(tab, info.menuItemId === "sbgd-selection");
+  if (!tab) return;
+  if (info.menuItemId === "sbgd-image" && info.srcUrl) sendImage(tab, info.srcUrl);
+  else sendFromUser(tab, info.menuItemId === "sbgd-selection");
 });
 
 chrome.commands.onCommand.addListener(async (command, tab) => {
@@ -235,6 +269,10 @@ chrome.runtime.onMessage.addListener((msg, _sender, reply) => {
     if (msg.type === "send") {
       const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
       return tab ? sendFromUser(tab, !!msg.selectionOnly) : { ok: false, error: "no tab" };
+    }
+    if (msg.type === "sendImage") {  // what the right-click menu does (also used by the How-to guide's script)
+      const [tab] = await chrome.tabs.query({ active: true, lastFocusedWindow: true });
+      return tab ? sendImage(tab, String(msg.srcUrl || "")) : { ok: false, error: "no tab" };
     }
     if (msg.type === "pair") return pair(String(msg.code || ""), Number(msg.port) || DEFAULT_PORT);
     if (msg.type === "pairError") {  // what went wrong while the popup was closed (Edge's permission prompt closes it)

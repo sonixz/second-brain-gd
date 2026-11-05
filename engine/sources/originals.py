@@ -67,8 +67,9 @@ def forget_unused(conn: sqlite3.Connection, rels: list[str]) -> int:
     root = data_root(conn)
     gone = 0
     for rel in rels:
-        if conn.execute("SELECT 1 FROM sources WHERE original = ?", (rel,)).fetchone():
-            continue  # the same file is still used by another document
+        if conn.execute("SELECT 1 FROM sources WHERE original = ? UNION ALL SELECT 1 FROM source_images WHERE original = ?",
+                        (rel, rel)).fetchone():
+            continue  # the same file is still used by another document (or kept as a page's picture)
         path = resolve(root, rel)
         if path is not None and path.is_file():
             try:
@@ -86,7 +87,9 @@ def purge_orphans(conn: sqlite3.Connection) -> dict[str, int]:
         return {"sources": 0, "files": 0}
     ids = [r["id"] for r in rows]
     marks = ",".join("?" * len(ids))
+    pictures = [r["original"] for r in conn.execute(f"SELECT original FROM source_images WHERE source_id IN ({marks})", ids)]
+    conn.execute(f"DELETE FROM source_images WHERE source_id IN ({marks})", ids)
     conn.execute(f"DELETE FROM source_chunks WHERE source_id IN ({marks})", ids)
     conn.execute(f"DELETE FROM sources WHERE id IN ({marks})", ids)
-    files = forget_unused(conn, [r["original"] for r in rows if r["original"]])
+    files = forget_unused(conn, [r["original"] for r in rows if r["original"]] + pictures)
     return {"sources": len(ids), "files": files}

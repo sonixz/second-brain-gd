@@ -10,7 +10,7 @@ from pydantic import BaseModel, Field
 from engine import brain, database
 from engine.assistant.llm import LLMError, make_client
 from engine.paths import Layout
-from engine.sources import core, extract
+from engine.sources import core, extract, images
 from engine.sources.core import embeddings_model, search_any, should_try_embeddings
 from engine.voice import secrets
 
@@ -102,7 +102,10 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         mime = str(src.get("mime") or "")
         kind = "pdf" if mime == "application/pdf" else ("image" if mime.startswith("image/") else
                                                          ("html" if "html" in mime else "text"))
+        with database.session(layout.database) as conn:
+            pictures = images.list_for_source(conn, source_id)
         return {"id": source_id, "note_id": src.get("note_id"), "title": src.get("title"), "uri": src.get("uri"),
+                "images": pictures,  # a web page's kept pictures (its main image first), see /image/{idx}
                 "mime": mime, "kind": kind, "pages": src.get("pages") or (1 if kind == "image" else 0),
                 "original_path": str(path) if path else None, "original_bytes": src.get("original_bytes"),
                 # pdf/image: rendered pages; html/docx/text: the full text, read inside the app
@@ -162,6 +165,8 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         from engine.sources import render
 
         doc = document(source_id)
+        if doc["kind"] == "html" and doc["images"] and page == 1:  # a web page's card shows its main image
+            return get_image(source_id, 0)
         if not doc["viewable"] or doc["mode"] != "pages":
             raise HTTPException(status_code=404, detail="No page images for this source.")
         path = Path(doc["original_path"])
@@ -172,6 +177,15 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         except render.RenderError as exc:
             raise HTTPException(status_code=422, detail=str(exc)) from exc
         return Response(content=data, media_type="image/png", headers={"Cache-Control": "max-age=3600"})
+
+    @r.get("/{source_id}/image/{idx}")
+    def get_image(source_id: str, idx: int) -> Response:
+        """One of a web page's kept pictures, as it was received."""
+        with database.session(layout.database) as conn:
+            found = images.path_of(conn, source_id, idx)
+        if found is None:
+            raise HTTPException(status_code=404, detail="No such picture for this source.")
+        return Response(content=found[0].read_bytes(), media_type=found[1], headers={"Cache-Control": "max-age=3600"})
 
     @r.get("/search")
     def search(q: str = Query(min_length=1, max_length=300), limit: int = Query(8, ge=1, le=30)) -> dict[str, Any]:

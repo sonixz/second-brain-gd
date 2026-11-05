@@ -284,7 +284,16 @@ def item(conn: sqlite3.Connection, note_id: str, with_body: bool = False) -> dic
             "key_points": m.get("key_points", []), "entities": m.get("entities", {}), "themes": m.get("themes", []),
             "language": m.get("language"), "confidence": m.get("confidence"), "filed": bool(m.get("filed", 0)),
             "question": m.get("question"), "receipt": m.get("receipt"),
-            "source": dict(src) if src else None, **({"body": n["body"]} if with_body else {})}
+            "source": _source(conn, src), **({"body": n["body"]} if with_body else {})}
+
+
+def _source(conn: sqlite3.Connection, src: Any) -> dict[str, Any] | None:
+    """An item's document, with how many pictures were kept from it (a web page's card shows the first)."""
+    if not src:
+        return None
+    out = dict(src)
+    out["images"] = int(conn.execute("SELECT COUNT(*) FROM source_images WHERE source_id = ?", (src["id"],)).fetchone()[0])
+    return out
 
 
 def feed(conn: sqlite3.Connection, limit: int = 50) -> list[dict[str, Any]]:

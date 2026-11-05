@@ -2,7 +2,7 @@
 # A separate Edge: its own temporary profile (no sign-in, no sync, nothing from your own Edge), the extension loaded
 # from the project folder, DevTools on 127.0.0.1 only. "close" kills that Edge and deletes the profile.
 #   edge.ps1 launch <extension dir> <url>   |  eval <target url part> <js> [gesture]  |  shot <png>
-#   edge.ps1 click <button name>            |  focus  |  targets  |  names            |  close
+#   edge.ps1 click <button name> [menu]     |  cdp <target> <method> <k=v;k=v>  |  focus  |  targets  |  names  |  close
 param([Parameter(Position = 0)][string]$Cmd, [Parameter(Position = 1)][string]$A = "",
       [Parameter(Position = 2)][string]$B = "", [Parameter(Position = 3)][string]$C = "")
 $ErrorActionPreference = "Stop"
@@ -84,6 +84,21 @@ switch ($Cmd) {
     for ($i = 0; $i -lt 40; $i++) { Start-Sleep -Milliseconds 500; try { Targets | Out-Null; break } catch {} }
     Targets | ForEach-Object { "{0}`t{1}" -f $_.type, $_.url }
   }
+  "cdp" {  # one DevTools command on a target: cdp <target url part> <method> <key=value;key=value>
+    # (no JSON: quotes do not survive the trip from WSL to a Windows command line)
+    $t = Targets | Where-Object { $_.url -like "*$A*" -and $_.webSocketDebuggerUrl } | Select-Object -First 1
+    if (-not $t) { throw "no target matches $A" }
+    $params = @{}
+    foreach ($kv in ($C -split ";")) {
+      if (-not $kv) { continue }
+      $k, $v = $kv -split "=", 2
+      $n = 0
+      $params[$k] = $(if ([int]::TryParse($v, [ref]$n)) { $n } else { $v })
+    }
+    $o = Cdp $t.webSocketDebuggerUrl $B $params
+    if ($o.error) { throw ($o.error | ConvertTo-Json -Compress) }
+    "ok"
+  }
   "targets" { Targets | ForEach-Object { "{0}`t{1}`t{2}" -f $_.type, $_.title, $_.url } }
   "eval" {
     $t = Targets | Where-Object { $_.url -like "*$A*" -and $_.webSocketDebuggerUrl } | Select-Object -First 1
@@ -118,7 +133,8 @@ switch ($Cmd) {
     $cond = New-Object Windows.Automation.AndCondition (
       (New-Object Windows.Automation.PropertyCondition ([Windows.Automation.AutomationElement]::ProcessIdProperty, [int]$bp)),
       (New-Object Windows.Automation.PropertyCondition ([Windows.Automation.AutomationElement]::NameProperty, $A)),
-      (New-Object Windows.Automation.PropertyCondition ([Windows.Automation.AutomationElement]::ControlTypeProperty, [Windows.Automation.ControlType]::Button)))
+      (New-Object Windows.Automation.PropertyCondition ([Windows.Automation.AutomationElement]::ControlTypeProperty,
+        $(if ($B -eq "menu") { [Windows.Automation.ControlType]::MenuItem } else { [Windows.Automation.ControlType]::Button }))))
     for ($i = 0; $i -lt 20; $i++) {
       $el = $root.FindFirst([Windows.Automation.TreeScope]::Descendants, $cond)
       if ($el) { break }

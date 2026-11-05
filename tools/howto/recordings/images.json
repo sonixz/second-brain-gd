@@ -1,0 +1,428 @@
+{
+ "calls": [
+  {
+   "kind": "json:Tu prépares une fiche de référence pour un second cerveau. Réponds en JSON avec:",
+   "model": "gpt-4o",
+   "seen": [
+    {
+     "role": "user",
+     "content": "{\"title\": \"Heat pump - Wikipedia\", \"text\": \"Jump to content\\n\\nFrom Wikipedia, the free encyclopedia\\n\\nSystem that transfers heat from one space to another\\n\\nThis article is about devices used to heat and potentially also cool buildings or water using the refrigeration cycle. For other uses, see Heat pump (disambiguation).\\n\\nExternal heat exchanger of an air-source heat pump for both heating and cooling\\nMitsubishi Electric heat pump interior air handler wall unit\\n\\nPart of a series on\\n\\nSustainable energy\\n\\nshow\\nEnergy conservation\\n\\nArcology\\n\\nBuilding insulation\\n\\nCogeneration\\n\\nCompact fluorescent lamp\\n\\nEco hotel\\n\\nEco-cities\\n\\nEcohouse\\n\\nEcolabel\\n\\nEfficient energy use\\n\\nEnergy audit\\n\\nEnergy efficiency implementation\\n\\nEnergy recovery\\n\\nEnergy recycling\\n\\nEnergy saving lamp\\n\\nEnergy Star\\n\\nEnergy storage\\n\\nEnvironmental planning\\n\\nEnvironmental technology\\n\\nFossil fuel phase-out\\n\\nGlass in green buildings\\n\\nGreen building and wood\\n\\nGreen building\\n\\nHeat pump\\n\\nList of low-energy building techniques\\n\\nLow-energy house\\n\\nMicrogeneration\\n\\nPassive house\\n\\nPassive solar building design\\n\\nSustainable architecture\\n\\nSustainable city\\n\\nSustainable habitat\\n\\nSustainable refurbishment\\n\\nThermal energy storage\\n\\nTropical green building\\n\\nWaste-to-energy\\n\\nZero heating building\\n\\nZero-energy building\\n\\nshow\\nRenewable energy\\n\\nBiofuel\\n\\nSustainable\\n\\nBiogas\\n\\nBiomass\\n\\nCarbon-neutral fuel\\n\\nGeothermal energy\\n\\nGeothermal power\\n\\nGeothermal heating\\n\\nHydropower\\n\\nHydroelectricity\\n\\nMicro hydro\\n\\nPico hydro\\n\\nRun-of-the-river\\n\\nSmall hydro\\n\\nMarine current power\\n\\nMarine energy\\n\\nTidal power\\n\\nTidal barrage\\n\\nTidal farm\\n\\nTidal stream generator\\n\\nOcean thermal energy conversion\\n\\nRenewable energy transition\\n\\nRenewable heat\\n\\nSolar\\n\\nWave\\n\\nWind\\n\\nCommunity\\n\\nFarm\\n\\nFloating wind turbine\\n\\nForecasting\\n\\nIndustry\\n\\nLens\\n\\nOutline\\n\\nRights\\n\\nTurbine\\n\\nWindbelt\\n\\nWindpump\\n\\nshow\\nSustainable transport\\n\\nGreen vehicle\\n\\nElectric vehicle\\n\\nBicycle\\n\\nSolar vehicle\\n\\nWind-powered vehicle\\n\\nHuman-electric\\n\\nTwike\\n\\nPlug-in\\n\\nHuman-powered transport\\n\\nHelicopter\\n\\nHydrofoil\\n\\nLand vehicle\\n\\nBicycle\\n\\nCycle rickshaw\\n\\nKick scooter\\n\\nQuadracycle\\n\\nTricycle\\n\\nVelomobile\\n\\nRoller skating\\n\\nSkateboarding\\n\\nWalking\\n\\nWatercraft\\n\\nPersonal transporter\\n\\nRail transport\\n\\nTram\\n\\nRapid transit\\n\\nPersonal rapid transit\\n\\n Category\\n\\n Renewable energy portal\\n\\nv\\n\\nt\\n\\ne\\n\\nA heat pump is a device that uses mechanical or thermal energy to transfer heat from one space to another. The mechanical heat pump uses electric power to transfer heat by compression. Specifically, it transfers thermal energy by means of a heat pump and refrigeration cycle, cooling one space and warming the other.[1]\\n\\nIn winter, a heat pump can move heat from the cool outdoors to warm a house; in summer, it may also be designed to move heat from the house to the warmer outdoors, functioning in the same manner as an air conditioner. As it transfers rather than generates heat, it is more energy-efficient than heating by gas boiler.[2]\\n\\nIn a typical vapor-compression heat pump, a gaseous refrigerant is compressed so its pressure and temperature rise. When the pump operates as a heater in cold weather, the warmed gas flows to a heat exchanger in the indoor space, where some of its thermal energy is transferred to that space, causing the gas to condense into a liquid. The liquified refrigerant flows to a heat exchanger in the outdoor space, where the pressure falls, the liquid evaporates, and the temperature of the gas falls. Now colder than the temperature of the outdoor space being used as a heat source, it can again take up energy from the heat source, be compressed, and repeat the cycle.\\n\\nAir source heat pumps are the most common models, while other types include ground source heat pumps, water source heat pumps, and exhaust air heat pumps.[3] Large-scale heat pumps are also used in district heating systems.[4]\\n\\nBecause of their high efficiency and the increasing share of fossil-free sources in electrical grids, heat pumps are playing a role in climate change mitigation.[5][6] At a cost of 1 kWh of electricity, they can transfer 1[7] to 4.5 kWh of thermal energy into a building. The carbon footprint of heat pumps depends on how electricity is generated, but they usually reduce emissions.[8] Heat pumps could satisfy over 80% of global space and water heating needs with a lower carbon footprint than gas-fired condensing boilers: however, in 2021 they only met 10%,[4] the boycott of Russian natural gas has accelerated the need to shift toward alternatives;[9] 3 million European heat pumps were sold in 2023.[10] Although sales have grown significantly, adoption remains limited.[11]\\n\\nOperation\\n[edit]\\n\\nMain articles: Heat pump and refrigeration cycle and Vapor-compression refrigeration\\n\\nA: indoor compartment, B: outdoor compartment, I: insulation, 1: condenser, 2: expansion valve, 3: evaporator, 4: compressor\\n\\nHeat flows spontaneously from a region of higher temperature to a region of lower temperature. Heat does not flow spontaneously from lower temperature to higher, but it can be made to flow in this direction if work is performed. The work required to transfer a given amount of heat is usually much less than the amount of heat gained; this is the motivation for using heat pumps in applications such as the heating of water and the interior of buildings.[12]\\n\\nThe heat pump works by the use of reverse cycle conditioning. Liquid refrigerant flows through coils in the cooling unit and absorbs heat, becoming a gas which is then compressed to further raise the temperature. This gaseous refrigerant is pumped into more coils in the heating unit, where a fan blows air over the coil to absorb the heat and liquefy the refrigerant. Most heat pumps are capable of transferring heat in both directions, meaning, for example, that they can heat and cool a space.[citation needed]\\n\\nThe amount of work required to provide an amount of heat Q to a higher-temperature reservoir such as the interior of a building, while extracting heat from a lower-temperature reservoir such as ambient air is:W=QCOPwhere\\n\\nW is the work performed on the working fluid by the heat pump's compressor.\\n\\nQ is the heat released in the higher-temperature reservoir.\\n\\nCOP is the instantaneous coefficient of performance for the heat pump at the temperatures prevailing in the reservoirs at one instant.\\n\\nThe coefficient of performance of a heat pump is greater than one so the work required is less than the heat released, making a heat pump a more efficient form of heating than electrical resistance heating. As the temperature of the higher-temperature reservoir increases in response to the heat flowing into it, the coefficient of performance decreases, causing an increasing amount of work to be required for each unit of heat being transferred.[12]\\n\\nThe coefficient of performance, and the work required by a heat pump can be calculated easily by considering an ideal heat pump operating on the reversed Carnot cycle:\\n\\nIf the low-temperature reservoir is at a temperature of 270 K (−3 °C) and the interior of the building is at 280 K (7 °C) the maximum theoretical coefficient of performance is 28. This means 1 joule of work delivers 28 joules of heat to the interior. The one joule of work ultimately ends up as thermal energy in the interior of the building and 27 joules of heat are moved from the low-temperature reservoir.[a]\\n\\nAs the temperature of the interior of the building rises progressively to 300 K (27 °C) the coefficient of performance falls progressively to 10. This means each joule of work is responsible for transferring 9 joules of heat out of the low-temperature reservoir and into the building. Again, the 1 joule of work ultimately ends up as thermal energy in the interior of the building so 10 joules of heat are added to the building interior.[b]\\n\\nThis is the theoretical amount of heat pumped but in practice it will be less for various reasons, for example if the outside unit has been installed where there is not enough airflow. More data sharing with owners and academics—perhaps from heat meters—could improve efficiency in the long run.[14]\\n\\nHistory\\n[edit]\\n\\nMilestones:\\n\\n1748\\nWilliam Cullen demonstrates artificial refrigeration.[15]\\n1834\\nJacob Perkins patents a design for a practical refrigerator using dimethyl ether.[16]\\n1852\\nLord Kelvin describes the theory underlying heat pumps.[17]\\n1855–1857\\nPeter von Rittinger develops and builds the first heat pump.[18]\\n1877\\nPrior to 1875, heat pumps were being pursued for vapor-compression evaporation (open heat pump process) in salt works with their obvious advantages for saving wood and coal. In 1857, Peter von Rittinger was the first to try to implement the idea of vapor compression in a small pilot plant. Presumably inspired by Rittinger's experiments in Ebensee, Antoine-Paul Piccard from the University of Lausanne and the engineer J. H. Weibel from the Weibel–Briquet company in Geneva, Switzerland, built the world's first really functioning vapor-compression system with a two-stage piston compressor. In 1877 this first heat pump in Switzerland was installed in the Bex salt works.[17][19]\\n1928\\nIn 1928, Slovak engineer Aurel Stodola designed an early water-source heat pump system for the Geneva City Hall using Lake Geneva as a thermal source. This pioneering work laid the foundation for large-scale heat pump applications, followed ten years later by the 100 kW Limmat river system for Zurich City Hall.[20]\\n1937–1945\\nDuring the First World War, fuel prices were high in Switzerland but it had plenty of hydropower.[17]: 18  In the period before and especially during the Second World War, when neutral Switzerland was surrounded by fascist-ruled countries, the coal shortage became alarming again. Thanks to their leading position in energy technology, the Swiss companies Sulzer, Escher Wyss and Brown Boveri built and put in operation around 35 heat pumps between 1937 and 1945. The main heat sources were lake water, river water, groundwater, and waste heat. Particularly noteworthy are the six historic heat pumps from the city of Zurich with heat outputs from 100 kW to 6 MW. An international milestone is the heat pump built by Escher Wyss in 1937/38 to replace the wood stoves in the City Hall of Zurich. To avoid noise and vibrations, a then recently developed rotary piston compressor was used. This historic heat pump heated the town hall for 63 years until 2001. Only then was it replaced by a new, more efficient heat pump.[17]\\n1945\\nJohn Sumner, City Electrical Engineer for Norwich, installs an experimental water-source heat pump fed central heating system, using a nearby river to heat new Council administrative buildings. It had a seasonal efficiency ratio of 3.42, average thermal delivery of 147 kW, and peak output of 234 kW.[21]\\n1948\\nRobert C. Webber is credited as developing and building the first ground-source heat pump.[22]\\n1951\\nFirst large scale installation—the Royal Festival Hall in London is opened with a town gas-powered reversible water-source heat pump, fed by the Thames river, for both winter heating and summer cooling needs.[21]\\n2019\\nThe Kigali Amendment to phase out harmful refrigerants takes effect.\\n\\nTypes\\n[edit]\\n\\nAir-source\\n[edit]\\n\\nThis section is an excerpt from Air source heat pump.[edit]\\n\\nHeat pump on balcony of apartment\\n\\nAn air source heat pump (ASHP), the most common type[c] of heat pump, can absorb energy (heat) sourced from cold ambient air outside a building, and release the energy at a higher temperature to heat the building, either via hot air or hot water. Electricity powers the mechanical pump (compressor), the used electric energy providing typically 3 or 4 times more pumped thermal energy than simple resistive Joule heating.\\n\\nHeat pumps use the same vapor-compression refrigeration process and much the same equipment as an air conditioner, but in the opposite direction, or rather source and target can be exchanged, vice versa. With ambient air accessible nearly everywhere, ASHPs are the most common type of heat pump and, usually being small, tend to be used to heat individual\"}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "{\n    \"title\": \"Heat Pump Overview\",\n    \"summary\": \"A heat pump is a device that transfers heat from one space to another using mechanical or thermal energy. It operates on the refrigeration cycle, making it more energy-efficient than traditional heating methods like gas boilers. Heat pumps can both heat and cool spaces, functioning similarly to air conditioners in warmer months. They are crucial in climate change mitigation due to their high efficiency and potential to reduce carbon emissions. Different types of heat pumps include air source, ground source, and water source models.\",\n    \"key_points\": [\n        \"Heat pumps transfer heat using mechanical or thermal energy.\",\n        \"They are more energy-efficient than gas boilers.\",\n        \"Can function as both heaters and air conditioners.\",\n        \"Types include air source, ground source, and water source.\",\n        \"Play a role in reducing carbon emissions and climate change mitigation.\"\n    ],\n    \"tags\": [\n        \"sustainable-energy\",\n        \"climate-change\"\n    ]\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 2875,
+    "completion_tokens": 199,
+    "total_tokens": 3074,
+    "prompt_tokens_details": {
+     "cached_tokens": 2688,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:",
+   "model": "gpt-4o-mini",
+   "seen": [
+    {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "Cette image vient d'une page web intitulée « Heat pump - Wikipedia », légende: « A: indoor compartment, B: outdoor compartment, I: insulation, 1: condenser, 2: expansion valve, 3: evaporator, 4: compressor ». Décris de façon factuelle ce qu'elle montre et ce qu'elle apprend (schéma, graphique, tableau: les données et les valeurs importantes), et transcris le texte visible. 2 à 6 phrases. N'invente rien. Écris toute la description en English, la langue de la page."
+      },
+      {
+       "type": "image_url",
+       "image_url": {
+        "url": "<image>"
+       }
+      }
+     ]
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "The image is a schematic representation of a heat pump system. It shows the indoor compartment (A) and outdoor compartment (B), along with key components labeled as follows: 1 is the condenser, 2 is the expansion valve, 3 is the evaporator, and 4 is the compressor. The arrows indicate the flow of refrigerant through the system. This diagram illustrates how heat is transferred from one compartment to another, highlighting the essential parts involved in the heat pump's operation.",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 8625,
+    "completion_tokens": 98,
+    "total_tokens": 8723,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "json:Tu es l'ARCHIVISTE d'un second cerveau (méthode CODE: Capture, Organize, Distill",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "user",
+     "content": "{\"item\": {\"title\": \"Heat Pump Overview\", \"content\": \"A heat pump is a device that transfers heat from one space to another using mechanical or thermal energy. It operates on the refrigeration cycle, making it more energy-efficient than traditional heating methods like gas boilers. Heat pumps can both heat and cool spaces, functioning similarly to air conditioners in warmer months. They are crucial in climate change mitigation due to their high efficiency and potential to reduce carbon emissions. Different types of heat pumps include air source, ground source, and water source models.\\n\\n- Heat pumps transfer heat using mechanical or thermal energy.\\n- They are more energy-efficient than gas boilers.\\n- Can function as both heaters and air conditioners.\\n- Types include air source, ground source, and water source.\\n- Play a role in reducing carbon emissions and climate change mitigation.\\n\\nSource: https://en.wikipedia.org/wiki/Heat_pump\\n\\n#sustainable-energy #climate-change\", \"origin\": \"url\", \"uri\": \"https://en.wikipedia.org/wiki/Heat_pump\", \"original_excerpt\": \"Jump to content\\n\\nFrom Wikipedia, the free encyclopedia\\n\\nSystem that transfers heat from one space to another\\n\\nThis article is about devices used to heat and potentially also cool buildings or water using the refrigeration cycle. For other uses, see Heat pump (disambiguation).\\n\\nExternal heat exchanger of an air-source heat pump for both heating and cooling\\nMitsubishi Electric heat pump interior air handler wall unit\\n\\nPart of a series on\\n\\nSustainable energy\\n\\nshow\\nEnergy conservation\\n\\nArcology\\n\\nBuilding insulation\\n\\nCogeneration\\n\\nCompact fluorescent lamp\\n\\nEco hotel\\n\\nEco-cities\\n\\nEcohouse\\n\\nEcolabel\\n\\nEfficient energy use\\n\\nEnergy audit\\n\\nEnergy efficiency implementation\\n\\nEnergy recovery\\n\\nEnergy recycling\\n\\nEnergy saving lamp\\n\\nEnergy Star\\n\\nEnergy storage\\n\\nEnvironmental planning\\n\\nEnvironmental technology\\n\\nFossil fuel phase-out\\n\\nGlass in green buildings\\n\\nGreen building and wood\\n\\nGreen building\\n\\nHeat pump\\n\\nList of low-energy building techniques\\n\\nLow-energy house\\n\\nMicrogeneration\\n\\nPassive house\\n\\nPassive solar building design\\n\\nSustainable architecture\\n\\nSustainable city\\n\\nSustainable habitat\\n\\nSustainable refurbishment\\n\\nThermal energy storage\\n\\nTropical green building\\n\\nWaste-to-energy nable architecture\\n\\nSustainable city\\n\\nSustainable habitat\\n\\nSustainable refurbishment\\n\\nThermal energy storage\\n\\nTropical green building\\n\\nWaste-to-energy\\n\\nZero heating building\\n\\nZero-energy building\\n\\nshow\\nRenewable energy\\n\\nBiofuel\\n\\nSustainable\\n\\nBiogas\\n\\nBiomass\\n\\nCarbon-neutral fuel\\n\\nGeothermal energy\\n\\nGeothermal power\\n\\nGeothermal heating\\n\\nHydropower\\n\\nHydroelectricity\\n\\nMicro hydro\\n\\nPico hydro\\n\\nRun-of-the-river\\n\\nSmall hydro\\n\\nMarine current power\\n\\nMarine energy\\n\\nTidal power\\n\\nTidal barrage\\n\\nTidal farm\\n\\nTidal stream generator\\n\\nOcean thermal energy conversion\\n\\nRenewable energy transition\\n\\nRenewable heat\\n\\nSolar\\n\\nWave\\n\\nWind\\n\\nCommunity\\n\\nFarm\\n\\nFloating wind turbine\\n\\nForecasting\\n\\nIndustry\\n\\nLens\\n\\nOutline\\n\\nRights\\n\\nTurbine\\n\\nWindbelt\\n\\nWindpump\\n\\nshow\\nSustainable transport\\n\\nGreen vehicle\\n\\nElectric vehicle\\n\\nBicycle\\n\\nSolar vehicle\\n\\nWind-powered vehicle\\n\\nHuman-electric\\n\\nTwike\\n\\nPlug-in\\n\\nHuman-powered transport\\n\\nHelicopter\\n\\nHydrofoil\\n\\nLand vehicle\\n\\nBicycle\\n\\nCycle rickshaw\\n\\nKick scooter\\n\\nQuadracycle\\n\\nTricycle\\n\\nVelomobile\\n\\nRoller skating\\n\\nSkateboarding\\n\\nWalking\\n\\nWatercraft\\n\\nPersonal transporter\\n\\nRail transport\\n\\nTram\\n\\nRapid transit\\n\\nPersonal rapid transit\\n\\nCategory\\n\\nRenewable energy portal\\n\\nv\\n\\nt\\n\\ne ng\\n\\nWalking\\n\\nWatercraft\\n\\nPersonal transporter\\n\\nRail transport\\n\\nTram\\n\\nRapid transit\\n\\nPersonal rapid transit\\n\\nCategory\\n\\nRenewable energy portal\\n\\nv\\n\\nt\\n\\ne\\n\\nA heat pump is a device that uses mechanical or thermal energy to transfer heat from one space to another. The mechanical heat pump uses electric power to transfer heat by compression. Specifically, it transfers thermal energy by means of a heat pump and refrigeration cycle, cooling one space and warming the other.[1]\\n\\nIn winter, a heat pump can move heat from the cool outdoors to warm a house; in summer, it may also be designed to move heat from the house to the warmer outdoors, functioning in the same manner as an air conditioner. As it transfers rather than generates heat, it is more energy-efficient than heating by gas boiler.[2] oning in the same manner as an air conditioner. As it transfers rather than generates heat, it is more energy-efficient than heating by gas boiler.[2]\\n\\nIn a typical vapor-compression heat pump, a gaseous refrigerant is compressed so its pressure and temperature rise. When the pump operates as a heater in cold weather, the warmed gas flows to a heat exchanger in the indoor space, where some of its thermal energy is transferred to that space, causing the gas to condense into a liquid. The liquified refrigerant flows to a heat exchanger in the outdoor space, where the pressure falls, the liquid evaporates, and the temperature of the gas falls. Now colder than the temperature of the outdoor space being used as a heat source, it can again take up energy from the heat source, be compressed, and repeat the cycle.\\n\\nAir source heat pumps are the most common models, while other types include ground source heat pumps, water source heat pumps, and exhaust air heat pumps.[3] Large-scale heat pumps are also used in district heating systems.[4] ground source heat pumps, water source heat pumps, and exhaust air heat pumps.[3] Large-scale heat pumps are also used in district heating systems.[4]\\n\\nBecause of their high efficiency and the increasing share of fossil-free sources in electrical grids, heat pumps are playing a role in climate change mitigation.[5][6] At a cost of 1 kWh of electricity, they can transfer 1[7] to 4.5 kWh of thermal energy into a building. The carbon footprint of heat pumps depends on how electricity is generated, but they usually reduce emissions.[8] Heat pumps could satisfy over 80% of global space and water heating needs with a lower carbon footprint than gas-fired condensing boilers: however, in 2021 they only met 10%,[4] the boycott of Russian natural gas has accelerated the need to shift toward alternatives;[9] 3 million European heat pumps were sold in 2023.[10] Although sales have grown significantly, adoption remains limited.[11]\\n\\nOperation\\n[edit]\\n\\nMain articles: Heat pump and refrigeration cycle and Vapor-compression refrigeration\\n\\nA: indoor compartment, B: outdoor compartment, I: insulation, 1: condenser, 2: expansion valve, 3: evaporator, 4: compressor ompression refrigeration\\n\\nA: indoor compartment, B: outdoor compartment, I: insulation, 1: condenser, 2: expansion valve, 3: evaporator, 4: compressor\\n\\nHeat flows spontaneously from a region of higher temperature to a region of lower temperature. Heat does not flow spontaneously from lower temperature to higher, but it can be made to flow in this direction if work is performed. The work required to transfer a given amount of heat is usually much less than the amount of heat gained; this is the motivation for using heat pumps in applications such as the heating of water and the interior of buildings.[12]\\n\\nThe heat pump works by the use of reverse cycle conditioning. Liquid refrigerant flows through coils in the cooling unit and absorbs heat, becoming a gas which is then compressed to further raise the temperature. This gaseous refrigerant is pumped into more coils in the heating unit, where a fan blows air over the coil to absorb the heat and liquefy the refrigerant. Most heat pumps are capable of transferring heat in both directions, meaning, for example, that they can heat and cool a space.[citation needed]\"}, \"places\": [{\"id\": \"inbox\", \"name\": \"Inbox\", \"kind\": \"inbox\", \"items\": 3, \"examples\": [\"The book Julie recommended\", \"Heat pump rebate\"]}, {\"id\": \"e91a3ca3f3fd4215\", \"name\": \"Kitchen renovation\", \"kind\": \"project\", \"items\": 7, \"examples\": [\"Tile samples: the matte green wins\", \"Call with Marc about the electrical panel\", \"Contractor quote — Brightline Renovations\"], \"goal\": \"New kitchen before the holidays\", \"area\": \"Home\"}, {\"id\": \"c3540be939fc4489\", \"name\": \"Talk: local-first software\", \"kind\": \"project\", \"items\": 4, \"examples\": [\"Opening story for the talk\", \"Talk outline\", \"Demo: unplug the network on stage\"], \"goal\": \"A 20-minute talk at the local meetup\"}, {\"id\": \"08ebcef0c5f24a37\", \"name\": \"Learn Japanese\", \"kind\": \"project\", \"items\": 4, \"examples\": [\"Phrases for ordering at a café\", \"Komorebi\", \"Daily routine for Japanese\"]}, {\"id\": \"eb1f7b225da74284\", \"name\": \"Health\", \"kind\": \"area\", \"items\": 5, \"examples\": [\"Ran 5 km under 30 minutes\", \"Sleep log: seven hours average\", \"Physio exercises for the left knee\"]}, {\"id\": \"9844d73cae6c4437\", \"name\": \"Finances\", \"kind\": \"area\", \"items\": 3, \"examples\": [\"Renovation budget\", \"Subscriptions to cancel\", \"Tax documents checklist\"]}, {\"id\": \"f5687c2e0d814cbf\", \"name\": \"Home\", \"kind\": \"area\", \"items\": 2, \"examples\": [\"Snow removal contact from the neighbour\", \"Furnace filter every three months\"]}, {\"id\": \"9f08784e4ebc4d91\", \"name\": \"Local-first software\", \"kind\": \"resource\", \"items\": 7, \"examples\": [\"Sync as a plugin, never a requirement\", \"Chat with Priya about offline-first mobile apps\", \"CRDTs in plain words\"]}, {\"id\": \"e92462bf1e08467e\", \"name\": \"Cooking\", \"kind\": \"resource\", \"items\": 4, \"examples\": [\"Meal plan this week\", \"Mom's tomato sauce, the way she says it\", \"No-knead bread\"]}, {\"id\": \"a8be42dd487648ce\", \"name\": \"Productivity\", \"kind\": \"resource\", \"items\": 5, \"examples\": [\"Capture by voice on walks\", \"Weekly review checklist\", \"Spaced repetition, explained\"]}, {\"id\": \"b581025e1e7949c4\", \"name\": \"Apartment move 2025\", \"kind\": \"archive\", \"items\": 2, \"examples\": [\"Change-of-address list\", \"Movers contact and invoice\"]}], \"themes\": [\"local-first\", \"talk\", \"crdt\", \"design\", \"budget\", \"moving\", \"capture\", \"recipe\", \"running\", \"climate-change\", \"sustainable-energy\", \"pkm\", \"para\", \"review\", \"pantry\", \"meal-plan\", \"family\", \"bread\", \"mobile\", \"sqlite\", \"file-formats\", \"library\", \"winter\", \"maintenance\", \"taxes\", \"appointments\", \"knee\", \"sleep\", \"learning\", \"memory\", \"vocabulary\", \"routine\", \"speaking\", \"kana\", \"demo\", \"countertops\", \"appliances\", \"electrical\", \"quote\", \"bl-2611\"], \"candidates\": [{\"id\": \"0062e18941a54ba2\", \"title\": \"Heat pump rebate\"}]}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "{\n  \"title\": \"Heat Pump Overview\",\n  \"item_type\": \"article\",\n  \"language\": \"en\",\n  \"summary\": \"A heat pump transfers heat between spaces using mechanical or thermal energy and a refrigeration cycle. It can heat and cool buildings and is generally more energy-efficient than a gas boiler. Air-source, ground-source, water-source, and exhaust-air models are described. Its potential to reduce carbon emissions depends in part on how its electricity is generated.\",\n  \"key_points\": [\n    \"Transfers heat rather than generating it.\",\n    \"Can provide both heating and cooling.\",\n    \"Air-source models are the most common.\",\n    \"Efficiency can help reduce carbon emissions.\"\n  ],\n  \"entities\": {\n    \"people\": [],\n    \"organizations\": [\"Wikipedia\", \"Mitsubishi Electric\"],\n    \"concepts\": [\"heat pump\", \"refrigeration cycle\", \"energy efficiency\", \"carbon emissions\", \"climate change mitigation\", \"air-source heat pump\", \"ground-source heat pump\", \"water-source heat pump\", \"exhaust-air heat pump\"],\n    \"places\": [],\n    \"dates\": [\"2021\", \"2023\"]\n  },\n  \"place\": {\n    \"space_id\": \"f5687c2e0d814cbf\"\n  },\n  \"themes\": [\"sustainable-energy\", \"climate-change\"],\n  \"link_ids\": [\"0062e18941a54ba2\"],\n  \"confidence\": 0.82,\n  \"question\": null,\n  \"receipt\": \"An article on heat pumps, filed in Areas › Home, linked to 1 item.\"\n}",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 3284,
+    "completion_tokens": 337,
+    "total_tokens": 3621,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "cache_write_tokens": 3281,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:",
+   "model": "gpt-4o-mini",
+   "seen": [
+    {
+     "role": "user",
+     "content": [
+      {
+       "type": "text",
+       "text": "Cette image a été gardée depuis la page web « Heat pump - Wikipedia ». Décris-la de façon factuelle: ce qu'elle montre, ce qu'elle apprend (schéma, graphique, tableau: les données importantes), le texte visible (transcris-le fidèlement). 3 à 8 phrases. N'invente rien. Écris toute la description en English, la langue de la page."
+      },
+      {
+       "type": "image_url",
+       "image_url": {
+        "url": "<image>"
+       }
+      }
+     ]
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "The image depicts a schematic diagram of a heat pump system. It shows four main components labeled as 1, 2, 3, and 4. The red lines indicate the flow of refrigerant in one direction, while the blue lines indicate the flow in the opposite direction. Component 1 is likely the evaporator, component 2 is the compressor, component 3 is the condenser, and component 4 is the expansion valve. The diagram illustrates how the refrigerant circulates through these components to transfer heat. There are no visible texts or additional labels in the image.",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 8588,
+    "completion_tokens": 117,
+    "total_tokens": 8705,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "json:Tu es l'ARCHIVISTE d'un second cerveau (méthode CODE: Capture, Organize, Distill",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "user",
+     "content": "{\"item\": {\"title\": \"Image from Heat pump - Wikipedia\", \"content\": \"Image from Heat pump - Wikipedia\\n\\nThe image depicts a schematic diagram of a heat pump system. It shows four main components labeled as 1, 2, 3, and 4. The red lines indicate the flow of refrigerant in one direction, while the blue lines indicate the flow in the opposite direction. Component 1 is likely the evaporator, component 2 is the compressor, component 3 is the condenser, and component 4 is the expansion valve. The diagram illustrates how the refrigerant circulates through these components to transfer heat. There are no visible texts or additional labels in the image.\\n\\nImage address: https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6b/Refrigerator-cycle.svg/250px-Refrigerator-cycle.svg.png?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail\\n\\nSource: https://en.wikipedia.org/wiki/Heat_pump\", \"origin\": \"url\", \"uri\": \"https://en.wikipedia.org/wiki/Heat_pump\", \"original_excerpt\": \"Image from Heat pump - Wikipedia\\n\\nThe image depicts a schematic diagram of a heat pump system. It shows four main components labeled as 1, 2, 3, and 4. The red lines indicate the flow of refrigerant in one direction, while the blue lines indicate the flow in the opposite direction. Component 1 is likely the evaporator, component 2 is the compressor, component 3 is the condenser, and component 4 is the expansion valve. The diagram illustrates how the refrigerant circulates through these components to transfer heat. There are no visible texts or additional labels in the image.\\n\\nImage address: https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6b/Refrigerator-cycle.svg/250px-Refrigerator-cycle.svg.png?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail\"}, \"places\": [{\"id\": \"inbox\", \"name\": \"Inbox\", \"kind\": \"inbox\", \"items\": 3, \"examples\": [\"The book Julie recommended\", \"Heat pump rebate\"]}, {\"id\": \"e91a3ca3f3fd4215\", \"name\": \"Kitchen renovation\", \"kind\": \"project\", \"items\": 7, \"examples\": [\"Tile samples: the matte green wins\", \"Call with Marc about the electrical panel\", \"Contractor quote — Brightline Renovations\"], \"goal\": \"New kitchen before the holidays\", \"area\": \"Home\"}, {\"id\": \"c3540be939fc4489\", \"name\": \"Talk: local-first software\", \"kind\": \"project\", \"items\": 4, \"examples\": [\"Opening story for the talk\", \"Talk outline\", \"Demo: unplug the network on stage\"], \"goal\": \"A 20-minute talk at the local meetup\"}, {\"id\": \"08ebcef0c5f24a37\", \"name\": \"Learn Japanese\", \"kind\": \"project\", \"items\": 4, \"examples\": [\"Phrases for ordering at a café\", \"Komorebi\", \"Daily routine for Japanese\"]}, {\"id\": \"eb1f7b225da74284\", \"name\": \"Health\", \"kind\": \"area\", \"items\": 5, \"examples\": [\"Ran 5 km under 30 minutes\", \"Sleep log: seven hours average\", \"Physio exercises for the left knee\"]}, {\"id\": \"9844d73cae6c4437\", \"name\": \"Finances\", \"kind\": \"area\", \"items\": 3, \"examples\": [\"Renovation budget\", \"Subscriptions to cancel\", \"Tax documents checklist\"]}, {\"id\": \"f5687c2e0d814cbf\", \"name\": \"Home\", \"kind\": \"area\", \"items\": 3, \"examples\": [\"Heat Pump Overview\", \"Snow removal contact from the neighbour\", \"Furnace filter every three months\"]}, {\"id\": \"9f08784e4ebc4d91\", \"name\": \"Local-first software\", \"kind\": \"resource\", \"items\": 7, \"examples\": [\"Sync as a plugin, never a requirement\", \"Chat with Priya about offline-first mobile apps\", \"CRDTs in plain words\"]}, {\"id\": \"e92462bf1e08467e\", \"name\": \"Cooking\", \"kind\": \"resource\", \"items\": 4, \"examples\": [\"Meal plan this week\", \"Mom's tomato sauce, the way she says it\", \"No-knead bread\"]}, {\"id\": \"a8be42dd487648ce\", \"name\": \"Productivity\", \"kind\": \"resource\", \"items\": 5, \"examples\": [\"Capture by voice on walks\", \"Weekly review checklist\", \"Spaced repetition, explained\"]}, {\"id\": \"b581025e1e7949c4\", \"name\": \"Apartment move 2025\", \"kind\": \"archive\", \"items\": 2, \"examples\": [\"Change-of-address list\", \"Movers contact and invoice\"]}], \"themes\": [\"local-first\", \"talk\", \"crdt\", \"design\", \"budget\", \"moving\", \"capture\", \"recipe\", \"running\", \"climate-change\", \"sustainable-energy\", \"pkm\", \"para\", \"review\", \"pantry\", \"meal-plan\", \"family\", \"bread\", \"mobile\", \"sqlite\", \"file-formats\", \"library\", \"winter\", \"maintenance\", \"taxes\", \"appointments\", \"knee\", \"sleep\", \"learning\", \"memory\", \"vocabulary\", \"routine\", \"speaking\", \"kana\", \"demo\", \"countertops\", \"appliances\", \"electrical\", \"quote\", \"bl-2611\"], \"candidates\": [{\"id\": \"ed3288bd119949a4\", \"title\": \"Heat Pump Overview\"}, {\"id\": \"0062e18941a54ba2\", \"title\": \"Heat pump rebate\"}]}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "{\"title\":\"Heat pump cycle diagram\",\"item_type\":\"reference\",\"language\":\"en\",\"summary\":\"A schematic image from Wikipedia depicts a heat pump system with four numbered components and red and blue refrigerant paths. The accompanying description tentatively identifies the components as an evaporator, compressor, condenser, and expansion valve.\",\"key_points\":[\"Shows refrigerant circulating through four components to transfer heat.\",\"Component identifications are tentative.\"],\"entities\":{\"people\":[],\"organizations\":[\"Wikipedia\"],\"concepts\":[\"heat pump\",\"refrigerant\",\"evaporator\",\"compressor\",\"condenser\",\"expansion valve\",\"heat transfer\"],\"places\":[],\"dates\":[]},\"place\":{\"space_id\":\"f5687c2e0d814cbf\"},\"themes\":[\"sustainable-energy\"],\"link_ids\":[\"ed3288bd119949a4\"],\"confidence\":0.94,\"question\":null,\"receipt\":\"A heat pump cycle diagram, filed in Areas › Home and linked to Heat Pump Overview.\"}",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 1962,
+    "completion_tokens": 204,
+    "total_tokens": 2166,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "cache_write_tokens": 1959,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "What does the heat pump diagram I just kept show?"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+     {
+      "id": "call_5QME6iUtrIZ26AVZfseL6l2c",
+      "type": "function",
+      "function": {
+       "name": "search_notes",
+       "arguments": "{\"query\": \"heat pump diagram just kept\"}"
+      }
+     },
+     {
+      "id": "call_VZwG7sj9CLyT1s1nZCMtqTSh",
+      "type": "function",
+      "function": {
+       "name": "search_sources",
+       "arguments": "{\"query\": \"heat pump diagram just kept\"}"
+      }
+     }
+    ],
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 4325,
+    "completion_tokens": 55,
+    "total_tokens": 4380,
+    "prompt_tokens_details": {
+     "cached_tokens": 0,
+     "cache_write_tokens": 4322,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "What does the heat pump diagram I just kept show?"
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_5QME6iUtrIZ26AVZfseL6l2c",
+       "type": "function",
+       "function": {
+        "name": "search_notes",
+        "arguments": "{\"query\": \"heat pump diagram just kept\"}"
+       }
+      },
+      {
+       "id": "call_VZwG7sj9CLyT1s1nZCMtqTSh",
+       "type": "function",
+       "function": {
+        "name": "search_sources",
+        "arguments": "{\"query\": \"heat pump diagram just kept\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_5QME6iUtrIZ26AVZfseL6l2c",
+     "content": "{\"results\": [{\"id\": \"0062e18941a54ba2\", \"title\": \"Heat pump rebate\", \"space_id\": \"inbox\", \"kind\": \"note\", \"snippet\": \"Ask whether the provincial heat pump rebate still applies this winter.\", \"match\": \"meaning\", \"place\": \"Inbox\"}, {\"id\": \"ed3288bd119949a4\", \"title\": \"Heat Pump Overview\", \"space_id\": \"f5687c2e0d814cbf\", \"kind\": \"reference\", \"snippet\": \"A heat pump is a device that transfers heat from one space to another using mechanical or thermal energy. It operates on the refrigeration cycle, making it more energy-efficient than traditional heati\", \"match\": \"meaning\", \"place\": \"Domaines › Home\"}, {\"id\": \"63c54599d12e4dee\", \"title\": \"Heat pump cycle diagram\", \"space_id\": \"f5687c2e0d814cbf\", \"kind\": \"reference\", \"snippet\": \"Image from Heat pump - Wikipedia\\n\\nThe image depicts a schematic diagram of a heat pump system. It shows four main components labeled as 1, 2, 3, and 4. The red lines indicate the flow of refrigerant i\", \"match\": \"meaning\", \"place\": \"Domaines › Home\"}, {\"id\": \"0dee9ac17ad14b58\", \"title\": \"Ran 5 km under 30 minutes\", \"space_id\": \"eb1f7b225da74284\", \"kind\": \"journal\", \"snippet\": \"…Knee felt fine, [kept] the pace easy for the first two kilometres…\", \"match\": \"words\", \"place\": \"Domaines › Health\"}, {\"id\": \"28c9edf1467b4748\", \"title\": \"Spaced repetition, explained\", \"space_id\": \"a8be42dd487648ce\", \"kind\": \"reference\", \"snippet\": \"An interactive explainer on why reviewing [just] before you forget is the…\", \"match\": \"words\", \"place\": \"Ressources › Productivity\"}], \"scope\": \"everything\"}"
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_VZwG7sj9CLyT1s1nZCMtqTSh",
+     "content": "{\"results\": [{\"document\": \"Heat Pump Overview\", \"note_title\": \"Heat Pump Overview\", \"excerpt\": \"ground source heat pumps, water source heat pumps, and exhaust air heat pumps.[3] Large-scale heat pumps are also used in district heating systems.[4]\\n\\nBecause of their high efficiency and the increasing share of fossil-free sources in electrical grids, heat pumps are playing a role in climate chang\", \"match\": \"meaning\"}, {\"document\": \"Heat Pump Overview\", \"note_title\": \"Heat Pump Overview\", \"excerpt\": \"lers.[31]\\n\\nGround source\\n[edit]\\n\\nThis section is an excerpt from Ground source heat pump.[edit]\\n\\nA heat pump in combination with heat and cold storage\\n\\nA ground source heat pump (also geothermal heat pump) is a heating/cooling system for buildings that use a heat pump to transfer heat to or from the\", \"match\": \"meaning\"}, {\"document\": \"Heat Pump Overview\", \"note_title\": \"Heat Pump Overview\", \"excerpt\": \"oning in the same manner as an air conditioner. As it transfers rather than generates heat, it is more energy-efficient than heating by gas boiler.[2]\\n\\nIn a typical vapor-compression heat pump, a gaseous refrigerant is compressed so its pressure and temperature rise. When the pump operates as a heat\", \"match\": \"meaning\"}, {\"document\": \"Heat Pump Overview\", \"note_title\": \"Heat Pump Overview\", \"excerpt\": \"gerants takes effect.\\n\\nTypes\\n[edit]\\n\\nAir-source\\n[edit]\\n\\nThis section is an excerpt from Air source heat pump.[edit]\\n\\nHeat pump on balcony of apartment\\n\\nAn air source heat pump (ASHP), the most common type[c] of heat pump, can absorb energy (heat) sourced from cold ambient air outside a building, and\", \"match\": \"meaning\"}, {\"document\": \"Heat Pump Overview\", \"note_title\": \"Heat Pump Overview\", \"excerpt\": \"Zurich. To avoid noise and vibrations, a then recently developed rotary piston compressor was used. This historic heat pump heated the town hall for 63 years until 2001. Only then was it replaced by a new, more efficient heat pump.[17]\\n1945\\nJohn Sumner, City Electrical Engineer for Norwich, installs\", \"match\": \"meaning\"}, {\"document\": \"Heat Pump Overview\", \"note_title\": \"Heat Pump Overview\", \"excerpt\": \"formance (COP) may be between 2 and 5, while at temperatures below around −8 °C (18 °F) an air-source heat pump may still achieve a COP of 1 to 4.[27]\\n\\nWhile older air-source heat pumps performed relatively poorly at low temperatures and were better suited for warm climates, newer models with variab\", \"match\": \"meaning\"}]}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": null,
+    "tool_calls": [
+     {
+      "id": "call_f9NcQBGwkIuoWYu2dTpFGv3h",
+      "type": "function",
+      "function": {
+       "name": "get_note",
+       "arguments": "{\"note_id\":\"63c54599d12e4dee\"}"
+      }
+     }
+    ],
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 5440,
+    "completion_tokens": 26,
+    "total_tokens": 5466,
+    "prompt_tokens_details": {
+     "cached_tokens": 4322,
+     "cache_write_tokens": 1115,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  },
+  {
+   "kind": "chat:Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (métho",
+   "model": "gpt-6-sol",
+   "seen": [
+    {
+     "role": "assistant",
+     "content": "Since yesterday: 4 new items. 3 are filed (Kitchen renovation, Talk: local-first software, Health). 2 items wait in the Inbox for one answer each."
+    },
+    {
+     "role": "user",
+     "content": "What do I have on countertops?"
+    },
+    {
+     "role": "assistant",
+     "content": "Two items: [[Quartz vs. butcher block countertops]] (an article, Kitchen renovation) and the countertop line of [[Contractor quote — Brightline Renovations]]: quartz, 3 cm, $3,900."
+    },
+    {
+     "role": "user",
+     "content": "What does the heat pump diagram I just kept show?"
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_5QME6iUtrIZ26AVZfseL6l2c",
+       "type": "function",
+       "function": {
+        "name": "search_notes",
+        "arguments": "{\"query\": \"heat pump diagram just kept\"}"
+       }
+      },
+      {
+       "id": "call_VZwG7sj9CLyT1s1nZCMtqTSh",
+       "type": "function",
+       "function": {
+        "name": "search_sources",
+        "arguments": "{\"query\": \"heat pump diagram just kept\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_5QME6iUtrIZ26AVZfseL6l2c",
+     "content": "{\"results\": [{\"id\": \"0062e18941a54ba2\", \"title\": \"Heat pump rebate\", \"space_id\": \"inbox\", \"kind\": \"note\", \"snippet\": \"Ask whether the provincial heat pump rebate still applies this winter.\", \"match\": \"meaning\", \"place\": \"Inbox\"}, {\"id\": \"ed3288bd119949a4\", \"title\": \"Heat Pump Overview\", \"space_id\": \"f5687c2e0d814cbf\", \"kind\": \"reference\", \"snippet\": \"A heat pump is a device that transfers heat from one space to another using mechanical or thermal energy. It operates on the refrigeration cycle, making it more energy-efficient than traditional heati\", \"match\": \"meaning\", \"place\": \"Domaines › Home\"}, {\"id\": \"63c54599d12e4dee\", \"title\": \"Heat pump cycle diagram\", \"space_id\": \"f5687c2e0d814cbf\", \"kind\": \"reference\", \"snippet\": \"Image from Heat pump - Wikipedia\\n\\nThe image depicts a schematic diagram of a heat pump system. It shows four main components labeled as 1, 2, 3, and 4. The red lines indicate the flow of refrigerant i\", \"match\": \"meaning\", \"place\": \"Domaines › Home\"}, {\"id\": \"0dee9ac17ad14b58\", \"title\": \"Ran 5 km under 30 minutes\", \"space_id\": \"eb1f7b225da74284\", \"kind\": \"journal\", \"snippet\": \"…Knee felt fine, [kept] the pace easy for the first two kilometres…\", \"match\": \"words\", \"place\": \"Domaines › Health\"}, {\"id\": \"28c9edf1467b4748\", \"title\": \"Spaced repetition, explained\", \"space_id\": \"a8be42dd487648ce\", \"kind\": \"reference\", \"snippet\": \"An interactive explainer on why reviewing [just] before you forget is the…\", \"match\": \"words\", \"place\": \"Ressources › Productivity\"}], \"scope\": \"everything\"}"
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_VZwG7sj9CLyT1s1nZCMtqTSh",
+     "content": "{\"results\": [{\"document\": \"Heat Pump Overview\", \"note_title\": \"Heat Pump Overview\", \"excerpt\": \"ground source heat pumps, water source heat pumps, and exhaust air heat pumps.[3] Large-scale heat pumps are also used in district heating systems.[4]\\n\\nBecause of their high efficiency and the increasing share of fossil-free sources in electrical grids, heat pumps are playing a role in climate chang\", \"match\": \"meaning\"}, {\"document\": \"Heat Pump Overview\", \"note_title\": \"Heat Pump Overview\", \"excerpt\": \"lers.[31]\\n\\nGround source\\n[edit]\\n\\nThis section is an excerpt from Ground source heat pump.[edit]\\n\\nA heat pump in combination with heat and cold storage\\n\\nA ground source heat pump (also geothermal heat pump) is a heating/cooling system for buildings that use a heat pump to transfer heat to or from the\", \"match\": \"meaning\"}, {\"document\": \"Heat Pump Overview\", \"note_title\": \"Heat Pump Overview\", \"excerpt\": \"oning in the same manner as an air conditioner. As it transfers rather than generates heat, it is more energy-efficient than heating by gas boiler.[2]\\n\\nIn a typical vapor-compression heat pump, a gaseous refrigerant is compressed so its pressure and temperature rise. When the pump operates as a heat\", \"match\": \"meaning\"}, {\"document\": \"Heat Pump Overview\", \"note_title\": \"Heat Pump Overview\", \"excerpt\": \"gerants takes effect.\\n\\nTypes\\n[edit]\\n\\nAir-source\\n[edit]\\n\\nThis section is an excerpt from Air source heat pump.[edit]\\n\\nHeat pump on balcony of apartment\\n\\nAn air source heat pump (ASHP), the most common type[c] of heat pump, can absorb energy (heat) sourced from cold ambient air outside a building, and\", \"match\": \"meaning\"}, {\"document\": \"Heat Pump Overview\", \"note_title\": \"Heat Pump Overview\", \"excerpt\": \"Zurich. To avoid noise and vibrations, a then recently developed rotary piston compressor was used. This historic heat pump heated the town hall for 63 years until 2001. Only then was it replaced by a new, more efficient heat pump.[17]\\n1945\\nJohn Sumner, City Electrical Engineer for Norwich, installs\", \"match\": \"meaning\"}, {\"document\": \"Heat Pump Overview\", \"note_title\": \"Heat Pump Overview\", \"excerpt\": \"formance (COP) may be between 2 and 5, while at temperatures below around −8 °C (18 °F) an air-source heat pump may still achieve a COP of 1 to 4.[27]\\n\\nWhile older air-source heat pumps performed relatively poorly at low temperatures and were better suited for warm climates, newer models with variab\", \"match\": \"meaning\"}]}"
+    },
+    {
+     "role": "assistant",
+     "content": null,
+     "tool_calls": [
+      {
+       "id": "call_f9NcQBGwkIuoWYu2dTpFGv3h",
+       "type": "function",
+       "function": {
+        "name": "get_note",
+        "arguments": "{\"note_id\":\"63c54599d12e4dee\"}"
+       }
+      }
+     ]
+    },
+    {
+     "role": "tool",
+     "tool_call_id": "call_f9NcQBGwkIuoWYu2dTpFGv3h",
+     "content": "{\"id\": \"63c54599d12e4dee\", \"space_id\": \"f5687c2e0d814cbf\", \"title\": \"Heat pump cycle diagram\", \"body\": \"Image from Heat pump - Wikipedia\\n\\nThe image depicts a schematic diagram of a heat pump system. It shows four main components labeled as 1, 2, 3, and 4. The red lines indicate the flow of refrigerant in one direction, while the blue lines indicate the flow in the opposite direction. Component 1 is likely the evaporator, component 2 is the compressor, component 3 is the condenser, and component 4 is the expansion valve. The diagram illustrates how the refrigerant circulates through these components to transfer heat. There are no visible texts or additional labels in the image.\\n\\nImage address: https://thumb.wikimedia.org/wikipedia/commons/thumb/6/6b/Refrigerator-cycle.svg/250px-Refrigerator-cycle.svg.png?utm_source=en.wikipedia.org&utm_campaign=parser&utm_content=thumbnail\\n\\nSource: https://en.wikipedia.org/wiki/Heat_pump\\n\\n#sustainable-energy\", \"kind\": \"reference\", \"source\": \"import\", \"status\": \"active\", \"pinned\": 0, \"created_at\": \"2026-11-05T19:24:32.004Z\", \"updated_at\": \"2026-11-05T19:24:34.625Z\", \"due_date\": null, \"done_at\": null, \"layer_id\": null, \"tags\": [\"sustainable-energy\"], \"links_out\": [{\"id\": \"ed3288bd119949a4\", \"title\": \"Heat Pump Overview\"}], \"links_in\": []}"
+    }
+   ],
+   "message": {
+    "role": "assistant",
+    "content": "[[Heat pump cycle diagram]] shows refrigerant circulating through four numbered components to transfer heat. Red and blue lines show flow in opposite directions; the components appear to be an evaporator, compressor, condenser, and expansion valve.",
+    "refusal": null,
+    "annotations": []
+   },
+   "usage": {
+    "prompt_tokens": 5841,
+    "completion_tokens": 48,
+    "total_tokens": 5889,
+    "prompt_tokens_details": {
+     "cached_tokens": 5437,
+     "cache_write_tokens": 401,
+     "audio_tokens": 0
+    },
+    "completion_tokens_details": {
+     "reasoning_tokens": 0,
+     "audio_tokens": 0,
+     "accepted_prediction_tokens": 0,
+     "rejected_prediction_tokens": 0
+    }
+   }
+  }
+ ],
+ "web": [],
+ "fetch": []
+}

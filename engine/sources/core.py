@@ -187,13 +187,13 @@ VISION_PROMPT = ("Décris cette image pour un second cerveau, en français et de
                  "3 à 8 phrases. N'invente rien.")
 
 
-def describe_image(conn: sqlite3.Connection, client: Any, data: bytes, mime: str) -> str:
+def describe_image(conn: sqlite3.Connection, client: Any, data: bytes, mime: str, prompt: str = VISION_PROMPT) -> str:
     """A vision model turns an image into searchable text (no key: a placeholder the user can edit)."""
     import base64
 
     model = database.get_setting(conn, "assistant_vision_model", "gpt-4o-mini")
     res = client.complete(model, [{"role": "user", "content": [
-        {"type": "text", "text": VISION_PROMPT},
+        {"type": "text", "text": prompt},
         {"type": "image_url", "image_url": {"url": f"data:{mime};base64," + base64.b64encode(data).decode("ascii")}}]}],
         temperature=0.2)
     from engine.assistant.core import _usage_event
@@ -348,9 +348,10 @@ MAX_PAGE_TEXT = 1_000_000
 
 
 def ingest_page(conn: sqlite3.Connection, client: Any | None, url: str, title: str, html: str, text: str,
-                space_id: str | None = None) -> dict[str, Any]:
+                space_id: str | None = None, pictures: list[dict[str, Any]] | None = None, lang: str = "") -> dict[str, Any]:
     """A page as the user's browser shows it (the extension): after their login, scripts and checks. Nothing is
-    downloaded again. The page's HTML is kept as its original; its readable text is indexed."""
+    downloaded again. The page's HTML is kept as its original; its readable text is indexed. `pictures`: the few
+    images the extension chose on the page, with their bytes (engine/sources/images.py keeps and reads them)."""
     from engine.sources import originals
 
     url = (url or "").strip()
@@ -362,8 +363,14 @@ def ingest_page(conn: sqlite3.Connection, client: Any | None, url: str, title: s
     if len(readable) < 200 and len(rendered) > len(readable):  # an app-like page: what was on screen reads better
         readable = rendered
     kept = originals.keep_bytes(originals.data_root(conn), html.encode("utf-8"), "html") if html else None
-    return ingest(conn, client, "url", url, (title or page_title or url)[:300], readable, "text/html",
-                  len(html.encode("utf-8")) if html else len(readable), space_id, original=kept, text_engine="browser")
+    out = ingest(conn, client, "url", url, (title or page_title or url)[:300], readable, "text/html",
+                 len(html.encode("utf-8")) if html else len(readable), space_id, original=kept, text_engine="browser")
+    if pictures and not out.get("duplicate"):  # the few pictures worth keeping, as the browser showed them
+        from engine.sources import images
+
+        out["images"] = images.keep_for_source(conn, client, out["id"], pictures, title or page_title, readable,
+                                               lang or images.html_lang(html))
+    return out
 
 
 def ingest_url(conn: sqlite3.Connection, client: Any | None, url: str, space_id: str | None = None) -> dict[str, Any]:
@@ -378,7 +385,63 @@ def ingest_url(conn: sqlite3.Connection, client: Any | None, url: str, space_id:
             pages = render.page_count(originals.data_root(conn) / kept[0])
         except render.RenderError:
             pages = None
-    return ingest(conn, client, "url", url.strip(), title, text, mime, size, space_id, original=kept, pages=pages)
+    out = ingest(conn, client, "url", url.strip(), title, text, mime, size, space_id, original=kept, pages=pages)
+    if ext == "html" and not out.get("duplicate"):  # its main image and its figures, downloaded too
+        from engine.sources import images
+
+        raw = data.decode("utf-8", errors="replace")
+        chosen = images.pick_from_html(raw, url.strip())
+        if chosen:
+            out["images"] = images.keep_for_source(conn, client, out["id"], images.fetch_all(chosen), title, text,
+                                                   images.html_lang(raw))
+    return out
+
+
+IMAGE_PROMPT = ("Cette image a été gardée depuis la page web « {page} ». Décris-la de façon factuelle: ce qu'elle "
+                "montre, ce qu'elle apprend (schéma, graphique, tableau: les données importantes), le texte visible "
+                "(transcris-le fidèlement). 3 à 8 phrases. N'invente rien. Écris toute la description en {language}, "
+                "la langue de la page.")
+
+
+def ingest_image(conn: sqlite3.Connection, client: Any | None, data: bytes, page_url: str, page_title: str = "",
+                 alt: str = "", image_url: str = "", space_id: str | None = None, lang: str = "") -> dict[str, Any]:
+    """One picture the user chose on a page (right-click → Send this image to the Brain): an item of its own,
+    like an image dropped on the window, that remembers the page it came from."""
+    from engine.sources import images, originals
+
+    page_url = (page_url or "").strip()
+    if not page_url.startswith(("http://", "https://")):
+        raise extract.ExtractError("only pictures from web pages (http/https) can be sent from the browser")
+    mime = images.sniff(data)
+    if mime is None:
+        raise extract.ExtractError("this picture's format cannot be kept (PNG, JPEG, WebP or GIF only)")
+    if len(data) > images.MAX_IMAGE_BYTES:
+        raise extract.ExtractError("this picture is larger than 8 MB")
+    root = originals.data_root(conn)
+    kept = originals.keep_bytes(root, data, images.KEEP_TYPES[mime])
+    dup = conn.execute("SELECT id FROM sources WHERE original = ? AND status = 'ready'", (kept[0],)).fetchone()
+    if dup:
+        return {**get_source(conn, dup["id"]), "duplicate": True}
+    desc = ""
+    if client is not None:
+        try:
+            desc = describe_image(conn, client, data, mime, IMAGE_PROMPT.format(
+                page=(page_title or page_url)[:160], language=images.language(lang, page_title + " " + alt)))
+        except Exception as exc:  # the picture is still kept and shown
+            desc = f"(description unavailable: {exc.__class__.__name__})"
+    path = originals.resolve(root, kept[0])
+    seen = _local_ocr_image(path) if path is not None and mime != "image/gif" else ""
+    host = page_url.split("/")[2] if page_url.count("/") >= 2 else page_url
+    text = f"Image from {page_title or host}\n\n{desc or 'No description yet (add your OpenAI key).'}"
+    if image_url and not image_url.startswith("data:"):
+        text += f"\n\nImage address: {image_url[:500]}"
+    text_engine = None
+    if seen:
+        text += "\n\nText in the image:\n" + seen
+        text_engine = "ocr-" + ("windows" if ocr.engine_name() == "recorded" else str(ocr.engine_name()))
+    title = alt.strip() if len(alt.strip()) >= 8 else f"Image from {page_title or host}"
+    return ingest(conn, client, "url", page_url, title[:200], text, mime, len(data), space_id, original=kept, pages=1,
+                  text_engine=text_engine)
 
 
 # ------------------------------------------------- embeddings status, search

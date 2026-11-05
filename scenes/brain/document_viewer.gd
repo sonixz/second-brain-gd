@@ -142,6 +142,7 @@ func open(source_id: String, at_page: int = 1) -> bool:
 		if not t["ok"]:
 			return false
 		reader_text.text = str((t["data"] as Dictionary).get("text", ""))
+		await _show_pictures(source_id, str((t["data"] as Dictionary).get("text", "")))
 		reader.scroll_vertical = 0
 	_update_read_by()
 	reader.visible = is_text()
@@ -162,6 +163,37 @@ func open(source_id: String, at_page: int = 1) -> bool:
 	fit()
 	_update_label()
 	return true
+
+
+## A web page's kept pictures (its main image and figures) come first in the reading view, each with its
+## caption, then the page's text.
+func _show_pictures(source_id: String, text: String) -> void:
+	var pics: Array = doc.get("images", []) if doc.get("images") is Array else []
+	if pics.is_empty():
+		return
+	var shown := []
+	for p in pics:
+		var pd: Dictionary = p
+		var res := await app.backend.api.call_api("/sources/%s/image/%d" % [source_id, int(pd.get("idx", 0))], true,
+			HTTPClient.METHOD_GET, "", true)
+		var tex: Texture2D = texture_from(res["bytes"], str(pd.get("mime", ""))) if res["ok"] else null
+		if tex != null:
+			shown.append([tex, str(pd.get("caption", "")) if str(pd.get("caption", "")) != "" else str(pd.get("alt", ""))])
+	if shown.is_empty() or not is_inside_tree():
+		return
+	reader_text.clear()
+	var room := int(reader_text.custom_minimum_size.x) - 40
+	for pair in shown:
+		var tex: Texture2D = pair[0]
+		reader_text.add_image(tex, mini(room, tex.get_width()))
+		reader_text.newline()
+		if str(pair[1]) != "":
+			reader_text.push_color(SbTheme.MUTED)
+			reader_text.add_text(str(pair[1]))
+			reader_text.pop()
+			reader_text.newline()
+		reader_text.newline()
+	reader_text.add_text(text)
 
 
 func _update_read_by() -> void:
@@ -321,7 +353,7 @@ static func texture_from(data: PackedByteArray, mime: String) -> Texture2D:
 		err = img.load_png_from_buffer(data)
 	elif data.size() >= 3 and data[0] == 0xFF and data[1] == 0xD8:
 		err = img.load_jpg_from_buffer(data)
-	elif mime == "image/webp":
+	elif mime == "image/webp" or (data.size() >= 12 and data.slice(8, 12).get_string_from_ascii() == "WEBP"):
 		err = img.load_webp_from_buffer(data)
 	if err != OK:
 		return null

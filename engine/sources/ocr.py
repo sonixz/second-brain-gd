@@ -46,8 +46,9 @@ def _no_window() -> dict:
 Progress = Callable[[str, int, int], None]   # (stage, done, total): "render" or "ocr", pages done so far
 
 
-def read_images(paths: list[Path], lang: str = "", on_page: Progress | None = None) -> list[str]:
-    """Text of each image, in order. on_page("ocr", k, n) after each one."""
+def read_images(paths: list[Path], lang: str = "", on_page: Progress | None = None, pdf_pages: bool = False) -> list[str]:
+    """Text of each image, in order. on_page("ocr", k, n) after each one. pdf_pages: the rendered pages of a PDF
+    (the recorded mode replays its pages only for those; any other picture reads as what was recorded for it)."""
     engine = engine_name()
     if engine is None:
         raise OcrError("no local OCR on this machine")
@@ -62,11 +63,17 @@ def read_images(paths: list[Path], lang: str = "", on_page: Progress | None = No
     if engine == "recorded":
         import time
 
-        pages = json.loads(Path(os.environ["SBGD_OCR_PAGES"]).read_text(encoding="utf-8"))["pages"]
+        import hashlib
+
+        recorded = json.loads(Path(os.environ["SBGD_OCR_PAGES"]).read_text(encoding="utf-8"))
+        pages, pictures = recorded.get("pages", []), recorded.get("images", {})
         out = []
         for i in range(n):
             time.sleep(0.8)  # a real page takes about a second: the progress line has time to show
-            out.append(pages[i] if i < len(pages) else "")
+            if pdf_pages:
+                out.append(pages[i] if i < len(pages) else "")
+            else:  # a picture: only what a real OCR read in that very picture (by its content), else nothing
+                out.append(str(pictures.get(hashlib.sha256(Path(paths[i]).read_bytes()).hexdigest(), "")))
             tick("ocr", i + 1, n)
         return out
     if engine == "windows":
@@ -144,7 +151,7 @@ def read_pdf(path: Path, pages: int, max_pages: int = 60, on_progress: Progress 
             f.write_bytes(render.render_page(path, page, RENDER_WIDTH, Path(tmp) / "cache"))
             files.append(f)
             tick("render", page, n)
-        texts = read_images(files, on_page=tick)
+        texts = read_images(files, on_page=tick, pdf_pages=True)
     parts = [t.strip() for t in texts if t and t.strip()]
     if pages > max_pages:
         parts.append(f"[Pages {max_pages + 1} à {pages} non lues.]")

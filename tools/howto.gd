@@ -551,3 +551,110 @@ func guide_browser() -> void:
 	edge(["close"])
 	if not sent:
 		push_error("browser: the page was not sent")
+
+
+## Pairs the throwaway Edge without screenshots (the browser guide shows the pairing itself).
+func edge_connect(url: String) -> bool:
+	edge_ps1 = OS.get_environment("SBGD_EDGE_PS1")
+	edge_out = OS.get_environment("SBGD_EDGE_OUT")
+	var r: Dictionary = await app.backend.api.call_api("/browser/pair/start", true, HTTPClient.METHOD_POST)
+	if not r["ok"]:
+		return false
+	var code := str((r["data"] as Dictionary).get("code", ""))
+	edge(["launch", OS.get_environment("SBGD_EDGE_EXT"), url])
+	await pause(4.0)
+	edge(["dismiss", "Not now"])
+	await open_popup()
+	popup("document.getElementById('code').value = '%s'; document.getElementById('port').value = '%d'; document.getElementById('pairBtn').click(); 'paired'" % [code, app.backend.api.port])
+	await pause(2.0)
+	for i in 3:
+		edge(["click", "Allow"])
+		await pause(1.0)
+		if edge(["eval", "/background.js", "chrome.permissions.contains({origins: ['<all_urls>']})"]) == "true":
+			break
+	var end := Time.get_ticks_msec() + 30000
+	while Time.get_ticks_msec() < end:
+		var st: Dictionary = await app.backend.api.call_api("/browser/status")
+		if st["ok"] and bool((st["data"] as Dictionary).get("connected", false)) and bool((st["data"] as Dictionary).get("can_read_tabs", false)):
+			return true
+		await pause(1.0)
+	return false
+
+
+## A real right-click in Edge (DevTools mouse events): Edge opens its own context menu at that point.
+func edge_right_click(js_point: String) -> void:
+	var at := edge(["eval", "wikipedia.org", js_point]).replace("\"", "")
+	await pause(1.0)
+	var x := at.get_slice(",", 0)
+	var y := at.get_slice(",", 1)
+	for kind in ["mouseMoved", "mousePressed", "mouseReleased"]:
+		var extra := "" if kind == "mouseMoved" else ";button=right;clickCount=1"
+		edge(["cdp", "wikipedia.org", "Input.dispatchMouseEvent", "type=%s;x=%s;y=%s%s" % [kind, x, y, extra]])
+	await pause(1.5)
+
+
+# ---------------------------------------------------------------- 6b. Keep the pictures that matter (real Edge, real answers)
+func guide_images() -> void:
+	await overview()
+	if not await edge_connect("https://en.wikipedia.org/wiki/Heat_pump"):
+		push_error("images: the extension did not connect")
+		edge(["close"])
+		return
+	# a fundraising banner may cover the article: close it the way a reader would (it can appear a moment later)
+	await pause(3.0)
+	edge(["eval", "wikipedia.org", "(() => { const m = [...document.querySelectorAll('a, button')].find((e) => /maybe later|close/i.test(e.textContent || e.getAttribute('aria-label') || '')); if (m) m.click(); return m ? 'closed' : 'none'; })()"])
+	await pause(1.0)
+	# 1. Send a page with pictures: its main image and its figures come with it.
+	var before := int(b.get("classified"))
+	await open_popup()
+	popup("document.getElementById('send').click(); 'sent'")
+	for i in 120:
+		await pause(1.0)
+		if popup("document.getElementById('result').hidden && document.getElementById('error').hidden ? '' : 'done'").contains("done"):
+			break
+	await pause(0.5)
+	await edge_step("Edge: Send this page; the receipt counts the pictures kept", false)
+	# 2. The page's card in the graph shows its main image.
+	await wait_until(func() -> bool: return int(b.get("classified")) > before, 30.0)
+	(b.get("toast") as Control).visible = false
+	await b.call("refresh_graph")
+	await settle(10.0)
+	var page := await newest_source_note()
+	if page != "":
+		g.zoom_level("read", page)
+		await pause(4.0)
+	await step("the page's card shows its main image")
+	# 3. The reading view: the kept pictures, with their captions, then the text.
+	await b.call("open_document_for", page)
+	await pause(3.0)
+	await step("the reading view: the pictures first, with their captions")
+	var viewer: Variant = b.get("viewer")
+	if viewer != null:
+		viewer.call("hide_viewer")
+	await pause(0.5)
+	# 4. Right-click a diagram in Edge: Send this image to the Brain.
+	edge(["focus"])
+	await edge_right_click("(() => { const f = [...document.querySelectorAll('figure')].find((x) => /indoor compartment/.test(x.innerText)); "
+		+ "const i = f.querySelector('img'); window.scrollBy(0, i.getBoundingClientRect().top - 120); "
+		+ "const r = i.getBoundingClientRect(); return Math.round(r.x + r.width / 2) + ',' + Math.round(r.y + 50); })()")
+	await edge_step("Edge: right-click a diagram → Send this image to the Brain", false)
+	before = int(b.get("classified"))
+	edge(["click", "Send this image to the Brain", "menu"])
+	# 5. The picture is an item of its own: described, filed, linked to its page.
+	await wait_until(func() -> bool: return int(b.get("classified")) > before, 90.0)
+	await pause(1.0)
+	(b.get("toast") as Control).visible = false
+	await b.call("refresh_graph")
+	await settle(10.0)
+	var pic := await newest_source_note()
+	if pic != "" and pic != page:
+		g.zoom_level("read", pic)
+		await pause(4.0)
+	await step("the diagram, an item of its own: described and filed")
+	# 6. Ask about it: the Archivist answers from what the picture shows.
+	var ap: AssistantPanel = b.get("assistant_panel")
+	await ask(ap, "What does the heat pump diagram I just kept show?")
+	await wait_until(func() -> bool: return not ap.busy, 90.0)
+	await pause(1.5)
+	await step("ask about it: the answer comes from the picture")
+	edge(["close"])

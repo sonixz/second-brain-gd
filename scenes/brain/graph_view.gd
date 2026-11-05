@@ -1130,9 +1130,10 @@ func _draw_card(n: Dictionary, p: Vector2, reading: bool) -> void:
 	var pad := clampf(zoom * 2.2, 5.0, 22.0)
 	var x := rect.position.x + pad + stripe
 	var width := sz.x - pad * 2.0 - stripe
-	# A document or an image: its first page sits on the right, sharper as you zoom in.
+	# A document or an image: its first page sits on the right, sharper as you zoom in (a web page: its main image).
 	var src: Variant = d.get("source")
-	if src is Dictionary and int((src as Dictionary).get("pages", 0) if (src as Dictionary).get("pages") != null else 0) > 0:
+	if src is Dictionary and (int((src as Dictionary).get("pages", 0) if (src as Dictionary).get("pages") != null else 0) > 0
+			or int((src as Dictionary).get("images", 0)) > 0):
 		var ph := sz.y - pad * 2.0
 		var pt: Dictionary = page_tex.get(id, {})
 		var tex: Texture2D = pt.get("tex")

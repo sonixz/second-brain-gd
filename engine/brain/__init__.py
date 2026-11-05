@@ -175,6 +175,9 @@ def delete_note(conn: sqlite3.Connection, note_id: str) -> None:
     from engine.sources import originals
 
     files = [r["original"] for r in conn.execute("SELECT original FROM sources WHERE note_id = ?", (note_id,)) if r["original"]]
+    files += [r["original"] for r in conn.execute(
+        "SELECT original FROM source_images WHERE source_id IN (SELECT id FROM sources WHERE note_id = ?)", (note_id,))]
+    conn.execute("DELETE FROM source_images WHERE source_id IN (SELECT id FROM sources WHERE note_id = ?)", (note_id,))
     conn.execute("DELETE FROM source_chunks WHERE source_id IN (SELECT id FROM sources WHERE note_id = ?)", (note_id,))
     conn.execute("DELETE FROM sources WHERE note_id = ?", (note_id,))
     conn.execute("DELETE FROM notes WHERE id = ?", (note_id,))

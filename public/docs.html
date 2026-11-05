@@ -54,6 +54,7 @@
           <li><a href="#agents-profiles">Archivist and Sparring</a></li>
           <li><a href="#internet">Internet</a></li>
           <li><a href="#extension">Browser extension</a></li>
+          <li><a href="#pictures">Pictures from pages</a></li>
           <li><a href="#browser">Bookmark (no extension)</a></li>
           <li><a href="#api">Local HTTP API</a></li>
           <li><a href="#packs">Brain packs</a></li>
@@ -469,9 +470,11 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           <thead><tr><th>You</th><th>What happens</th></tr></thead>
           <tbody>
             <tr><td>Click the icon → <b>Send this page</b>, or <kbd>Alt</kbd>+<kbd>Shift</kbd>+<kbd>B</kbd></td>
-              <td>The page you see is kept (its HTML as the original), its text indexed, summarised and filed by the archivist. A ✓ appears on the icon; the app shows “From your browser: …” and refreshes the graph.</td></tr>
+              <td>The page you see is kept (its HTML as the original) with its main image and figures, its text indexed, summarised and filed by the archivist. A ✓ appears on the icon; the app shows “From your browser: …” and refreshes the graph.</td></tr>
             <tr><td>Select text → right-click → <b>Send the selection to the Brain</b></td>
               <td>Only that passage enters, as a quote, with the page as its source.</td></tr>
+            <tr><td>Right-click a picture → <b>Send this image to the Brain</b></td>
+              <td>That picture becomes an item of its own, described and filed (<a href="#pictures">Pictures from pages</a>).</td></tr>
             <tr><td>“open the first job offer” (<kbd>F8</kbd>)</td>
               <td>The Brain opens the page in a new tab of your browser and remembers it.</td></tr>
             <tr><td>“add it” / “put it in the Brain”</td>
@@ -558,6 +561,35 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             <tr><td><code>POST /browser/capture</code> <code>{url, title, html, text, selection, selection_only, place}</code></td><td>extension token</td><td>Add a page or a passage; returns the note, its place and the archivist's receipt</td></tr>
           </tbody>
         </table>
+      </section>
+
+      <section class="doc" id="pictures">
+        <p class="kicker">Integrate · reference</p>
+        <h2>Pictures from pages</h2>
+        <p>A web page brings its pictures that carry something: its <b>main image</b> (shown on its card in the graph)
+          and its <b>figures</b>: a diagram, a chart, a table published as a picture, a photo with a caption. At most
+          five per page. Logos, icons, avatars, ads, menu and footer pictures and anything small never come in. Any
+          other picture is one right-click away. Step by step: <a href="howto.html#images">How-to → Keep the pictures
+          that matter</a>.</p>
+        <table>
+          <thead><tr><th>How</th><th>What is kept</th></tr></thead>
+          <tbody>
+            <tr><td>Send a page with the extension</td><td>The chosen pictures as Edge shows them (after your login),
+              with the page. The receipt says how many.</td></tr>
+            <tr><td>Paste a link</td><td>The same choice, downloaded by the engine (public pictures only).</td></tr>
+            <tr><td>Right-click a picture → <b>Send this image to the Brain</b></td><td>That picture, as an item of its
+              own that remembers its page: described, read for its text, filed.</td></tr>
+          </tbody>
+        </table>
+        <h3>What a picture says</h3>
+        <p>Each kept picture is a kept original (<code>originals/</code>), deleted with its item. What it says is
+          searchable with the page: its caption, the text read in it on your computer (Windows OCR, or Tesseract),
+          and, for a picture that holds information (text or numbers in it, a caption that says diagram or chart, or
+          a PNG, the usual format of diagrams and screenshots), a description by the vision model
+          (<code>assistant_vision_model</code>, gpt-4o-mini by default, a fraction of a cent per picture), written in
+          the page's language. A decorative photo is kept with its caption only: no model call.</p>
+        <p>The reading view shows the pictures first, with their captions, then the text. Drawings in SVG are not kept
+          yet; formats kept: PNG, JPEG, WebP, GIF, up to 8 MB each.</p>
       </section>
 
       <section class="doc" id="browser">
@@ -848,7 +880,7 @@ SBGD_SHOT_SIZE=1600x1000 ./tools/showcase.sh     # the website screenshots, from
           <code>public/howto.html</code>. Guides marked <i>Real answers</i> are recorded once with the real model, then replayed:</p>
 <pre><code>./tools/howto.sh                    # every guide, recorded answers replayed: no network, no key, no cost
 ./tools/howto.sh --record web       # the real model answers again (OPENAI_API_KEY through dotenvx)
-./tools/howto.sh --edge browser     # the browser guide: drives a real Microsoft Edge (Windows, from WSL)</code></pre>
+./tools/howto.sh --edge browser images   # the browser guides: drive a real Microsoft Edge (Windows, from WSL)</code></pre>
         <p>A recording keeps the model's answers, web searches and downloaded pages
           (<code>tools/howto/recordings/</code>); item ids are mapped to the new ones on each run. A guide whose steps no
           longer play, or whose screenshots do not match its steps, makes the run fail, so the guides double as end-to-end

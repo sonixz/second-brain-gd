@@ -269,6 +269,34 @@ guide(
     "Find and connect", edge=True)
 
 guide(
+    "images", "Keep the pictures that matter", "real", 4,
+    "A page's main image and its figures (a diagram, a chart, a table shown as a picture) come with it; any other "
+    "picture is one right-click away. Logos, icons and ads never come in.",
+    ["The browser extension, paired (<a href=\"#browser\">Connect your browser</a>)"],
+    [("On a page with pictures: the extension's icon → <b>Send this page</b>.",
+      "The receipt says how many pictures came with the page: at most five, the ones that carry something. Each is "
+      "kept as it was in Edge."),
+     ("Zoom into the page in the graph.",
+      "Its card shows the page's main image, next to the summary."),
+     ("Open it: double-click its card (or <b>View document</b> in the item).",
+      "The kept pictures come first, with their captions, then the page's text. A diagram or a chart was also read: "
+      "what it shows is searchable, like the text."),
+     ("In Edge, right-click any picture → <b>Send this image to the Brain</b>.",
+      "Edge's own menu. Use it for the picture you want, whatever the page."),
+     ("Back in the app.",
+      "The picture is an item of its own: described, read for any text it holds, filed, and it remembers the page it "
+      "came from."),
+     ("Ask about it: <span class=\"say\">What does the heat pump diagram I just kept show?</span>",
+      "The Archivist answers from what the picture shows."),
+     ],
+    [("No picture came with the page.", "The page has only small or decorative pictures, or they are drawings "
+      "(SVG) the Brain does not keep yet: right-click the one you want."),
+     ("The menu item is missing.", "Reload the extension (<code>edge://extensions</code> → Reload) after updating "
+      "the project.")],
+    [("Browser extension", "docs.html#extension"), ("Pictures from pages", "docs.html#pictures")],
+    "Find and connect", edge=True)
+
+guide(
     "organise", "Organise by voice", "real", 3,
     "Move, link and undo by naming things, the way you would ask a person.",
     [],
