@@ -172,13 +172,19 @@ def _finish(layout: Layout, client: Any, note_id: str | None, duplicate: bool, t
             receipt = archivist.file_item(conn, client, note_id, float(core.settings(conn)["assistant_min_confidence"])).get("receipt") or ""
     with database.session(layout.database) as conn:
         place = archivist.place_label(conn, conn.execute("SELECT space_id FROM notes WHERE id = ?", (note_id,)).fetchone()["space_id"],
-                                      "en") if note_id else ""  # shown in the app and the popup, which are in English
+                                      core.ui_language(conn)) if note_id else ""  # shown in the app and the popup
+        fr = core.ui_language(conn) == "fr"
         database.record_event(conn, {"timestamp": utc_now(), "component": "browser", "stage": "capture", "status": "ok",
                                      "message": f"From the browser: {title}" + (" (already in the Brain)" if duplicate else ""),
                                      "details": {"url": url[:300]}})
-    receipt = receipt or ("Already in your Brain." if duplicate else f"Added to {place or 'the Inbox'}.")
-    if kept_images:
-        receipt += f" {kept_images} image{'s' if kept_images > 1 else ''} from the page kept with it."
+    if fr:
+        receipt = receipt or ("Déjà dans ton Brain." if duplicate else f"Ajouté à {place or 'l’Inbox'}.")
+        if kept_images:
+            receipt += f" {kept_images} image{'s' if kept_images > 1 else ''} de la page gardée{'s' if kept_images > 1 else ''} avec."
+    else:
+        receipt = receipt or ("Already in your Brain." if duplicate else f"Added to {place or 'the Inbox'}.")
+        if kept_images:
+            receipt += f" {kept_images} image{'s' if kept_images > 1 else ''} from the page kept with it."
     out = {"note_id": note_id, "title": title, "duplicate": duplicate, "place": place, "images": kept_images,
            "receipt": receipt}
     if not duplicate:

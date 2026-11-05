@@ -11,6 +11,22 @@ const PYTHON_DOWNLOAD := "https://www.python.org/downloads/"
 var _thread: Thread
 
 
+## A candidate's result id ("compatible", "not found"…) as shown to the user, in the current language.
+static func result_text(result: String) -> String:
+	match result:
+		"compatible":
+			return I18n.t("compatible")
+		"incompatible":
+			return I18n.t("incompatible")
+		"not found":
+			return I18n.t("not found")
+		"unreadable answer":
+			return I18n.t("unreadable answer")
+		"missing venv module":
+			return I18n.t("missing venv module")
+	return result
+
+
 static func custom_python() -> String:
 	var env := OS.get_environment("SBGD_PYTHON")
 	if env != "":
@@ -26,7 +42,7 @@ static func candidates() -> Array[Dictionary]:
 	var list: Array[Dictionary] = []
 	var custom := custom_python()
 	if custom != "":
-		list.append({"label": custom + " (custom)", "cmd": custom, "args": []})
+		list.append({"label": I18n.t("%s (custom)") % custom, "cmd": custom, "args": []})
 	if OS.get_name() == "Windows":
 		for v in ["3.13", "3.12"]:
 			list.append({"label": "py -" + v, "cmd": "py", "args": ["-" + v]})

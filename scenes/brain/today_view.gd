@@ -27,7 +27,7 @@ func setup(a: SbApp) -> TodayView:
 	htext.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(htext)
 	var over := Label.new()
-	over.text = "TODAY"
+	over.text = I18n.t("TODAY")
 	over.theme_type_variation = "Overline"
 	htext.add_child(over)
 	title_label = Label.new()
@@ -38,8 +38,8 @@ func setup(a: SbApp) -> TodayView:
 	summary.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(summary)
 	var review := Button.new()
-	review.text = "Weekly review"
-	review.tooltip_text = "The assistant walks through each project: progress, blockers, next step, and questions for your vision"
+	review.text = I18n.t("Weekly review")
+	review.tooltip_text = I18n.t("The assistant walks through each project: progress, blockers, next step, and questions for your vision")
 	review.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	review.pressed.connect(func() -> void: review_requested.emit())
 	head.add_child(review)
@@ -63,31 +63,35 @@ func refresh() -> void:
 		c.queue_free()
 	task_rows = 0
 	var d := Time.get_datetime_dict_from_system()
-	var days := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-	var months := ["January", "February", "March", "April", "May", "June", "July", "August", "September",
-		"October", "November", "December"]
-	title_label.text = "%s, %s %d" % [days[int(d["weekday"])], months[int(d["month"]) - 1], int(d["day"])]
+	var days := [I18n.t("Sunday"), I18n.t("Monday"), I18n.t("Tuesday"), I18n.t("Wednesday"), I18n.t("Thursday"),
+		I18n.t("Friday"), I18n.t("Saturday")]
+	var months := [I18n.t("January"), I18n.t("February"), I18n.t("March"), I18n.t("April"), I18n.t("May"), I18n.t("June"),
+		I18n.t("July"), I18n.t("August"), I18n.t("September"), I18n.t("October"), I18n.t("November"), I18n.t("December")]
+	# Named fields: French puts the day before the month (« jeudi 5 novembre »).
+	var line := I18n.t("{weekday}, {month} {day}").format({"weekday": days[int(d["weekday"])],
+		"month": months[int(d["month"]) - 1], "day": int(d["day"])})
+	title_label.text = line.left(1).to_upper() + line.substr(1)
 	var overdue: Array = data.get("overdue", [])
 	var today: Array = data.get("today", [])
 	var soon: Array = data.get("soon", [])
-	summary.text = "%d overdue · %d today · %d this week · %d in Inbox" % [overdue.size(), today.size(), soon.size(),
+	summary.text = I18n.t("%d overdue · %d today · %d this week · %d in Inbox") % [overdue.size(), today.size(), soon.size(),
 		int(data.get("inbox_count", 0))]
 	var left := _column(1.3)
 	var right := _column(1.0)
-	_task_section(left, "Overdue", overdue, SbTheme.ERROR)
-	_task_section(left, "Today", today, SbTheme.WARM)
-	_task_section(left, "This week", soon, SbTheme.INFO)
+	_task_section(left, I18n.t("Overdue"), overdue, SbTheme.ERROR)
+	_task_section(left, I18n.t("Today"), today, SbTheme.WARM)
+	_task_section(left, I18n.t("This week"), soon, SbTheme.INFO)
 	var next: Array = data.get("next_actions", [])
-	_task_section(left, "Next action per project", next, SbTheme.MINT, true)
+	_task_section(left, I18n.t("Next action per project"), next, SbTheme.MINT, true)
 	var stuck: Array = data.get("projects_without_next_action", [])
 	if not stuck.is_empty():
-		_section_title(left, "Projects without a next action", SbTheme.WARN)
+		_section_title(left, I18n.t("Projects without a next action"), SbTheme.WARN)
 		for item in stuck:
 			var p: Dictionary = item
 			var b := Button.new()
 			b.theme_type_variation = "GhostButton"
 			b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-			b.text = "◇  %s  · define the next step" % p["name"]
+			b.text = I18n.t("◇  %s  · define the next step") % p["name"]
 			var pid := str(p["id"])
 			b.pressed.connect(func() -> void: open_project.emit(pid))
 			left.add_child(b)
@@ -95,7 +99,7 @@ func refresh() -> void:
 		var calm := Label.new()
 		calm.theme_type_variation = "Muted"
 		calm.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		calm.text = "Nothing due. Add a task by typing it below, or ask the assistant: “ajoute une tâche…”."
+		calm.text = I18n.t("Nothing due. Add a task by typing it below, or ask the assistant: “add a task…”.")
 		left.add_child(calm)
 	var lists: Array = data.get("checklists", [])
 	for item in lists:
@@ -214,15 +218,15 @@ func _checklist_card(cl: Dictionary) -> PanelContainer:
 	if items.is_empty():
 		var empty := Label.new()
 		empty.theme_type_variation = "Muted"
-		empty.text = "Empty. Say “ajoute du lait à l'épicerie”."
+		empty.text = I18n.t("Empty. Say “add milk to the grocery list”.")
 		col.add_child(empty)
 	var add := LineEdit.new()
-	add.placeholder_text = "Add items (comma separated)…"
+	add.placeholder_text = I18n.t("Add items (comma separated)…")
 	add.text_submitted.connect(func(text: String) -> void: add_items(cid, text))
 	col.add_child(add)
 	if done_count > 0:
 		var clear := Button.new()
-		clear.text = "Clear %d checked" % done_count
+		clear.text = I18n.t("Clear %d checked") % done_count
 		clear.theme_type_variation = "GhostButton"
 		clear.pressed.connect(func() -> void:
 			await app.backend.api.call_api("/brain/checklists/%s/clear" % cid, true, HTTPClient.METHOD_POST)

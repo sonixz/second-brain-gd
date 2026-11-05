@@ -74,9 +74,9 @@ func _process(_delta: float) -> void:
 		_ws = null
 		is_ready = false
 		if not _was_open:
-			failed.emit("Cannot reach the local voice service (code %d)." % code)
+			failed.emit(I18n.t("Cannot reach the local voice service (code %d).") % code)
 		elif code == 4403:
-			failed.emit("No OpenAI key configured.")
+			failed.emit(I18n.t("No OpenAI key configured."))
 		closed.emit()
 
 
@@ -106,4 +106,4 @@ func _handle(msg: Dictionary) -> void:
 		"ended":
 			ended.emit(str(msg.get("reason", "")))
 		"error":
-			failed.emit(str(msg.get("message", "Live conversation error")))
+			failed.emit(str(msg.get("message", I18n.t("Live conversation error"))))

@@ -62,7 +62,7 @@ func _poll() -> void:
 	if _final.is_empty():
 		_final = {"component": "bootstrap", "stage": "done", "status": "error", "progress": null,
 			"timestamp": Time.get_datetime_string_from_system(true) + "Z",
-			"message": "The setup process ended (exit code %d) without reporting a result." % exit_code}
+			"message": I18n.t("The setup process ended (exit code %d) without reporting a result.") % exit_code}
 		event_received.emit(_final)
 	finished.emit(str(_final.get("status", "")) == "ok", _final)
 

@@ -1286,32 +1286,39 @@ func edge_text(e: Dictionary) -> String:
 	var b := str((nodes[e["to"]] as Dictionary)["label"])
 	match str(e["type"]):
 		"space":
-			return "“%s” belongs to the place “%s”" % [a, b]
+			return I18n.t("“%s” belongs to the place “%s”") % [a, b]
 		"area":
-			return "“%s” is part of “%s”" % [a, b]
+			return I18n.t("“%s” is part of “%s”") % [a, b]
 		"tag":
-			return "“%s” carries %s" % [a, b]
+			return I18n.t("“%s” carries %s") % [a, b]
 		"related":
-			return "Suggested by meaning (dashed): “%s” ≈ “%s”\nOpen the item to keep (✓) or dismiss (✕) it" % [a, b]
-	return "Link: “%s” — “%s”" % [a, b]
+			return I18n.t("Suggested by meaning (dashed): “%s” ≈ “%s”\nOpen the item to keep (✓) or dismiss (✕) it") % [a, b]
+	return I18n.t("Link: “%s” — “%s”") % [a, b]
 
 
-const LEGEND := [["link", "Link: you wrote [[…]], the archivist linked, or you kept a suggestion"],
-	["related", "Suggested by meaning, not confirmed yet"],
-	["space", "Belongs to this place"], ["tag", "Carries this #theme"], ["path", "Answer to “how is X connected to Y?”"]]
+## [line type, explanation]; the explanations follow the interface language.
+static func legend() -> Array:
+	return [["link", I18n.t("Link: you wrote [[…]], the archivist linked, or you kept a suggestion")],
+		["related", I18n.t("Suggested by meaning, not confirmed yet")],
+		["space", I18n.t("Belongs to this place")], ["tag", I18n.t("Carries this #theme")],
+		["path", I18n.t("Answer to “how is X connected to Y?”")]]
 
 
 func _draw_legend() -> void:
 	var font := get_theme_default_font()
-	var box := Rect2(Vector2(legend_x, 148), Vector2(470, 30 + LEGEND.size() * 26))
+	var rows := legend()
+	var widest := 0.0
+	for row in rows:
+		widest = maxf(widest, font.get_string_size(str(row[1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x)
+	var box := Rect2(Vector2(legend_x, 148), Vector2(maxf(470.0, widest + 90.0), 30 + rows.size() * 26))
 	draw_rect(box, Color(SbTheme.BG, 0.92))
 	draw_rect(box, Color(SbTheme.FOREST_LIGHT, 0.35), false, 1.0)
-	draw_string(font, box.position + Vector2(14, 22), "LINES IN THE GRAPH", HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(SbTheme.TEXT, 0.7))
-	for i in LEGEND.size():
+	draw_string(font, box.position + Vector2(14, 22), I18n.t("LINES IN THE GRAPH"), HORIZONTAL_ALIGNMENT_LEFT, -1, 12, Color(SbTheme.TEXT, 0.7))
+	for i in rows.size():
 		var y := box.position.y + 44.0 + i * 26.0
 		var a := Vector2(box.position.x + 14, y)
 		var b := a + Vector2(46, 0)
-		match str(LEGEND[i][0]):
+		match str(rows[i][0]):
 			"link":
 				draw_line(a, b, Color(SbTheme.MINT, 0.85), 2.2, true)
 				draw_circle(a.lerp(b, 0.6), 2.4, Color(SbTheme.MINT_SOFT, 0.9))
@@ -1323,7 +1330,7 @@ func _draw_legend() -> void:
 				draw_line(a, b, Color(SbTheme.MUTED, 0.5), 1.0, true)
 			"path":
 				draw_line(a, b, Color(SbTheme.WARM, 1.0), 3.5, true)
-		draw_string(font, Vector2(b.x + 14, y + 5), str(LEGEND[i][1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(SbTheme.TEXT, 0.9))
+		draw_string(font, Vector2(b.x + 14, y + 5), str(rows[i][1]), HORIZONTAL_ALIGNMENT_LEFT, -1, 13, Color(SbTheme.TEXT, 0.9))
 
 
 ## The place whose zone contains a world point ("" when none). Closest centre wins where zones overlap.

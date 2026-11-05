@@ -7,7 +7,23 @@ extends RefCounted
 
 const THEMES := ["morning", "focus", "evening", "forest"]
 const THEME_LABELS := {"auto": "Auto (time of day)", "morning": "Morning", "focus": "Focus",
-	"evening": "Evening", "forest": "Forest"}
+	"evening": "Evening", "forest": "Forest"}  # English; shown text is theme_label()
+
+
+## A theme's name as shown, in the interface language ("auto" included).
+static func theme_label(key: String) -> String:
+	match key:
+		"auto":
+			return I18n.t("Auto (time of day)")
+		"morning":
+			return I18n.t("Morning")
+		"focus":
+			return I18n.t("Focus")
+		"evening":
+			return I18n.t("Evening")
+		"forest":
+			return I18n.t("Forest")
+	return str(THEME_LABELS.get(key, key.capitalize()))
 
 const PALETTES := {
 	# Soft, felted blue: calm, cosy, not too dark. Sunrise peach as second accent.

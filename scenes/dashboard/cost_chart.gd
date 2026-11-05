@@ -109,7 +109,7 @@ func _draw() -> void:
 		draw_line(Vector2(r.position.x, y), Vector2(r.end.x, y), Color(SbTheme.BORDER, 0.55 if k > 0 else 1.0), 1.0)
 		draw_string(font, Vector2(0, y + 4), money(v, currency), HORIZONTAL_ALIGNMENT_RIGHT, LEFT - 8, fs, SbTheme.MUTED)
 	if days.is_empty():
-		draw_string(font, Vector2(r.position.x, r.position.y + r.size.y / 2), "No data yet", HORIZONTAL_ALIGNMENT_CENTER,
+		draw_string(font, Vector2(r.position.x, r.position.y + r.size.y / 2), I18n.t("No data yet"), HORIZONTAL_ALIGNMENT_CENTER,
 			r.size.x, 13, SbTheme.MUTED)
 		return
 	var slot := r.size.x / days.size()

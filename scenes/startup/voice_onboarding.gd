@@ -35,17 +35,17 @@ func _ready() -> void:
 	var htext := VBoxContainer.new()
 	head.add_child(htext)
 	var over := Label.new()
-	over.text = "ONE LAST THING · OPTIONAL"
+	over.text = I18n.t("ONE LAST THING · OPTIONAL")
 	over.theme_type_variation = "Overline"
 	htext.add_child(over)
 	var title := Label.new()
-	title.text = "Talk to your Second Brain"
+	title.text = I18n.t("Talk to your Second Brain")
 	title.theme_type_variation = "Heading"
 	title.add_theme_font_size_override("font_size", 24)
 	htext.add_child(title)
 	var body := Label.new()
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	body.text = "Press the microphone, speak, and watch your words appear live. Voice capture uses OpenAI's realtime transcription with your own API key, so it is billed to your account and you stay in control."
+	body.text = I18n.t("Press the microphone, speak, and watch your words appear live. Voice capture uses OpenAI's realtime transcription with your own API key, so it is billed to your account and you stay in control.")
 	col.add_child(body)
 	panel = VoiceKeyPanel.new().setup(app, true)
 	panel.saved.connect(func(st: Dictionary) -> void:
@@ -55,7 +55,7 @@ func _ready() -> void:
 	panel.skipped.connect(finish)
 	col.add_child(panel)
 	continue_button = Button.new()
-	continue_button.text = "Enter your Second Brain"
+	continue_button.text = I18n.t("Enter your Second Brain")
 	continue_button.theme_type_variation = "PrimaryButton"
 	continue_button.visible = false
 	continue_button.custom_minimum_size = Vector2(0, 48)

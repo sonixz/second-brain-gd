@@ -3,16 +3,19 @@ extends Control
 ## Success is shown only after the bootstrap's final event, which is emitted
 ## after /health and an authenticated call were verified.
 
-const STEPS: Array = [
-	["python", "Python interpreter"],
-	["directories", "Data directories"],
-	["venv", "Virtual environment"],
-	["dependencies", "Locked dependencies"],
-	["database", "SQLite database"],
-	["agents", "Agent room (Codex, verified download)"],
-	["service", "Local API service"],
-	["health", "Health verification"],
-]
+## The setup steps: [id, label shown in the current language].
+static func steps() -> Array:
+	return [
+		["python", I18n.t("Python interpreter")],
+		["directories", I18n.t("Data directories")],
+		["venv", I18n.t("Virtual environment")],
+		["dependencies", I18n.t("Locked dependencies")],
+		["database", I18n.t("SQLite database")],
+		["agents", I18n.t("Agent room (Codex, verified download)")],
+		["service", I18n.t("Local API service")],
+		["health", I18n.t("Health verification")],
+	]
+
 const AUTO_CONTINUE_S := 1.2
 
 var app: SbApp
@@ -68,11 +71,11 @@ func _ready() -> void:
 	htext.add_theme_constant_override("separation", 0)
 	head.add_child(htext)
 	var over := Label.new()
-	over.text = "SETUP"
+	over.text = I18n.t("SETUP")
 	over.theme_type_variation = "Overline"
 	htext.add_child(over)
 	headline = Label.new()
-	headline.text = "Preparing your Second Brain"
+	headline.text = I18n.t("Preparing your Second Brain")
 	headline.theme_type_variation = "Heading"
 	headline.add_theme_font_size_override("font_size", 24)
 	htext.add_child(headline)
@@ -93,7 +96,7 @@ func _ready() -> void:
 	progress_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	prow.add_child(progress_label)
 
-	for s in STEPS:
+	for s in steps():
 		var row := StepRow.new().setup(str(s[0]), str(s[1]))
 		rows[s[0]] = row
 		left.add_child(row)
@@ -120,7 +123,7 @@ func _ready() -> void:
 	brow.add_theme_constant_override("separation", 10)
 	left.add_child(brow)
 	back_button = Button.new()
-	back_button.text = "Back"
+	back_button.text = I18n.t("Back")
 	back_button.theme_type_variation = "GhostButton"
 	back_button.pressed.connect(func() -> void: app.show_welcome())
 	brow.add_child(back_button)
@@ -128,12 +131,12 @@ func _ready() -> void:
 	spacer.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	brow.add_child(spacer)
 	retry_button = Button.new()
-	retry_button.text = "Retry (resumes)"
+	retry_button.text = I18n.t("Retry (resumes)")
 	retry_button.visible = false
 	retry_button.pressed.connect(begin)
 	brow.add_child(retry_button)
 	continue_button = Button.new()
-	continue_button.text = "Enter your Second Brain"
+	continue_button.text = I18n.t("Enter your Second Brain")
 	continue_button.theme_type_variation = "PrimaryButton"
 	continue_button.visible = false
 	continue_button.pressed.connect(func() -> void: app.after_setup())
@@ -147,18 +150,18 @@ func _ready() -> void:
 	var lhead := HBoxContainer.new()
 	right.add_child(lhead)
 	var ltitle := Label.new()
-	ltitle.text = "Live log"
+	ltitle.text = I18n.t("Live log")
 	ltitle.theme_type_variation = "Heading"
 	ltitle.add_theme_font_size_override("font_size", 16)
 	ltitle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lhead.add_child(ltitle)
 	log_toggle = Button.new()
-	log_toggle.text = "Hide details"
+	log_toggle.text = I18n.t("Hide details")
 	log_toggle.theme_type_variation = "GhostButton"
 	log_toggle.toggle_mode = true
 	log_toggle.toggled.connect(func(on: bool) -> void:
 		_show_tool_output = not on
-		log_toggle.text = "Show tool output" if on else "Hide details")
+		log_toggle.text = I18n.t("Show tool output") if on else I18n.t("Hide details"))
 	lhead.add_child(log_toggle)
 	log_panel = PanelContainer.new()
 	log_panel.theme_type_variation = "Inset"
@@ -199,14 +202,14 @@ func begin() -> void:
 	back_button.disabled = true
 	for k in rows:
 		var row: StepRow = rows[k]
-		row.set_state("pending", "Waiting")
+		row.set_state("pending", I18n.t("Waiting"))
 	_target_progress = 0.0
 	progress.value = 0.0
-	headline.text = "Preparing your Second Brain"
+	headline.text = I18n.t("Preparing your Second Brain")
 	var row_py: StepRow = rows["python"]
-	row_py.set_state("checking", "Looking for a compatible Python (3.12 or 3.13)…")
-	_log("ui", "info", "Data folder: %s" % app.backend.data_dir)
-	_log("ui", "info", "Looking for Python…")
+	row_py.set_state("checking", I18n.t("Looking for a compatible Python (3.12 or 3.13)…"))
+	_log("ui", "info", I18n.t("Data folder: %s") % app.backend.data_dir)
+	_log("ui", "info", I18n.t("Looking for Python…"))
 	locator.locate()
 
 
@@ -214,19 +217,19 @@ func _on_located(result: Dictionary) -> void:
 	var tried: Array = result["tried"]
 	for t in tried:
 		var entry: Dictionary = t
-		_log("python", "log", "%s → %s %s" % [entry["label"], entry["result"], entry.get("version", "")])
+		_log("python", "log", "%s → %s %s" % [entry["label"], PythonLocator.result_text(str(entry["result"])), entry.get("version", "")])
 	if not bool(result["found"]):
 		var row: StepRow = rows["python"]
-		row.set_state("error", "No compatible Python found")
-		_fail("No compatible Python (3.12 or 3.13) was found on this computer.",
-			"Install Python from [url=%s]python.org/downloads[/url]. On Windows, tick [b]Add python.exe to PATH[/b] in the installer. Then press Retry. You can also set a custom python path in [i]Check prerequisites[/i] on the welcome screen." % result["download_url"])
+		row.set_state("error", I18n.t("No compatible Python found"))
+		_fail(I18n.t("No compatible Python (3.12 or 3.13) was found on this computer."),
+			I18n.t("Install Python from [url=%s]python.org/downloads[/url]. On Windows, tick [b]Add python.exe to PATH[/b] in the installer. Then press Retry. You can also set a custom python path in [i]Check prerequisites[/i] on the welcome screen.") % result["download_url"])
 		return
 	var py: Dictionary = result["python"]
 	app.backend.python = py
-	_log("ui", "info", "Using Python %s at %s" % [py["version"], py["executable"]])
+	_log("ui", "info", I18n.t("Using Python %s at %s") % [py["version"], py["executable"]])
 	var err := runner.start(str(py["executable"]), app.backend.data_dir)
 	if err != OK:
-		_fail("Could not start the setup process (%s)." % error_string(err), "Check that the data folder is writable: %s" % app.backend.data_dir)
+		_fail(I18n.t("Could not start the setup process (%s).") % error_string(err), I18n.t("Check that the data folder is writable: %s") % app.backend.data_dir)
 
 
 func _on_event(ev: Dictionary) -> void:
@@ -255,7 +258,7 @@ func _on_finished(ok: bool, final_event: Dictionary) -> void:
 		succeeded = true
 		app.audio.play("setup_complete")
 		_target_progress = 1.0
-		headline.text = "Your Second Brain is ready"
+		headline.text = I18n.t("Your Second Brain is ready")
 		continue_button.visible = true
 		continue_button.grab_focus()
 		app.backend.load_runtime()
@@ -263,9 +266,9 @@ func _on_finished(ok: bool, final_event: Dictionary) -> void:
 			if is_inside_tree() and app.current_screen == "setup":
 				app.after_setup())
 	else:
-		headline.text = "Setup needs attention"
+		headline.text = I18n.t("Setup needs attention")
 		if not error_panel.visible:
-			_fail(str(final_event.get("message", "Setup failed.")), "")
+			_fail(str(final_event.get("message", I18n.t("Setup failed."))), "")
 		retry_button.visible = true
 
 
@@ -281,7 +284,7 @@ func _fail(message: String, hint_bbcode: String, tail: String = "") -> void:
 	error_hint.visible = hint != ""
 	retry_button.visible = true
 	back_button.disabled = false
-	headline.text = "Setup needs attention"
+	headline.text = I18n.t("Setup needs attention")
 
 
 func _log(component: String, status: String, message: String) -> void:

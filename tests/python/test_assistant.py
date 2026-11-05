@@ -335,3 +335,53 @@ class BriefingFactsTests(unittest.TestCase):
             for word in ("overdue", "due", "task", "next_action"):
                 self.assertNotIn(word, " ".join(f.keys()))
             conn.close()
+
+
+class LanguageTests(unittest.TestCase):
+    """The FR / EN switch (Loop 26): English is the product's language, French the other choice."""
+
+    def setUp(self):
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db = Path(self.tmp.name) / "a.sqlite3"
+        database.migrate(self.db)
+        self.conn = database.connect(self.db)
+        seed_if_empty(self.conn)
+
+    def tearDown(self):
+        self.conn.close()
+        self.tmp.cleanup()
+
+    def test_english_by_default_french_on_the_switch(self):
+        from engine.assistant import agents
+
+        self.assertEqual(core.ui_language(self.conn), "en")
+        for agent in ("archivist", "sparring", "builder"):
+            self.assertIn("ANGLAIS par défaut", agents.persona(self.conn, agent))
+        self.assertIn("Écris en anglais", core.write_in(self.conn))
+        self.assertEqual(core.said(self.conn, "Done.", "C'est fait."), "Done.")
+        database.set_setting(self.conn, "ui_language", "fr")
+        for agent in ("archivist", "sparring", "builder"):
+            persona = agents.persona(self.conn, agent)
+            self.assertIn("français québécois naturel par défaut", persona)
+            self.assertNotIn("ANGLAIS par défaut", persona)
+        self.assertEqual(core.said(self.conn, "Done.", "C'est fait."), "C'est fait.")
+
+    def test_the_voice_accent_follows_what_is_read(self):
+        heard = []
+
+        class Voice(FakeChat):
+            def speak(self, text, voice, instructions):
+                heard.append(instructions)
+                return b"ID3"
+
+        with tempfile.TemporaryDirectory() as cache:
+            core.speak(self.conn, Voice(), "The heat pump quote is in the Kitchen renovation project.", "morning", Path(cache))
+            core.speak(self.conn, Voice(), "La soumission de la thermopompe est dans le projet de cuisine.", "morning", Path(cache))
+        self.assertIn("North American English", heard[0])
+        self.assertIn("québécois", heard[1])
+
+    def test_live_transcribes_in_the_app_language(self):
+        from engine.voice import live
+
+        self.assertEqual(live.session_update("x", "marin", "m", [], "fr")["session"]["audio"]["input"]["transcription"]["language"], "fr")
+        self.assertEqual(live.session_update("x", "marin", "m", [])["session"]["audio"]["input"]["transcription"]["language"], "en")

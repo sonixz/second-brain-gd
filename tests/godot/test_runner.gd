@@ -759,6 +759,24 @@ func _e2e() -> void:
 	check(SbTheme.current == "evening" and app.current_screen == "brain", "theme switch keeps you in the brain")
 	check(app.audio.playlist.size() >= 2 and app.audio.theme_name == "evening", "music follows the theme")
 	app.set_theme_choice("auto")
+	# FR / EN (Loop 26): English by default; the switch rebuilds the screen in French and tells the engine.
+	check(I18n.lang == "en", "English is the app's language by default")
+	check(app.current().find_child("LangFR", true, false) is Button, "the FR / EN switch is in the top bar")
+	await app.set_language("fr")
+	for _i in 6:
+		await process_frame
+	var fr_nav: Dictionary = app.current().get("view_buttons")
+	check(I18n.lang == "fr" and (fr_nav["graph"] as Button).text == "Graphe" and (fr_nav["projects"] as Button).text == "Projets",
+		"FR rebuilds the interface in French (%s)" % (fr_nav["graph"] as Button).text)
+	var lang_st := await app.backend.api.call_api("/assistant/status")
+	check(lang_st["ok"] and str((lang_st["data"] as Dictionary).get("ui_language", "")) == "fr",
+		"the engine follows the app's language (agents, Live, its own words)")
+	await app.set_language("en")
+	for _i in 6:
+		await process_frame
+	var en_nav: Dictionary = app.current().get("view_buttons")
+	check((en_nav["graph"] as Button).text == "Graph" and str(SbSettings.get_value("ui", "language", "")) == "en",
+		"EN brings the English back, and the choice is remembered")
 	app.show_console()
 	await process_frame
 	check(app.current_screen == "console", "engine room opens from the brain")

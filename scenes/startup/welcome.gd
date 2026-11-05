@@ -22,6 +22,13 @@ func _ready() -> void:
 	var center := CenterContainer.new()
 	center.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(center)
+	# FR / EN from the very first screen: a francophone sets up the app in French.
+	var lang_switch := I18n.switch(app)
+	lang_switch.set_anchors_and_offsets_preset(Control.PRESET_TOP_RIGHT)
+	lang_switch.offset_left = -112
+	lang_switch.offset_top = 20
+	lang_switch.offset_right = -24
+	add_child(lang_switch)
 	var col := VBoxContainer.new()
 	col.custom_minimum_size = Vector2(560, 0)
 	col.alignment = BoxContainer.ALIGNMENT_CENTER
@@ -34,7 +41,7 @@ func _ready() -> void:
 	col.add_child(logo)
 
 	var over := Label.new()
-	over.text = "LOCAL-FIRST KNOWLEDGE SYSTEM"
+	over.text = I18n.t("LOCAL-FIRST KNOWLEDGE SYSTEM")
 	over.theme_type_variation = "Overline"
 	over.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(over)
@@ -44,7 +51,7 @@ func _ready() -> void:
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(title)
 	var tagline := Label.new()
-	tagline.text = "Your knowledge. Your system. Your control."
+	tagline.text = I18n.t("Your knowledge. Your system. Your control.")
 	tagline.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	tagline.add_theme_color_override("font_color", SbTheme.MINT_SOFT)
 	col.add_child(tagline)
@@ -73,14 +80,14 @@ func _ready() -> void:
 	primary.pressed.connect(func() -> void: app.start_setup())
 	buttons.add_child(primary)
 	secondary = Button.new()
-	secondary.text = "Re-run full setup"
-	secondary.tooltip_text = "Checks every component again. Your data is kept."
+	secondary.text = I18n.t("Re-run full setup")
+	secondary.tooltip_text = I18n.t("Checks every component again. Your data is kept.")
 	secondary.custom_minimum_size = Vector2(0, 50)
 	secondary.pressed.connect(func() -> void: app.start_setup())
 	buttons.add_child(secondary)
 
 	diag_button = Button.new()
-	diag_button.text = "Check prerequisites"
+	diag_button.text = I18n.t("Check prerequisites")
 	diag_button.theme_type_variation = "GhostButton"
 	diag_button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	diag_button.pressed.connect(_run_diagnostic)
@@ -103,18 +110,18 @@ func _ready() -> void:
 	crow.add_theme_constant_override("separation", 8)
 	dcol.add_child(crow)
 	custom_edit = LineEdit.new()
-	custom_edit.placeholder_text = "Optional: full path to python.exe"
+	custom_edit.placeholder_text = I18n.t("Optional: full path to python.exe")
 	custom_edit.text = PythonLocator.custom_python()
 	custom_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	crow.add_child(custom_edit)
 	var apply := Button.new()
-	apply.text = "Use & re-check"
+	apply.text = I18n.t("Use & re-check")
 	apply.pressed.connect(func() -> void:
 		PythonLocator.save_custom_python(custom_edit.text)
 		_run_diagnostic())
 	crow.add_child(apply)
 	var open_dir := Button.new()
-	open_dir.text = "Open data folder"
+	open_dir.text = I18n.t("Open data folder")
 	open_dir.theme_type_variation = "GhostButton"
 	open_dir.pressed.connect(func() -> void:
 		DirAccess.make_dir_recursive_absolute(app.backend.data_dir)
@@ -122,7 +129,7 @@ func _ready() -> void:
 	dcol.add_child(open_dir)
 
 	var foot := Label.new()
-	foot.text = "v%s · Loop 0 · Data stays on this computer" % ProjectSettings.get_setting("application/config/version")
+	foot.text = I18n.t("v%s · Loop 0 · Data stays on this computer") % ProjectSettings.get_setting("application/config/version")
 	foot.theme_type_variation = "Muted"
 	foot.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	col.add_child(foot)
@@ -140,10 +147,10 @@ func refresh_status() -> void:
 	if installed:
 		var py: Dictionary = state.get("python", {})
 		status_dot.set_status("ok")
-		status_label.text = "Installed · Python %s · last ready %s" % [py.get("version", "?"),
+		status_label.text = I18n.t("Installed · Python %s · last ready %s") % [py.get("version", "?"),
 			SbFormat.local_time(state.get("last_success_at"), true)]
-		primary.text = "Start"
-		primary.tooltip_text = "Verifies the installation quickly and starts the local engine."
+		primary.text = I18n.t("Start")
+		primary.tooltip_text = I18n.t("Verifies the installation quickly and starts the local engine.")
 		secondary.visible = true
 	else:
 		var failed := ""
@@ -153,22 +160,22 @@ func refresh_status() -> void:
 				failed = str(k)
 		if failed != "":
 			status_dot.set_status("warning")
-			status_label.text = "Setup incomplete · stopped at '%s' · it will resume" % failed
+			status_label.text = I18n.t("Setup incomplete · stopped at '%s' · it will resume") % failed
 		elif steps.is_empty():
 			status_dot.set_status("pending")
-			status_label.text = "Not installed yet"
+			status_label.text = I18n.t("Not installed yet")
 		else:
 			status_dot.set_status("warning")
-			status_label.text = "Setup incomplete · it will resume where it stopped"
-		primary.text = "Setup"
-		primary.tooltip_text = "Detects Python, prepares the engine and starts it."
+			status_label.text = I18n.t("Setup incomplete · it will resume where it stopped")
+		primary.text = I18n.t("Setup")
+		primary.tooltip_text = I18n.t("Detects Python, prepares the engine and starts it.")
 		secondary.visible = false
 
 
 func _run_diagnostic() -> void:
 	diag_panel.visible = true
 	diag_button.disabled = true
-	diag_text.text = "[color=#%s]Checking…[/color]" % SbTheme.INFO.to_html(false)
+	diag_text.text = "[color=#%s]%s[/color]" % [SbTheme.INFO.to_html(false), I18n.t("Checking…")]
 	locator.locate()
 
 
@@ -178,15 +185,15 @@ func _on_located(result: Dictionary) -> void:
 	var bad_c := SbTheme.ERROR.to_html(false)
 	var mute_c := SbTheme.MUTED.to_html(false)
 	var lines: PackedStringArray = []
-	lines.append("[b]Prerequisites[/b]")
-	lines.append("[color=#%s]Operating system[/color]  %s" % [mute_c, OS.get_name()])
+	lines.append("[b]%s[/b]" % I18n.t("Prerequisites"))
+	lines.append("[color=#%s]%s[/color]  %s" % [mute_c, I18n.t("Operating system"), OS.get_name()])
 	var gv: Dictionary = Engine.get_version_info()
 	lines.append("[color=#%s]Godot[/color]  %s" % [mute_c, gv.get("string", "?")])
-	lines.append("[color=#%s]Data folder[/color]  %s" % [mute_c, app.backend.data_dir])
-	lines.append("[color=#%s]Engine sources[/color]  %s %s" % [mute_c, SbPaths.bootstrap_script(),
-		"[color=#%s]found[/color]" % ok_c if FileAccess.file_exists(SbPaths.bootstrap_script())
-		else "[color=#%s]missing[/color]" % bad_c])
-	lines.append("[color=#%s]Python (supported %s)[/color]" % [mute_c, result["supported_range"]])
+	lines.append("[color=#%s]%s[/color]  %s" % [mute_c, I18n.t("Data folder"), app.backend.data_dir])
+	lines.append("[color=#%s]%s[/color]  %s %s" % [mute_c, I18n.t("Engine sources"), SbPaths.bootstrap_script(),
+		"[color=#%s]%s[/color]" % [ok_c, I18n.t("found")] if FileAccess.file_exists(SbPaths.bootstrap_script())
+		else "[color=#%s]%s[/color]" % [bad_c, I18n.t("missing")]])
+	lines.append("[color=#%s]%s[/color]" % [mute_c, I18n.t("Python (supported %s)") % result["supported_range"]])
 	var tried: Array = result["tried"]
 	for t in tried:
 		var entry: Dictionary = t
@@ -195,7 +202,8 @@ func _on_located(result: Dictionary) -> void:
 		var extra := ""
 		if entry.has("version"):
 			extra = " %s · %s" % [entry["version"], entry.get("executable", "")]
-		lines.append("  • %s → [color=#%s]%s[/color]%s" % [entry["label"], color, res, extra])
+		lines.append("  • %s → [color=#%s]%s[/color]%s" % [entry["label"], color, PythonLocator.result_text(res), extra])
 	if not bool(result["found"]):
-		lines.append("[color=#%s]No compatible Python found.[/color] Install Python 3.12 or 3.13 from [url=%s]python.org[/url] (tick “Add python.exe to PATH”), then check again." % [bad_c, result["download_url"]])
+		lines.append("[color=#%s]%s[/color] %s" % [bad_c, I18n.t("No compatible Python found."),
+			I18n.t("Install Python 3.12 or 3.13 from [url=%s]python.org[/url] (tick “Add python.exe to PATH”), then check again.") % result["download_url"]])
 	diag_text.text = "\n".join(lines)

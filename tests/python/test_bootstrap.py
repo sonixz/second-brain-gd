@@ -404,11 +404,16 @@ class BootstrapIntegration(unittest.TestCase):
                 return e.code, e.read().decode("utf-8")
         code, body = page({"key": "wrong", "url": "https://example.org/a"})
         self.assertEqual(code, 400)
-        self.assertIn("invalide", body)
+        self.assertIn("Invalid capture link", body)  # English, the app's default language
+        code, st = get(f"http://127.0.0.1:{port}/assistant/settings", tok, "PATCH", {"language": "fr"})
+        self.assertEqual((code, st["ui_language"]), (200, "fr"))
+        code, body = page({"key": "wrong", "url": "https://example.org/a"})
+        self.assertIn("Lien de capture invalide", body)  # the FR / EN switch reaches the engine's own words
+        get(f"http://127.0.0.1:{port}/assistant/settings", tok, "PATCH", {"language": "en"})
         code, body = page({"key": ckey, "url": "https://example.org/sommeil", "title": "Dormir mieux",
                            "text": "Une routine du soir régulière améliore le sommeil."})
         self.assertEqual(code, 200, body[-400:])
-        self.assertIn("Ajouté à ton Brain", body)
+        self.assertIn("Added to your Brain", body)
         code, feed = get(f"http://127.0.0.1:{port}/brain/feed?limit=5", tok)
         top = feed["items"][0]
         self.assertEqual((top["title"], top["origin"], top["origin_uri"]), ("Dormir mieux", "url", "https://example.org/sommeil"))

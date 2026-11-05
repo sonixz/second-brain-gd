@@ -40,16 +40,16 @@ func _ready() -> void:
 	t.add_theme_constant_override("separation", 0)
 	head.add_child(t)
 	var title := Label.new()
-	title.text = "Real costs · OpenAI billing"
+	title.text = I18n.t("Real costs · OpenAI billing")
 	title.theme_type_variation = "Heading"
 	title.add_theme_font_size_override("font_size", 16)
 	t.add_child(title)
 	state_label = Label.new()
 	state_label.theme_type_variation = "Muted"
-	state_label.text = "Loading…"
+	state_label.text = I18n.t("Loading…")
 	t.add_child(state_label)
 	refresh_button = Button.new()
-	refresh_button.text = "Refresh"
+	refresh_button.text = I18n.t("Refresh")
 	refresh_button.pressed.connect(func() -> void: load_billing(true))
 	head.add_child(refresh_button)
 
@@ -60,9 +60,7 @@ func _ready() -> void:
 	col.add_child(setup_box)
 	var why := Label.new()
 	why.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	why.text = ("To show what OpenAI actually bills, add an admin key that can only read usage. "
-		+ "On platform.openai.com: Settings → Organization → Admin keys → Create, permissions Restricted, "
-		+ "\"Usage API: Read\" and nothing else. It cannot call models or change anything.")
+	why.text = I18n.t("To show what OpenAI actually bills, add an admin key that can only read usage. On platform.openai.com: Settings → Organization → Admin keys → Create, permissions Restricted, \"Usage API: Read\" and nothing else. It cannot call models or change anything.")
 	setup_box.add_child(why)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
@@ -73,7 +71,7 @@ func _ready() -> void:
 	key_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(key_edit)
 	var save := Button.new()
-	save.text = "Save admin key"
+	save.text = I18n.t("Save admin key")
 	save.theme_type_variation = "PrimaryButton"
 	save.pressed.connect(_save_key)
 	row.add_child(save)
@@ -90,10 +88,10 @@ func _ready() -> void:
 	var tiles := HBoxContainer.new()
 	tiles.add_theme_constant_override("separation", 12)
 	data_box.add_child(tiles)
-	month_value = _tile(tiles, "This month", true)
-	today_value = _tile(tiles, "Today (UTC, so far)", false)
-	period_value = _tile(tiles, "Last 30 days", false)
-	tokens_value = _tile(tiles, "Tokens this month", false)
+	month_value = _tile(tiles, I18n.t("This month"), true)
+	today_value = _tile(tiles, I18n.t("Today (UTC, so far)"), false)
+	period_value = _tile(tiles, I18n.t("Last 30 days"), false)
+	tokens_value = _tile(tiles, I18n.t("Tokens this month"), false)
 	chart = CostChart.new()
 	chart.name = "CostChart"
 	data_box.add_child(chart)
@@ -101,7 +99,7 @@ func _ready() -> void:
 	legend.add_theme_constant_override("h_separation", 16)
 	data_box.add_child(legend)
 	var mt := Label.new()
-	mt.text = "By model, this month"
+	mt.text = I18n.t("By model, this month")
 	mt.theme_type_variation = "Overline"
 	data_box.add_child(mt)
 	models_grid = GridContainer.new()
@@ -110,7 +108,7 @@ func _ready() -> void:
 	models_grid.add_theme_constant_override("v_separation", 4)
 	data_box.add_child(models_grid)
 	var it := Label.new()
-	it.text = "Billed line items, this month"
+	it.text = I18n.t("Billed line items, this month")
 	it.theme_type_variation = "Overline"
 	data_box.add_child(it)
 	items_label = RichTextLabel.new()
@@ -123,10 +121,10 @@ func _ready() -> void:
 	src.theme_type_variation = "Muted"
 	src.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	src.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	src.text = "Straight from OpenAI's Costs and Usage APIs (what your invoice shows). Nothing is stored by the app."
+	src.text = I18n.t("Straight from OpenAI's Costs and Usage APIs (what your invoice shows). Nothing is stored by the app.")
 	foot.add_child(src)
 	var remove := Button.new()
-	remove.text = "Remove admin key"
+	remove.text = I18n.t("Remove admin key")
 	remove.theme_type_variation = "GhostButton"
 	remove.pressed.connect(_remove_key)
 	foot.add_child(remove)
@@ -158,14 +156,14 @@ func load_billing(refresh: bool) -> void:
 		return
 	_loading = true
 	refresh_button.disabled = true
-	state_label.text = "Asking OpenAI…"
+	state_label.text = I18n.t("Asking OpenAI…")
 	var res := await app.backend.api.call_api("/billing?days=30" + ("&refresh=true" if refresh else ""))
 	_loading = false
 	if not is_inside_tree():
 		return
 	refresh_button.disabled = false
 	if not res["ok"]:
-		state_label.text = "Engine not reachable (%s)." % str(res.get("error", ""))
+		state_label.text = I18n.t("Engine not reachable (%s).") % str(res.get("error", ""))
 		return
 	render(res["data"])
 
@@ -177,15 +175,15 @@ func render(d: Dictionary) -> void:
 	data_box.visible = configured and not d.has("error")
 	refresh_button.visible = configured
 	if not configured:
-		state_label.text = "Admin key needed"
+		state_label.text = I18n.t("Admin key needed")
 		return
 	if d.has("error"):
-		state_label.text = "OpenAI did not answer"
+		state_label.text = I18n.t("OpenAI did not answer")
 		key_status.text = str(d.get("error", ""))
 		return
 	var cur := str(d.get("currency", "usd"))
-	state_label.text = "Updated %s%s" % [SbFormat.local_time(d.get("fetched_at", ""), true),
-		" (cached)" if bool(d.get("cached", false)) else ""]
+	state_label.text = (I18n.t("Updated %s (cached)") if bool(d.get("cached", false)) else I18n.t("Updated %s")) \
+		% SbFormat.local_time(d.get("fetched_at", ""), true)
 	month_value.text = CostChart.money(float(d.get("month", 0.0)), cur)
 	today_value.text = CostChart.money(float(d.get("today", 0.0)), cur)
 	period_value.text = CostChart.money(float(d.get("period", 0.0)), cur)
@@ -215,7 +213,7 @@ func render(d: Dictionary) -> void:
 		legend.add_child(item)
 	for c in models_grid.get_children():
 		c.queue_free()
-	for h in ["Model", "Requests", "Input tokens", "Cached", "Output tokens"]:
+	for h in [I18n.t("Model"), I18n.t("Requests"), I18n.t("Input tokens"), I18n.t("Cached"), I18n.t("Output tokens")]:
 		var hl := Label.new()
 		hl.text = h
 		hl.theme_type_variation = "Muted"
@@ -226,10 +224,10 @@ func render(d: Dictionary) -> void:
 		var input := SbFormat.number(md.get("input_tokens", 0))
 		var output := SbFormat.number(md.get("output_tokens", 0))
 		if kind == "audio_speeches":
-			input = "%s chars" % SbFormat.number(md.get("characters", 0))
+			input = I18n.t("%s chars") % SbFormat.number(md.get("characters", 0))
 			output = "—"
 		elif kind == "audio_transcriptions":
-			input = "%s s audio" % SbFormat.number(md.get("seconds", 0))
+			input = I18n.t("%s s audio") % SbFormat.number(md.get("seconds", 0))
 			output = "—"
 		for v in [str(md.get("model", "?")), SbFormat.number(md.get("requests", 0)), input,
 				SbFormat.number(md.get("cached_tokens", 0)), output]:
@@ -240,23 +238,23 @@ func render(d: Dictionary) -> void:
 	for li in d.get("line_items", []):
 		lines.append("%s  [color=#%s]%s[/color]" % [CostChart.money(float(li.get("cost", 0.0)), cur),
 			SbTheme.MUTED.to_html(false), str(li.get("name", ""))])
-	items_label.text = "\n".join(lines) if not lines.is_empty() else "Nothing billed yet this month."
+	items_label.text = "\n".join(lines) if not lines.is_empty() else I18n.t("Nothing billed yet this month.")
 
 
 func _save_key() -> void:
 	var key := key_edit.text.strip_edges()
 	if key.length() < 20:
-		key_status.text = "That does not look like a complete key."
+		key_status.text = I18n.t("That does not look like a complete key.")
 		return
-	key_status.text = "Checking the key with OpenAI…"
+	key_status.text = I18n.t("Checking the key with OpenAI…")
 	var res := await app.backend.api.call_api("/billing/key", true, HTTPClient.METHOD_PUT, JSON.stringify({"api_key": key}))
 	key_edit.text = ""
 	if not is_inside_tree():
 		return
 	if not res["ok"]:
-		key_status.text = str((res["data"] as Dictionary).get("detail", res.get("error", "Refused.")))
+		key_status.text = str((res["data"] as Dictionary).get("detail", res.get("error", I18n.t("Refused."))))
 		return
-	key_status.text = "Saved in %s." % str(res["data"].get("backend", "the credential store"))
+	key_status.text = I18n.t("Saved in %s.") % str(res["data"].get("backend", I18n.t("the credential store")))
 	load_billing(true)
 
 

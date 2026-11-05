@@ -20,13 +20,13 @@ from engine.assistant.llm import make_client
 from engine.paths import Layout
 from engine.voice import secrets
 
-PAGE = """<!doctype html><html lang="fr"><head><meta charset="utf-8"><title>Second Brain</title>
+PAGE = """<!doctype html><html lang="{lang}"><head><meta charset="utf-8"><title>Second Brain</title>
 <meta name="viewport" content="width=device-width,initial-scale=1"><style>
 body{{margin:0;font:15px/1.45 system-ui,sans-serif;background:#2b3c54;color:#f1f6fc;display:flex;min-height:100vh;
 align-items:center;justify-content:center}}main{{max-width:400px;padding:22px}}h1{{font-size:18px;margin:0 0 8px;color:{color}}}
 p{{margin:6px 0;color:#d9e4f0}}small{{color:#b5c6da}}button{{margin-top:14px;background:#a9d4ff;color:#13233a;border:0;
 border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer}}</style></head><body><main>
-<h1>{headline}</h1><p>{receipt}</p><small>{detail}</small><br><button onclick="window.close()">Fermer</button>
+<h1>{headline}</h1><p>{receipt}</p><small>{detail}</small><br><button onclick="window.close()">{close}</button>
 </main><script>setTimeout(function(){{window.close()}},{close_ms});</script></body></html>"""
 
 
@@ -44,8 +44,23 @@ def bookmarklet(port: int, key: str) -> str:
             "+encodeURIComponent(s):''),'sbgd','width=480,height=340')})()" % (port, key))
 
 
-def _page(ok: bool, headline: str, receipt: str, detail: str = "") -> HTMLResponse:
-    return HTMLResponse(PAGE.format(color="#a9f0c7" if ok else "#ffd27a", headline=html.escape(headline),
+WORDS = {  # the little receipt window of the bookmark, in the app's language (FR / EN switch)
+    "bad_key": ("Invalid capture link", "Lien de capture invalide"),
+    "bad_key_how": ("Copy the “Send to Brain” bookmark again from the app (Captures → Send from browser).",
+                    "Recopie le favori « Envoyer au Brain » depuis l'app (Captures → Envoyer du navigateur)."),
+    "bad_url": ("Address not supported", "Adresse non prise en charge"),
+    "already": ("Already in your Brain", "Déjà dans ton Brain"),
+    "inbox": ("Added to the Inbox", "Ajouté à l'Inbox"),
+    "add_key": ("Add your OpenAI key to have it filed automatically.", "Ajoute ta clé OpenAI pour le classement automatique."),
+    "added": ("Added to your Brain ✓", "Ajouté à ton Brain ✓"),
+    "filed": ("Filed.", "Classé."),
+    "unreadable": ("This page cannot be read", "Page illisible"),
+    "failed": ("This page could not be added", "Impossible d'ajouter cette page"),
+}
+
+
+def _page(ok: bool, headline: str, receipt: str, detail: str = "", lang: str = "en") -> HTMLResponse:
+    return HTMLResponse(PAGE.format(lang=lang, close="Fermer" if lang == "fr" else "Close", color="#a9f0c7" if ok else "#ffd27a", headline=html.escape(headline),
                                     receipt=html.escape(receipt), detail=html.escape(detail),
                                     close_ms=4000 if ok else 20000), status_code=200 if ok else 400)
 
@@ -75,11 +90,15 @@ def make_router(layout: Layout, auth: Callable[..., None], port: int) -> APIRout
         from engine.sources.extract import ExtractError
 
         with database.session(layout.database) as conn:
+            lang = core.ui_language(conn)
+
+            def w(k: str) -> str:
+                return WORDS[k][1 if lang == "fr" else 0]
+
             if not pysecrets.compare_digest(key, get_key(conn)):
-                return _page(False, "Lien de capture invalide", "Recopie le favori « Envoyer au Brain » depuis l'app "
-                             "(Captures → Send from browser).")
+                return _page(False, w("bad_key"), w("bad_key_how"), lang=lang)
         if not url.startswith(("http://", "https://")):
-            return _page(False, "Adresse non prise en charge", url[:120])
+            return _page(False, w("bad_url"), url[:120], lang=lang)
         api_key, _ = secrets.get(layout, "openai")
         try:
             client = make_client(api_key)
@@ -96,16 +115,16 @@ def make_router(layout: Layout, auth: Callable[..., None], port: int) -> APIRout
                     src = sources.ingest_url(conn, client, url)
                     note_id = src.get("note_id")
                     if src.get("duplicate"):
-                        return _page(True, "Déjà dans ton Brain", f"« {src.get('title', '')} »")
+                        return _page(True, w("already"), f"“{src.get('title', '')}”", lang=lang)
             if client is None or not note_id:
-                return _page(True, "Ajouté à l'Inbox", f"« {title or url} »", "Ajoute ta clé OpenAI pour le classement automatique.")
+                return _page(True, w("inbox"), f"“{title or url}”", w("add_key"), lang=lang)
             with database.session(layout.database) as conn:
                 core._CLIENT["c"] = client
                 out = archivist.file_item(conn, client, note_id, float(core.settings(conn)["assistant_min_confidence"]))
-            return _page(True, "Ajouté à ton Brain ✓", out.get("receipt") or "Classé.")
+            return _page(True, w("added"), out.get("receipt") or w("filed"), lang=lang)
         except ExtractError as exc:
-            return _page(False, "Page illisible", str(exc)[:200])
+            return _page(False, w("unreadable"), str(exc)[:200], lang=lang)
         except Exception as exc:
-            return _page(False, "Impossible d'ajouter cette page", f"{exc.__class__.__name__}: {str(exc)[:160]}")
+            return _page(False, w("failed"), f"{exc.__class__.__name__}: {str(exc)[:160]}", lang=lang)
 
     return r

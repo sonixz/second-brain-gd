@@ -31,7 +31,7 @@ func setup(a: SbApp) -> AudioWidget:
 	row.add_child(now_label)
 	button = Button.new()
 	button.custom_minimum_size = Vector2(44, 44)
-	button.tooltip_text = "Ambiance: theme, music, sounds"
+	button.tooltip_text = I18n.t("Ambiance: theme, music, sounds")
 	button.set_meta("sfx", "none")
 	button.pressed.connect(_open)
 	row.add_child(button)
@@ -55,37 +55,37 @@ func _build_popup() -> void:
 	col.custom_minimum_size = Vector2(300, 0)
 	popup.add_child(col)
 	var over := Label.new()
-	over.text = "AMBIANCE"
+	over.text = I18n.t("AMBIANCE")
 	over.theme_type_variation = "Overline"
 	col.add_child(over)
 	theme_option = OptionButton.new()
 	var choice := str(SbSettings.get_value("ui", "theme", "auto"))
 	for key in ["auto", "morning", "focus", "evening", "forest"]:
-		theme_option.add_item(str(SbTheme.THEME_LABELS[key]))
+		theme_option.add_item(SbTheme.theme_label(key))
 		theme_option.set_item_metadata(theme_option.item_count - 1, key)
 		if key == choice:
 			theme_option.select(theme_option.item_count - 1)
 	theme_option.item_selected.connect(func(i: int) -> void:
 		app.set_theme_choice(str(theme_option.get_item_metadata(i))))
-	col.add_child(_labelled("Theme", theme_option))
-	col.add_child(_slider_row("Music", "Music", app.audio.music_enabled,
+	col.add_child(_labelled(I18n.t("Theme"), theme_option))
+	col.add_child(_slider_row(I18n.t("Music"), "Music", app.audio.music_enabled,
 		func(on: bool) -> void: app.audio.set_music_enabled(on)))
-	col.add_child(_slider_row("Effects", "SFX", true, Callable()))
-	col.add_child(_slider_row("Assistant", "Voice", true, Callable()))
-	col.add_child(_slider_row("Ambience", "Ambience", app.audio.ambience_enabled,
+	col.add_child(_slider_row(I18n.t("Effects"), "SFX", true, Callable()))
+	col.add_child(_slider_row(I18n.t("Assistant"), "Voice", true, Callable()))
+	col.add_child(_slider_row(I18n.t("Ambience"), "Ambience", app.audio.ambience_enabled,
 		func(on: bool) -> void: app.audio.set_ambience_enabled(on)))
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	col.add_child(row)
 	var next := Button.new()
-	next.text = "Next track"
+	next.text = I18n.t("Next track")
 	next.pressed.connect(func() -> void: app.audio.next_track())
 	row.add_child(next)
 	var mute := Button.new()
-	mute.text = "Unmute all" if app.audio.muted else "Mute all"
+	mute.text = I18n.t("Unmute all") if app.audio.muted else I18n.t("Mute all")
 	mute.pressed.connect(func() -> void:
 		app.audio.set_muted(not app.audio.muted)
-		mute.text = "Unmute all" if app.audio.muted else "Mute all"
+		mute.text = I18n.t("Unmute all") if app.audio.muted else I18n.t("Mute all")
 		_refresh())
 	row.add_child(mute)
 

@@ -51,11 +51,11 @@ func setup(a: SbApp, id: String, profile: Dictionary, capabilities: Dictionary, 
 	name_edit = LineEdit.new()
 	name_edit.text = str(prof.get("name", id))
 	name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	name_edit.tooltip_text = "The agent's name (Enter to save)"
+	name_edit.tooltip_text = I18n.t("The agent's name (Enter to save)")
 	name_edit.text_submitted.connect(func(t: String) -> void: _patch({"name": t}))
 	top.add_child(name_edit)
 	model_option = OptionButton.new()
-	model_option.tooltip_text = "The model this agent thinks with"
+	model_option.tooltip_text = I18n.t("The model this agent thinks with")
 	var current := str(prof.get("model", "gpt-6-sol"))
 	var found := false
 	for m in models:
@@ -72,12 +72,12 @@ func setup(a: SbApp, id: String, profile: Dictionary, capabilities: Dictionary, 
 	top.add_child(model_option)
 	status = Label.new()
 	status.theme_type_variation = "Muted"
-	status.text = "Adjusted (not the original)" if bool(prof.get("modified", false)) else \
-		("Built-in agent" if bool(prof.get("builtin", false)) else "Your agent")
+	status.text = I18n.t("Adjusted (not the original)") if bool(prof.get("modified", false)) else \
+		(I18n.t("Built-in agent") if bool(prof.get("builtin", false)) else I18n.t("Your agent"))
 	box.add_child(status)
 
 	# Capabilities
-	box.add_child(_overline("CAPABILITIES · WHAT IT MAY DO"))
+	box.add_child(_overline(I18n.t("CAPABILITIES · WHAT IT MAY DO")))
 	var have: Array = prof.get("capabilities", [])
 	for key in caps_info:
 		var c: Dictionary = caps_info[key]
@@ -89,12 +89,12 @@ func setup(a: SbApp, id: String, profile: Dictionary, capabilities: Dictionary, 
 		cb.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		cb.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		cb.button_pressed = key in have
-		cb.tooltip_text = "Tools: " + ", ".join((c.get("tools", []) as Array).map(func(t: Variant) -> String: return str(t)))
+		cb.tooltip_text = I18n.t("Tools: %s") % ", ".join((c.get("tools", []) as Array).map(func(t: Variant) -> String: return str(t)))
 		if key == "agents" and agent_id == "builder":
 			cb.disabled = true  # the Builder without it would be no builder
-			cb.tooltip_text += "\n(The Agent Builder always keeps this one.)"
+			cb.tooltip_text += "\n" + I18n.t("(The Agent Builder always keeps this one.)")
 		if key == "organise" and not (key in have):
-			cb.tooltip_text += "\nLets this agent change your graph (with Undo)."
+			cb.tooltip_text += "\n" + I18n.t("Lets this agent change your graph (with Undo).")
 		var k := str(key)
 		cb.toggled.connect(func(_on: bool) -> void: _save_capabilities())
 		row.add_child(cb)
@@ -108,23 +108,23 @@ func setup(a: SbApp, id: String, profile: Dictionary, capabilities: Dictionary, 
 
 	# First words (custom agents)
 	if not bool(prof.get("builtin", false)):
-		box.add_child(_overline("FIRST WORDS"))
+		box.add_child(_overline(I18n.t("FIRST WORDS")))
 		intro_edit = LineEdit.new()
 		intro_edit.text = str(prof.get("intro", ""))
-		intro_edit.placeholder_text = "What it says when you open it"
+		intro_edit.placeholder_text = I18n.t("What it says when you open it")
 		intro_edit.text_submitted.connect(func(t: String) -> void: _patch({"intro": t}))
 		box.add_child(intro_edit)
 
 	# Instructions
 	var ihead := HBoxContainer.new()
 	box.add_child(ihead)
-	var ilab := _overline("INSTRUCTIONS")
+	var ilab := _overline(I18n.t("INSTRUCTIONS"))
 	ilab.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	ihead.add_child(ilab)
 	var builder := Button.new()
-	builder.text = "Ask the Builder to change it…"
+	builder.text = I18n.t("Ask the Builder to change it…")
 	builder.theme_type_variation = "GhostButton"
-	builder.tooltip_text = "Describe the change out loud; the Agent Builder rewrites the instructions and shows you the result"
+	builder.tooltip_text = I18n.t("Describe the change out loud; the Agent Builder rewrites the instructions and shows you the result")
 	builder.visible = agent_id != "builder"
 	builder.pressed.connect(func() -> void:
 		ask_builder.emit(str(prof.get("name", agent_id)))
@@ -140,7 +140,7 @@ func setup(a: SbApp, id: String, profile: Dictionary, capabilities: Dictionary, 
 	actions.add_theme_constant_override("separation", 8)
 	box.add_child(actions)
 	save_button = Button.new()
-	save_button.text = "Save the instructions"
+	save_button.text = I18n.t("Save the instructions")
 	save_button.theme_type_variation = "PrimaryButton"
 	save_button.disabled = true
 	save_button.pressed.connect(func() -> void:
@@ -152,19 +152,19 @@ func setup(a: SbApp, id: String, profile: Dictionary, capabilities: Dictionary, 
 	actions.add_child(spacer)
 	if bool(prof.get("builtin", false)):
 		var reset := Button.new()
-		reset.text = "Back to the original"
+		reset.text = I18n.t("Back to the original")
 		reset.theme_type_variation = "GhostButton"
 		reset.disabled = not bool(prof.get("modified", false))
 		reset.pressed.connect(func() -> void:
 			var r := await app.backend.api.call_api("/assistant/agents/%s/reset" % agent_id, true, HTTPClient.METHOD_POST)
 			if r["ok"]:
 				_reload(r["data"])
-				status.text = "Back to the original ✓"
+				status.text = I18n.t("Back to the original ✓")
 				changed.emit())
 		actions.add_child(reset)
 	else:
 		var del := Button.new()
-		del.text = "Delete this agent"
+		del.text = I18n.t("Delete this agent")
 		del.theme_type_variation = "GhostButton"
 		del.pressed.connect(func() -> void:
 			await app.backend.api.call_api("/assistant/agents/" + agent_id, true, HTTPClient.METHOD_DELETE)
@@ -196,10 +196,10 @@ func _patch(fields: Dictionary) -> bool:
 		return r["ok"]
 	if r["ok"]:
 		prof = r["data"]
-		status.text = "Saved ✓ · applies from the next message (a live conversation: from the next one)"
+		status.text = I18n.t("Saved ✓ · applies from the next message (a live conversation: from the next one)")
 		changed.emit()
 	else:
-		status.text = "Could not save: %s" % str(r.get("error", ""))
+		status.text = I18n.t("Could not save: %s") % str(r.get("error", ""))
 	return r["ok"]
 
 

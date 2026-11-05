@@ -60,11 +60,11 @@ func _ready() -> void:
 	htext.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(htext)
 	var over := Label.new()
-	over.text = "SECOND BRAIN GD · TRANSPARENCY"
+	over.text = I18n.t("SECOND BRAIN GD · TRANSPARENCY")
 	over.theme_type_variation = "Overline"
 	htext.add_child(over)
 	var title := Label.new()
-	title.text = "Engine Room · System Console"
+	title.text = I18n.t("Engine Room · System Console")
 	title.theme_type_variation = "Heading"
 	title.add_theme_font_size_override("font_size", 24)
 	htext.add_child(title)
@@ -79,24 +79,24 @@ func _ready() -> void:
 	header_dot.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	prow.add_child(header_dot)
 	header_state = Label.new()
-	header_state.text = "Connecting…"
+	header_state.text = I18n.t("Connecting…")
 	prow.add_child(header_state)
 	last_check_label = Label.new()
 	last_check_label.theme_type_variation = "Muted"
 	last_check_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(last_check_label)
 	var back := Button.new()
-	back.text = "← Back to your brain"
+	back.text = I18n.t("← Back to your brain")
 	back.theme_type_variation = "PrimaryButton"
 	back.custom_minimum_size = Vector2(0, 44)
 	back.pressed.connect(func() -> void: app.show_brain())
 	head.add_child(back)
 	var refresh := Button.new()
-	refresh.text = "Refresh"
+	refresh.text = I18n.t("Refresh")
 	refresh.pressed.connect(func() -> void: refresh_all())
 	head.add_child(refresh)
 	restart_button = Button.new()
-	restart_button.text = "Restart engine"
+	restart_button.text = I18n.t("Restart engine")
 	restart_button.visible = false
 	restart_button.pressed.connect(func() -> void: app.start_setup())
 	head.add_child(restart_button)
@@ -115,19 +115,19 @@ func _ready() -> void:
 	grid.add_theme_constant_override("h_separation", 16)
 	grid.add_theme_constant_override("v_separation", 16)
 	body.add_child(grid)
-	api_card = InfoCard.new().setup("Local API")
-	db_card = InfoCard.new().setup("Database")
-	py_card = InfoCard.new().setup("Python environment")
-	storage_card = InfoCard.new().setup("Storage")
-	proc_card = InfoCard.new().setup("Processes")
+	api_card = InfoCard.new().setup(I18n.t("Local API"))
+	db_card = InfoCard.new().setup(I18n.t("Database"))
+	py_card = InfoCard.new().setup(I18n.t("Python environment"))
+	storage_card = InfoCard.new().setup(I18n.t("Storage"))
+	proc_card = InfoCard.new().setup(I18n.t("Processes"))
 	for c in [api_card, db_card, py_card, storage_card, proc_card]:
 		grid.add_child(c)
-	var about := InfoCard.new().setup("Installation")
+	var about := InfoCard.new().setup(I18n.t("Installation"))
 	about.name = "InstallCard"
 	grid.add_child(about)
-	voice_card = InfoCard.new().setup("Voice capture")
+	voice_card = InfoCard.new().setup(I18n.t("Voice capture"))
 	grid.add_child(voice_card)
-	sources_card = InfoCard.new().setup("Sources & memory")
+	sources_card = InfoCard.new().setup(I18n.t("Sources & memory"))
 	grid.add_child(sources_card)
 
 	billing_panel = BillingPanel.new().setup(app)
@@ -141,7 +141,7 @@ func _ready() -> void:
 	ecol.add_theme_constant_override("separation", 8)
 	ev_card.add_child(ecol)
 	var etitle := Label.new()
-	etitle.text = "Recent operations"
+	etitle.text = I18n.t("Recent operations")
 	etitle.theme_type_variation = "Heading"
 	etitle.add_theme_font_size_override("font_size", 16)
 	ecol.add_child(etitle)
@@ -223,25 +223,25 @@ func _poll_voice() -> void:
 	if not is_inside_tree() or voice_card == null:
 		return
 	if not res["ok"]:
-		voice_card.set_state("error" if not last_health.is_empty() else "checking", "No data")
+		voice_card.set_state("error" if not last_health.is_empty() else "checking", I18n.t("No data"))
 		return
 	last_voice = res["data"]
 	var v := last_voice
-	var sources := {"keyring": "System credential store", "file": "Private file (no credential store)",
-		"env": "Environment variable (dev)", "none": "Not configured"}
+	var sources := {"keyring": I18n.t("System credential store"), "file": I18n.t("Private file (no credential store)"),
+		"env": I18n.t("Environment variable (dev)"), "none": I18n.t("Not configured")}
 	if bool(v.get("configured", false)):
-		voice_card.set_state("ok", "Ready")
+		voice_card.set_state("ok", I18n.t("Ready"))
 	else:
-		voice_card.set_state("pending", "No API key")
+		voice_card.set_state("pending", I18n.t("No API key"))
 	voice_card.set_rows([
-		["Provider", "OpenAI realtime"],
-		["Model", str(v.get("model", SbFormat.NA))],
-		["Key", str(v.get("hint", "")) if bool(v.get("configured", false)) else SbFormat.NA],
-		["Stored in", str(sources.get(str(v.get("source", "none")), "?"))],
-		["Backend", str(v.get("backend", SbFormat.NA))],
-		["List price", "$%s / min of audio" % str(v.get("price_per_minute_usd", "?"))],
+		[I18n.t("Provider"), I18n.t("OpenAI realtime")],
+		[I18n.t("Model"), str(v.get("model", SbFormat.na()))],
+		[I18n.t("Key"), str(v.get("hint", "")) if bool(v.get("configured", false)) else SbFormat.na()],
+		[I18n.t("Stored in"), str(sources.get(str(v.get("source", "none")), "?"))],
+		[I18n.t("Backend"), str(v.get("backend", SbFormat.na()))],
+		[I18n.t("List price"), I18n.t("$%s / min of audio") % str(v.get("price_per_minute_usd", "?"))],
 	])
-	voice_card.set_footer("The key never reaches Godot, logs or the database.")
+	voice_card.set_footer(I18n.t("The key never reaches Godot, logs or the database."))
 
 
 func _poll_sources() -> void:
@@ -263,19 +263,19 @@ func _poll_sources() -> void:
 		emb = m["embeddings"]
 		avail = emb.get("available")
 	if avail == true:
-		sources_card.set_state("ok", "Search by meaning")
+		sources_card.set_state("ok", I18n.t("Search by meaning"))
 	elif avail == false:
-		sources_card.set_state("warning", "Words only")
+		sources_card.set_state("warning", I18n.t("Words only"))
 	else:
-		sources_card.set_state("pending", "No sources yet")
+		sources_card.set_state("pending", I18n.t("No sources yet"))
 	sources_card.set_rows([
-		["Sources", SbFormat.number(list.size())],
-		["Passages indexed", SbFormat.number(chunks)],
-		["Notes by meaning", ("%s of %s" % [SbFormat.number(m.get("embedded", 0)), SbFormat.number(m.get("notes", 0))]) if not m.is_empty() else SbFormat.NA],
-		["Related idea pairs", SbFormat.number(m.get("related_pairs", 0)) if not m.is_empty() else SbFormat.NA],
-		["Embeddings model", str(emb.get("model", "text-embedding-3-small"))],
-		["Embeddings", "available" if avail == true else ("unavailable: " + str(emb.get("error", "")).left(70) if avail == false else SbFormat.NA)],
-		["Formats", "PDF, Word, Markdown, text, HTML, web links"],
+		[I18n.t("Sources"), SbFormat.number(list.size())],
+		[I18n.t("Passages indexed"), SbFormat.number(chunks)],
+		[I18n.t("Notes by meaning"), (I18n.t("%s of %s") % [SbFormat.number(m.get("embedded", 0)), SbFormat.number(m.get("notes", 0))]) if not m.is_empty() else SbFormat.na()],
+		[I18n.t("Related idea pairs"), SbFormat.number(m.get("related_pairs", 0)) if not m.is_empty() else SbFormat.na()],
+		[I18n.t("Embeddings model"), str(emb.get("model", "text-embedding-3-small"))],
+		[I18n.t("Embeddings"), I18n.t("available") if avail == true else (I18n.t("unavailable: %s") % str(emb.get("error", "")).left(70) if avail == false else SbFormat.na())],
+		[I18n.t("Formats"), I18n.t("PDF, Word, Markdown, text, HTML, web links")],
 	])
 
 
@@ -293,35 +293,35 @@ func _poll_events() -> void:
 func _render() -> void:
 	if not is_inside_tree():
 		return
-	var na := SbFormat.NA
+	var na := SbFormat.na()
 	if last_health.is_empty():
 		header_dot.set_status("checking")
-		header_state.text = "Connecting…"
+		header_state.text = I18n.t("Connecting…")
 	elif health_ok:
 		header_dot.set_status("ok")
-		header_state.text = "All systems operational"
+		header_state.text = I18n.t("All systems operational")
 	else:
 		header_dot.set_status("error")
-		header_state.text = "Engine unreachable" if last_health.has("error") else "Engine degraded"
+		header_state.text = I18n.t("Engine unreachable") if last_health.has("error") else I18n.t("Engine degraded")
 	restart_button.visible = not health_ok and not last_health.is_empty()
-	last_check_label.text = "Last health check %s" % (last_health_at if last_health_at != "" else "—")
+	last_check_label.text = I18n.t("Last health check %s") % (last_health_at if last_health_at != "" else "—")
 
 	# API
 	var api: Dictionary = last_status.get("api", {})
 	if health_ok:
-		api_card.set_state("ok", "Healthy")
+		api_card.set_state("ok", I18n.t("Healthy"))
 	elif last_health.is_empty():
-		api_card.set_state("checking", "Checking")
+		api_card.set_state("checking", I18n.t("Checking"))
 	else:
-		api_card.set_state("error", str(last_health.get("error", "Degraded")))
+		api_card.set_state("error", str(last_health.get("error", I18n.t("Degraded"))))
 	api_card.set_rows([
-		["Address", "http://127.0.0.1:%d" % app.backend.api.port if app.backend.api.port > 0 else na],
+		[I18n.t("Address"), "http://127.0.0.1:%d" % app.backend.api.port if app.backend.api.port > 0 else na],
 		["/health", "%s · %d ms" % [str(last_health.get("status", last_health.get("error", "—"))), last_health_ms] if not last_health.is_empty() else na],
-		["Last check", last_health_at if last_health_at != "" else na],
-		["Uptime", SbFormat.duration(last_health.get("uptime_s"))],
-		["Started", SbFormat.local_time(api.get("started_at"), true)],
-		["Version", str(last_health.get("version", na))],
-		["Auth", "Bearer token (local)" if app.backend.api.token != "" else "No token found"],
+		[I18n.t("Last check"), last_health_at if last_health_at != "" else na],
+		[I18n.t("Uptime"), SbFormat.duration(last_health.get("uptime_s"))],
+		[I18n.t("Started"), SbFormat.local_time(api.get("started_at"), true)],
+		[I18n.t("Version"), str(last_health.get("version", na))],
+		[I18n.t("Auth"), I18n.t("Bearer token (local)") if app.backend.api.token != "" else I18n.t("No token found")],
 	])
 
 	# Database
@@ -330,55 +330,56 @@ func _render() -> void:
 	var db_entry: Dictionary = storage_entries.get("database", {})
 	var db_status := str(db.get("status", last_health.get("database", "")))
 	if not health_ok and not last_status.is_empty():
-		db_card.set_state("warning", "Last known · engine offline")
+		db_card.set_state("warning", I18n.t("Last known · engine offline"))
 	elif db_status == "ok":
-		db_card.set_state("ok", "Connected")
+		db_card.set_state("ok", I18n.t("Connected"))
 	elif db_status == "":
-		db_card.set_state("checking", "Checking")
+		db_card.set_state("checking", I18n.t("Checking"))
 	else:
 		db_card.set_state("error", db_status)
 	db_card.set_rows([
-		["Engine", "SQLite (WAL)"],
-		["Schema version", SbFormat.value_or_na(db.get("schema_version"))],
-		["Size", SbFormat.bytes(db_entry.get("bytes"))],
-		["Installed", SbFormat.local_time(db.get("installed_at"), true)],
-		["File", str(db.get("path", na))],
+		[I18n.t("Engine"), "SQLite (WAL)"],
+		[I18n.t("Schema version"), SbFormat.value_or_na(db.get("schema_version"))],
+		[I18n.t("Size"), SbFormat.bytes(db_entry.get("bytes"))],
+		[I18n.t("Installed"), SbFormat.local_time(db.get("installed_at"), true)],
+		[I18n.t("File"), str(db.get("path", na))],
 	])
 
 	# Python
 	var py: Dictionary = last_status.get("python", {})
 	var plat: Dictionary = last_status.get("platform", {})
 	if not health_ok and not py.is_empty():
-		py_card.set_state("warning", "Last known · engine offline")
+		py_card.set_state("warning", I18n.t("Last known · engine offline"))
 	elif py.is_empty():
-		py_card.set_state("checking" if last_health.is_empty() else "error", "Checking" if last_health.is_empty() else "No data")
+		py_card.set_state("checking" if last_health.is_empty() else "error", I18n.t("Checking") if last_health.is_empty() else I18n.t("No data"))
 	else:
 		py_card.set_state("ok" if bool(py.get("in_venv", false)) else "warning",
-			"Isolated venv" if bool(py.get("in_venv", false)) else "Not in a venv")
+			I18n.t("Isolated venv") if bool(py.get("in_venv", false)) else I18n.t("Not in a venv"))
 	py_card.set_rows([
 		["Python", SbFormat.value_or_na(py.get("version"))],
-		["Implementation", SbFormat.value_or_na(py.get("implementation"))],
-		["Virtual env", SbFormat.value_or_na(py.get("prefix"))],
-		["Base interpreter", SbFormat.value_or_na(py.get("base_prefix"))],
-		["Platform", "%s %s %s" % [plat.get("system", ""), plat.get("release", ""), plat.get("machine", "")] if not plat.is_empty() else na],
+		[I18n.t("Implementation"), SbFormat.value_or_na(py.get("implementation"))],
+		[I18n.t("Virtual env"), SbFormat.value_or_na(py.get("prefix"))],
+		[I18n.t("Base interpreter"), SbFormat.value_or_na(py.get("base_prefix"))],
+		[I18n.t("Platform"), "%s %s %s" % [plat.get("system", ""), plat.get("release", ""), plat.get("machine", "")] if not plat.is_empty() else na],
 	])
 
 	# Storage
 	var disk: Dictionary = last_storage.get("disk", {})
 	if last_storage.is_empty():
-		storage_card.set_state("checking", "Checking")
+		storage_card.set_state("checking", I18n.t("Checking"))
 	elif not health_ok:
-		storage_card.set_state("warning", "Last known · engine offline")
+		storage_card.set_state("warning", I18n.t("Last known · engine offline"))
 	else:
 		var free: Variant = disk.get("free_bytes")
 		var total: Variant = disk.get("total_bytes")
 		var low := free != null and total != null and float(free) / maxf(1.0, float(total)) < 0.05
-		storage_card.set_state("warning" if low else "ok", "Low disk space" if low else "OK")
-	var srows: Array = [["Data folder", str(last_storage.get("data_dir", app.backend.data_dir))]]
+		storage_card.set_state("warning" if low else "ok", I18n.t("Low disk space") if low else "OK")
+	var srows: Array = [[I18n.t("Data folder"), str(last_storage.get("data_dir", app.backend.data_dir))]]
+	var entry_names := {"database": I18n.t("Database"), "notes": I18n.t("Notes"), "logs": I18n.t("Logs"), "venv": I18n.t("Venv")}
 	for key in ["database", "notes", "logs", "venv"]:
 		var e: Dictionary = storage_entries.get(key, {})
-		srows.append([key.capitalize(), "%s · %s files" % [SbFormat.bytes(e.get("bytes")), SbFormat.number(e.get("files", 0))] if not e.is_empty() else na])
-	srows.append(["Disk free", "%s of %s" % [SbFormat.bytes(disk.get("free_bytes")), SbFormat.bytes(disk.get("total_bytes"))] if disk.get("free_bytes") != null else na])
+		srows.append([entry_names[key], I18n.t("%s · %s files") % [SbFormat.bytes(e.get("bytes")), SbFormat.number(e.get("files", 0))] if not e.is_empty() else na])
+	srows.append([I18n.t("Disk free"), I18n.t("%s of %s") % [SbFormat.bytes(disk.get("free_bytes")), SbFormat.bytes(disk.get("total_bytes"))] if disk.get("free_bytes") != null else na])
 	storage_card.set_rows(srows)
 
 	_render_process_only()
@@ -394,15 +395,15 @@ func _render() -> void:
 			if str(st.get("status", "")) == "ok":
 				ok_steps += 1
 		if install.is_empty():
-			card.set_state("checking", "Checking")
+			card.set_state("checking", I18n.t("Checking"))
 		elif not health_ok:
-			card.set_state("warning", "Last known · engine offline")
+			card.set_state("warning", I18n.t("Last known · engine offline"))
 		else:
 			card.set_state("ok" if bool(install.get("installed", false)) else "warning",
-				"Complete" if bool(install.get("installed", false)) else "Incomplete")
+				I18n.t("Complete") if bool(install.get("installed", false)) else I18n.t("Incomplete"))
 		card.set_rows([
-			["Verified steps", "%d / %d" % [ok_steps, steps.size()] if not steps.is_empty() else na],
-			["Last ready", SbFormat.local_time(install.get("last_success_at"), true)],
+			[I18n.t("Verified steps"), "%d / %d" % [ok_steps, steps.size()] if not steps.is_empty() else na],
+			[I18n.t("Last ready"), SbFormat.local_time(install.get("last_success_at"), true)],
 			["Godot", str(Engine.get_version_info().get("string", na))],
 			["OS", OS.get_name()],
 		])
@@ -417,30 +418,30 @@ func _render_process_only() -> void:
 		# Live measurements are never shown stale: the API process is not answering.
 		proc = {}
 		sys = {}
-		proc_card.set_state("warning", "API not measured · engine offline")
+		proc_card.set_state("warning", I18n.t("API not measured · engine offline"))
 	elif proc.is_empty():
-		proc_card.set_state("checking" if last_health.is_empty() else "error", "Checking" if last_health.is_empty() else "No data")
+		proc_card.set_state("checking" if last_health.is_empty() else "error", I18n.t("Checking") if last_health.is_empty() else I18n.t("No data"))
 	else:
-		proc_card.set_state("ok", "Measured")
-	var mem_sys := SbFormat.NA
+		proc_card.set_state("ok", I18n.t("Measured"))
+	var mem_sys := SbFormat.na()
 	if sys.get("memory_total_bytes") != null and sys.get("memory_available_bytes") != null:
-		mem_sys = "%s free of %s" % [SbFormat.bytes(sys.get("memory_available_bytes")), SbFormat.bytes(sys.get("memory_total_bytes"))]
+		mem_sys = I18n.t("%s free of %s") % [SbFormat.bytes(sys.get("memory_available_bytes")), SbFormat.bytes(sys.get("memory_total_bytes"))]
 	proc_card.set_rows([
-		["API pid", SbFormat.value_or_na(proc.get("pid"))],
-		["API CPU", SbFormat.value_or_na(proc.get("cpu_percent"), " %")],
-		["API memory (RSS)", SbFormat.bytes(proc.get("rss_bytes"))],
-		["API threads", SbFormat.value_or_na(proc.get("threads"))],
-		["Godot pid", str(OS.get_process_id())],
-		["Godot memory", SbFormat.bytes(OS.get_static_memory_usage())],
-		["Godot FPS", SbFormat.number(Engine.get_frames_per_second())],
-		["System RAM", mem_sys],
+		[I18n.t("API pid"), SbFormat.value_or_na(proc.get("pid"))],
+		[I18n.t("API CPU"), SbFormat.value_or_na(proc.get("cpu_percent"), " %")],
+		[I18n.t("API memory (RSS)"), SbFormat.bytes(proc.get("rss_bytes"))],
+		[I18n.t("API threads"), SbFormat.value_or_na(proc.get("threads"))],
+		[I18n.t("Godot pid"), str(OS.get_process_id())],
+		[I18n.t("Godot memory"), SbFormat.bytes(OS.get_static_memory_usage())],
+		[I18n.t("Godot FPS"), SbFormat.number(Engine.get_frames_per_second())],
+		[I18n.t("System RAM"), mem_sys],
 	])
 
 
 func _render_events() -> void:
 	var lines: PackedStringArray = []
 	if last_events.is_empty():
-		lines.append("[color=#%s]%s[/color]" % [SbTheme.FAINT.to_html(false), "No operations recorded yet" if health_ok else SbFormat.NA])
+		lines.append("[color=#%s]%s[/color]" % [SbTheme.FAINT.to_html(false), I18n.t("No operations recorded yet") if health_ok else SbFormat.na()])
 	var shown := 0
 	for item in last_events:
 		var e: Dictionary = item

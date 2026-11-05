@@ -102,7 +102,8 @@ func boot_env() -> void:
 	SbSettings.set_value("ui", "modules", false)
 	SbSettings.set_value("onboarding", "voice_done", true)
 	SbSettings.set_value("voice", "speak_replies", false)
-	SbSettings.set_value("voice", "language", "en")  # what buttons say on your behalf, in English
+	# the app's language: English (the site's screenshots), or SBGD_UI_LANG=fr to review the French interface
+	SbSettings.set_value("ui", "language", "fr" if OS.get_environment("SBGD_UI_LANG") == "fr" else "en")
 	OS.set_environment("SBGD_VOICE_PROVIDER", "fake")
 	OS.set_environment("SBGD_BILLING_PROVIDER", "fake")
 	if OS.get_environment("SBGD_ASSISTANT_PROVIDER") == "":

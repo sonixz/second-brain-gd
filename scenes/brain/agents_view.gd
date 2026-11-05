@@ -42,11 +42,11 @@ func setup(a: SbApp) -> AgentsView:
 	htext.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(htext)
 	var over := Label.new()
-	over.text = "AGENT ROOM"
+	over.text = I18n.t("AGENT ROOM")
 	over.theme_type_variation = "Overline"
 	htext.add_child(over)
 	var title := Label.new()
-	title.text = "Agents that work in your folders, with your approval"
+	title.text = I18n.t("Agents that work in your folders, with your approval")
 	title.theme_type_variation = "Heading"
 	htext.add_child(title)
 	status_label = Label.new()
@@ -54,7 +54,7 @@ func setup(a: SbApp) -> AgentsView:
 	status_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	htext.add_child(status_label)
 	install_button = Button.new()
-	install_button.text = "Install agents"
+	install_button.text = I18n.t("Install agents")
 	install_button.visible = false
 	install_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	install_button.pressed.connect(install)
@@ -69,20 +69,20 @@ func setup(a: SbApp) -> AgentsView:
 	left.add_theme_constant_override("separation", 8)
 	body.add_child(left)
 	var fl := Label.new()
-	fl.text = "FOLDERS AGENTS MAY USE"
+	fl.text = I18n.t("FOLDERS AGENTS MAY USE")
 	fl.theme_type_variation = "Overline"
 	left.add_child(fl)
 	folders_box = VBoxContainer.new()
 	folders_box.add_theme_constant_override("separation", 4)
 	left.add_child(folders_box)
 	var add := Button.new()
-	add.text = "+ Add a folder"
+	add.text = I18n.t("+ Add a folder")
 	add.theme_type_variation = "GhostButton"
-	add.tooltip_text = "Agents can only read and propose changes inside folders listed here."
+	add.tooltip_text = I18n.t("Agents can only read and propose changes inside folders listed here.")
 	add.pressed.connect(_pick_folder)
 	left.add_child(add)
 	var sl := Label.new()
-	sl.text = "SESSIONS"
+	sl.text = I18n.t("SESSIONS")
 	sl.theme_type_variation = "Overline"
 	left.add_child(sl)
 	sessions_box = VBoxContainer.new()
@@ -95,7 +95,7 @@ func setup(a: SbApp) -> AgentsView:
 	body.add_child(right)
 	session_title = Label.new()
 	session_title.theme_type_variation = "Muted"
-	session_title.text = "Start an agent in one of your folders."
+	session_title.text = I18n.t("Start an agent in one of your folders.")
 	right.add_child(session_title)
 	transcript = RichTextLabel.new()
 	transcript.bbcode_enabled = true
@@ -110,18 +110,18 @@ func setup(a: SbApp) -> AgentsView:
 	row.add_theme_constant_override("separation", 8)
 	right.add_child(row)
 	input_edit = LineEdit.new()
-	input_edit.placeholder_text = "Ask the agent…  (Enter to send)"
+	input_edit.placeholder_text = I18n.t("Ask the agent…  (Enter to send)")
 	input_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	input_edit.text_submitted.connect(func(t: String) -> void: send_message(t))
 	row.add_child(input_edit)
 	send_button = Button.new()
-	send_button.text = "Send"
+	send_button.text = I18n.t("Send")
 	send_button.pressed.connect(func() -> void: send_message(input_edit.text))
 	row.add_child(send_button)
 	stop_button = Button.new()
-	stop_button.text = "Stop"
+	stop_button.text = I18n.t("Stop")
 	stop_button.theme_type_variation = "GhostButton"
-	stop_button.tooltip_text = "Interrupt the current turn"
+	stop_button.tooltip_text = I18n.t("Interrupt the current turn")
 	stop_button.pressed.connect(func() -> void:
 		if current_id != "":
 			await app.backend.api.call_api("/agents/sessions/%s/interrupt" % current_id, true, HTTPClient.METHOD_POST, "{}"))
@@ -137,18 +137,18 @@ func setup(a: SbApp) -> AgentsView:
 func refresh() -> void:
 	var res := await app.backend.api.call_api("/agents/status")
 	if not res["ok"] or not is_inside_tree():
-		status_label.text = "Agent room: Not available (%s)" % str(res.get("error", ""))
+		status_label.text = I18n.t("Agent room: Not available (%s)") % str(res.get("error", ""))
 		return
 	info = res["data"]
 	var job: Dictionary = info.get("install", {})
 	if bool(info.get("installed", false)):
-		status_label.text = "Codex %s · model %s · every change waits for your approval" % [info.get("version", "?"), info.get("agents_model", "?")]
+		status_label.text = I18n.t("Codex %s · model %s · every change waits for your approval") % [info.get("version", "?"), info.get("agents_model", "?")]
 	elif bool(job.get("running", false)):
-		status_label.text = str(job.get("message", "Installing…"))
+		status_label.text = str(job.get("message", I18n.t("Installing…")))
 	elif job.get("error") != null:
-		status_label.text = "Install failed: %s" % str(job.get("error"))
+		status_label.text = I18n.t("Install failed: %s") % str(job.get("error"))
 	else:
-		status_label.text = "Agents are not installed yet (download of about 160 MB, fingerprint checked)."
+		status_label.text = I18n.t("Agents are not installed yet (download of about 160 MB, fingerprint checked).")
 	install_button.visible = not bool(info.get("installed", false)) and not bool(job.get("running", false))
 	_render_folders()
 	_render_sessions()
@@ -172,7 +172,7 @@ func add_folder(path: String) -> bool:
 
 
 func start_session(cwd: String) -> bool:
-	status_label.text = "Starting an agent in %s…" % cwd
+	status_label.text = I18n.t("Starting an agent in %s…") % cwd
 	var res := await app.backend.api.call_api("/agents/sessions", true, HTTPClient.METHOD_POST, JSON.stringify({"cwd": cwd}))
 	if not res["ok"]:
 		failed.emit(str((res["data"] as Dictionary).get("detail", res["error"])))
@@ -241,27 +241,29 @@ func _apply(ev: Dictionary) -> void:
 	var t := str(ev.get("type", ""))
 	match t:
 		"ready":
-			_put("ready", "[color=#%s]Agent ready in %s[/color]" % [SbTheme.FAINT.to_html(false), _esc(str(ev.get("cwd", "")))])
+			_put("ready", "[color=#%s]%s[/color]" % [SbTheme.FAINT.to_html(false), I18n.t("Agent ready in %s") % _esc(str(ev.get("cwd", "")))])
 		"user":
-			_put("u%d" % int(ev["seq"]), "[b]You[/b]  %s" % _esc(str(ev.get("text", ""))))
+			_put("u%d" % int(ev["seq"]), "[b]%s[/b]  %s" % [I18n.t("You"), _esc(str(ev.get("text", "")))])
 		"delta":
 			var key := "m:" + str(ev.get("item_id", ""))
 			var prev := _entry_text(key)
-			_put(key, (prev if prev != "" else "[b]Agent[/b]  ") + _esc(str(ev.get("text", ""))))
+			_put(key, (prev if prev != "" else "[b]%s[/b]  " % I18n.t("Agent")) + _esc(str(ev.get("text", ""))))
 		"item":
 			_apply_item(str(ev.get("phase", "")), ev.get("item", {}))
 		"approval":
 			app.audio.play("notification", 0.0, -2.0)
 		"decision":
-			var verdict := "approved" if str(ev.get("decision", "")).begins_with("accept") else "declined"
-			_put("d%d" % int(ev["seq"]), "[color=#%s]You %s this %s.[/color]" % [SbTheme.FAINT.to_html(false), verdict,
-				"command" if str(ev.get("kind", "")) == "command" else "change"])
+			var ok := str(ev.get("decision", "")).begins_with("accept")
+			var cmd := str(ev.get("kind", "")) == "command"
+			var said := (I18n.t("You approved this command.") if ok else I18n.t("You declined this command.")) if cmd \
+				else (I18n.t("You approved this change.") if ok else I18n.t("You declined this change."))
+			_put("d%d" % int(ev["seq"]), "[color=#%s]%s[/color]" % [SbTheme.FAINT.to_html(false), said])
 		"turn_completed":
 			var err := str(ev.get("error", "")) if ev.get("error") != null else ""
 			_put("t%d" % int(ev["seq"]), "[color=#%s]— %s%s[/color]" % [SbTheme.FAINT.to_html(false), str(ev.get("status", "done")),
 				(": " + _esc(err)) if err != "" else ""])
 		"stopped":
-			_put("stop", "[color=#%s]Agent stopped. %s[/color]" % [SbTheme.WARN.to_html(false), _esc(str(ev.get("error", "") if ev.get("error") != null else ""))])
+			_put("stop", "[color=#%s]%s[/color]" % [SbTheme.WARN.to_html(false), I18n.t("Agent stopped. %s") % _esc(str(ev.get("error", "") if ev.get("error") != null else ""))])
 
 
 func _apply_item(phase: String, item: Dictionary) -> void:
@@ -269,7 +271,7 @@ func _apply_item(phase: String, item: Dictionary) -> void:
 	var id := str(item.get("id", ""))
 	if kind == "agentMessage":
 		if phase == "completed":
-			_put("m:" + id, "[b]Agent[/b]  " + _esc(str(item.get("text", ""))))
+			_put("m:" + id, "[b]%s[/b]  " % I18n.t("Agent") + _esc(str(item.get("text", ""))))
 	elif kind == "commandExecution":
 		var line := "[code]$ %s[/code]" % _esc(str(item.get("command", "")))
 		if phase == "completed":
@@ -286,8 +288,8 @@ func _apply_item(phase: String, item: Dictionary) -> void:
 			diffs.append("%s\n%s" % [str(ch.get("path", "")), str(ch.get("diff", ""))])
 		_diffs[id] = "\n".join(diffs)
 		var status := str(item.get("status", ""))
-		_put("f:" + id, "[color=#%s]Files:[/color] %s  [color=#%s]%s[/color]" % [SbTheme.MINT.to_html(false),
-			_esc(", ".join(parts)), SbTheme.FAINT.to_html(false), status if phase == "completed" else "proposed"])
+		_put("f:" + id, "[color=#%s]%s[/color] %s  [color=#%s]%s[/color]" % [SbTheme.MINT.to_html(false), I18n.t("Files:"),
+			_esc(", ".join(parts)), SbTheme.FAINT.to_html(false), status if phase == "completed" else I18n.t("proposed")])
 
 
 func _put(key: String, text: String) -> void:
@@ -329,8 +331,11 @@ func _render_approvals() -> void:
 		card.add_child(col)
 		var l := Label.new()
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		var what := "run a command" if str(a.get("kind")) == "command" else "change files"
-		l.text = "The agent asks to %s%s" % [what, (": " + str(a.get("reason"))) if a.get("reason") != null else "."]
+		var is_cmd := str(a.get("kind")) == "command"
+		if a.get("reason") != null:
+			l.text = (I18n.t("The agent asks to run a command: %s") if is_cmd else I18n.t("The agent asks to change files: %s")) % str(a.get("reason"))
+		else:
+			l.text = I18n.t("The agent asks to run a command.") if is_cmd else I18n.t("The agent asks to change files.")
 		l.add_theme_color_override("font_color", SbTheme.WARM)
 		col.add_child(l)
 		if a.get("command") != null:
@@ -349,7 +354,7 @@ func _render_approvals() -> void:
 		row.add_theme_constant_override("separation", 8)
 		col.add_child(row)
 		var rid := int(a.get("request_id", 0))
-		for pair in [["accept", "Approve"], ["acceptForSession", "Approve for this session"], ["decline", "Decline"]]:
+		for pair in [["accept", I18n.t("Approve")], ["acceptForSession", I18n.t("Approve for this session")], ["decline", I18n.t("Decline")]]:
 			if not (a.get("decisions", []) as Array).has(pair[0]):
 				continue
 			var b := Button.new()
@@ -375,7 +380,7 @@ func _render_folders() -> void:
 	var folders: Array = info.get("agents_folders", [])
 	if folders.is_empty():
 		var l := Label.new()
-		l.text = "No folder yet."
+		l.text = I18n.t("No folder yet.")
 		l.theme_type_variation = "Muted"
 		folders_box.add_child(l)
 	for f in folders:
@@ -384,7 +389,7 @@ func _render_folders() -> void:
 		folders_box.add_child(row)
 		var b := Button.new()
 		b.text = "▶ " + path.get_file()
-		b.tooltip_text = "Start an agent in " + path
+		b.tooltip_text = I18n.t("Start an agent in %s") % path
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.disabled = not bool(info.get("installed", false))
@@ -393,7 +398,7 @@ func _render_folders() -> void:
 		var x := Button.new()
 		x.text = "✕"
 		x.theme_type_variation = "GhostButton"
-		x.tooltip_text = "Remove this folder from the agent room"
+		x.tooltip_text = I18n.t("Remove this folder from the agent room")
 		x.pressed.connect(func() -> void:
 			await app.backend.api.call_api("/agents/folders?path=" + path.uri_encode(), true, HTTPClient.METHOD_DELETE)
 			await refresh())
@@ -415,8 +420,8 @@ func _render_sessions() -> void:
 
 
 func _status_text(s: String) -> String:
-	return {"starting": "starting", "idle": "ready", "working": "working…", "waiting_approval": "needs your approval",
-		"stopped": "stopped", "error": "error"}.get(s, s)
+	return {"starting": I18n.t("starting"), "idle": I18n.t("ready"), "working": I18n.t("working…"),
+		"waiting_approval": I18n.t("needs your approval"), "stopped": I18n.t("stopped"), "error": I18n.t("error")}.get(s, s)
 
 
 func _update_controls() -> void:

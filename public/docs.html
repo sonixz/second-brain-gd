@@ -41,6 +41,7 @@
           <li><a href="#install">Install</a></li>
           <li><a href="#openai-key">Your OpenAI key</a></li>
           <li><a href="#data">Where your data lives</a></li>
+          <li><a href="#language">English or French</a></li>
         </ul>
         <h4>Use</h4>
         <ul>
@@ -155,6 +156,27 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         </table>
         <p>Models can be changed in the engine room; every call's cost is shown, and your real bill can be read
           live (see <a href="#costs">Real AI costs</a>).</p>
+      </section>
+
+      <section class="doc" id="language">
+        <p class="kicker">Start</p>
+        <h2>English or French</h2>
+        <p>The app is in English. The <b>FR / EN</b> switch at the top right turns the whole interface into French (and
+          back) at once, and is remembered. It also sets:</p>
+        <ul>
+          <li>the agents' default language: they answer in the app's language, and always in the language you speak or
+            write to them if it is another one;</li>
+          <li>the Live conversation's transcription (<kbd>F9</kbd>); dictation (<kbd>F8</kbd>) detects the language by
+            itself;</li>
+          <li>what the buttons say on your behalf (“Yes, save it”), the briefing and the weekly review, and the engine's
+            own words (receipts of the browser and the bookmark).</li>
+        </ul>
+        <p>Your content keeps its own language: an English article keeps an English summary in a French interface, and
+          its pictures are described in the page's language. The voice reads French with a Québec accent and English
+          with a neutral North American one.</p>
+        <p>For contributors: every interface text is written in English inside <code>I18n.t("…")</code>
+          (<code>scripts/core/i18n.gd</code>); its French lives in <code>i18n/fr.json</code>.
+          <code>python3 tools/i18n.py --check</code> fails when a text has no French, and the tests run it.</p>
       </section>
 
       <section class="doc" id="data">

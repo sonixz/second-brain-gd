@@ -1,30 +1,35 @@
 class_name SbFormat
 extends RefCounted
 
-const NA := "Not available"
+const NA := "Not available"  # the English value; shown text is na()
+
+
+## "Not available", in the interface language.
+static func na() -> String:
+	return I18n.t("Not available")
 
 
 static func bytes(value: Variant) -> String:
 	if value == null:
-		return NA
+		return na()
 	return String.humanize_size(int(value))
 
 
 static func duration(seconds: Variant) -> String:
 	if seconds == null:
-		return NA
+		return na()
 	var s := int(seconds)
 	if s < 60:
-		return "%d s" % s
+		return I18n.t("%d s") % s
 	if s < 3600:
-		return "%d min %02d s" % [s / 60, s % 60]
-	return "%d h %02d min" % [s / 3600, (s % 3600) / 60]
+		return I18n.t("%d min %02d s") % [s / 60, s % 60]
+	return I18n.t("%d h %02d min") % [s / 3600, (s % 3600) / 60]
 
 
 ## ISO-8601 UTC ("2026-11-03T00:55:55.859Z") to local "HH:MM:SS" or full date.
 static func local_time(iso: Variant, with_date: bool = false) -> String:
 	if iso == null or str(iso) == "":
-		return NA
+		return na()
 	var s := str(iso)
 	var unix := Time.get_unix_time_from_datetime_string(s.substr(0, 19))
 	var bias: int = Time.get_time_zone_from_system().get("bias", 0)
@@ -37,7 +42,7 @@ static func local_time(iso: Variant, with_date: bool = false) -> String:
 
 static func value_or_na(value: Variant, suffix: String = "") -> String:
 	if value == null:
-		return NA
+		return na()
 	return number(value) + suffix
 
 

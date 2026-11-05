@@ -50,7 +50,7 @@ func setup(a: SbApp, b: Control, who: String = "archivist") -> AssistantPanel:
 	speak_toggle = CheckButton.new()
 	speak_toggle.text = ""
 	speak_toggle.icon = load("res://assets/icons/speaker.svg")
-	speak_toggle.tooltip_text = "The archivist reads its answers aloud (voice: marin)"
+	speak_toggle.tooltip_text = I18n.t("The archivist reads its answers aloud (voice: marin)")
 	speak_toggle.button_pressed = bool(SbSettings.get_value("assistant", "speaks", true))
 	speak_toggle.toggled.connect(func(on: bool) -> void:
 		SbSettings.set_value("assistant", "speaks", on)
@@ -58,8 +58,8 @@ func setup(a: SbApp, b: Control, who: String = "archivist") -> AssistantPanel:
 			app.audio.stop_voice())
 	head.add_child(speak_toggle)
 	live_button = Button.new()
-	live_button.text = "Live"
-	live_button.tooltip_text = "A spoken conversation with the archivist (F9 to start and end)"
+	live_button.text = I18n.t("Live")
+	live_button.tooltip_text = I18n.t("A spoken conversation with the archivist (F9 to start and end)")
 	live_button.toggle_mode = false
 	live_button.pressed.connect(func() -> void:
 		activated.emit(agent)
@@ -83,7 +83,7 @@ func setup(a: SbApp, b: Control, who: String = "archivist") -> AssistantPanel:
 	row.add_theme_constant_override("separation", 6)
 	add_child(row)
 	input = LineEdit.new()
-	input.placeholder_text = "Ask or tell the archivist…" if agent == "archivist" else ("Think out loud with Sparring…" if agent == "sparring" else "Talk with this agent…")
+	input.placeholder_text = I18n.t("Ask or tell the archivist…") if agent == "archivist" else (I18n.t("Think out loud with Sparring…") if agent == "sparring" else I18n.t("Talk with this agent…"))
 	input.focus_entered.connect(func() -> void: activated.emit(agent))
 	input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	input.custom_minimum_size = Vector2(0, 40)
@@ -92,7 +92,7 @@ func setup(a: SbApp, b: Control, who: String = "archivist") -> AssistantPanel:
 	mic_button = Button.new()
 	mic_button.icon = load("res://assets/icons/mic.svg")
 	mic_button.custom_minimum_size = Vector2(40, 40)
-	mic_button.tooltip_text = "Talk to the archivist (click, speak, click again)"
+	mic_button.tooltip_text = I18n.t("Talk to the archivist (click, speak, click again)")
 	mic_button.set_meta("sfx", "none")
 	mic_button.pressed.connect(func() -> void:
 		activated.emit(agent)
@@ -109,7 +109,7 @@ func setup(a: SbApp, b: Control, who: String = "archivist") -> AssistantPanel:
 func _process(delta: float) -> void:
 	if thinking.visible:
 		_dots_t += delta
-		thinking.text = "Thinking" + ".".repeat(1 + int(_dots_t * 3.0) % 3)
+		thinking.text = I18n.t("Thinking") + ".".repeat(1 + int(_dots_t * 3.0) % 3)
 
 
 ## Loads today's conversation, then the morning briefing (spoken once per day).
@@ -118,7 +118,7 @@ func start() -> void:
 	var data: Dictionary = st["data"] if st["ok"] else {}
 	configured = bool(data.get("configured", false))
 	if not configured:
-		_add_bubble("assistant", "Hi! I'm your archivist. Give me anything (a thought, a link, a PDF, your voice): I file it, link it and find it again. I need your OpenAI key first: click the microphone or open the engine room's Voice card.", [], [])
+		_add_bubble("assistant", I18n.t("Hi! I'm your archivist. Give me anything (a thought, a link, a PDF, your voice): I file it, link it and find it again. I need your OpenAI key first: click the microphone or open the engine room's Voice card."), [], [])
 		return
 	var hist := await app.backend.api.call_api("/assistant/history?limit=40&agent=" + agent)
 	var had_briefing := false
@@ -150,7 +150,7 @@ func start() -> void:
 			_add_bubble("briefing", str(bd.get("text", "")), [], [])
 			say(str(bd.get("text", "")))
 		else:
-			_add_bubble("assistant", "I could not prepare your briefing: %s" % _err(b), [], [])
+			_add_bubble("assistant", I18n.t("I could not prepare your briefing: %s") % _err(b), [], [])
 
 
 ## spoken = true when the message came by voice: the reply is read aloud even if reading is off.
@@ -164,7 +164,7 @@ func send(text: String, spoken: bool = false) -> void:
 		return
 	input.text = ""
 	if not configured:
-		_add_bubble("assistant", "I need your OpenAI key first (microphone or engine room → Voice).", [], [])
+		_add_bubble("assistant", I18n.t("I need your OpenAI key first (microphone or engine room → Voice)."), [], [])
 		return
 	_add_bubble("user", t, [], [])
 	_set_busy(true)
@@ -182,7 +182,7 @@ func send(text: String, spoken: bool = false) -> void:
 		return
 	if not res["ok"]:
 		app.audio.play("error")
-		_add_bubble("assistant", "Something went wrong: %s" % _err(res), [], [])
+		_add_bubble("assistant", I18n.t("Something went wrong: %s") % _err(res), [], [])
 		return
 	var d: Dictionary = res["data"]
 	last_reply = str(d.get("reply", ""))
@@ -223,14 +223,14 @@ func show_draft() -> void:
 	row.add_theme_constant_override("separation", 8)
 	draft_box.add_child(row)
 	var save_b := Button.new()
-	save_b.text = "Save to the Brain"
+	save_b.text = I18n.t("Save to the Brain")
 	save_b.theme_type_variation = "PrimaryButton"
 	save_b.pressed.connect(func() -> void:
 		save_b.disabled = true
 		send(said("save_synthesis")))
 	row.add_child(save_b)
 	var change := Button.new()
-	change.text = "Change it…"
+	change.text = I18n.t("Change it…")
 	change.theme_type_variation = "GhostButton"
 	change.pressed.connect(func() -> void:
 		input.text = said("change_synthesis")
@@ -257,9 +257,9 @@ func show_agent_draft() -> void:
 	var update := str(d.get("mode", "")) == "update"
 	var caps: Array = (d.get("capabilities", []) as Array).map(func(c: Variant) -> String: return str(labels.get(str(c), c)))
 	var head := "%s\n%s\n\n" % [str(d.get("name", d.get("agent_id", ""))).to_upper(),
-		("Capabilities: " + ", ".join(caps)) if not caps.is_empty() else "Capabilities unchanged"]
+		(I18n.t("Capabilities: %s") % ", ".join(caps)) if not caps.is_empty() else I18n.t("Capabilities unchanged")]
 	if str(d.get("intro", "")) != "":
-		head += "First words: " + str(d.get("intro", "")) + "\n\n"
+		head += I18n.t("First words: %s") % str(d.get("intro", "")) + "\n\n"
 	var lines: Array[String] = []
 	for line in str(d.get("instructions", "")).split("\n"):  # markdown headings read as plain capitals here
 		lines.append(line.lstrip("#").strip_edges().to_upper() if line.begins_with("#") else line)
@@ -270,14 +270,14 @@ func show_agent_draft() -> void:
 	row.add_theme_constant_override("separation", 8)
 	inner.add_child(row)
 	var go := Button.new()
-	go.text = "Apply it" if update else "Create it"
+	go.text = I18n.t("Apply it") if update else I18n.t("Create it")
 	go.theme_type_variation = "PrimaryButton"
 	go.pressed.connect(func() -> void:
 		go.disabled = true
 		send(said("apply_agent") if update else said("create_agent")))
 	row.add_child(go)
 	var change := Button.new()
-	change.text = "Change it…"
+	change.text = I18n.t("Change it…")
 	change.theme_type_variation = "GhostButton"
 	change.pressed.connect(func() -> void:
 		input.text = said("change_agent")
@@ -295,7 +295,7 @@ func run_review() -> bool:
 	var res := await app.backend.api.call_api("/assistant/review", true, HTTPClient.METHOD_POST)
 	_set_busy(false)
 	if not res["ok"] or not is_inside_tree():
-		_add_bubble("assistant", "I could not prepare the review: %s" % _err(res), [], [])
+		_add_bubble("assistant", I18n.t("I could not prepare the review: %s") % _err(res), [], [])
 		return false
 	var text := str((res["data"] as Dictionary).get("text", ""))
 	last_reply = text
@@ -344,7 +344,7 @@ func _err(res: Dictionary) -> String:
 
 
 func _on_live_state(st: String) -> void:
-	live_button.text = "End (F9)" if st != "idle" else "Live"
+	live_button.text = I18n.t("End (F9)") if st != "idle" else I18n.t("Live")
 
 
 ## The archivist's receipt for an item that came in: where it went, or what it is waiting on.
@@ -392,9 +392,9 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 	bubble.add_child(inner)
 	if special:
 		var over := Label.new()
-		over.text = {"briefing": "TODAY", "review": "WEEKLY REVIEW", "receipt": "FILED", "waiting": "IN THE INBOX · WAITING",
-			"draft": "SYNTHESIS · NOT SAVED YET", "agent_draft": "NEW AGENT · NOT CREATED YET",
-			"agent_draft_update": "CHANGES · NOT APPLIED YET"}.get(role, "")
+		over.text = {"briefing": I18n.t("TODAY"), "review": I18n.t("WEEKLY REVIEW"), "receipt": I18n.t("FILED"),
+			"waiting": I18n.t("IN THE INBOX · WAITING"), "draft": I18n.t("SYNTHESIS · NOT SAVED YET"),
+			"agent_draft": I18n.t("NEW AGENT · NOT CREATED YET"), "agent_draft_update": I18n.t("CHANGES · NOT APPLIED YET")}.get(role, "")
 		over.theme_type_variation = "Overline"
 		over.add_theme_color_override("font_color", col)
 		inner.add_child(over)
@@ -417,7 +417,7 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 		src.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		src.add_theme_font_size_override("normal_font_size", 12)
 		src.add_theme_color_override("default_color", SbTheme.MUTED)
-		var lines: Array[String] = ["SOURCES"]
+		var lines: Array[String] = [I18n.t("SOURCES")]
 		for item in sources:
 			var sd: Dictionary = item
 			var url := str(sd.get("url", ""))
@@ -435,8 +435,8 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 		tools.alignment = BoxContainer.ALIGNMENT_END
 		inner.add_child(tools)
 		var play := Button.new()
-		play.text = "▶ Replay"
-		play.tooltip_text = "Read this answer aloud again (free: the audio is cached)"
+		play.text = I18n.t("▶ Replay")
+		play.tooltip_text = I18n.t("Read this answer aloud again (free: the audio is cached)")
 		play.theme_type_variation = "GhostButton"
 		play.add_theme_font_size_override("font_size", 12)
 		play.set_meta("sfx", "none")
@@ -448,10 +448,12 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 		inner.add_child(line)
 		var l := Label.new()
 		l.theme_type_variation = "Muted"
-		l.text = str({"create_note": "✚ Created ", "classify": "⇢ Filed ", "move": "⇢ Moved ", "trash": "✕ Deleted ",
-			"web_page": "✚ Added from the web ", "remove_place": "✕ Removed place ", "link": "— Linked ", "unlink": "✕ Unlinked ",
-			"untag": "✕ Tag removed ", "agent_created": "✚ Created the agent ", "agent_changed": "✎ Changed the agent "}.get(
-				str(a.get("kind")), "✎ Updated ")) + "“%s”" % str(a.get("title", ""))
+		l.text = str({"create_note": I18n.t("✚ Created “%s”"), "classify": I18n.t("⇢ Filed “%s”"),
+			"move": I18n.t("⇢ Moved “%s”"), "trash": I18n.t("✕ Deleted “%s”"),
+			"web_page": I18n.t("✚ Added from the web “%s”"), "remove_place": I18n.t("✕ Removed place “%s”"),
+			"link": I18n.t("— Linked “%s”"), "unlink": I18n.t("✕ Unlinked “%s”"), "untag": I18n.t("✕ Tag removed “%s”"),
+			"agent_created": I18n.t("✚ Created the agent “%s”"), "agent_changed": I18n.t("✎ Changed the agent “%s”")}.get(
+				str(a.get("kind")), I18n.t("✎ Updated “%s”"))) % str(a.get("title", ""))
 		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		l.clip_text = true
@@ -460,13 +462,13 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 		if aid <= 0:  # not journaled (an agent created or changed: ⓘ has Delete and Back to the original)
 			continue
 		var undo := Button.new()
-		undo.text = "Undo"
+		undo.text = I18n.t("Undo")
 		undo.theme_type_variation = "GhostButton"
 		undo.pressed.connect(func() -> void:
 			var r := await app.backend.api.call_api("/assistant/actions/%d/undo" % aid, true, HTTPClient.METHOD_POST)
 			if r["ok"]:
 				undo.disabled = true
-				undo.text = "Undone"
+				undo.text = I18n.t("Undone")
 				app.audio.play("whoosh")
 				brain_changed.emit())
 		line.add_child(undo)
@@ -487,7 +489,7 @@ func _on_link(meta: Variant) -> void:
 
 
 ## What the app says on your behalf (a button that approves, the rail's « + »…), in the language you speak to the
-## agents: settings voice/language, "fr" (default) or "en".
+## agents: in the app's language (I18n, the FR / EN switch).
 const SAID := {
 	"save_synthesis": {"fr": "Oui, sauvegarde cette synthèse dans le Brain.", "en": "Yes, save this synthesis to the Brain."},
 	"change_synthesis": {"fr": "Change la synthèse: ", "en": "Change the synthesis: "},
@@ -500,7 +502,7 @@ const SAID := {
 
 
 static func said(key: String) -> String:
-	var lang := str(SbSettings.get_value("voice", "language", "fr"))
+	var lang := I18n.lang  # the app's language (FR / EN switch)
 	var d: Dictionary = SAID.get(key, {})
 	return str(d.get(lang, d.get("fr", "")))
 

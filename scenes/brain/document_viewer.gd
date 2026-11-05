@@ -52,8 +52,8 @@ func setup(a: SbApp) -> DocumentViewer:
 	title_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	title_label.clip_text = true
 	row.add_child(title_label)
-	for spec in [["◀", "Previous page (←)", func() -> void: go_page(page - 1)],
-			["▶", "Next page (→)", func() -> void: go_page(page + 1)]]:
+	for spec in [["◀", I18n.t("Previous page (←)"), func() -> void: go_page(page - 1)],
+			["▶", I18n.t("Next page (→)"), func() -> void: go_page(page + 1)]]:
 		var b := Button.new()
 		b.text = str(spec[0])
 		b.tooltip_text = str(spec[1])
@@ -64,8 +64,8 @@ func setup(a: SbApp) -> DocumentViewer:
 	page_label.theme_type_variation = "Muted"
 	row.add_child(page_label)
 	page_controls.append(page_label)
-	for spec in [["−", "Zoom out (−)", func() -> void: set_zoom(zoom / 1.4)], ["Fit", "Fit the page (0)", func() -> void: fit()],
-			["+", "Zoom in (+)", func() -> void: set_zoom(zoom * 1.4)]]:
+	for spec in [["−", I18n.t("Zoom out (−)"), func() -> void: set_zoom(zoom / 1.4)], [I18n.t("Fit"), I18n.t("Fit the page (0)"), func() -> void: fit()],
+			["+", I18n.t("Zoom in (+)"), func() -> void: set_zoom(zoom * 1.4)]]:
 		var b := Button.new()
 		b.text = str(spec[0])
 		b.tooltip_text = str(spec[1])
@@ -76,19 +76,19 @@ func setup(a: SbApp) -> DocumentViewer:
 	read_by_label.theme_type_variation = "Muted"
 	row.add_child(read_by_label)
 	reread_button = Button.new()
-	reread_button.text = "Re-read with AI"
-	reread_button.tooltip_text = "These pages were read on your computer (local OCR). The vision model can read them\nagain, more accurately: the pages are sent to OpenAI with your key (a few cents)."
+	reread_button.text = I18n.t("Re-read with AI")
+	reread_button.tooltip_text = I18n.t("These pages were read on your computer (local OCR). The vision model can read them\nagain, more accurately: the pages are sent to OpenAI with your key (a few cents).")
 	reread_button.theme_type_variation = "GhostButton"
 	reread_button.pressed.connect(reread_with_ai)
 	row.add_child(reread_button)
 	var orig := Button.new()
-	orig.text = "Open original"
-	orig.tooltip_text = "Open the kept file in your usual app (PDF reader, image viewer, browser)"
+	orig.text = I18n.t("Open original")
+	orig.tooltip_text = I18n.t("Open the kept file in your usual app (PDF reader, image viewer, browser)")
 	orig.pressed.connect(open_original)
 	row.add_child(orig)
 	var close := Button.new()
 	close.text = "✕"
-	close.tooltip_text = "Close (Esc)"
+	close.tooltip_text = I18n.t("Close (Esc)")
 	close.theme_type_variation = "GhostButton"
 	close.pressed.connect(hide_viewer)
 	row.add_child(close)
@@ -99,7 +99,7 @@ func setup(a: SbApp) -> DocumentViewer:
 	hint_label.offset_left = -300
 	hint_label.offset_right = 300
 	hint_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	hint_label.text = "Wheel to zoom · drag to move · ← → pages · Esc to close"
+	hint_label.text = I18n.t("Wheel to zoom · drag to move · ← → pages · Esc to close")
 	add_child(hint_label)
 	reader = ScrollContainer.new()
 	reader.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
@@ -148,8 +148,8 @@ func open(source_id: String, at_page: int = 1) -> bool:
 	reader.visible = is_text()
 	for c in page_controls:
 		c.visible = not is_text()
-	hint_label.text = ("Scroll to read · + / − text size · Esc to close" if is_text()
-		else "Wheel to zoom · drag to move · ← → pages · Esc to close")
+	hint_label.text = (I18n.t("Scroll to read · + / − text size · Esc to close") if is_text()
+		else I18n.t("Wheel to zoom · drag to move · ← → pages · Esc to close"))
 	textures.clear()
 	_pending.clear()
 	page = clampi(at_page, 1, maxi(1, int(doc.get("pages", 1))))
@@ -198,25 +198,25 @@ func _show_pictures(source_id: String, text: String) -> void:
 
 func _update_read_by() -> void:
 	var how := str(doc.get("text_engine", ""))
-	read_by_label.text = {"ocr-windows": "Read by Windows OCR", "ocr-tesseract": "Read by Tesseract OCR",
-		"ocr-fake": "Read by local OCR", "ocr-ai": "Read by AI"}.get(how, "")
+	read_by_label.text = {"ocr-windows": I18n.t("Read by Windows OCR"), "ocr-tesseract": I18n.t("Read by Tesseract OCR"),
+		"ocr-fake": I18n.t("Read by local OCR"), "ocr-ai": I18n.t("Read by AI")}.get(how, "")
 	reread_button.visible = how.begins_with("ocr-") and how != "ocr-ai" and str(doc.get("kind", "")) == "pdf"
 
 
 ## The local OCR's reading is replaced by the vision model's (passages, search and summary follow).
 func reread_with_ai() -> bool:
 	reread_button.disabled = true
-	reread_button.text = "Reading…"
+	reread_button.text = I18n.t("Reading…")
 	var job := "%d-%d" % [Time.get_ticks_usec(), randi()]
 	var state := {"busy": true}
 	_follow_reread(job, state)
 	var res := await app.backend.api.call_api("/sources/%s/reread?job=%s" % [str(doc.get("id", "")), job], true, HTTPClient.METHOD_POST)
 	state["busy"] = false
 	reread_button.disabled = false
-	reread_button.text = "Re-read with AI"
+	reread_button.text = I18n.t("Re-read with AI")
 	if not res["ok"]:
 		var d: Variant = res["data"]
-		read_by_label.text = "Could not re-read: " + (str((d as Dictionary).get("detail", res["error"])) if d is Dictionary else str(res["error"])).left(80)
+		read_by_label.text = I18n.t("Could not re-read: %s") % (str((d as Dictionary).get("detail", res["error"])) if d is Dictionary else str(res["error"])).left(80)
 		return false
 	doc["text_engine"] = "ocr-ai"
 	_update_read_by()
@@ -231,11 +231,11 @@ func _follow_reread(job: String, state: Dictionary) -> void:
 			var line := ""
 			var p: Dictionary = res["data"]
 			if str(p.get("stage", "")) == "ai":
-				line = "page %d / %d" % [mini(int(p.get("done", 0)) + 1, int(p.get("total", 0))), int(p.get("total", 0))]
+				line = I18n.t("page %d / %d") % [mini(int(p.get("done", 0)) + 1, int(p.get("total", 0))), int(p.get("total", 0))]
 			elif str(p.get("stage", "")) == "summary":
-				line = "summary"
+				line = I18n.t("summary")
 			if line != "":
-				reread_button.text = "Reading… " + line
+				reread_button.text = I18n.t("Reading… %s") % line
 
 
 func hide_viewer() -> void:
@@ -284,7 +284,7 @@ func open_original() -> void:
 
 
 func _update_label() -> void:
-	page_label.text = "Page %d / %d" % [page, pages()] if str(doc.get("kind", "")) == "pdf" else "Image"
+	page_label.text = I18n.t("Page %d / %d") % [page, pages()] if str(doc.get("kind", "")) == "pdf" else I18n.t("Image")
 
 
 ## The page's rectangle at fit zoom: as large as the area allows, below the bar.
@@ -372,7 +372,7 @@ func _draw() -> void:
 		draw_texture_rect(tex, rect, false)
 	else:
 		draw_rect(rect, Color(1, 1, 1, 0.92))
-		draw_string(get_theme_default_font(), rect.get_center() - Vector2(40, 0), "Loading…", HORIZONTAL_ALIGNMENT_LEFT, -1, 16,
+		draw_string(get_theme_default_font(), rect.get_center() - Vector2(40, 0), I18n.t("Loading…"), HORIZONTAL_ALIGNMENT_LEFT, -1, 16,
 			Color(0, 0, 0, 0.6))
 	_ensure_page()
 

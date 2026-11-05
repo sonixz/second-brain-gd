@@ -26,7 +26,7 @@ func timeout_for(path_and_query: String, method: int) -> float:
 func call_api(path: String, auth: bool = true, method: int = HTTPClient.METHOD_GET, body: String = "",
 		raw: bool = false) -> Dictionary:
 	if port <= 0:
-		return {"ok": false, "code": 0, "error": "API port unknown", "data": {}, "ms": 0}
+		return {"ok": false, "code": 0, "error": I18n.t("API port unknown"), "data": {}, "ms": 0}
 	var req := HTTPRequest.new()
 	req.timeout = timeout_for(path, method)
 	add_child(req)
@@ -39,7 +39,7 @@ func call_api(path: String, auth: bool = true, method: int = HTTPClient.METHOD_G
 	var err := req.request(base_url() + path, headers, method, body)
 	if err != OK:
 		req.queue_free()
-		return {"ok": false, "code": 0, "error": "request failed to start (%s)" % error_string(err), "data": {},
+		return {"ok": false, "code": 0, "error": I18n.t("request failed to start (%s)") % error_string(err), "data": {},
 			"ms": 0}
 	var res: Array = await req.request_completed
 	req.queue_free()
@@ -62,9 +62,9 @@ func call_api(path: String, auth: bool = true, method: int = HTTPClient.METHOD_G
 static func _result_text(result: int) -> String:
 	match result:
 		HTTPRequest.RESULT_CANT_CONNECT, HTTPRequest.RESULT_CONNECTION_ERROR:
-			return "connection refused"
+			return I18n.t("connection refused")
 		HTTPRequest.RESULT_TIMEOUT:
-			return "timeout"
+			return I18n.t("timeout")
 		HTTPRequest.RESULT_CANT_RESOLVE:
-			return "cannot resolve host"
-	return "network error %d" % result
+			return I18n.t("cannot resolve host")
+	return I18n.t("network error %d") % result

@@ -12,9 +12,26 @@ signal assistant_said(text: String)
 signal finished(reason: String)
 
 const KEY_TOGGLE := KEY_F9
-const ENDINGS := {"goodbye": "Conversation ended. À la prochaine!", "user": "Conversation ended.",
+## English endings by reason (kept for callers that look them up); show ending_text(reason) instead.
+const ENDINGS := {"goodbye": "Conversation ended. See you next time!", "user": "Conversation ended.",
 	"idle": "Conversation ended after a few quiet minutes.", "cap": "Conversation ended: this conversation reached its spending limit.",
 	"max_minutes": "Conversation ended: maximum length reached.", "closed": "Conversation ended."}
+
+
+
+## Why the conversation ended, in the current language.
+static func ending_text(reason: String) -> String:
+	match reason:
+		"goodbye":
+			return I18n.t("Conversation ended. See you next time!")
+		"idle":
+			return I18n.t("Conversation ended after a few quiet minutes.")
+		"cap":
+			return I18n.t("Conversation ended: this conversation reached its spending limit.")
+		"max_minutes":
+			return I18n.t("Conversation ended: maximum length reached.")
+	return I18n.t("Conversation ended.")
+
 
 var app: SbApp
 var stream: LiveStream
@@ -126,13 +143,15 @@ func _set_state(s: String) -> void:
 func _refresh() -> void:
 	if _label == null:
 		return
-	var texts := {"connecting": "Connecting…", "listening": "Live · I'm listening", "speaking":
-		"Live · speaking" + ("" if headphones else " — F8 to interrupt"), "thinking": "Live · looking it up…"}
-	_label.text = ("Sparring · " if agent == "sparring" else "") + str(texts.get(state, "Live"))
+	var texts := {"connecting": I18n.t("Connecting…"), "listening": I18n.t("Live · I'm listening"), "speaking":
+		I18n.t("Live · speaking") if headphones else I18n.t("Live · speaking — F8 to interrupt"),
+		"thinking": I18n.t("Live · looking it up…")}
+	var shown := str(texts.get(state, "Live"))
+	_label.text = I18n.t("Sparring · %s") % shown if agent == "sparring" else shown
 	var col := SbTheme.WARM if state == "listening" else (SbTheme.MINT if state == "speaking" else SbTheme.INFO)
 	_dot.add_theme_color_override("font_color", col)
-	var money := ("$%.3f" % float(cost_usd)) if cost_usd != null else "cost unknown"
-	_meter.text = "%s · %.1f min · F9 to end" % [money, minutes]
+	var money := ("$%.3f" % float(cost_usd)) if cost_usd != null else I18n.t("cost unknown")
+	_meter.text = I18n.t("%s · %.1f min · F9 to end") % [money, minutes]
 
 
 ## use_mic = false lets tests feed audio frames with capture.feed_frames().
@@ -150,7 +169,7 @@ func start(use_mic: bool = true) -> bool:
 	_set_state("connecting")
 	var err := stream.connect_to(app.backend.api.port, app.backend.api.token, agent)
 	if err != OK:
-		last_error = "Cannot open the live connection (%s)." % error_string(err)
+		last_error = I18n.t("Cannot open the live connection (%s).") % error_string(err)
 		stop("error")
 		return false
 	var deadline := Time.get_ticks_msec() + 15000
@@ -158,7 +177,7 @@ func start(use_mic: bool = true) -> bool:
 		await get_tree().process_frame
 	if not stream.is_ready:
 		if last_error == "":
-			last_error = "The live conversation did not start."
+			last_error = I18n.t("The live conversation did not start.")
 		stop("error")
 		return false
 	if use_mic:

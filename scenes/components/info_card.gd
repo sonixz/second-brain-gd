@@ -40,7 +40,7 @@ func setup(title: String) -> InfoCard:
 	_footer.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_footer.visible = false
 	col.add_child(_footer)
-	set_state("pending", "Waiting for data")
+	set_state("pending", I18n.t("Waiting for data"))
 	return self
 
 
@@ -67,7 +67,7 @@ func set_rows(rows: Array) -> void:
 		v.clip_text = true
 		v.tooltip_text = str(r[1])
 		v.mouse_filter = Control.MOUSE_FILTER_PASS
-		if str(r[1]) == SbFormat.NA:
+		if str(r[1]) == SbFormat.na() or str(r[1]) == SbFormat.NA:
 			v.add_theme_color_override("font_color", SbTheme.FAINT)
 		elif r.size() > 2:
 			v.add_theme_color_override("font_color", r[2])

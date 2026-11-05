@@ -309,16 +309,16 @@ class FakeChat:
                 {"name": "Coach entrevue", "instructions": ins, "capabilities": ["read_brain", "internet"],
                  "intro": "Prêt pour ta prochaine entrevue?"})}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
-        if "save_agent" in names and low.startswith("oui"):
+        if "save_agent" in names and low.startswith(("oui", "yes")):  # what the buttons say, in French or English
             call = {"id": "call_sagent", "type": "function", "function": {"name": "save_agent", "arguments": "{}"}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
-        if "draft_agent" in names and ("nouvel agent" in low or "crée-moi un agent" in low):
+        if "draft_agent" in names and ("nouvel agent" in low or "crée-moi un agent" in low or "new agent" in low):
             return {"message": {"role": "assistant", "content": "Avec plaisir. À quoi doit-il servir, par exemple préparer tes entrevues?"},
                     "usage": usage, "model": model}
         if "ui_open_agent" in names and "draft_agent" not in names and ("crée-moi un agent" in low or "nouvel agent" in low):
             call = {"id": "call_oagent", "type": "function", "function": {"name": "ui_open_agent", "arguments": json.dumps({"agent": "builder"})}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
-        if "save_synthesis" in names and low.startswith("oui"):
+        if "save_synthesis" in names and low.startswith(("oui", "yes")):
             call = {"id": "call_save", "type": "function", "function": {"name": "save_synthesis", "arguments": "{}"}}
             return {"message": {"role": "assistant", "content": None, "tool_calls": [call]}, "usage": usage, "model": model}
         if low.startswith("ouvre la page http") and tools:

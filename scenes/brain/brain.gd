@@ -77,7 +77,8 @@ var view := "graph"   # graph | today | projects
 var captures_view: CapturesView
 # Today and Agents are set aside (2026-11-04): the Brain is the graph, its data and their relations.
 # Their views stay in the code, unreachable from the interface, until they come back as modules.
-const NAV_VIEWS := [["graph", "Graph"], ["captures", "Captures"], ["projects", "Projects"]]
+static func nav_views() -> Array:
+	return [["graph", I18n.t("Graph")], ["captures", I18n.t("Captures")], ["projects", I18n.t("Projects")]]
 var today_view: TodayView
 var projects_view: ProjectsView
 var agents_view: AgentsView
@@ -95,6 +96,7 @@ func bind(a: SbApp) -> void:
 
 func _ready() -> void:
 	app.backend.load_runtime()
+	app.tell_engine_language()  # the engine follows the app's language (an older engine database starts in English)
 	graph = GraphView.new()
 	graph.set_anchors_preset(Control.PRESET_FULL_RECT)
 	graph.node_selected.connect(_on_node_selected)
@@ -192,7 +194,7 @@ func _watch_browser() -> void:
 	if _browser_rev >= 0 and rev != _browser_rev:
 		var last: Dictionary = browser_status.get("last_added", {})
 		app.audio.play("note_create", 0.04)
-		show_toast("From your browser: “%s” → %s" % [str(last.get("title", "")).left(60), str(last.get("place", "Inbox"))])
+		show_toast(I18n.t("From your browser: “%s” → %s") % [str(last.get("title", "")).left(60), str(last.get("place", I18n.t("Inbox")))])
 		await refresh_graph()
 		await refresh_spaces()
 		if view == "captures":
@@ -214,7 +216,7 @@ func toggle_panel(index: int) -> void:
 		p.set_minimized(true)
 		return
 	if p == inspector and current_note.is_empty():
-		show_toast("No item open: click one in the graph.")
+		show_toast(I18n.t("No item open: click one in the graph."))
 		return
 	p.reveal()
 	for id in agent_panels:
@@ -234,7 +236,7 @@ func toggle_focus_mode() -> void:
 				_focus_restore.append(p)
 				p.set_minimized(true)
 		if not _focus_restore.is_empty():
-			show_toast("Graph only · Tab brings the panels back")
+			show_toast(I18n.t("Graph only · Tab brings the panels back"))
 	else:
 		for p in _focus_restore:
 			if is_instance_valid(p):
@@ -292,7 +294,7 @@ func _make_agent(id: String, agent_name: String, letter: String, intro: String, 
 	var info := Button.new()
 	info.icon = load("res://assets/icons/info.svg")
 	info.theme_type_variation = "GhostButton"
-	info.tooltip_text = "Instructions, capabilities and model of this agent"
+	info.tooltip_text = I18n.t("Instructions, capabilities and model of this agent")
 	info.pressed.connect(func() -> void: show_agent_info(id))
 	panel.extra.add_child(info)
 	panel_layer.add_panel(panel)
@@ -357,7 +359,7 @@ func show_agent_info(id: String) -> void:
 	agent_settings.ask_builder.connect(func(n: String) -> void: open_agent("builder", AssistantPanel.said("modify_agent") % n))
 	agent_settings.close_requested.connect(close_agent_settings)
 	var w := 560.0
-	agent_settings_panel = SbFloatingPanel.new().setup("agent-settings", "%s · SETTINGS" % str(prof.get("name", id)).to_upper(),
+	agent_settings_panel = SbFloatingPanel.new().setup("agent-settings", I18n.t("%s · SETTINGS") % str(prof.get("name", id)).to_upper(),
 		agent_settings, {"dock": "free", "size": w, "icon": "⚙",
 		 "free": Rect2(maxf(24.0, size.x * 0.5 - w * 0.5), 110, w, maxf(420.0, size.y - 240.0))})
 	agent_settings_panel.minimized = false
@@ -365,7 +367,7 @@ func show_agent_info(id: String) -> void:
 	var close := Button.new()
 	close.text = "✕"
 	close.theme_type_variation = "GhostButton"
-	close.tooltip_text = "Close the settings"
+	close.tooltip_text = I18n.t("Close the settings")
 	close.pressed.connect(close_agent_settings)
 	agent_settings_panel.extra.add_child(close)
 	panel_layer.add_panel(agent_settings_panel)
@@ -435,7 +437,7 @@ func _build_top_bar() -> void:
 	seg.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(seg)
 	var group := ButtonGroup.new()
-	for pair in NAV_VIEWS:
+	for pair in nav_views():
 		var b := Button.new()
 		b.text = str(pair[1])
 		b.toggle_mode = true
@@ -448,7 +450,7 @@ func _build_top_bar() -> void:
 		view_buttons[key] = b
 	search_edit = LineEdit.new()
 	search_edit.theme_type_variation = "SearchEdit"
-	search_edit.placeholder_text = "Search your brain   ( / )"
+	search_edit.placeholder_text = I18n.t("Search your brain   ( / )")
 	search_edit.custom_minimum_size = Vector2(260, 40)
 	search_edit.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	search_edit.clear_button_enabled = true
@@ -457,7 +459,7 @@ func _build_top_bar() -> void:
 	bar.add_child(search_edit)
 	var pill := Button.new()
 	pill.theme_type_variation = "GhostButton"
-	pill.tooltip_text = "Open the engine room (System Console)"
+	pill.tooltip_text = I18n.t("Open the engine room (System Console)")
 	pill.pressed.connect(func() -> void: app.show_console())
 	pill.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	bar.add_child(pill)
@@ -475,6 +477,8 @@ func _build_top_bar() -> void:
 	status_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	prow.add_child(status_label)
 	pill.custom_minimum_size = Vector2(196, 40)
+	# FR / EN: the app's language. English is the product's; the switch rebuilds the screen in the other one.
+	bar.add_child(I18n.switch(app))
 
 
 func _build_views() -> void:
@@ -546,9 +550,9 @@ func _build_left_panel() -> void:
 	add_child(panel_layer)
 	panel_layer.edges_changed.connect(_on_panel_edges)
 	panel_layer.create_requested.connect(func() -> void: open_agent("builder", AssistantPanel.said("new_agent")))
-	assistant_panel = _make_agent("archivist", "Archivist", "A", "", false)
+	assistant_panel = _make_agent("archivist", I18n.t("Archivist"), "A", "", false)
 	archivist_panel = agent_panels["archivist"]
-	sparring_chat = _make_agent("sparring", "Sparring", "S", "", true)
+	sparring_chat = _make_agent("sparring", I18n.t("Sparring"), "S", "", true)
 	sparring_panel = agent_panels["sparring"]
 	spaces_page = VBoxContainer.new()
 	spaces_page.add_theme_constant_override("separation", 10)
@@ -556,12 +560,12 @@ func _build_left_panel() -> void:
 	var places_scroll := ScrollContainer.new()
 	places_scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
 	places_scroll.add_child(spaces_page)
-	places_panel = SbFloatingPanel.new().setup("places", "PLACES · TODAY", places_scroll,
+	places_panel = SbFloatingPanel.new().setup("places", I18n.t("PLACES · TODAY"), places_scroll,
 		{"dock": "left", "size": 340.0, "minimized": true, "free": Rect2(800, 120, 320, 480)})
 	panel_layer.add_panel(places_panel)
 	var col := spaces_page
 	var over := Label.new()
-	over.text = "BRIEFING"
+	over.text = I18n.t("BRIEFING")
 	over.theme_type_variation = "Overline"
 	col.add_child(over)
 	briefing_box = VBoxContainer.new()
@@ -571,14 +575,14 @@ func _build_left_panel() -> void:
 	var shead := HBoxContainer.new()
 	col.add_child(shead)
 	var sover := Label.new()
-	sover.text = "SPACES"
+	sover.text = I18n.t("SPACES")
 	sover.theme_type_variation = "Overline"
 	sover.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	shead.add_child(sover)
 	var add := Button.new()
 	add.text = "+"
 	add.theme_type_variation = "GhostButton"
-	add.tooltip_text = "New space (a project, an area of your life…)"
+	add.tooltip_text = I18n.t("New space (a project, an area of your life…)")
 	add.pressed.connect(_prompt_new_space)
 	shead.add_child(add)
 	spaces_box = VBoxContainer.new()
@@ -592,14 +596,14 @@ func _build_left_panel() -> void:
 	var srow := HBoxContainer.new()
 	col.add_child(srow)
 	var sl := Label.new()
-	sl.text = "SOURCES"
+	sl.text = I18n.t("SOURCES")
 	sl.theme_type_variation = "Overline"
 	sl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	srow.add_child(sl)
 	var addf := Button.new()
-	addf.text = "+ File"
+	addf.text = I18n.t("+ File")
 	addf.theme_type_variation = "GhostButton"
-	addf.tooltip_text = "Add a PDF, Word, Markdown or text file. You can also drop files on the window, or paste a link in the capture bar."
+	addf.tooltip_text = I18n.t("Add a PDF, Word, Markdown or text file. You can also drop files on the window, or paste a link in the capture bar.")
 	addf.pressed.connect(_pick_file)
 	srow.add_child(addf)
 	sources_box = VBoxContainer.new()
@@ -607,12 +611,12 @@ func _build_left_panel() -> void:
 	col.add_child(sources_box)
 	col.add_child(HSeparator.new())
 	var reset := Button.new()
-	reset.text = "Reset the panel layout"
+	reset.text = I18n.t("Reset the panel layout")
 	reset.theme_type_variation = "GhostButton"
-	reset.tooltip_text = "Archivist on the left, item on the right, this panel shrunk under the archivist"
+	reset.tooltip_text = I18n.t("Archivist on the left, item on the right, this panel shrunk under the archivist")
 	reset.pressed.connect(func() -> void:
 		panel_layer.reset_all()
-		show_toast("Panels back in their places."))
+		show_toast(I18n.t("Panels back in their places.")))
 	col.add_child(reset)
 
 
@@ -633,7 +637,7 @@ func _build_toast() -> void:
 	toast_label = Label.new()
 	row.add_child(toast_label)
 	toast_undo = Button.new()
-	toast_undo.text = "Undo"
+	toast_undo.text = I18n.t("Undo")
 	toast_undo.theme_type_variation = "GhostButton"
 	toast_undo.pressed.connect(_undo_toast)
 	row.add_child(toast_undo)
@@ -660,7 +664,7 @@ func _undo_toast() -> void:
 	var res := await app.backend.api.call_api("/assistant/actions/%d/undo" % toast_action, true, HTTPClient.METHOD_POST)
 	if res["ok"]:
 		app.audio.play("whoosh")
-		show_toast("Put back where it was.")
+		show_toast(I18n.t("Put back where it was."))
 		await refresh_graph()
 		await refresh_spaces()
 
@@ -691,14 +695,14 @@ func _pick_file() -> void:
 		_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILES
 		_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 		_file_dialog.use_native_dialog = true
-		_file_dialog.filters = PackedStringArray(["*.pdf, *.docx, *.md, *.txt, *.html, *.htm, *.csv, *.json ; Documents"])
+		_file_dialog.filters = PackedStringArray(["*.pdf, *.docx, *.md, *.txt, *.html, *.htm, *.csv, *.json ; " + I18n.t("Documents")])
 		_file_dialog.files_selected.connect(func(paths: PackedStringArray) -> void: _on_files_dropped(paths))
 		add_child(_file_dialog)
 	_file_dialog.popup_centered_ratio(0.6)
 
 
 func add_source_file(path: String) -> bool:
-	show_toast("Reading %s…" % path.get_file())
+	show_toast(I18n.t("Reading %s…") % path.get_file())
 	var payload := {"path": path}
 	if not _auto_file():
 		payload["space_id"] = current_space
@@ -706,7 +710,7 @@ func add_source_file(path: String) -> bool:
 
 
 func add_source_url(url: String) -> bool:
-	show_toast("Reading %s…" % url.left(60))
+	show_toast(I18n.t("Reading %s…") % url.left(60))
 	var payload := {"url": url}
 	if not _auto_file():
 		payload["space_id"] = current_space
@@ -727,15 +731,15 @@ func _ingest(path: String, payload: Dictionary) -> bool:
 		var d: Dictionary = res["data"]
 		last_source_error = str(d.get("detail", res["error"]))
 		app.audio.play("error")
-		show_toast("Could not add it: %s" % last_source_error)
+		show_toast(I18n.t("Could not add it: %s") % last_source_error)
 		return false
 	var src: Dictionary = res["data"]
 	if bool(src.get("duplicate", false)):
-		show_toast("Already in your brain: “%s”" % src.get("title", ""))
+		show_toast(I18n.t("Already in your brain: “%s”") % src.get("title", ""))
 		return true
 	sources_added += 1
 	app.audio.play("note_create", 0.04)
-	show_toast("Added “%s” · %d passages indexed" % [src.get("title", ""), int(src.get("chunks", 0))])
+	show_toast(I18n.t("Added “%s” · %d passages indexed") % [src.get("title", ""), int(src.get("chunks", 0))])
 	var born := await refresh_graph()
 	if not born.is_empty():
 		graph.focus_on(born[0])
@@ -756,7 +760,7 @@ func _follow_progress(job: String, what: String, state: Dictionary) -> void:
 		if res["ok"]:
 			var line := progress_text(res["data"])
 			if line != "":
-				show_toast("Reading %s · %s" % [what, line])
+				show_toast(I18n.t("Reading %s · %s") % [what, line])
 		await get_tree().create_timer(0.5).timeout
 
 
@@ -765,15 +769,15 @@ static func progress_text(p: Dictionary) -> String:
 	var total := int(p.get("total", 0))
 	match str(p.get("stage", "")):
 		"render":
-			return "preparing page %d / %d" % [done, total]
+			return I18n.t("preparing page %d / %d") % [done, total]
 		"ocr":
-			return "page %d / %d read (local OCR)" % [done, total]
+			return I18n.t("page %d / %d read (local OCR)") % [done, total]
 		"ai":
-			return "page %d / %d (AI)" % [mini(done + 1, total), total]
+			return I18n.t("page %d / %d (AI)") % [mini(done + 1, total), total]
 		"summary":
-			return "writing the summary"
+			return I18n.t("writing the summary")
 		"indexing":
-			return "indexing by meaning"
+			return I18n.t("indexing by meaning")
 	return ""
 
 
@@ -799,7 +803,7 @@ func refresh_sources() -> void:
 		var l := Label.new()
 		l.theme_type_variation = "Muted"
 		l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		l.text = "Drop files on the window or paste a link in the capture bar."
+		l.text = I18n.t("Drop files on the window or paste a link in the capture bar.")
 		sources_box.add_child(l)
 
 
@@ -867,7 +871,7 @@ func run_ui_actions(actions: Array) -> void:
 				else:
 					tid = graph.selected
 				if tid == "" or tid.begins_with("space:") or tid.begins_with("tag:"):
-					show_toast("Which document? Say its title.")
+					show_toast(I18n.t("Which document? Say its title."))
 				elif await open_document_for(tid) and str(a.get("action", "")) == "open_original":
 					viewer.open_original()
 			"page":
@@ -892,7 +896,7 @@ func run_ui_actions(actions: Array) -> void:
 				var target := str(a.get("target", ""))
 				var hit := graph.find_node(target) if target != "" else ""
 				if target != "" and hit == "":
-					show_toast("Nothing called “%s” in the graph." % target)
+					show_toast(I18n.t("Nothing called “%s” in the graph.") % target)
 				graph.zoom_level(str(a.get("level", "closer")), hit)
 				if hit != "" and str(a.get("level", "")) == "read":
 					graph.select(hit)
@@ -900,7 +904,7 @@ func run_ui_actions(actions: Array) -> void:
 				await set_view("captures")
 				captures_view.open_packs().pick_file()
 			"pack_exported":
-				show_toast("Pack saved: %s" % str(a.get("path", "")).get_file())
+				show_toast(I18n.t("Pack saved: %s") % str(a.get("path", "")).get_file())
 				last_pack_export = str(a.get("path", ""))
 			"open_agent":
 				open_agent(str(a.get("agent", "archivist")))
@@ -912,7 +916,7 @@ func run_ui_actions(actions: Array) -> void:
 				var made := str(a.get("agent", ""))
 				if agent_panels.has(made):
 					(agent_panels[made] as SbFloatingPanel).reveal()
-				show_toast("“%s” is ready: talk to it in its own panel." % str(a.get("name", made)))
+				show_toast(I18n.t("“%s” is ready: talk to it in its own panel.") % str(a.get("name", made)))
 			"synthesis_draft":
 				var drafter := str(a.get("agent", "sparring"))
 				agent_panel(drafter).reveal()
@@ -925,13 +929,13 @@ func run_ui_actions(actions: Array) -> void:
 			"capture_clipboard":
 				var clip := clipboard_text().strip_edges()
 				if clip == "":
-					show_toast("The clipboard is empty: copy a link or a text first.")
+					show_toast(I18n.t("The clipboard is empty: copy a link or a text first."))
 				else:
 					await capture(clip, "typed")
 			"context":
 				var ctx: Variant = a.get("context")
-				capture_hint.text = ("Working on %s: new items are filed there." % str((ctx as Dictionary).get("name", ""))) \
-					if ctx is Dictionary else "No working context: the archivist files freely."
+				capture_hint.text = (I18n.t("Working on %s: new items are filed there.") % str((ctx as Dictionary).get("name", ""))) \
+					if ctx is Dictionary else I18n.t("No working context: the archivist files freely.")
 				await refresh_spaces()
 			"set_voice_speed":
 				app.audio.change_voice_speed(str(a.get("change", "normal")))
@@ -991,7 +995,7 @@ func push_to_talk(pressed: bool, use_mic: bool = true) -> void:
 		var deadline := Time.get_ticks_msec() + 10000
 		while voice_state == "connecting" and Time.get_ticks_msec() < deadline:
 			await get_tree().process_frame
-		listening_label.text = "Transcribing…"
+		listening_label.text = I18n.t("Transcribing…")
 		await stop_voice()
 		_show_listening(false)
 
@@ -1014,7 +1018,7 @@ func _build_listening_overlay() -> void:
 
 
 func _show_listening(on: bool) -> void:
-	listening_label.text = "●  Listening — release F8 to send"
+	listening_label.text = I18n.t("●  Listening — release F8 to send")
 	listening_overlay.visible = on
 	if on:
 		listening_overlay.modulate.a = 0.0
@@ -1047,11 +1051,11 @@ func move_to_place(note_id: String, space_id: String) -> bool:
 	if not is_inside_tree():
 		return false
 	if not res["ok"]:
-		show_toast("Could not move it: %s" % str(res["error"]))
+		show_toast(I18n.t("Could not move it: %s") % str(res["error"]))
 		await refresh_graph()
 		return false
 	app.audio.play("node_link", 0.05)
-	show_toast("Moved to %s." % _space_name(space_id))
+	show_toast(I18n.t("Moved to %s.") % _space_name(space_id))
 	await refresh_graph()
 	await refresh_spaces()
 	if not current_note.is_empty() and str(current_note["id"]) == note_id:
@@ -1073,7 +1077,7 @@ func _classify(note_id: String, spoken: bool = false) -> void:
 	if not res["ok"]:
 		var d0: Variant = res["data"]
 		var why := str((d0 as Dictionary).get("detail", res["error"])) if d0 is Dictionary else str(res["error"])
-		show_toast("The archivist could not file it (%s). It stays in the Inbox." % why.left(120))
+		show_toast(I18n.t("The archivist could not file it (%s). It stays in the Inbox.") % why.left(120))
 		return
 	var d: Dictionary = res["data"]
 	var item: Dictionary = d.get("item", {})
@@ -1096,7 +1100,7 @@ func _classify(note_id: String, spoken: bool = false) -> void:
 func _build_inspector() -> void:
 	var col := VBoxContainer.new()
 	col.add_theme_constant_override("separation", 10)
-	inspector = SbFloatingPanel.new().setup("item", "ITEM", col, {"dock": "right", "size": 380.0, "free": Rect2(900, 120, 380, 560)})
+	inspector = SbFloatingPanel.new().setup("item", I18n.t("ITEM"), col, {"dock": "right", "size": 380.0, "free": Rect2(900, 120, 380, 560)})
 	inspector.visible = false
 	panel_layer.add_panel(inspector)
 	var head := HBoxContainer.new()
@@ -1106,14 +1110,14 @@ func _build_inspector() -> void:
 	save_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(save_label)
 	var del := Button.new()
-	del.text = "Delete"
+	del.text = I18n.t("Delete")
 	del.theme_type_variation = "GhostButton"
 	del.pressed.connect(_delete_note)
 	head.add_child(del)
 	var close := Button.new()
 	close.text = "✕"
 	close.theme_type_variation = "GhostButton"
-	close.tooltip_text = "Close (Esc)"
+	close.tooltip_text = I18n.t("Close (Esc)")
 	close.pressed.connect(func() -> void:
 		graph.select("")
 		_close_inspector())
@@ -1133,19 +1137,21 @@ func _build_inspector() -> void:
 	space_option.item_selected.connect(func(_i: int) -> void: _queue_save(true))
 	meta.add_child(space_option)
 	kind_option = OptionButton.new()
-	for k in ["note", "idea", "task", "journal", "reference"]:
-		kind_option.add_item(k.capitalize())
+	var kinds := {"note": I18n.t("Note"), "idea": I18n.t("Idea"), "task": I18n.t("Task"), "journal": I18n.t("Journal"),
+		"reference": I18n.t("Reference")}
+	for k in kinds:
+		kind_option.add_item(str(kinds[k]))
 		kind_option.set_item_metadata(kind_option.item_count - 1, k)
 	kind_option.item_selected.connect(func(_i: int) -> void: _queue_save(true))
 	meta.add_child(kind_option)
 	body_edit = TextEdit.new()
 	body_edit.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	body_edit.wrap_mode = TextEdit.LINE_WRAPPING_BOUNDARY
-	body_edit.placeholder_text = "Write freely. [[Another note]] links it, #tag groups it."
+	body_edit.placeholder_text = I18n.t("Write freely. [[Another note]] links it, #tag groups it.")
 	body_edit.text_changed.connect(func() -> void: _queue_save())
 	col.add_child(body_edit)
 	var lover := Label.new()
-	lover.text = "CONNECTIONS"
+	lover.text = I18n.t("CONNECTIONS")
 	lover.theme_type_variation = "Overline"
 	col.add_child(lover)
 	links_box = VBoxContainer.new()
@@ -1156,20 +1162,20 @@ func _build_inspector() -> void:
 	doc_row.visible = false
 	col.add_child(doc_row)
 	var view_doc := Button.new()
-	view_doc.text = "View document"
+	view_doc.text = I18n.t("View document")
 	view_doc.pressed.connect(func() -> void: open_document_for(str(current_note.get("id", ""))))
 	doc_row.add_child(view_doc)
 	var orig_doc := Button.new()
-	orig_doc.text = "Open original"
+	orig_doc.text = I18n.t("Open original")
 	orig_doc.theme_type_variation = "GhostButton"
 	orig_doc.pressed.connect(func() -> void:
 		if await open_document_for(str(current_note.get("id", ""))):
 			viewer.open_original())
 	doc_row.add_child(orig_doc)
 	related_label = Label.new()
-	related_label.text = "RELATED IDEAS"
+	related_label.text = I18n.t("RELATED IDEAS")
 	related_label.theme_type_variation = "Overline"
-	related_label.tooltip_text = "Found by meaning, in any language. Dashed warm lines in the graph."
+	related_label.tooltip_text = I18n.t("Found by meaning, in any language. Dashed warm lines in the graph.")
 	related_label.visible = false
 	col.add_child(related_label)
 	related_box = VBoxContainer.new()
@@ -1192,7 +1198,7 @@ func _build_capture_bar() -> void:
 	col.add_child(row)
 	capture_edit = LineEdit.new()
 	capture_edit.theme_type_variation = "CaptureEdit"
-	capture_edit.placeholder_text = "Type, paste a link…   (Enter · Ctrl+Shift+V adds the clipboard · F8 to speak)"
+	capture_edit.placeholder_text = I18n.t("Type, paste a link…   (Enter · Ctrl+Shift+V adds the clipboard · F8 to speak)")
 	capture_edit.custom_minimum_size = Vector2(620, 54)
 	capture_edit.text_submitted.connect(func(t: String) -> void: capture(t))
 	capture_edit.focus_entered.connect(func() -> void: app.audio.play("capture_open", 0.0, -4.0))
@@ -1202,7 +1208,7 @@ func _build_capture_bar() -> void:
 	mic_button.icon_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	mic_button.expand_icon = false
 	mic_button.custom_minimum_size = Vector2(54, 54)
-	mic_button.tooltip_text = "Speak a thought (Ctrl+M). Click again to finish."
+	mic_button.tooltip_text = I18n.t("Speak a thought (Ctrl+M). Click again to finish.")
 	mic_button.set_meta("sfx", "none")
 	mic_button.pressed.connect(toggle_voice)
 	row.add_child(mic_button)
@@ -1221,17 +1227,22 @@ func _build_capture_bar() -> void:
 func _update_greeting() -> void:
 	var d := Time.get_datetime_dict_from_system()
 	var hour: int = d["hour"]
-	var part := "Good evening"
+	var part := I18n.t("Good evening")
 	if hour >= 5 and hour < 12:
-		part = "Good morning"
+		part = I18n.t("Good morning")
 	elif hour >= 12 and hour < 18:
-		part = "Good afternoon"
+		part = I18n.t("Good afternoon")
 	greeting.text = part
-	var days := ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
-	var months := ["January", "February", "March", "April", "May", "June", "July", "August", "September",
-		"October", "November", "December"]
-	date_label.text = "%s, %s %d · %s theme" % [days[int(d["weekday"])], months[int(d["month"]) - 1], int(d["day"]),
-		SbTheme.current.capitalize()]
+	var days := [I18n.t("Sunday"), I18n.t("Monday"), I18n.t("Tuesday"), I18n.t("Wednesday"), I18n.t("Thursday"),
+		I18n.t("Friday"), I18n.t("Saturday")]
+	var months := [I18n.t("January"), I18n.t("February"), I18n.t("March"), I18n.t("April"), I18n.t("May"), I18n.t("June"),
+		I18n.t("July"), I18n.t("August"), I18n.t("September"), I18n.t("October"), I18n.t("November"), I18n.t("December")]
+	var themes := {"morning": I18n.t("Morning"), "focus": I18n.t("Focus"), "evening": I18n.t("Evening"), "forest": I18n.t("Forest")}
+	# Named fields: French puts the day before the month (« jeudi 5 novembre »).
+	var line := I18n.t("{weekday}, {month} {day} · {theme} theme").format({"weekday": days[int(d["weekday"])],
+		"month": months[int(d["month"]) - 1], "day": int(d["day"]),
+		"theme": str(themes.get(SbTheme.current, SbTheme.current.capitalize()))})
+	date_label.text = line.left(1).to_upper() + line.substr(1)
 
 
 func _check_health() -> void:
@@ -1241,7 +1252,7 @@ func _check_health() -> void:
 	var data: Dictionary = res["data"]
 	health_ok = bool(res["ok"]) and str(data.get("status", "")) == "ok"
 	status_dot.set_status("ok" if health_ok else "error")
-	status_label.text = "All systems operational" if health_ok else "Engine unreachable"
+	status_label.text = I18n.t("All systems operational") if health_ok else I18n.t("Engine unreachable")
 
 
 func refresh_graph() -> Array[String]:
@@ -1294,22 +1305,26 @@ func open_document_for(note_id: String, at_page: int = 1) -> bool:
 		return false
 	var src: Variant = (res["data"] as Dictionary).get("source")
 	if not src is Dictionary:
-		show_toast("This item has no document to show.")
+		show_toast(I18n.t("This item has no document to show."))
 		return false
 	if viewer == null:
 		viewer = DocumentViewer.new().setup(app)
 		add_child(viewer)
 	var ok := await viewer.open(str((src as Dictionary).get("id", "")), at_page)
 	if not ok:
-		show_toast("No kept original for this item (added before originals were kept?).")
+		show_toast(I18n.t("No kept original for this item (added before originals were kept?)."))
 	return ok
 
 
 func _update_stats() -> void:
 	var notes := graph.node_count("note")
 	var shown := graph.shown_note_count()
-	stats_label.text = ("%d notes" % notes if shown == notes else "%d of %d notes shown" % [shown, notes]) \
-		+ " · %d spaces · %d tags" % [graph.node_count("space"), graph.node_count("tag")]
+	var n_spaces := graph.node_count("space")
+	var n_tags := graph.node_count("tag")
+	var notes_part := ((I18n.t("%d note") if notes == 1 else I18n.t("%d notes")) % notes) if shown == notes \
+		else I18n.t("%d of %d notes shown") % [shown, notes]
+	stats_label.text = "%s · %s · %s" % [notes_part, (I18n.t("%d space") if n_spaces == 1 else I18n.t("%d spaces")) % n_spaces,
+		(I18n.t("%d tag") if n_tags == 1 else I18n.t("%d tags")) % n_tags]
 
 
 ## Fold or unfold a place by name (voice) or node id.
@@ -1324,7 +1339,7 @@ func fold_place(name_or_id: String, on: bool) -> bool:
 			var hit := graph.find_node(name_or_id)
 			id = hit if hit.begins_with("space:") else ""
 	if id == "":
-		show_toast("No place called “%s”." % name_or_id)
+		show_toast(I18n.t("No place called “%s”.") % name_or_id)
 		return false
 	graph.fold(id, on)
 	var f: Dictionary = app.state.get("graph_folded", {})
@@ -1356,7 +1371,7 @@ func refresh_spaces() -> void:
 		var col := Color(str(s["color"])) if s.get("color") != null else SbTheme.FOREST_LIGHT
 		b.icon = _dot_texture(col)
 		b.add_theme_color_override("font_color", SbTheme.TEXT)
-		b.tooltip_text = "Capture into %s; click again to show everything" % s["name"]
+		b.tooltip_text = I18n.t("Capture into %s; click again to show everything") % s["name"]
 		var sid := str(s["id"])
 		b.pressed.connect(func() -> void: _toggle_space(sid))
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -1367,7 +1382,7 @@ func refresh_spaces() -> void:
 			var x := Button.new()
 			x.text = "✕"
 			x.theme_type_variation = "GhostButton"
-			x.tooltip_text = "Remove this place: its items go back to the Inbox (Undo available)"
+			x.tooltip_text = I18n.t("Remove this place: its items go back to the Inbox (Undo available)")
 			var sname := str(s["name"])
 			var count := int(s.get("note_count", 0))
 			x.pressed.connect(func() -> void: _confirm_remove_place(sid, sname, count))
@@ -1379,10 +1394,10 @@ func refresh_spaces() -> void:
 
 func _confirm_remove_place(sid: String, sname: String, count: int) -> void:
 	var dlg := ConfirmationDialog.new()
-	dlg.title = "Remove a place"
-	dlg.dialog_text = "Remove “%s”?\n%s" % [sname, ("Its %d item(s) go back to the Inbox; nothing is deleted." % count) if count > 0
-		else "It is empty."]
-	dlg.ok_button_text = "Remove"
+	dlg.title = I18n.t("Remove a place")
+	dlg.dialog_text = I18n.t("Remove “%s”?\n%s") % [sname, (I18n.t("Its %d item(s) go back to the Inbox; nothing is deleted.") % count)
+		if count > 0 else I18n.t("It is empty.")]
+	dlg.ok_button_text = I18n.t("Remove")
 	dlg.confirmed.connect(func() -> void: remove_place(sid))
 	dlg.visibility_changed.connect(func() -> void:
 		if not dlg.visible:
@@ -1398,14 +1413,15 @@ func remove_place(sid: String) -> bool:
 		return false
 	if not res["ok"]:
 		var d: Variant = res["data"]
-		show_toast("Could not remove it: %s" % (str((d as Dictionary).get("detail", res["error"])) if d is Dictionary else str(res["error"])))
+		show_toast(I18n.t("Could not remove it: %s") % (str((d as Dictionary).get("detail", res["error"])) if d is Dictionary else str(res["error"])))
 		return false
 	var out: Dictionary = res["data"]
 	if current_space == sid:
 		current_space = ""
 	var n := (out.get("moved_to_inbox", []) as Array).size()
 	app.audio.play("whoosh")
-	show_toast("“%s” removed%s." % [str(out.get("removed", "")), (", %d item(s) back in the Inbox" % n) if n > 0 else ""],
+	var gone := str(out.get("removed", ""))
+	show_toast(I18n.t("“%s” removed, %d item(s) back in the Inbox.") % [gone, n] if n > 0 else I18n.t("“%s” removed.") % gone,
 		int(out.get("action_id", 0)))
 	await refresh_graph()
 	await refresh_spaces()
@@ -1454,11 +1470,11 @@ func load_briefing() -> void:
 	var head := Label.new()
 	head.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if b.get("previous_visit_at") == null:
-		head.text = "Welcome. Your brain is ready with %d starter notes." % int(totals.get("notes", 0))
+		head.text = I18n.t("Welcome. Your brain is ready with %d starter notes.") % int(totals.get("notes", 0))
 	elif created.is_empty() and updated.is_empty():
-		head.text = "Nothing new since %s. A calm start." % SbFormat.local_time(b.get("previous_visit_at"), true)
+		head.text = I18n.t("Nothing new since %s. A calm start.") % SbFormat.local_time(b.get("previous_visit_at"), true)
 	else:
-		head.text = "Since your last visit: %d new, %d updated." % [created.size(), updated.size()]
+		head.text = I18n.t("Since your last visit: %d new, %d updated.") % [created.size(), updated.size()]
 		if fresh:
 			app.audio.play("notification", 0.0, -3.0)
 	briefing_box.add_child(head)
@@ -1466,7 +1482,7 @@ func load_briefing() -> void:
 	if inbox > 0:
 		var ib := Label.new()
 		ib.theme_type_variation = "Muted"
-		ib.text = "%d thought%s waiting in the Inbox" % [inbox, "" if inbox == 1 else "s"]
+		ib.text = (I18n.t("%d thought waiting in the Inbox") if inbox == 1 else I18n.t("%d thoughts waiting in the Inbox")) % inbox
 		briefing_box.add_child(ib)
 	var recent: Array = b.get("recent", [])
 	for item in recent.slice(0, 4):
@@ -1505,7 +1521,7 @@ func capture(text: String, source: String = "typed") -> void:
 	var res := await _post("/brain/notes", payload)
 	if not res["ok"]:
 		app.audio.play("error")
-		capture_hint.text = "Could not save: %s" % res["error"]
+		capture_hint.text = I18n.t("Could not save: %s") % res["error"]
 		return
 	notes_created += 1
 	if source == "voice":
@@ -1520,7 +1536,7 @@ func capture(text: String, source: String = "typed") -> void:
 		graph.select("")
 		graph.focus_on(born[0])
 	await refresh_spaces()
-	capture_hint.text = "Saved to %s. Keep going." % _space_name(str(note["space_id"]))
+	capture_hint.text = I18n.t("Saved to %s. Keep going.") % _space_name(str(note["space_id"]))
 	if _auto_file():
 		await _classify(str(note["id"]), source == "voice")
 	_refresh_view()
@@ -1533,8 +1549,8 @@ func _post(path: String, payload: Dictionary, method: int = HTTPClient.METHOD_PO
 func _update_capture_hint() -> void:
 	if capture_hint == null:
 		return
-	capture_hint.text = "Lands in %s · [[links]], #tags, and links to web pages work here · drop files on the window" % (
-		_space_name(current_space) if current_space != "" else "your Inbox")
+	capture_hint.text = I18n.t("Lands in %s · [[links]], #tags, and links to web pages work here · drop files on the window") % (
+		_space_name(current_space) if current_space != "" else I18n.t("your Inbox"))
 
 
 func _space_name(sid: String) -> String:
@@ -1542,15 +1558,15 @@ func _space_name(sid: String) -> String:
 		var s: Dictionary = item
 		if str(s["id"]) == sid:
 			return str(s["name"])
-	return "Inbox"
+	return I18n.t("Inbox")
 
 
 func _prompt_new_space() -> void:
 	var dlg := AcceptDialog.new()
-	dlg.title = "New space"
-	dlg.ok_button_text = "Create"
+	dlg.title = I18n.t("New space")
+	dlg.ok_button_text = I18n.t("Create")
 	var edit := LineEdit.new()
-	edit.placeholder_text = "Project or area name"
+	edit.placeholder_text = I18n.t("Project or area name")
 	edit.custom_minimum_size = Vector2(320, 0)
 	dlg.add_child(edit)
 	add_child(dlg)
@@ -1603,7 +1619,7 @@ func open_note(id: String, focus: bool = false) -> void:
 	_select_option(space_option, str(current_note["space_id"]))
 	_select_option(kind_option, str(current_note["kind"]))
 	_loading_note = false
-	save_label.text = "Edited %s" % SbFormat.local_time(current_note["updated_at"], true)
+	save_label.text = I18n.t("Edited %s") % SbFormat.local_time(current_note["updated_at"], true)
 	_render_links()
 	_load_related(id)
 	_show_doc_buttons(id)
@@ -1640,7 +1656,7 @@ func _render_links() -> void:
 	if out.is_empty() and inc.is_empty() and tags.is_empty():
 		var l := Label.new()
 		l.theme_type_variation = "Muted"
-		l.text = "No connections yet."
+		l.text = I18n.t("No connections yet.")
 		links_box.add_child(l)
 	for pair in [[out, "→ "], [inc, "← "]]:
 		for item in pair[0]:
@@ -1686,7 +1702,7 @@ func _load_related(id: String) -> void:
 		b.theme_type_variation = "GhostButton"
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
 		b.text = "≈ " + str(n["title"])
-		b.tooltip_text = "%s · similarity %d%%" % [str(n["title"]), int(round(float(n.get("score", 0.0)) * 100.0))]
+		b.tooltip_text = I18n.t("%s · similarity %d%%") % [str(n["title"]), int(round(float(n.get("score", 0.0)) * 100.0))]
 		_trim_button(b)
 		var nid := str(n["id"])
 		b.pressed.connect(func() -> void: open_note(nid, true))
@@ -1694,7 +1710,7 @@ func _load_related(id: String) -> void:
 		var row := HBoxContainer.new()
 		related_box.add_child(row)
 		row.add_child(b)
-		for spec in [["✓", "keep", "Keep: make it a real link"], ["✕", "dismiss", "Dismiss: never suggest it again"]]:
+		for spec in [["✓", "keep", I18n.t("Keep: make it a real link")], ["✕", "dismiss", I18n.t("Dismiss: never suggest it again")]]:
 			var c := Button.new()
 			c.text = str(spec[0])
 			c.tooltip_text = str(spec[2])
@@ -1708,7 +1724,7 @@ func _load_related(id: String) -> void:
 func answer_related(a: String, b: String, choice: String) -> void:
 	var res := await app.backend.api.call_api("/brain/related/%s/%s/%s" % [a, b, choice], true, HTTPClient.METHOD_POST)
 	if res["ok"] and is_inside_tree():
-		show_toast("Kept as a link." if choice == "keep" else "Suggestion dismissed.")
+		show_toast(I18n.t("Kept as a link.") if choice == "keep" else I18n.t("Suggestion dismissed."))
 		await refresh_graph()
 		if not current_note.is_empty() and str(current_note["id"]) == a:
 			open_note(a)
@@ -1756,19 +1772,19 @@ func edit_in_card(id: String) -> void:
 	row.alignment = BoxContainer.ALIGNMENT_END
 	col.add_child(row)
 	var cancel := Button.new()
-	cancel.text = "Cancel"
+	cancel.text = I18n.t("Cancel")
 	cancel.theme_type_variation = "GhostButton"
 	cancel.pressed.connect(func() -> void:
 		card_editor.queue_free()
 		card_editor = null)
 	row.add_child(cancel)
 	var save := Button.new()
-	save.text = "Save (Ctrl+Enter)"
+	save.text = I18n.t("Save (Ctrl+Enter)")
 	save.theme_type_variation = "PrimaryButton"
 	var do_save := func() -> void:
 		var r := await _post("/brain/notes/" + id, {"title": t.text.strip_edges(), "body": body.text}, HTTPClient.METHOD_PATCH)
 		if r["ok"]:
-			show_toast("Saved in its card.")
+			show_toast(I18n.t("Saved in its card."))
 			if card_editor != null:
 				card_editor.queue_free()
 				card_editor = null
@@ -1804,7 +1820,7 @@ func _select_option(opt: OptionButton, value: String) -> void:
 func _queue_save(now: bool = false) -> void:
 	if _loading_note or current_note.is_empty():
 		return
-	save_label.text = "Saving…"
+	save_label.text = I18n.t("Saving…")
 	if now:
 		_save_timer.stop()
 		_save_note()
@@ -1817,7 +1833,7 @@ func _save_note() -> void:
 		return
 	var title := title_edit.text.strip_edges()
 	if title == "":
-		save_label.text = "A title is needed"
+		save_label.text = I18n.t("A title is needed")
 		return
 	var payload := {"title": title, "body": body_edit.text,
 		"space_id": str(space_option.get_item_metadata(space_option.selected)) if space_option.selected >= 0 else null,
@@ -1825,11 +1841,11 @@ func _save_note() -> void:
 	var before_links: int = (current_note.get("links_out", []) as Array).size()
 	var res := await _post("/brain/notes/" + str(current_note["id"]), payload, HTTPClient.METHOD_PATCH)
 	if not res["ok"]:
-		save_label.text = "Not saved: %s" % res["error"]
+		save_label.text = I18n.t("Not saved: %s") % res["error"]
 		app.audio.play("error")
 		return
 	current_note = res["data"]
-	save_label.text = "Saved %s" % Time.get_time_string_from_system()
+	save_label.text = I18n.t("Saved %s") % Time.get_time_string_from_system()
 	_render_links()
 	if (current_note.get("links_out", []) as Array).size() > before_links:
 		app.audio.play("node_link", 0.05)
@@ -1877,14 +1893,14 @@ func _render_results(query: String, hits: Array) -> void:
 	panel_node.visible = query != "" and view == "graph"
 	var head := Label.new()
 	head.theme_type_variation = "Overline"
-	head.text = "%d RESULT%s FOR “%s”" % [hits.size(), "" if hits.size() == 1 else "S", query.to_upper()]
+	head.text = (I18n.t("%d RESULT FOR “%s”") if hits.size() == 1 else I18n.t("%d RESULTS FOR “%s”")) % [hits.size(), query.to_upper()]
 	results_box.add_child(head)
 	for h in hits.slice(0, 8):
 		var hd: Dictionary = h
 		var b := Button.new()
 		b.theme_type_variation = "GhostButton"
 		b.alignment = HORIZONTAL_ALIGNMENT_LEFT
-		var why := ("by meaning · %d%%" % int(round(float(hd.get("score", 0.0)) * 100.0))) if str(hd.get("match", "")) == "meaning" else "by words"
+		var why := (I18n.t("by meaning · %d%%") % int(round(float(hd.get("score", 0.0)) * 100.0))) if str(hd.get("match", "")) == "meaning" else I18n.t("by words")
 		b.text = "%s   —  %s" % [str(hd.get("title", "")), why]
 		b.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 		b.custom_minimum_size = Vector2(320, 0)
@@ -1996,16 +2012,16 @@ func start_voice(use_mic: bool) -> bool:
 	voice_text = ""
 	_voice_final = ""
 	_voice_error = ""
-	capture_hint.text = "Connecting to voice…"
+	capture_hint.text = I18n.t("Connecting to voice…")
 	var err := voice_stream.connect_to(app.backend.api.port, app.backend.api.token)
 	if err != OK:
-		_voice_fail("Cannot open the voice connection (%s)." % error_string(err))
+		_voice_fail(I18n.t("Cannot open the voice connection (%s).") % error_string(err))
 		return false
 	var deadline := Time.get_ticks_msec() + 10000
 	while voice_stream._open == false and _voice_error == "" and Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
 	if not voice_stream._open:
-		_voice_fail(_voice_error if _voice_error != "" else "Voice service did not answer.")
+		_voice_fail(_voice_error if _voice_error != "" else I18n.t("Voice service did not answer."))
 		return false
 	if use_mic:
 		voice_capture.start()
@@ -2015,10 +2031,10 @@ func start_voice(use_mic: bool) -> bool:
 	app.audio.play("mic_start")
 	capture_edit.text = ""
 	capture_edit.editable = false
-	capture_edit.placeholder_text = "Listening…  speak, then release F8" if ptt_active else "Listening…  speak, then click the microphone again"
-	var who := "Sparring" if active_agent == "sparring" else "the archivist"
-	capture_hint.text = ("Listening for %s · release F8 to send" % who if ptt_active else "Listening for %s · click the mic to finish" % who) if voice_target == "chat" \
-		else "Listening · Ctrl+M or click the mic to finish"
+	capture_edit.placeholder_text = I18n.t("Listening…  speak, then release F8") if ptt_active else I18n.t("Listening…  speak, then click the microphone again")
+	var who := I18n.t("Sparring") if active_agent == "sparring" else I18n.t("the archivist")
+	capture_hint.text = (I18n.t("Listening for %s · release F8 to send") % who if ptt_active else I18n.t("Listening for %s · click the mic to finish") % who) if voice_target == "chat" \
+		else I18n.t("Listening · Ctrl+M or click the mic to finish")
 	return true
 
 
@@ -2033,17 +2049,17 @@ func stop_voice() -> void:
 	await get_tree().process_frame
 	voice_stream.commit()
 	app.audio.play("mic_stop")
-	capture_hint.text = "Transcribing…"
+	capture_hint.text = I18n.t("Transcribing…")
 	var deadline := Time.get_ticks_msec() + 20000
 	while _voice_final == "" and _voice_error == "" and Time.get_ticks_msec() < deadline:
 		await get_tree().process_frame
 	voice_stream.stop()
 	capture_edit.editable = true
-	capture_edit.placeholder_text = "Type, paste a link…   (Enter · Ctrl+Shift+V adds the clipboard · F8 to speak)"
+	capture_edit.placeholder_text = I18n.t("Type, paste a link…   (Enter · Ctrl+Shift+V adds the clipboard · F8 to speak)")
 	voice_state = "idle"
 	var text := _voice_final.strip_edges()
 	if text == "":
-		_voice_fail(_voice_error if _voice_error != "" else "No speech was transcribed.")
+		_voice_fail(_voice_error if _voice_error != "" else I18n.t("No speech was transcribed."))
 		return
 	capture_edit.text = ""
 	if voice_target == "chat":
@@ -2070,7 +2086,7 @@ func _on_live_finished(reason: String) -> void:
 	if reason == "error":
 		capture_hint.text = app.live.last_error
 	else:
-		capture_hint.text = str(LiveConversation.ENDINGS.get(reason, "Conversation ended."))
+		capture_hint.text = LiveConversation.ending_text(reason)
 	if reason != "error":
 		refresh_graph()
 		_refresh_view()
@@ -2105,25 +2121,25 @@ func _voice_fail(msg: String) -> void:
 
 func _open_voice_settings() -> void:
 	var dlg := AcceptDialog.new()
-	dlg.title = "Voice capture"
-	dlg.ok_button_text = "Close"
+	dlg.title = I18n.t("Voice capture")
+	dlg.ok_button_text = I18n.t("Close")
 	var box := VBoxContainer.new()
 	box.custom_minimum_size = Vector2(560, 0)
 	dlg.add_child(box)
 	var intro := Label.new()
 	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	intro.text = "Voice capture uses OpenAI realtime transcription with your own API key."
+	intro.text = I18n.t("Voice capture uses OpenAI realtime transcription with your own API key.")
 	box.add_child(intro)
 	var panel := VoiceKeyPanel.new().setup(app, false)
 	box.add_child(panel)
 	panel.saved.connect(func(st: Dictionary) -> void:
 		if bool(st.get("configured", false)):
-			capture_hint.text = "Voice is ready. Click the microphone and speak.")
+			capture_hint.text = I18n.t("Voice is ready. Click the microphone and speak."))
 	var speed_row := HBoxContainer.new()
 	speed_row.add_theme_constant_override("separation", 10)
 	box.add_child(speed_row)
 	var speed_label := Label.new()
-	speed_label.text = "Voice speed  %.2f×" % app.audio.voice_speed
+	speed_label.text = I18n.t("Voice speed  %.2f×") % app.audio.voice_speed
 	speed_label.custom_minimum_size = Vector2(150, 0)
 	speed_row.add_child(speed_label)
 	var speed := HSlider.new()
@@ -2134,18 +2150,17 @@ func _open_voice_settings() -> void:
 	speed.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	speed.value_changed.connect(func(v: float) -> void:
 		app.audio.set_voice_speed(v)
-		speed_label.text = "Voice speed  %.2f×" % app.audio.voice_speed)
+		speed_label.text = I18n.t("Voice speed  %.2f×") % app.audio.voice_speed)
 	speed_row.add_child(speed)
 	var phones := CheckButton.new()
-	phones.text = "I use headphones (in a live conversation, just talk over the assistant to interrupt it)"
+	phones.text = I18n.t("I use headphones (in a live conversation, just talk over the assistant to interrupt it)")
 	phones.button_pressed = bool(SbSettings.get_value("voice", "headphones", false))
 	phones.toggled.connect(func(on: bool) -> void: SbSettings.set_value("voice", "headphones", on))
 	box.add_child(phones)
 	var live_note := Label.new()
 	live_note.theme_type_variation = "Muted"
 	live_note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	live_note.text = ("Live conversation (F9): speech to speech with OpenAI Realtime. With speakers, the microphone "
-		+ "pauses while the assistant talks so it never hears itself; press F8 to interrupt it.")
+	live_note.text = I18n.t("Live conversation (F9): speech to speech with OpenAI Realtime. With speakers, the microphone pauses while the assistant talks so it never hears itself; press F8 to interrupt it.")
 	box.add_child(live_note)
 	add_child(dlg)
 	dlg.popup_centered()

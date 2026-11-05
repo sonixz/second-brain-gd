@@ -29,7 +29,7 @@ func setup(id: String, label: String) -> StepRow:
 	col.add_child(_label)
 	_message = Label.new()
 	_message.theme_type_variation = "Muted"
-	_message.text = "Waiting"
+	_message.text = I18n.t("Waiting")
 	_message.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	_message.clip_text = true
 	col.add_child(_message)
@@ -37,7 +37,7 @@ func setup(id: String, label: String) -> StepRow:
 	_tag.theme_type_variation = "Muted"
 	_tag.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	row.add_child(_tag)
-	set_state("pending", "Waiting")
+	set_state("pending", I18n.t("Waiting"))
 	return self
 
 
@@ -62,7 +62,8 @@ func set_state(value: String, message: String = "") -> void:
 	_message.remove_theme_color_override("font_color")
 	if value == "error":
 		_message.add_theme_color_override("font_color", SbTheme.ERROR)
-	var tags := {"pending": "", "started": "Running", "progress": "Running", "ok": "Done",
-		"skipped": "Already done", "warning": "Not available" if optional_failed else "Warning", "error": "Failed", "checking": "Checking"}
+	var tags := {"pending": "", "started": I18n.t("Running"), "progress": I18n.t("Running"), "ok": I18n.t("Done"),
+		"skipped": I18n.t("Already done"), "warning": I18n.t("Not available") if optional_failed else I18n.t("Warning"),
+		"error": I18n.t("Failed"), "checking": I18n.t("Checking")}
 	_tag.text = str(tags.get(value, value))
 	_tag.add_theme_color_override("font_color", SbTheme.status_color(value))

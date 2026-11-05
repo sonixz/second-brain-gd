@@ -88,12 +88,13 @@ def cost_of(model: str, usage: dict[str, Any] | None) -> float | None:
             + (a_in - a_c) * p[3] + a_c * p[4] + int(o.get("audio_tokens", 0)) * p[5]) / 1e6
 
 
-def session_update(instructions: str, voice: str, transcribe_model: str, tools: list[dict[str, Any]]) -> dict[str, Any]:
+def session_update(instructions: str, voice: str, transcribe_model: str, tools: list[dict[str, Any]],
+                   language: str = "en") -> dict[str, Any]:
     return {"type": "session.update", "session": {
         "type": "realtime", "output_modalities": ["audio"], "instructions": instructions,
         "audio": {
             "input": {"format": {"type": "audio/pcm", "rate": SAMPLE_RATE},
-                      "transcription": {"model": transcribe_model, "language": "fr"},
+                      "transcription": {"model": transcribe_model, "language": language},  # the app's (FR / EN)
                       "noise_reduction": {"type": "near_field"},
                       "turn_detection": {"type": "semantic_vad", "eagerness": "auto", "create_response": True,
                                          "interrupt_response": True}},
@@ -287,6 +288,15 @@ class LiveSession:
         finally:
             conn.close()
 
+    def language(self) -> str:
+        from engine.assistant import core
+
+        conn = self._db()
+        try:
+            return core.ui_language(conn)
+        finally:
+            conn.close()
+
     def tools(self) -> list[dict[str, Any]]:
         from engine.assistant import core
 
@@ -300,7 +310,8 @@ class LiveSession:
 
     async def start(self) -> None:
         await self.up.connect()
-        await self.up.send(session_update(self.instructions(), self.voice, self.s["live_transcribe_model"], self.tools()))
+        await self.up.send(session_update(self.instructions(), self.voice, self.s["live_transcribe_model"], self.tools(),
+                                          self.language()))
 
     async def mic(self, pcm: bytes) -> None:
         self.mic_bytes += len(pcm)
@@ -376,7 +387,7 @@ class LiveSession:
             return
         if refocus:
             await self.up.send(session_update(self.instructions(), self.voice, self.s["live_transcribe_model"],
-                                              self.tools()))
+                                              self.tools(), self.language()))
         await self.up.send({"type": "response.create"})
 
     async def _limits(self) -> str | None:

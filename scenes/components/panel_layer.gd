@@ -192,7 +192,7 @@ func _add_splitter(above: SbFloatingPanel, below: SbFloatingPanel, r: Rect2, fre
 	sp.size = r.size
 	sp.mouse_filter = Control.MOUSE_FILTER_STOP
 	sp.mouse_default_cursor_shape = Control.CURSOR_VSPLIT
-	sp.tooltip_text = "Drag to share the height between these panels"
+	sp.tooltip_text = I18n.t("Drag to share the height between these panels")
 	sp.set_meta("pair", [above, below])
 	var hovered := [false]
 	sp.mouse_entered.connect(func() -> void:
@@ -249,7 +249,7 @@ func _build_rail() -> void:
 		var b := Button.new()
 		b.text = p.icon_text
 		b.custom_minimum_size = Vector2(RAIL_W - 8.0, RAIL_W - 8.0)
-		b.tooltip_text = "%s (shrunk) · click to open" % p.title_label.text.capitalize()
+		b.tooltip_text = I18n.t("%s (shrunk) · click to open") % p.title_label.text.capitalize()
 		b.set_meta("panel", p)
 		b.pressed.connect(func() -> void: p.reveal())
 		rail.add_child(b)
@@ -257,7 +257,7 @@ func _build_rail() -> void:
 	plus.text = "+"
 	plus.custom_minimum_size = Vector2(RAIL_W - 8.0, RAIL_W - 8.0)
 	plus.theme_type_variation = "GhostButton"
-	plus.tooltip_text = "Create an agent: the Agent Builder interviews you and writes its instructions"
+	plus.tooltip_text = I18n.t("Create an agent: the Agent Builder interviews you and writes its instructions")
 	plus.pressed.connect(func() -> void: create_requested.emit())
 	rail.add_child(plus)
 

@@ -43,7 +43,7 @@ func setup(id: String, title: String, content: Control, defaults: Dictionary) ->
 	header.custom_minimum_size = Vector2(0, HEADER_H - 12)
 	header.mouse_filter = Control.MOUSE_FILTER_STOP
 	header.mouse_default_cursor_shape = Control.CURSOR_MOVE
-	header.tooltip_text = "Drag to move · drop near an edge to dock · double-click to shrink"
+	header.tooltip_text = I18n.t("Drag to move · drop near an edge to dock · double-click to shrink")
 	header.gui_input.connect(_on_header_input)
 	col.add_child(header)
 	var grip_dots := Label.new()
@@ -64,7 +64,7 @@ func setup(id: String, title: String, content: Control, defaults: Dictionary) ->
 	min_button = Button.new()
 	min_button.text = "–"
 	min_button.theme_type_variation = "GhostButton"
-	min_button.tooltip_text = "Shrink into the rail on the left"
+	min_button.tooltip_text = I18n.t("Shrink into the rail on the left")
 	min_button.pressed.connect(func() -> void: set_minimized(not minimized))
 	header.add_child(min_button)
 	body = content
@@ -77,7 +77,7 @@ func setup(id: String, title: String, content: Control, defaults: Dictionary) ->
 	var grip := Control.new()
 	grip.custom_minimum_size = Vector2(16, 12)
 	grip.mouse_default_cursor_shape = Control.CURSOR_FDIAGSIZE
-	grip.tooltip_text = "Drag to resize"
+	grip.tooltip_text = I18n.t("Drag to resize")
 	grip.gui_input.connect(_on_grip_input)
 	grip.draw.connect(func() -> void:
 		for i in 3:

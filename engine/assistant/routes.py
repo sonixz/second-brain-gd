@@ -46,6 +46,7 @@ class SettingsIn(BaseModel):
     auto_classify: bool | None = None
     ocr_mode: Literal["local", "ai"] | None = None
     web_access: bool | None = None
+    language: Literal["en", "fr"] | None = None  # the FR / EN switch at the top of the app
 
 
 def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
@@ -79,7 +80,7 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
             for field, key in (("chat_model", "assistant_chat_model"), ("classify_model", "assistant_classify_model"),
                                ("review_model", "assistant_review_model"), ("review_effort", "assistant_review_effort"),
                                ("voice", "assistant_voice"), ("auto_classify", "assistant_auto_classify"),
-                               ("ocr_mode", "ocr_mode"), ("web_access", "web_access")):
+                               ("ocr_mode", "ocr_mode"), ("web_access", "web_access"), ("language", "ui_language")):
                 v = getattr(body, field)
                 if v is not None:
                     database.set_setting(conn, key, v)
@@ -97,17 +98,15 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     @r.get("/agents")
     def get_agents() -> dict[str, Any]:
         with database.session(layout.database) as conn:
-            return {"agents": agents.profiles(conn),
-                    "capabilities": {k: {"label": v["label"], "description": v["description"], "tools": v["tools"]}
-                                     for k, v in agents.CAPABILITIES.items()},
-                    "models": agents.MODELS}
+            lang = core.ui_language(conn)
+            return {"agents": agents.profiles(conn), "capabilities": agents.capabilities(lang), "models": agents.models(lang)}
 
     @r.get("/agent-draft")
     def get_agent_draft() -> dict[str, Any]:
         """The Agent Builder's draft waiting for approval (shown on screen in full)."""
         with database.session(layout.database) as conn:
             return {"draft": agents.pending_agent(conn),
-                    "capabilities": {k: v["label"] for k, v in agents.CAPABILITIES.items()}}
+                    "capabilities": {k: v["label"] for k, v in agents.capabilities(core.ui_language(conn)).items()}}
 
     @r.post("/agents", status_code=201)
     def create_agent(body: AgentIn) -> dict[str, Any]:

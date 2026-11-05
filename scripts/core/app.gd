@@ -29,6 +29,7 @@ var _quitting := false
 
 func _ready() -> void:
 	set_anchors_preset(Control.PRESET_FULL_RECT)
+	I18n.load_saved()
 	theme_choice = str(SbSettings.get_value("ui", "theme", "auto"))
 	SbTheme.apply(theme_choice)
 	theme = SbTheme.build()
@@ -100,6 +101,28 @@ func set_theme_choice(choice: String) -> void:
 			_switch(CONSOLE.instantiate(), "console", 0.5)
 		"brain":
 			_switch(BRAIN.instantiate(), "brain", 0.5)
+
+
+## The FR / EN switch: the whole interface is rebuilt in the other language, and the engine is told (agents'
+## default language, Live transcription, its own words).
+func set_language(code: String) -> void:
+	if code == I18n.lang:
+		return
+	I18n.use(code)
+	SbSettings.set_value("ui", "language", I18n.lang)
+	await tell_engine_language()
+	match current_screen:
+		"welcome":
+			_switch(WELCOME.instantiate(), "welcome", 0.3)
+		"console":
+			_switch(CONSOLE.instantiate(), "console", 0.3)
+		"brain":
+			_switch(BRAIN.instantiate(), "brain", 0.3)
+
+
+func tell_engine_language() -> void:
+	if backend != null and backend.api.port > 0:
+		await backend.api.call_api("/assistant/settings", true, HTTPClient.METHOD_PATCH, JSON.stringify({"language": I18n.lang}))
 
 
 func current() -> Control:

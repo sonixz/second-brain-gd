@@ -60,9 +60,9 @@ func _process(_delta: float) -> void:
 		var code := _ws.get_close_code()
 		_ws = null
 		if not _was_open:
-			failed.emit("Cannot reach the local voice service (code %d)." % code)
+			failed.emit(I18n.t("Cannot reach the local voice service (code %d).") % code)
 		elif code == 4403:
-			failed.emit("No OpenAI key configured.")
+			failed.emit(I18n.t("No OpenAI key configured."))
 		closed.emit()
 
 
@@ -76,4 +76,4 @@ func _handle(msg: Dictionary) -> void:
 		"final":
 			final.emit(str(msg.get("text", "")))
 		"error":
-			failed.emit(str(msg.get("message", "Voice error")))
+			failed.emit(str(msg.get("message", I18n.t("Voice error"))))

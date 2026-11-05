@@ -92,7 +92,11 @@ def preview(conn: sqlite3.Connection, selection: dict[str, Any], client: Any = N
     sids = _space_ids(conn, ids)
     places = [r["name"] for r in conn.execute(f"SELECT name FROM spaces WHERE id IN ({','.join('?' * len(sids)) or chr(39) * 2})", sids)]
     return {"items": len(ids), "sources": sources, "places": places, "titles": titles,
-            "never_included": ["your API keys", "settings", "conversations", "costs and system events"]}
+            "never_included": NEVER_INCLUDED["fr" if database.get_setting(conn, "ui_language", "en") == "fr" else "en"]}
+
+
+NEVER_INCLUDED = {"en": ["your API keys", "settings", "conversations", "costs and system events"],
+                  "fr": ["tes clés d’API", "les réglages", "les conversations", "les coûts et les événements système"]}
 
 
 # ---------------------------------------------------------------- export

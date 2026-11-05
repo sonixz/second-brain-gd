@@ -277,7 +277,9 @@ def item(conn: sqlite3.Connection, note_id: str, with_body: bool = False) -> dic
     m = get_meta(conn, note_id) or {}
     src = conn.execute("SELECT id, kind, uri, chunks, mime, pages, original, original_bytes FROM sources WHERE note_id = ?",
                        (note_id,)).fetchone()
-    return {"id": n["id"], "title": n["title"], "space_id": n["space_id"], "place": place_label(conn, n["space_id"], "en"),  # the interface is in English
+    from engine.assistant.core import ui_language
+
+    return {"id": n["id"], "title": n["title"], "space_id": n["space_id"], "place": place_label(conn, n["space_id"], ui_language(conn)),
             "kind": n["kind"], "tags": n.get("tags", []), "created_at": n["created_at"],
             "item_type": m.get("item_type", "note"), "origin": (src["kind"] if src else m.get("origin", n.get("source"))),
             "origin_uri": src["uri"] if src else m.get("origin_uri"), "summary": m.get("summary"),

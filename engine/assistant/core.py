@@ -27,6 +27,9 @@ DEFAULTS = {
     # astra@medium 16.4 s barely deeper; gpt-4o 3.5 s but generic.
     "assistant_review_effort": "low",
     "assistant_voice": "marin",
+    # The app's language (the FR / EN switch at the top): the agents' default language, the Live transcription,
+    # the engine's own words. English is the product's language; the agents still answer in the language spoken.
+    "ui_language": "en",
     "assistant_auto_classify": True,
     "assistant_min_confidence": 0.6,
     # Scanned PDFs: "local" reads page images on this machine (Windows OCR, Tesseract); "ai" uses the vision model.
@@ -75,11 +78,40 @@ VOICE_TONES = {
     "forest": "Voix calme et naturelle, apaisante.",
 }
 ACCENT = " Accent québécois naturel et léger, français du Québec."
+ACCENT_EN = " Natural, neutral North American English."
+
+
+def ui_language(conn: sqlite3.Connection) -> str:
+    """'en' or 'fr': the app's language, chosen with the FR / EN switch (English by default)."""
+    return "fr" if str(database.get_setting(conn, "ui_language", "en")) == "fr" else "en"
+
+
+LANGUAGE_RULES = {
+    "fr": ("\n- Langue: français québécois naturel par défaut (tutoiement); si l'utilisateur écrit ou parle dans une "
+           "autre langue, réponds dans sa langue (synthèses, brouillons et instructions aussi)."),
+    "en": ("\n- Langue: ANGLAIS par défaut (l'application de l'utilisateur est en anglais), même si ces consignes sont en "
+           "français; si l'utilisateur écrit ou parle dans une autre langue (le français par exemple), réponds dans sa "
+           "langue (synthèses, brouillons et instructions aussi)."),
+}
+
+
+def language_rule(conn: sqlite3.Connection) -> str:
+    return LANGUAGE_RULES[ui_language(conn)]
+
+
+def write_in(conn: sqlite3.Connection) -> str:
+    """For texts nobody asked in a given language (the briefing, the weekly review): the app's language."""
+    return " Écris en anglais." if ui_language(conn) == "en" else " Écris en français québécois naturel."
+
+
+def said(conn: sqlite3.Connection, en: str, fr: str) -> str:
+    """The engine's own words (fallbacks, notices), in the app's language."""
+    return fr if ui_language(conn) == "fr" else en
 
 PERSONA = """Tu es l'archiviste de Second Brain GD, le second cerveau de l'utilisateur (méthode CODE, classement PARA).
 Ton rôle: recevoir, comprendre, classer, relier et retrouver ses données. Tu es orientée DONNÉES: tu ne donnes pas
-d'opinion, tu ne critiques pas, tu ne fais pas la morale; tu rapportes des faits tirés de sa base. Tutoiement, français
-québécois naturel, sauf s'il écrit dans une autre langue: réponds alors dans sa langue.
+d'opinion, tu ne critiques pas, tu ne fais pas la morale; tu rapportes des faits tirés de sa base. Langue: voir la
+dernière règle (la langue de l'application, sauf s'il écrit dans une autre langue: réponds alors dans sa langue).
 Règles:
 - Quand il te donne de l'information (une idée, un texte, un fait), enregistre-la avec create_note: l'archiviste la
   classe ensuite et tu rapportes le reçu en une phrase. ui_capture_clipboard SEULEMENT s'il parle du presse-papiers
@@ -973,7 +1005,7 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
         messages.append({"role": "user", "content": "Résume en 1 à 3 phrases ce que tu viens de faire, sans appeler d'outil."})
         res = complete_agent(conn, client, prof, messages)
         cost += _usage_event(conn, "chat", res["model"], res["usage"], client.provider)
-        reply = (res["message"].get("content") or "").strip() or "C'est fait."
+        reply = (res["message"].get("content") or "").strip() or said(conn, "Done.", "C'est fait.")
     cited = _cited(conn, reply)
     web_sources = list(_WEB["sources"])[:8]
     _save(conn, conversation, "assistant", reply, {"actions": actions, "cited": cited, "estimated_cost_usd": round(cost, 6),
@@ -1009,7 +1041,8 @@ def briefing(conn: sqlite3.Connection, client: Any, force: bool = False) -> dict
               "(une connexion entre deux idées, un thème qui grandit, ou un élément à redécouvrir). Puis propose 2 ou 3 "
               "pistes concrètes tirées des faits: explorer une portion du Brain (une place), brainstormer un projet, "
               "clarifier des liens. Termine par une question ouverte. Si le Brain est presque vide, invite à y verser de "
-              "l'information (un lien, un PDF, une idée dictée, une page envoyée depuis le navigateur). N'invente rien.")
+              "l'information (un lien, un PDF, une idée dictée, une page envoyée depuis le navigateur). N'invente rien."
+              + write_in(conn))
     res = client.complete(s["assistant_chat_model"], [{"role": "system", "content": system},
                                                       {"role": "user", "content": json.dumps(facts, ensure_ascii=False)}])
     cost = _usage_event(conn, "briefing", res["model"], res["usage"], client.provider)
@@ -1138,7 +1171,7 @@ def weekly_review(conn: sqlite3.Connection, client: Any) -> dict[str, Any]:
               "manque (ex. pas de prochaine action, échéance proche), et UNE prochaine étape concrète proposée.\n"
               "3) Inbox: combien de pensées à trier, et une suggestion.\n4) Trois questions de réflexion pour faire "
               "avancer la vision (surtout le domaine Vision au travail), inspirées des notes de la semaine.\n"
-              "N'invente rien: seulement les faits fournis. 150 à 280 mots.")
+              "N'invente rien: seulement les faits fournis. 150 à 280 mots." + write_in(conn))
     res = complete_with_fallback(conn, client, "assistant_review_model",
                                  [{"role": "system", "content": system},
                                   {"role": "user", "content": json.dumps(facts, ensure_ascii=False)}],
@@ -1155,7 +1188,10 @@ def speak(conn: sqlite3.Connection, client: Any, text: str, theme: str, cache_di
     s = settings(conn)
     text = re.sub(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]", r"\1", text)[:3000]  # say titles, not brackets
     text = re.sub(r"[\U0001F000-\U0001FAFF\u2600-\u27BF\uFE0F]", "", text).strip()  # never read emojis aloud
-    instructions = VOICE_TONES.get(theme, VOICE_TONES["morning"]) + ACCENT
+    # the accent follows what is read: a Québec accent for French, a neutral one for English
+    from engine.sources.images import language
+
+    instructions = VOICE_TONES.get(theme, VOICE_TONES["morning"]) + (ACCENT if language("", text) == "français" else ACCENT_EN)
     digest = hashlib.sha256(f"{s['assistant_voice']}|{instructions}|{text}".encode()).hexdigest()[:24]
     cache_dir.mkdir(parents=True, exist_ok=True)
     path = cache_dir / f"{digest}.mp3"

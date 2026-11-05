@@ -25,26 +25,26 @@ func setup(a: SbApp) -> CapturesView:
 	htext.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(htext)
 	var over := Label.new()
-	over.text = "CAPTURES"
+	over.text = I18n.t("CAPTURES")
 	over.theme_type_variation = "Overline"
 	htext.add_child(over)
 	title_label = Label.new()
 	title_label.theme_type_variation = "Heading"
-	title_label.text = "Everything you added"
+	title_label.text = I18n.t("Everything you added")
 	htext.add_child(title_label)
 	context_label = Label.new()
 	context_label.theme_type_variation = "Muted"
 	context_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	head.add_child(context_label)
 	var browser := Button.new()
-	browser.text = "Send from browser…"
-	browser.tooltip_text = "A bookmark that sends the page you are reading (or your selection) to the Brain"
+	browser.text = I18n.t("Send from browser…")
+	browser.tooltip_text = I18n.t("A bookmark that sends the page you are reading (or your selection) to the Brain")
 	browser.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	browser.pressed.connect(show_bookmarklet)
 	head.add_child(browser)
 	var packs_btn := Button.new()
-	packs_btn.text = "Packs…"
-	packs_btn.tooltip_text = "Export part of your Brain as a .brain file, or import one as a layer"
+	packs_btn.text = I18n.t("Packs…")
+	packs_btn.tooltip_text = I18n.t("Export part of your Brain as a .brain file, or import one as a layer")
 	packs_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	packs_btn.pressed.connect(func() -> void: open_packs())
 	head.add_child(packs_btn)
@@ -66,18 +66,18 @@ func refresh() -> void:
 		return
 	if ctx["ok"]:
 		var c: Variant = (ctx["data"] as Dictionary).get("context")
-		context_label.text = ("Working on: %s" % str((c as Dictionary).get("name", ""))) if c is Dictionary else ""
+		context_label.text = (I18n.t("Working on: %s") % str((c as Dictionary).get("name", ""))) if c is Dictionary else ""
 	if not res["ok"]:
 		return
 	items = (res["data"] as Dictionary).get("items", [])
 	for child in list.get_children():
 		child.queue_free()
-	title_label.text = "Everything you added (%d)" % items.size() if not items.is_empty() else "Nothing captured yet"
+	title_label.text = I18n.t("Everything you added (%d)") % items.size() if not items.is_empty() else I18n.t("Nothing captured yet")
 	if items.is_empty():
 		var hint := Label.new()
 		hint.theme_type_variation = "Muted"
 		hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		hint.text = "Type, paste a link, drop a PDF, or hold F8 and speak: the archivist files it and it shows up here."
+		hint.text = I18n.t("Type, paste a link, drop a PDF, or hold F8 and speak: the archivist files it and it shows up here.")
 		list.add_child(hint)
 		return
 	for it in items:
@@ -106,10 +106,10 @@ func show_bookmarklet() -> void:
 		return
 	bookmarklet = str((res["data"] as Dictionary).get("bookmarklet", ""))
 	var dlg := AcceptDialog.new()
-	dlg.title = "Your browser and the Brain"
+	dlg.title = I18n.t("Your browser and the Brain")
 	dlg.theme = app.theme
 	dlg.add_theme_stylebox_override("panel", SbTheme.box(SbTheme.PANEL, 0, SbTheme.BORDER, 1, 18))
-	dlg.ok_button_text = "Close"
+	dlg.ok_button_text = I18n.t("Close")
 	var box := VBoxContainer.new()
 	box.custom_minimum_size = Vector2(620, 0)
 	box.add_theme_constant_override("separation", 10)
@@ -118,14 +118,12 @@ func show_bookmarklet() -> void:
 	var sep := HSeparator.new()
 	box.add_child(sep)
 	var alt := Label.new()
-	alt.text = "WITHOUT THE EXTENSION: A BOOKMARK"
+	alt.text = I18n.t("WITHOUT THE EXTENSION: A BOOKMARK")
 	alt.theme_type_variation = "Overline"
 	box.add_child(alt)
 	var how := Label.new()
 	how.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	how.text = ("1. Copy the link below.\n2. In your browser, add a bookmark named “Send to Brain” and paste it as the address.\n"
-		+ "3. On any page, click it: the page (or the text you selected) goes to the archivist, and a small window shows the receipt.\n"
-		+ "The Brain must be open. The link holds a capture key that can only add pages; you can renew it here.")
+	how.text = I18n.t("1. Copy the link below.\n2. In your browser, add a bookmark named “Send to Brain” and paste it as the address.\n3. On any page, click it: the page (or the text you selected) goes to the archivist, and a small window shows the receipt.\nThe Brain must be open. The link holds a capture key that can only add pages; you can renew it here.")
 	box.add_child(how)
 	var code := TextEdit.new()
 	code.text = bookmarklet
@@ -137,21 +135,21 @@ func show_bookmarklet() -> void:
 	row.add_theme_constant_override("separation", 8)
 	box.add_child(row)
 	var copy := Button.new()
-	copy.text = "Copy the link"
+	copy.text = I18n.t("Copy the link")
 	copy.theme_type_variation = "PrimaryButton"
 	copy.pressed.connect(func() -> void:
 		DisplayServer.clipboard_set(bookmarklet)
-		copy.text = "Copied ✓")
+		copy.text = I18n.t("Copied ✓"))
 	row.add_child(copy)
 	var renew := Button.new()
-	renew.text = "Renew the capture key"
+	renew.text = I18n.t("Renew the capture key")
 	renew.theme_type_variation = "GhostButton"
 	renew.pressed.connect(func() -> void:
 		var r := await app.backend.api.call_api("/brain/capture-link/rotate", true, HTTPClient.METHOD_POST)
 		if r["ok"]:
 			bookmarklet = str((r["data"] as Dictionary).get("bookmarklet", ""))
 			code.text = bookmarklet
-			copy.text = "Copy the link")
+			copy.text = I18n.t("Copy the link"))
 	row.add_child(renew)
 	add_child(dlg)
 	dlg.popup_centered()
@@ -166,7 +164,7 @@ var pair_code := ""
 
 func _extension_section(box: VBoxContainer) -> void:
 	var title := Label.new()
-	title.text = "BROWSER EXTENSION · EDGE, CHROME (RECOMMENDED)"
+	title.text = I18n.t("BROWSER EXTENSION · EDGE, CHROME (RECOMMENDED)")
 	title.theme_type_variation = "Overline"
 	box.add_child(title)
 	var state := Label.new()
@@ -175,9 +173,7 @@ func _extension_section(box: VBoxContainer) -> void:
 	var steps := Label.new()
 	steps.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	steps.theme_type_variation = "Muted"
-	steps.text = ("Install it once: in the browser open edge://extensions (or chrome://extensions), turn on Developer mode, "
-		+ "click “Load unpacked” and choose the folder browser-extension in the project. Then pair it: click below, "
-		+ "and type the code in the extension (its icon in the toolbar). It talks only to this computer.")
+	steps.text = I18n.t("Install it once: in the browser open edge://extensions (or chrome://extensions), turn on Developer mode, click “Load unpacked” and choose the folder browser-extension in the project. Then pair it: click below, and type the code in the extension (its icon in the toolbar). It talks only to this computer.")
 	box.add_child(steps)
 	var code_label := Label.new()
 	code_label.add_theme_font_size_override("font_size", 30)
@@ -188,11 +184,11 @@ func _extension_section(box: VBoxContainer) -> void:
 	row.add_theme_constant_override("separation", 8)
 	box.add_child(row)
 	var pair := Button.new()
-	pair.text = "Pair a browser"
+	pair.text = I18n.t("Pair a browser")
 	pair.theme_type_variation = "PrimaryButton"
 	row.add_child(pair)
 	var unpair := Button.new()
-	unpair.text = "Unpair all browsers"
+	unpair.text = I18n.t("Unpair all browsers")
 	unpair.theme_type_variation = "GhostButton"
 	row.add_child(unpair)
 	var refresh_state := func() -> void:
@@ -201,37 +197,37 @@ func _extension_section(box: VBoxContainer) -> void:
 			return
 		var d: Dictionary = r["data"]
 		var paired: Array = d.get("paired", [])
+		state.set_meta("connected", bool(d.get("connected", false)))
 		if bool(d.get("connected", false)):
-			state.text = "● Connected: %s (extension %s)%s" % [str(d.get("browser", "")), str(d.get("extension_version", "")),
-				"" if bool(d.get("can_read_tabs", false)) else ". Voice commands such as “add it” need “Also let the Brain read the pages it opens” in the extension."]
+			state.text = (I18n.t("● Connected: %s (extension %s)") % [str(d.get("browser", "")), str(d.get("extension_version", ""))]
+				+ ("" if bool(d.get("can_read_tabs", false)) else I18n.t(". Voice commands such as “add it” need “Also let the Brain read the pages it opens” in the extension.")))
 		elif not paired.is_empty():
-			state.text = "○ Paired (%s), not connected right now. The extension reconnects by itself while the app is open." % \
-				", ".join(paired.map(func(x: Variant) -> String: return str((x as Dictionary).get("browser", "browser"))))
+			state.text = I18n.t("○ Paired (%s), not connected right now. The extension reconnects by itself while the app is open.") % \
+				", ".join(paired.map(func(x: Variant) -> String: return str((x as Dictionary).get("browser", I18n.t("browser")))))
 		else:
-			state.text = "○ No browser paired yet."
+			state.text = I18n.t("○ No browser paired yet.")
 		unpair.visible = not paired.is_empty()
 	refresh_state.call()
 	pair.pressed.connect(func() -> void:
 		var r := await app.backend.api.call_api("/browser/pair/start", true, HTTPClient.METHOD_POST)
 		if not r["ok"]:
-			code_label.text = "Could not start pairing"
+			code_label.text = I18n.t("Could not start pairing")
 			code_label.visible = true
 			return
 		var d: Dictionary = r["data"]
 		pair_code = str(d.get("code", ""))
-		code_label.text = "%s     port %d" % [pair_code, int(d.get("port", 8765))]
+		code_label.text = I18n.t("%s     port %d") % [pair_code, int(d.get("port", 8765))]
 		code_label.visible = true
-		pair.text = "New code"
-		steps.text = "Type this code in the extension within 10 minutes (it works once). Then this window shows “Connected”."
+		pair.text = I18n.t("New code")
+		steps.text = I18n.t("Type this code in the extension within 10 minutes (it works once). Then this window shows “Connected”.")
 		for i in 60:  # watch for the extension for two minutes
 			await get_tree().create_timer(2.0).timeout
 			if not is_instance_valid(state):
 				return
 			await refresh_state.call()
-			if state.text.begins_with("●") and code_label.visible:  # keeps watching: the permission can come a moment later
+			if bool(state.get_meta("connected", false)) and code_label.visible:  # keeps watching: the permission can come a moment later
 				code_label.visible = false
-				steps.text = ("Paired. On any page: the extension's icon → Send this page (or Alt+Shift+B). The Archivist "
-					+ "can now open, add and close pages when you ask."))
+				steps.text = I18n.t("Paired. On any page: the extension's icon → Send this page (or Alt+Shift+B). The Archivist can now open, add and close pages when you ask."))
 	unpair.pressed.connect(func() -> void:
 		await app.backend.api.call_api("/browser/pair", true, HTTPClient.METHOD_DELETE)
 		refresh_state.call())
@@ -240,13 +236,13 @@ func _extension_section(box: VBoxContainer) -> void:
 static func origin_label(it: Dictionary) -> String:
 	match str(it.get("origin", "")):
 		"url":
-			return "Web page"
+			return I18n.t("Web page")
 		"file":
-			return "File"
+			return I18n.t("File")
 		"voice":
-			return "Spoken"
+			return I18n.t("Spoken")
 		_:
-			return "Typed"
+			return I18n.t("Typed")
 
 
 func _card(it: Dictionary) -> Control:
@@ -300,7 +296,7 @@ func _card(it: Dictionary) -> Control:
 			row.add_child(chip)
 	if not filed and it.get("question") != null:
 		var q := Label.new()
-		q.text = "Waiting: " + str(it.get("question"))
+		q.text = I18n.t("Waiting: %s") % str(it.get("question"))
 		q.add_theme_color_override("font_color", SbTheme.WARM)
 		q.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		col.add_child(q)
