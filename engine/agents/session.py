@@ -244,7 +244,7 @@ class AgentSession:
             except Exception:
                 self.proc.kill()
         # With an API-key login the app-server may keep credentials in CODEX_HOME; the key lives in the
-        # OS keyring already, so remove any copy when the session ends.
+        # OS credential store already, so remove any copy when the session ends.
         for name in ("auth.json",):
             try:
                 (self.home / name).unlink()

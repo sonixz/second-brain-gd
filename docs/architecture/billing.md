@@ -12,8 +12,8 @@ with permissions **Restricted** and **Usage API: Read**, and everything else lef
 
 Such a key can read usage and costs. It cannot call models or change anything. It is stored like the
 regular key:
-- in the OS keyring, as provider `openai_admin`;
-- in a private file when there is no keyring;
+- in the OS credential store (Windows Credential Manager), as provider `openai_admin`;
+- in a private file when there is no credential store (Linux, WSL);
 - or in `OPENAI_ADMIN_KEY` for developers using `dotenvx run`.
 
 ## What is read (`engine/billing.py`)

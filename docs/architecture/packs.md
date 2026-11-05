@@ -15,7 +15,7 @@ A zip with exactly two entries:
 links between them, themes, the archivist's records (`item_meta`), meaning vectors and related ideas, and
 the sources with their indexed text.
 
-**Never included:** settings, keys (they live in the OS keyring anyway), conversations, the action
+**Never included:** settings, keys (they live in the OS credential store anyway), conversations, the action
 journal, system events and costs. A test checks those tables are empty in an exported pack.
 
 ## Export

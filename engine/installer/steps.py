@@ -335,7 +335,7 @@ class Installer:
 
     def _deps_importable(self) -> bool:
         try:
-            out = subprocess.run([str(self.layout.venv_python), "-c", "import fastapi, uvicorn, psutil, websockets, keyring, pypdf"],
+            out = subprocess.run([str(self.layout.venv_python), "-c", "import fastapi, uvicorn, psutil, websockets, pypdfium2"],
                                  capture_output=True, timeout=60, **_no_window())
         except (OSError, subprocess.TimeoutExpired):
             return False

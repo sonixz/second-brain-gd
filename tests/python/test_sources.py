@@ -12,7 +12,7 @@ from engine.sources import core, extract
 from engine.sources.core import search_any
 
 try:  # the PDF libraries live in the engine's venv; a bare system Python skips these tests
-    import pypdf, pypdfium2  # noqa: F401
+    import pypdfium2  # noqa: F401
     HAS_PDF = True
 except ImportError:
     HAS_PDF = False
@@ -243,7 +243,7 @@ class OriginalTests(unittest.TestCase):
     def _chunks(self, sid):
         return " ".join(r[0] for r in self.conn.execute("SELECT text FROM source_chunks WHERE source_id = ?", (sid,)))
 
-    @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
+    @unittest.skipUnless(HAS_PDF, "pypdfium2 not installed")
     def test_a_pdf_of_page_images_is_read_locally_first(self):
         src = core.ingest_file(self.conn, self.client, str(self._picture_pdf(2)))
         row = core.get_source(self.conn, src["id"])
@@ -251,7 +251,7 @@ class OriginalTests(unittest.TestCase):
         self.assertEqual(self._events("read_scanned_page"), 0)  # nothing sent to the vision model
         self.assertIn("Guide du compost", self._chunks(src["id"]))  # what the OCR read is searchable
 
-    @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
+    @unittest.skipUnless(HAS_PDF, "pypdfium2 not installed")
     def test_ai_mode_sends_the_pages_to_the_vision_model(self):
         database.set_setting(self.conn, "ocr_mode", "ai")
         src = core.ingest_file(self.conn, self.client, str(self._picture_pdf(2)))
@@ -259,7 +259,7 @@ class OriginalTests(unittest.TestCase):
         self.assertEqual(self._events("read_scanned_page"), 2)  # one vision call per page
         self.assertIn("schéma", self._chunks(src["id"]))
 
-    @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
+    @unittest.skipUnless(HAS_PDF, "pypdfium2 not installed")
     def test_without_local_ocr_the_key_is_the_fallback(self):
         with mock.patch.dict("os.environ", {"SBGD_OCR": "off"}):
             src = core.ingest_file(self.conn, self.client, str(self._picture_pdf(1)))
@@ -268,7 +268,7 @@ class OriginalTests(unittest.TestCase):
                 core.ingest_file(self.conn, None, str(self._picture_pdf(2)))
         self.assertIn("tesseract", str(ctx.exception))  # says how to get a local OCR
 
-    @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
+    @unittest.skipUnless(HAS_PDF, "pypdfium2 not installed")
     def test_failed_local_ocr_falls_back_or_says_why(self):
         from engine.sources import ocr
         with mock.patch.object(ocr, "read_images", side_effect=ocr.OcrError("boom")):
@@ -278,7 +278,7 @@ class OriginalTests(unittest.TestCase):
                 core.ingest_file(self.conn, None, str(self._picture_pdf(2)))
         self.assertIn("boom", str(ctx.exception))
 
-    @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
+    @unittest.skipUnless(HAS_PDF, "pypdfium2 not installed")
     def test_reread_with_ai_replaces_the_local_reading(self):
         src = core.ingest_file(self.conn, self.client, str(self._picture_pdf(2)))
         out = core.reread_with_ai(self.conn, self.client, src["id"])
@@ -287,7 +287,7 @@ class OriginalTests(unittest.TestCase):
         self.assertIn("schéma", text)
         self.assertNotIn("Guide du compost", text)  # the local reading is replaced, not doubled
 
-    @unittest.skipUnless(HAS_PDF, "pypdf/pypdfium2 not installed")
+    @unittest.skipUnless(HAS_PDF, "pypdfium2 not installed")
     def test_progress_follows_every_page_then_the_summary(self):
         from engine.sources import progress
         seen = []

@@ -54,8 +54,9 @@ Godot mic ──(AudioEffectCapture, 48 kHz stereo)──► VoiceCapture: mono,
 
 - **Key (BYOK).** It is entered once in the onboarding step after setup, or later from the mic button. Godot
   sends it to `PUT /voice/key`. The engine checks it for free (`GET /v1/models/{model}`), refuses it on
-  401/403, and stores it with `keyring`: Windows Credential Manager, macOS Keychain or Secret Service. Without
-  a credential store, a user-only file in `<data>/secrets/` is used. `OPENAI_API_KEY` from the environment is
+  401/403, and stores it in the Windows Credential Manager, called directly (`engine/voice/secrets.py`, no
+  package since Loop 27; keys saved earlier by `keyring` are read as they are). Elsewhere (Linux, WSL), a
+  user-only file in `<data>/secrets/` is used. `OPENAI_API_KEY` from the environment is
   the last fallback, for developers using `dotenvx run`. Godot clears the field at once. The key never appears
   in logs, events, SQLite or `/voice/status`, which shows only the last four characters.
 - **Session.** The engine sends `session.update` with `type: transcription`, `audio/pcm` at 24 kHz, the model,
@@ -138,7 +139,7 @@ checklist, and it now sees each space's kind, goal and area.
 Drop files on the window, use **+ File** in the Spaces tab, or paste a web link in the capture bar.
 
 1. **Extract.** Text, Markdown, CSV, JSON and HTML use the stdlib, DOCX is read through its zip XML, PDF uses
-   `pypdf`. Web pages are fetched over http(s) only. Local and private addresses are refused, so the engine
+   PDFium (`pypdfium2`, which also renders the pages). Web pages are fetched over http(s) only. Local and private addresses are refused, so the engine
    cannot be used to probe the LAN. The limit is 15 MB.
 2. **Dedupe.** A SHA-256 of the text means the same document is never added twice.
 3. **Chunk.** Paragraph-aware passages of about 1,200 characters with overlap go into `source_chunks`, plus the

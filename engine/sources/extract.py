@@ -1,4 +1,4 @@
-"""Text extraction. Stdlib for HTML, DOCX, text; pypdf for PDF (imported lazily)."""
+"""Text extraction. Stdlib for HTML, DOCX, text; PDFium (pypdfium2, also used to show the pages) for PDF."""
 from __future__ import annotations
 
 import html
@@ -80,16 +80,31 @@ def docx_to_text(path: Path) -> str:
 
 
 def pdf_to_text(path: Path) -> str:
+    """The text layer of a PDF (300 pages at most). PDFium replaced pypdf in Loop 27: one dependency less, and it
+    keeps words whole where pypdf split some into letters (measured on the sample quotes)."""
     try:
-        from pypdf import PdfReader
+        import pypdfium2 as pdfium
     except ImportError as exc:
-        raise ExtractError("PDF support is not installed (pypdf)") from exc
+        raise ExtractError("PDF support is not installed (pypdfium2)") from exc
     try:
-        reader = PdfReader(str(path))
-        pages = [(page.extract_text() or "") for page in reader.pages[:300]]
+        doc = pdfium.PdfDocument(str(path))
     except Exception as exc:
         raise ExtractError(f"cannot read this PDF: {exc.__class__.__name__}") from exc
-    return "\n\n".join(pages).strip()
+    pages = []
+    try:
+        for i in range(min(len(doc), 300)):
+            page = doc[i]
+            textpage = page.get_textpage()
+            try:
+                pages.append(textpage.get_text_bounded() or "")
+            finally:
+                textpage.close()
+                page.close()
+    except Exception as exc:
+        raise ExtractError(f"cannot read this PDF: {exc.__class__.__name__}") from exc
+    finally:
+        doc.close()
+    return "\n\n".join(p.replace("\r\n", "\n").replace("\r", "\n") for p in pages).strip()
 
 
 def from_file(path: Path) -> tuple[str, str, str]:

@@ -14,7 +14,7 @@ class SecretFallbackTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.layout = Layout(Path(self.tmp.name))
-        self.no_store = mock.patch.object(secrets, "_keyring", return_value=(None, "none"))
+        self.no_store = mock.patch.object(secrets, "_store", return_value=None)
         self.no_store.start()
         self.env = mock.patch.dict(os.environ, {}, clear=False)
         self.env.start()

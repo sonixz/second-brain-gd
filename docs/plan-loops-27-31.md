@@ -24,7 +24,7 @@ Development happens in a separate git worktree, so the owner's running copy stay
 | What | How |
 |---|---|
 | Replace `keyring` (and the ~9 packages it pulls: `cryptography`, `cffi`, `pycparser`, `jaraco.*`, `more-itertools`, `secretstorage`, `jeepney`, `pywin32-ctypes`) | Our own credential store: Windows Credential Manager called directly (ctypes, `CredWriteW` / `CredReadW` / `CredDeleteW`); on Linux, the private file that already exists as the fallback (0600). |
-| Gentle migration | A key saved by `keyring` is read the old way once and moved; the owner never re-enters it. Tested on a test service name, never on the real key. |
+| No migration needed | Credentials are written and read the way `keyring` did on Windows (same names, same encoding, same persistence), so a key saved before is found as it is. Checked on Windows against `keyring` itself, on a test service name, never on the real key. |
 | Drop `pypdf` | `pypdfium2` (already used to show pages) extracts the text too. Same results checked on the sample PDFs. |
 | Lock | `engine/requirements.lock` regenerated with hashes; the installer reinstalls the dependencies when the lock changes (already does). |
 

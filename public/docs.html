@@ -853,16 +853,16 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
         <p class="kicker">Develop</p>
         <h2>Dependencies</h2>
         <p>Everything installs into a private virtual environment in your data folder, without administrator rights.
-          Python packages are pinned with hashes in <code>engine/requirements.lock</code>; pip refuses anything else.</p>
+          Python packages are pinned with hashes in <code>engine/requirements.lock</code>; pip refuses anything else.
+          Fifteen packages in all, counting what these pull in. Your API keys need no package: on Windows the engine
+          calls the Credential Manager directly; elsewhere they go to a private file only you can read.</p>
         <table>
           <thead><tr><th>Package</th><th>Why</th></tr></thead>
           <tbody>
             <tr><td><code>fastapi</code>, <code>uvicorn</code></td><td>The local engine API on 127.0.0.1</td></tr>
             <tr><td><code>psutil</code></td><td>Engine-room measurements, process watchdog</td></tr>
             <tr><td><code>websockets</code></td><td>Voice: Godot ↔ engine, engine ↔ OpenAI Realtime</td></tr>
-            <tr><td><code>keyring</code></td><td>Your keys in the OS credential store</td></tr>
-            <tr><td><code>pypdf</code></td><td>Text of PDFs that have a text layer (pure Python)</td></tr>
-            <tr><td><code>pypdfium2</code></td><td>PDF pages as images: the viewer, cards, and pages for the OCR (prebuilt PDFium)</td></tr>
+            <tr><td><code>pypdfium2</code></td><td>PDFs: their text, and their pages as images for the viewer, cards and the OCR (prebuilt PDFium)</td></tr>
           </tbody>
         </table>
         <table>

@@ -4,7 +4,7 @@ OpenAI already keeps every request, token and dollar. The app asks for them when
 dashboard opens: the Costs API (billed amounts, one bucket per UTC day, by line item)
 and the Usage API (tokens and requests per model). Both need an **admin key** with
 "Usage API: Read" (a project key gets HTTP 403 whatever its permissions). That key is
-read-only for usage, cannot call models, and is kept in the OS keyring like the
+read-only for usage, cannot call models, and is kept in the OS credential store like the
 regular key (provider "openai_admin", or OPENAI_ADMIN_KEY for developers).
 
 The only state is an in-memory cache of a few minutes, so reopening the dashboard does

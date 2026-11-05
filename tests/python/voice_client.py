@@ -1,4 +1,4 @@
-"""Helper run with the engine's venv Python (it has websockets/keyring).
+"""Helper run with the engine's venv Python (it has websockets).
 
   voice_client.py stream <port> <token> <pcm file> [chunk_ms]
   voice_client.py live <port> <token> <seconds of speech>

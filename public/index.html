@@ -57,7 +57,7 @@
           </div>
           <ul class="stats" aria-label="Project facts">
             <li><b>100%</b> on your disk</li>
-            <li><b>26</b> loops shipped</li>
+            <li><b>27</b> loops shipped</li>
             <li><b>400</b> automated tests</li>
             <li><b>2 OS</b> Windows &amp; Linux</li>
           </ul>
@@ -487,6 +487,7 @@
           <button type="button" class="phase-agents" data-target="loop-24" title="Loop 24: How-to guides, with real answers"><span class="dot"></span>24</button>
           <button type="button" class="phase-brain" data-target="loop-25" title="Loop 25: Pictures that matter"><span class="dot"></span>25</button>
           <button type="button" class="phase-foundation" data-target="loop-26" title="Loop 26: English or French"><span class="dot"></span>26</button>
+          <button type="button" class="phase-foundation" data-target="loop-27" title="Loop 27: Fewer dependencies"><span class="dot"></span>27</button>
         </div>
         <div class="phases" role="group" aria-label="Filter loops by phase">
           <button type="button" data-phase="all" aria-pressed="true">All</button>
@@ -498,6 +499,16 @@
           <button type="button" class="phase-foundation" data-phase="foundation" aria-pressed="false">Foundations</button>
         </div>
         <div class="loops collapsed">
+          <article class="loop-card phase-foundation" id="loop-27" data-phase="foundation" data-loop="27" data-date="Nov 5, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-27.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 27</span> · Foundations · <time datetime="2026-11-05">Nov 5, 2026</time></p>
+              <h3><button type="button" class="loop-open">Fewer dependencies</button></h3>
+              <p class="excerpt">The engine now needs 15 Python packages instead of 27. Ten of them only served to keep your API key in the Windows credential store; the engine now calls the Credential Manager itself, writing exactly the way the old package did, so a key saved before is found as it is (checked on Windows against the old package). PDF text now comes from PDFium, already used to show the pages: one package less, and words that were split into letters on some quotes now come out whole. A smaller, simpler base for shipping Python inside the app.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>The engine now needs 15 Python packages instead of 27. Ten of them only served to keep your API key in the Windows credential store; the engine now calls the Credential Manager itself, writing exactly the way the old package did, so a key saved before is found as it is (checked on Windows against the old package). PDF text now comes from PDFium, already used to show the pages: one package less, and words that were split into letters on some quotes now come out whole. A smaller, simpler base for shipping Python inside the app. <a href="docs.html#dependencies">The dependencies →</a></p></div>
+            </div>
+          </article>
           <article class="loop-card phase-foundation" id="loop-26" data-phase="foundation" data-loop="26" data-date="Nov 5, 2026">
             <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-26.webp" alt="" loading="lazy" width="720" height="450"></div>
             <div class="loop-body">
@@ -819,7 +830,7 @@
             </div>
           </article>
         </div>
-        <p class="center"><button type="button" class="btn loops-more">Show all 32 loops</button></p>
+        <p class="center"><button type="button" class="btn loops-more">Show all 33 loops</button></p>
         <dialog class="reader" id="reader" aria-labelledby="reader-title">
           <button class="reader-close" type="button" aria-label="Close">✕</button>
           <div class="reader-img"></div>
