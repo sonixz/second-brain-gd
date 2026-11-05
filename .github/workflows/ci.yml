@@ -43,4 +43,4 @@ jobs:
           unzip -q godot.zip
           echo "GODOT=$PWD/Godot_v${GODOT_VERSION}-stable_linux.x86_64" >> "$GITHUB_ENV"
       - name: Godot load check and end-to-end flow
-        run: PYTHON=python ./tools/test.sh
+        run: PYTHON=python bash ./tools/test.sh
