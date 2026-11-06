@@ -114,6 +114,32 @@ Principles:
 | **14 — Search and connect in the graph** ✅ 2026-11-03 | Results light up in the graph with the reason. The path between two items. Accept or dismiss a related idea. Edit text in the card |
 | **15 — Large volume and timeline** ✅ 2026-11-03 | Thousands of items stay fluid (faster layout, only visible items drawn). A timeline view of captures |
 
+## Next: routines, scheduled missions (owner, 2026-11-06)
+
+A routine is a mission on a schedule, so a standard workflow runs by itself (« chaque vendredi, prépare les
+soupers de la semaine avec la circulaire Maxi ») and lands the same structured data in the graph each time.
+Planned after Loop 37 (notifications, missions using past choices) and shaped by the owner's real Cuisin'Plan
+missions.
+
+- **Settings.** When (weekly, monthly, a time); which agent; the goal with variables ({lundi}, {dimanche},
+  {semaine}); the output template; where it goes in the graph (e.g. Recettes › Semaine {n}, linked to that
+  week's flyer); approval (draft that waits, by default, or save directly once it has proven itself);
+  ceilings per run and per month.
+- **Standard output.** A fixed schema per routine (e.g. recipe: title, ingredients, price found, store,
+  source link); the engine refuses a draft that does not match. Same items are linked to the new week, not
+  duplicated, so history builds up (price of chicken at Maxi since September) and feeds the reports idea.
+- **When the PC is off.** Catch up at the next launch first; a user-level Windows Task Scheduler entry (no
+  admin) to start the engine in the background is a later option.
+- **Unattended questions.** The routine reuses earlier answers (« pas de poisson », « 4 portions ») kept in
+  the routine; otherwise the mission waits and a Windows notification tells the owner.
+- **Safety.** Per-run and monthly ceilings; automatic pause after two failures in a row.
+- **UI and voice.** « Make it a routine… » on a finished mission pre-fills everything; a Routines card in the
+  engine room (next run, last run, month's cost, Pause, Run now). By voice: « chaque vendredi, … », « mets la
+  routine épicerie en pause ».
+- **Size.** About two loops: (1) schedule and catch-up, output template, Routines card, « Make it a
+  routine », ceilings; (2) remembered answers, notification, save-directly mode, week-to-week history and
+  links, a How-to guide.
+
 ## Next: @ mentions (owner, 2026-11-06)
 
 Typing `@` in the assistant or an agent's panel offers Brain items by title (search as you type); the chosen
