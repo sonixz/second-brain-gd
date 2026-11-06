@@ -179,8 +179,9 @@ def public(m: dict[str, Any]) -> dict[str, Any]:
 
 
 def start(conn: sqlite3.Connection, agent: str, goal: str, max_cost: float | None = None,
-          max_minutes: float | None = None) -> dict[str, Any]:
+          max_minutes: float | None = None, mentions: list[str] | None = None) -> dict[str, Any]:
     from engine.assistant import agents
+    from engine.brain import mentions as mention
 
     goal = " ".join(str(goal or "").split())[:2000]
     if len(goal) < 4:
@@ -194,6 +195,11 @@ def start(conn: sqlite3.Connection, agent: str, goal: str, max_cost: float | Non
                  (mid, agent, goal, float(max_cost or s["max_cost"]), float(max_minutes or s["max_minutes"]), now, now))
     m = _row(conn, mid)
     _feed(m, "start", goal)
+    pinned = mention.items(conn, mentions)
+    if pinned:  # the mission starts from these items (@ in « Mission… »); « Run again » keeps them
+        m["messages"] = [{"role": "user", "content": "Commence la mission: " + goal + "\n" + mention.context(conn, pinned),
+                          "_mentions": [p["id"] for p in pinned]}]
+        _feed(m, "mentions", ", ".join(p["title"] for p in pinned))
     _save(conn, m)
     WAKE.set()
     return m
@@ -221,7 +227,8 @@ def again(conn: sqlite3.Connection, mission_id: str) -> dict[str, Any]:
     m = _row(conn, mission_id)
     if m["status"] in ("running", "waiting", "draft"):
         raise MissionError("this mission is still going: finish or stop it first")
-    return start(conn, m["agent"], m["goal"])
+    first = (m.get("messages") or [{}])[0]
+    return start(conn, m["agent"], m["goal"], mentions=first.get("_mentions") if isinstance(first, dict) else None)
 
 
 def summary(conn: sqlite3.Connection) -> dict[str, Any]:

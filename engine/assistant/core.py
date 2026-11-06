@@ -969,8 +969,10 @@ SPOKEN_RULE = ("\nCe message est arrivé à la VOIX et ta réponse sera lue à v
 
 
 def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None = None,
-         spoken: bool = False, open_note: str | None = None, agent: str = "archivist") -> dict[str, Any]:
+         spoken: bool = False, open_note: str | None = None, agent: str = "archivist",
+         mentions: list[str] | None = None) -> dict[str, Any]:
     from engine.assistant import agents
+    from engine.brain import mentions as mention
 
     agent = agents.name(conn, agent)
     prof = agents.profile(conn, agent)
@@ -991,9 +993,13 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
             focus = project_context(conn, space_id)
         except brain.NotFound:
             pass
+    pinned = mention.items(conn, mentions)
+    if not pinned and spoken:  # « dans la recette du poulet, … »: the item named first, when the match is clear
+        hit = mention.spoken(conn, text)
+        pinned = mention.items(conn, [hit["id"]]) if hit else []
     now = datetime.now().strftime("%A %Y-%m-%d %H:%M")
     messages: list[dict[str, Any]] = [{"role": "system", "content": agents.persona(conn, agent) + f"\nNous sommes le {now}." + focus
-                                        + on_screen + (SPOKEN_RULE if spoken else "")}]
+                                        + on_screen + mention.context(conn, pinned) + (SPOKEN_RULE if spoken else "")}]
     for m in history(conn, conversation, HISTORY):
         content = m["content"]
         acts = (m.get("meta") or {}).get("actions") or []
@@ -1008,7 +1014,7 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
                 f"{i}. {src.get('title') or src.get('url')} {src.get('url')}" for i, src in enumerate(shown, 1)) + ")"
         messages.append({"role": "assistant" if m["role"] in ("assistant", "briefing") else "user", "content": content})
     messages.append({"role": "user", "content": text})
-    _save(conn, conversation, "user", text)
+    _save(conn, conversation, "user", text, {"mentions": mention.public(pinned)} if pinned else None)
     actions: list[dict[str, Any]] = []
     _UI["actions"] = []
     _WEB["sources"] = []
@@ -1060,7 +1066,7 @@ def chat(conn: sqlite3.Connection, client: Any, text: str, space_id: str | None 
     _save(conn, conversation, "assistant", reply, {"actions": actions, "cited": cited, "estimated_cost_usd": round(cost, 6),
                                                    "ui_actions": list(_UI["actions"]), "sources": web_sources})
     return {"reply": reply, "actions": actions, "cited": cited, "estimated_cost_usd": round(cost, 6),
-            "ui_actions": list(_UI["actions"]), "sources": web_sources}
+            "ui_actions": list(_UI["actions"]), "sources": web_sources, "mentions": mention.public(pinned)}
 
 
 def _cited(conn: sqlite3.Connection, text: str) -> list[dict[str, str]]:

@@ -832,5 +832,11 @@
  "source": "source",
  "This month: 1 mission": "Ce mois-ci : 1 mission",
  "This month: %d missions": "Ce mois-ci : %d missions",
- "in all: %s": "en tout : %s"
+ "in all: %s": "en tout : %s",
+ "Type @ to ask about a precise item of your Brain": "Tape @ pour poser une question sur un élément précis de ton Brain",
+ "Answered from: %s": "Réponse à partir de : %s",
+ "Remove this item from the question": "Retirer cet élément de la question",
+ "No item with that title": "Aucun élément avec ce titre",
+ "Ask about this": "Poser une question",
+ "Pins this item to your next question to the active agent (@)": "Épingle cet élément à ta prochaine question à l’agent actif (@)"
 }

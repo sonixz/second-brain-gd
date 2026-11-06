@@ -151,7 +151,7 @@ missions.
 (« Obsidian vault detected »): notes, front matter, `[[links]]`, tags and folders are read without a model,
 shown in a preview with counts and cost, and imported as a layer. Two loops; see docs/plan-loops-import.md.
 
-## Next: @ mentions (owner, 2026-11-06)
+## @ mentions (owner, 2026-11-06) ✅ Loop 38
 
 Typing `@` in the assistant or an agent's panel offers Brain items by title (search as you type); the chosen
 items are pinned as the context of that question, so the answer comes from them rather than from guessed

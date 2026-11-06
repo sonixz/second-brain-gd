@@ -39,6 +39,14 @@ var draft_box: VBoxContainer         # Sparring's synthesis waiting for approval
 var mission_card: PanelContainer     # the agent's mission (Loop 33): MissionCard, loaded by path
 var mission_row: HBoxContainer       # « Mission… »: what the agent should do
 var mission_edit: LineEdit
+## @ mentions (Loop 38): Brain items pinned as the context of the next question or mission.
+var mentions: Array = []              # [{id, title}], at most 8
+var chips_box: HFlowContainer         # one chip per mentioned item, × to remove
+var picker: PanelContainer            # the « @ » suggestions while typing
+var picker_list: ItemList
+var picker_items: Array = []
+var _picker_for: LineEdit             # the field where « @ » was typed (chat or mission)
+var _picker_seq := 0
 
 
 func setup(a: SbApp, b: Control, who: String = "archivist") -> AssistantPanel:
@@ -88,7 +96,11 @@ func setup(a: SbApp, b: Control, who: String = "archivist") -> AssistantPanel:
 	mission_edit = LineEdit.new()
 	mission_edit.placeholder_text = I18n.t("What should it do? e.g. this week's menu from the grocery specials")
 	mission_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	mission_edit.text_submitted.connect(func(_t: String) -> void: start_mission(mission_edit.text))
+	mission_edit.text_submitted.connect(func(_t: String) -> void:
+		if not _pick_from_picker(mission_edit):
+			start_mission(mission_edit.text))
+	mission_edit.text_changed.connect(func(_t: String) -> void: _on_typed(mission_edit))
+	mission_edit.gui_input.connect(func(e: InputEvent) -> void: _picker_keys(e, mission_edit))
 	mission_row.add_child(mission_edit)
 	var go := Button.new()
 	go.text = I18n.t("Start")
@@ -110,6 +122,21 @@ func setup(a: SbApp, b: Control, who: String = "archivist") -> AssistantPanel:
 	thinking.theme_type_variation = "Muted"
 	thinking.visible = false
 	add_child(thinking)
+	picker = PanelContainer.new()
+	picker.name = "MentionPicker"
+	picker.theme_type_variation = "Card"
+	picker.visible = false
+	add_child(picker)
+	picker_list = ItemList.new()
+	picker_list.auto_height = true
+	picker_list.focus_mode = Control.FOCUS_NONE
+	picker_list.item_clicked.connect(func(i: int, _at: Vector2, _b: int) -> void: _choose(i))
+	picker.add_child(picker_list)
+	chips_box = HFlowContainer.new()
+	chips_box.name = "MentionChips"
+	chips_box.visible = false
+	chips_box.add_theme_constant_override("h_separation", 6)
+	add_child(chips_box)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
 	add_child(row)
@@ -118,7 +145,12 @@ func setup(a: SbApp, b: Control, who: String = "archivist") -> AssistantPanel:
 	input.focus_entered.connect(func() -> void: activated.emit(agent))
 	input.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	input.custom_minimum_size = Vector2(0, 40)
-	input.text_submitted.connect(func(t: String) -> void: send(t))
+	input.text_submitted.connect(func(t: String) -> void:
+		if not _pick_from_picker(input):
+			send(t))
+	input.text_changed.connect(func(_t: String) -> void: _on_typed(input))
+	input.gui_input.connect(func(e: InputEvent) -> void: _picker_keys(e, input))
+	input.tooltip_text = I18n.t("Type @ to ask about a precise item of your Brain")
 	row.add_child(input)
 	mic_button = Button.new()
 	mic_button.icon = load("res://assets/icons/mic.svg")
@@ -148,10 +180,11 @@ func start_mission(goal: String) -> void:
 	goal = goal.strip_edges()
 	if goal.length() < 4:
 		return
-	var res: Dictionary = await mission_card.call("start_mission", goal)
+	var res: Dictionary = await mission_card.call("start_mission", goal, mention_ids())
 	if res.get("ok", false):
 		mission_edit.text = ""
 		mission_row.visible = false
+		clear_mentions()
 
 
 ## Loads today's conversation, then the morning briefing (spoken once per day).
@@ -171,7 +204,10 @@ func start() -> void:
 			var m: Dictionary = item
 			var meta: Dictionary = m["meta"] if m.get("meta") is Dictionary else {}
 			var role := "review" if str(meta.get("kind", "")) == "weekly_review" else str(m["role"])
-			_add_bubble(role, str(m["content"]), meta.get("actions", []), meta.get("cited", []), meta.get("sources", []))
+			var shown_text := str(m["content"])
+			if meta.get("mentions") is Array and not (meta["mentions"] as Array).is_empty():
+				shown_text = _mention_line(meta["mentions"]) + "\n" + shown_text
+			_add_bubble(role, shown_text, meta.get("actions", []), meta.get("cited", []), meta.get("sources", []))
 			if str(m["role"]) == "briefing":
 				had_briefing = true
 	if agent != "archivist":  # no briefing: the other agents wait for you
@@ -198,6 +234,7 @@ func start() -> void:
 
 ## spoken = true when the message came by voice: the reply is read aloud even if reading is off.
 var last_sources: Array = []        # web pages behind the last answer (tests, « ouvre la source »)
+var last_mentions: Array = []       # the items the last answer was pinned to (tests)
 var last_opened_url := ""
 
 
@@ -209,10 +246,14 @@ func send(text: String, spoken: bool = false) -> void:
 	if not configured:
 		_add_bubble("assistant", I18n.t("I need your OpenAI key first (microphone or engine room → Voice)."), [], [])
 		return
-	_add_bubble("user", t, [], [])
+	var pinned := mentions.duplicate()
+	_add_bubble("user", (_mention_line(pinned) + "\n" + t) if not pinned.is_empty() else t, [], [])
+	clear_mentions()
 	_set_busy(true)
 	activated.emit(agent)
 	var payload := {"text": t, "spoken": spoken, "agent": agent}
+	if not pinned.is_empty():
+		payload["mentions"] = pinned.map(func(x: Dictionary) -> String: return str(x["id"]))
 	var open_note: Dictionary = brain.get("current_note")
 	if not open_note.is_empty() and (brain.get("inspector") as Control).visible:
 		payload["open_note"] = str(open_note.get("id", ""))
@@ -228,6 +269,14 @@ func send(text: String, spoken: bool = false) -> void:
 		_add_bubble("assistant", I18n.t("Something went wrong: %s") % _err(res), [], [])
 		return
 	var d: Dictionary = res["data"]
+	last_mentions = d.get("mentions", []) if d.get("mentions") is Array else []
+	if pinned.is_empty() and not last_mentions.is_empty():  # by voice: « dans la recette du poulet, … »
+		var from := Label.new()
+		from.name = "MentionFrom"
+		from.theme_type_variation = "Muted"
+		from.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		from.text = I18n.t("Answered from: %s") % ", ".join(last_mentions.map(func(x: Variant) -> String: return str((x as Dictionary).get("title", ""))))
+		list.add_child(from)
 	last_reply = str(d.get("reply", ""))
 	var actions: Array = d.get("actions", [])
 	_add_bubble("assistant", last_reply, actions, d.get("cited", []), d.get("sources", []))
@@ -244,6 +293,124 @@ func send(text: String, spoken: bool = false) -> void:
 		say(last_reply, spoken)
 	if not ui.is_empty():
 		ui_requested.emit(ui)
+
+
+# ------------------------------------------------------------------ @ mentions
+## Pins an item to the next question (the picker, or « Ask about this » on a graph item).
+func add_mention(id: String, title: String) -> void:
+	if id == "" or mentions.size() >= 8:
+		return
+	for m in mentions:
+		if str((m as Dictionary)["id"]) == id:
+			return
+	mentions.append({"id": id, "title": title})
+	_rebuild_chips()
+
+
+func mention_ids() -> Array:
+	return mentions.map(func(x: Dictionary) -> String: return str(x["id"]))
+
+
+func clear_mentions() -> void:
+	mentions.clear()
+	_rebuild_chips()
+
+
+func _rebuild_chips() -> void:
+	for c in chips_box.get_children():
+		c.queue_free()
+	chips_box.visible = not mentions.is_empty()
+	for m in mentions:
+		var chip := Button.new()
+		var id := str((m as Dictionary)["id"])
+		chip.name = "Chip_" + id
+		chip.theme_type_variation = "GhostButton"
+		chip.text = "@" + str((m as Dictionary)["title"]).left(40) + "  ×"
+		chip.tooltip_text = I18n.t("Remove this item from the question")
+		chip.pressed.connect(func() -> void:
+			mentions = mentions.filter(func(x: Dictionary) -> bool: return str(x["id"]) != id)
+			_rebuild_chips())
+		chips_box.add_child(chip)
+
+
+static func _mention_line(items: Array) -> String:
+	return " ".join(items.map(func(x: Variant) -> String: return "@" + str((x as Dictionary).get("title", ""))))
+
+
+## The « @word » being typed just before the caret, or "" when there is none.
+static func mention_query(text: String, caret: int) -> String:
+	var before := text.left(caret)
+	var at := before.rfind("@")
+	if at < 0 or (at > 0 and before[at - 1] != " "):
+		return ""
+	var q := before.substr(at + 1)
+	if q.length() > 40 or q.begins_with(" ") or q.contains("  "):
+		return ""
+	return "@" + q
+
+
+func _on_typed(field: LineEdit) -> void:
+	var token := mention_query(field.text, field.caret_column)
+	if token == "":
+		picker.visible = false
+		return
+	_picker_for = field
+	_picker_seq += 1
+	var seq := _picker_seq
+	var res := await app.backend.api.call_api("/brain/mention?limit=8&q=" + token.substr(1).uri_encode())
+	if seq != _picker_seq or not is_inside_tree():
+		return
+	picker_items = (res["data"] as Dictionary).get("items", []) if res["ok"] and res["data"] is Dictionary else []
+	picker_list.clear()
+	for it in picker_items:
+		var d: Dictionary = it
+		var place := str(d.get("place", ""))
+		picker_list.add_item(str(d.get("title", "")) + ("   · " + place if place != "" else ""))
+	if picker_items.is_empty():
+		picker_list.add_item(I18n.t("No item with that title"))
+		picker_list.set_item_disabled(0, true)
+	else:
+		picker_list.select(0)
+	picker.visible = true
+
+
+func _picker_keys(e: InputEvent, field: LineEdit) -> void:
+	if not picker.visible or field != _picker_for or not (e is InputEventKey) or not e.is_pressed():
+		return
+	var n := picker_list.item_count
+	var cur: int = picker_list.get_selected_items()[0] if picker_list.is_anything_selected() else -1
+	if e.is_action("ui_down") and n > 0:
+		picker_list.select(mini(cur + 1, n - 1))
+		field.accept_event()
+	elif e.is_action("ui_up") and n > 0:
+		picker_list.select(maxi(cur - 1, 0))
+		field.accept_event()
+	elif e.is_action("ui_cancel"):
+		picker.visible = false
+		field.accept_event()
+
+
+## Enter while the picker is open picks the selected item instead of sending.
+func _pick_from_picker(field: LineEdit) -> bool:
+	if not picker.visible or field != _picker_for or picker_items.is_empty():
+		return false
+	_choose(picker_list.get_selected_items()[0] if picker_list.is_anything_selected() else 0)
+	return true
+
+
+func _choose(i: int) -> void:
+	if i < 0 or i >= picker_items.size() or _picker_for == null:
+		return
+	var d: Dictionary = picker_items[i]
+	var field := _picker_for
+	var token := mention_query(field.text, field.caret_column)
+	var caret := field.caret_column
+	if token != "":
+		field.text = field.text.left(caret - token.length()) + field.text.substr(caret)
+		field.caret_column = caret - token.length()
+	add_mention(str(d.get("id", "")), str(d.get("title", "")))
+	picker.visible = false
+	field.grab_focus()
 
 
 ## Sparring drafted a synthesis: it is shown in full, with a button to save it (or say « oui, sauvegarde »).

@@ -302,6 +302,14 @@ def _scripted(system: str, messages: list[dict[str, Any]], names: list[str]) -> 
         return None
     if last.get("role") != "user":
         return None
+    if "ÉLÉMENTS MENTIONNÉS" in system and "budget" in low:  # Loop 38: a question about @ mentioned items
+        if "français québécois" in system:
+            return _say("D'après [[Renovation budget]], la soumission est à 18 340 $, soit 340 $ au-dessus du plafond de "
+                        "18 000 $. Dans [[Appliances shortlist]], la hotte avec sortie extérieure est la coupure la plus "
+                        "simple; sinon, le dosseret, comme le suggère la note du budget.")
+        return _say("From [[Renovation budget]]: the quote is $18,340, $340 over the $18,000 cap. In [[Appliances "
+                    "shortlist]], the ducted range hood is the easiest trim; otherwise the backsplash, as the budget "
+                    "note suggests.")
     if "web_search" in names and low.startswith("search the web"):
         return _tool("web_search", {"query": users[-1].split(" for ", 1)[-1].strip(" ?.")})
     if "Tu es Sparring" in system:

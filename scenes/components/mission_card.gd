@@ -313,9 +313,11 @@ func _post(what: String, payload: Dictionary = {}) -> Dictionary:
 
 
 ## Starts a mission for this agent (the panel's Mission button, or the tests).
-func start_mission(goal: String) -> Dictionary:
-	var res := await app.backend.api.call_api("/missions", true, HTTPClient.METHOD_POST,
-		JSON.stringify({"agent": agent, "goal": goal}))
+func start_mission(goal: String, mentions: Array = []) -> Dictionary:
+	var body := {"agent": agent, "goal": goal}
+	if not mentions.is_empty():
+		body["mentions"] = mentions  # Brain items pinned with @ (Loop 38)
+	var res := await app.backend.api.call_api("/missions", true, HTTPClient.METHOD_POST, JSON.stringify(body))
 	if res["ok"]:
 		await follow()
 	return res

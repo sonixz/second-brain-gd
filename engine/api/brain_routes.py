@@ -150,6 +150,12 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     def get_search(q: str = Query(min_length=1, max_length=200), limit: int = Query(30, ge=1, le=200)) -> dict[str, Any]:
         return {"results": run(meaning.search_notes, client_or_none(), q, limit)}
 
+    @r.get("/mention")
+    def get_mention(q: str = Query("", max_length=200), limit: int = Query(8, ge=1, le=20)) -> dict[str, Any]:
+        """The « @ » picker: items by title as you type (no model call)."""
+        from engine.brain import mentions
+        return {"items": run(mentions.suggest, q, limit)}
+
     @r.get("/path")
     def get_path(a: str = Query(alias="from", min_length=1, max_length=300), b: str = Query(alias="to", min_length=1, max_length=300)) -> dict[str, Any]:
         from engine.brain import connect

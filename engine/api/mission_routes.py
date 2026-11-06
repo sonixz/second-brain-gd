@@ -27,6 +27,7 @@ class StartIn(BaseModel):
     goal: str = Field(min_length=4, max_length=2000)
     max_cost: float | None = Field(default=None, gt=0, le=20)
     max_minutes: float | None = Field(default=None, gt=0, le=240)
+    mentions: list[str] = Field(default_factory=list, max_length=8)  # Brain items pinned with @ (Loop 38)
 
 
 class AnswerIn(BaseModel):
@@ -86,7 +87,7 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
 
     @r.post("")
     def start(body: StartIn) -> dict[str, Any]:
-        return run(missions.start, body.agent, body.goal, body.max_cost, body.max_minutes)
+        return run(missions.start, body.agent, body.goal, body.max_cost, body.max_minutes, body.mentions)
 
     @r.post("/{mission_id}/answer")
     def answer(mission_id: str, body: AnswerIn) -> dict[str, Any]:

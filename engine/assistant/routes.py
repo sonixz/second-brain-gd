@@ -20,6 +20,7 @@ class ChatIn(BaseModel):
     spoken: bool = False  # the message came by voice: the reply is read aloud, so it must be short
     open_note: str | None = Field(default=None, max_length=64)  # the item open on screen, for « garde ce lien »
     agent: str = Field(default="archivist", max_length=40)
+    mentions: list[str] = Field(default_factory=list, max_length=8)  # Brain items pinned with @ (Loop 38)
 
 
 class AgentIn(BaseModel):
@@ -150,7 +151,7 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
 
     @r.post("/chat")
     def post_chat(body: ChatIn) -> dict[str, Any]:
-        return run(core.chat, body.text, body.space_id, body.spoken, body.open_note, body.agent)
+        return run(core.chat, body.text, body.space_id, body.spoken, body.open_note, body.agent, body.mentions)
 
     @r.post("/briefing")
     def post_briefing(force: bool = False) -> dict[str, Any]:

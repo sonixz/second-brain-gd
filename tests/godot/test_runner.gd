@@ -683,6 +683,25 @@ func _e2e() -> void:
 	check(str((l14_rb.get_child(1) as Button).text).contains("by "), "each hit says how it matched (%s)" % (l14_rb.get_child(1) as Button).text)
 	brain.get("search_edit").text = ""
 	await brain.call("_on_search_changed", "")
+	# Loop 38: @ mentions pin Brain items to one question.
+	check(AssistantPanel.mention_query("prix @poul", 10) == "@poul" and AssistantPanel.mention_query("mail a@b", 8) == ""
+		and AssistantPanel.mention_query("sans", 4) == "", "« @word » before the caret opens the picker; an e-mail address does not")
+	ap.input.text = "Résume @Links"
+	ap.input.caret_column = ap.input.text.length()
+	ap.input.text_changed.emit(ap.input.text)
+	var m_picked := await wait_until(func() -> bool: return ap.picker.visible and not ap.picker_items.is_empty(), 10.0)
+	check(m_picked and str((ap.picker_items[0] as Dictionary).get("title", "")) == "Links make constellations",
+		"typing @ shows Brain items by title (%d)" % ap.picker_items.size())
+	ap.input.text_submitted.emit(ap.input.text)  # Enter picks the item instead of sending
+	check(ap.mentions.size() == 1 and ap.input.text == "Résume " and ap.chips_box.visible and not ap.picker.visible,
+		"Enter picks the item: a chip appears and the @word goes away (« %s »)" % ap.input.text)
+	await ap.send("Résume cet élément")
+	check(ap.last_mentions.size() == 1 and str((ap.last_mentions[0] as Dictionary).get("title", "")) == "Links make constellations"
+		and ap.mentions.is_empty() and not ap.chips_box.visible, "the question goes with the item pinned, then the chips clear")
+	var asked_cp: AssistantPanel = brain.call("chat_panel")
+	brain.call("ask_about", graph.find_node("Links make constellations"), "Links make constellations")
+	check(asked_cp.mentions.size() == 1 and asked_cp.chips_box.visible, "« Ask about this » pins a graph item to the active agent's next question")
+	asked_cp.clear_mentions()
 	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
 	var l14_welcome := graph.find_node("Welcome to your Second Brain")
 	var l14_pathed := await wait_until(func() -> bool: return graph.path_ids.size() >= 2, 10.0)

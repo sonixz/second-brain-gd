@@ -261,6 +261,16 @@ func agent_panel(who: String = "") -> SbFloatingPanel:
 	return agent_panels.get(id, archivist_panel)
 
 
+## « Ask about this »: the item becomes an @ mention in the active agent's panel, ready for the question.
+func ask_about(id: String, title: String) -> void:
+	var chat := chat_panel()
+	if chat == null:
+		return
+	agent_panel().reveal()
+	chat.add_mention(id, title)
+	chat.input.grab_focus()
+
+
 ## Opens an agent's panel, makes it the one F8/F9 talk to, and optionally says something to it.
 func open_agent(id: String, say_first: String = "") -> void:
 	if not agent_chats.has(id):
@@ -1113,6 +1123,15 @@ func _build_inspector() -> void:
 	save_label.theme_type_variation = "Muted"
 	save_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(save_label)
+	var ask := Button.new()
+	ask.name = "AskAbout"
+	ask.text = I18n.t("Ask about this")
+	ask.theme_type_variation = "GhostButton"
+	ask.tooltip_text = I18n.t("Pins this item to your next question to the active agent (@)")
+	ask.pressed.connect(func() -> void:
+		if not current_note.is_empty():
+			ask_about(str(current_note.get("id", "")), str(current_note.get("title", ""))))
+	head.add_child(ask)
 	var del := Button.new()
 	del.text = I18n.t("Delete")
 	del.theme_type_variation = "GhostButton"

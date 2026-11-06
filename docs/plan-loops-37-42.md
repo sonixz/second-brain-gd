@@ -39,6 +39,13 @@ Details from docs/plan-loops-35-37.md (Loop 37), plus what was left from Loop 36
 
 ## Loop 38 — @ mentions
 
+**Done 2026-11-06.** engine/brain/mentions.py (suggest by title, no model; context block with each item's text,
+6,000 characters each, 18,000 in all, chunks for documents; spoken « dans la recette du poulet, … » resolved
+only when one item clearly matches). Chat, missions (« Run again » keeps them) and GET /brain/mention. In the
+panel: the @ picker (arrows, Enter, click), chips with ×, « Answered from » after a spoken match, « Ask about
+this » on a graph item. Tests: 7 Python (tests/python/test_mentions.py), 5 Godot checks. Screenshots
+docs/screenshots/mentions-en and mentions-fr; docs.html#mentions.
+
 - Typing `@` in the assistant or an agent's panel opens a picker of Brain items, searched as you type
   (title, then meaning). Chosen items show as chips in the message and can be removed.
 - The chosen items are pinned as the context of that question: the answer comes from them and cites them;

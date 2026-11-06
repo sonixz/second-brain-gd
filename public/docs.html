@@ -55,6 +55,7 @@
         <ul>
           <li><a href="#agents-profiles">Archivist and Sparring</a></li>
           <li><a href="#internet">Internet</a></li>
+          <li><a href="#mentions">Ask about precise items (@)</a></li>
           <li><a href="#missions">Missions</a></li>
           <li><a href="#extension">Browser extension</a></li>
           <li><a href="#pictures">Pictures from pages</a></li>
@@ -508,6 +509,28 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             <i>reference card</i> with what the search said and the link, and the reply says so.</li>
           <li>What comes from the web is <b>data</b>: no agent ever follows instructions found in a page.</li>
           <li>Turn it off: <code>PATCH /assistant/settings {"web_access": false}</code>.</li>
+        </ul>
+      </section>
+
+      <section class="doc" id="mentions">
+        <p class="kicker">Use</p>
+        <h2>Ask about precise items (@)</h2>
+        <p>Normally the agent searches your Brain to find what fits your question. When you already know which items
+          you mean, type <b>@</b> in an agent's panel: items appear by title as you type (no AI call, instant). Pick one
+          with the arrows and Enter, or a click; it becomes a chip above the box. Add up to eight, remove one with ×.
+          The answer then comes <b>from those items</b> and cites them; the agent looks elsewhere only if you ask, or
+          if they are not enough (and says so).</p>
+        <figure class="shot doc-shot"><img src="assets/showcase/mention-answer.webp" alt="A question with two items mentioned, @Renovation budget and @Appliances shortlist, and the answer citing both" loading="lazy" width="1280" height="800"><figcaption>Two items pinned to one question; the answer cites both.</figcaption></figure>
+        <ul>
+          <li><b>From the graph</b>: open an item and click <b>Ask about this</b>. It is pinned to your next question to
+            the active agent.</li>
+          <li><b>By voice</b>: name the item first. “Dans la recette du poulet rôti, combien de temps au four ?”
+            When one item clearly matches, the answer comes from it, and the panel says <i>Answered from: …</i>.
+            When several match, the normal search takes over.</li>
+          <li><b>With a mission</b>: chips present when you click <b>Start</b> go with the mission, which starts from
+            those items; <b>Run again</b> keeps them.</li>
+          <li>A long document is sent in part (about 6,000 characters per item); the agent can search the rest. The
+            text of a mentioned item is data, never instructions.</li>
         </ul>
       </section>
 
