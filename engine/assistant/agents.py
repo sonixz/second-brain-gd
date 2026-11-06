@@ -29,7 +29,7 @@ CAPABILITIES: dict[str, dict[str, Any]] = {
     "organise": {"label": "Organise the graph", "description": "file, move, link, unlink, delete, manage places, packs, undo, back up",
                  "tools": ["move_items", "link_items", "unlink_items", "remove_tag", "trash_items", "remove_place",
                            "update_note", "related_idea", "undo_last_action", "create_project", "add_task",
-                           "complete_task", "add_to_checklist", "get_today", "export_pack", "manage_pack", "ui_import_pack",
+                           "complete_task", "add_to_checklist", "get_today", "export_pack", "manage_pack", "ui_import_pack", "ui_import_folder",
                            "backup_now", "backup_status"]},
     "synthesis": {"label": "Approved synthesis", "description": "save a synthesis of the conversation, only after your “yes”",
                   "tools": ["draft_synthesis", "save_synthesis"]},

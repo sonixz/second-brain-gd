@@ -60,7 +60,17 @@ docs/screenshots/mentions-en and mentions-fr; docs.html#mentions.
 
 Full detail in docs/plan-loops-import.md.
 
-- **39 (Import A).** « Import a folder… » and dropping a folder; detection shown, never put forward
+- **39 (Import A) — done 2026-11-06.** engine/sources/folder_import.py, POST /brain/import/scan and /run,
+  scenes/brain/folder_import_dialog.gd, « + Folder », a dropped folder, and the voice tool ui_import_folder
+  (« mon vault Obsidian » reads Obsidian's own vault list). Learned from real vaults and added: links in front
+  matter (kepano style) and properties kept readable at the top; .base and attachment links are not notes;
+  template folders and placeholders left out; a vault inside a subfolder; escaped pipes in table links.
+  Measured: kepano/kepano-obsidian 51 notes, 55 of 96 links (the rest are notes its author never wrote);
+  ObsidianStarterVault 102 of 103; obsidianmd/obsidian-help (local only, no licence) 1,682 of 1,686, 179 notes
+  read in 0.07 s and imported in 0.19 s. Not done: « to create » nodes for missing notes (listed in the report
+  instead), summaries at import (the archivist summarises on demand). Tests: 8 Python, 5 Godot checks.
+  Screenshots docs/screenshots/folder-import-en and -fr; docs.html#folder-import.
+- **39 (Import A), as planned.** « Import a folder… » and dropping a folder; detection shown, never put forward
   (« Obsidian vault detected »); notes, front matter, `[[links]]` (alias, heading), tags and folders read
   without a model; missing links as « to create » nodes; preview with counts and cost; a layer like packs;
   re-import adds only what changed; an honest report (links resolved and unresolved, with the list).

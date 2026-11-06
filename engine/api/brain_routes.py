@@ -80,6 +80,11 @@ class ContextIn(BaseModel):
     kind: Literal["project", "area", "resource"] = "project"
 
 
+class FolderIn(BaseModel):
+    path: str = Field(min_length=1, max_length=1000)  # a folder of notes on this PC (Loop 39)
+    keep_folders: bool = True                           # folders become places; False: everything to the Inbox
+
+
 class NotePatch(BaseModel):
     title: str | None = Field(default=None, max_length=300)
     body: str | None = Field(default=None, max_length=200_000)
@@ -149,6 +154,17 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     @r.get("/search")
     def get_search(q: str = Query(min_length=1, max_length=200), limit: int = Query(30, ge=1, le=200)) -> dict[str, Any]:
         return {"results": run(meaning.search_notes, client_or_none(), q, limit)}
+
+    @r.post("/import/scan")
+    def post_import_scan(body: FolderIn) -> dict[str, Any]:
+        """The preview of a folder import: what was detected, what would come in, the cost."""
+        from engine.sources import folder_import
+        return run(folder_import.scan, body.path, body.keep_folders)
+
+    @r.post("/import/run")
+    def post_import_run(body: FolderIn) -> dict[str, Any]:
+        from engine.sources import folder_import
+        return run(folder_import.run, body.path, body.keep_folders)
 
     @r.get("/mention")
     def get_mention(q: str = Query("", max_length=200), limit: int = Query(8, ge=1, le=20)) -> dict[str, Any]:

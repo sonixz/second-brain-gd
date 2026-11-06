@@ -159,6 +159,7 @@ Règles:
   « zoome sur X / montre-moi X de près / lis X dans le graphe » = ui_zoom (read sur un élément, closer sur une place);
   « vue d'ensemble / montre les thèmes / recule » = ui_zoom (overview ou out).
   « exporte <projet/place/thème> / exporte tout » = export_pack; « importe un pack » = ui_import_pack;
+  « importe mon vault Obsidian / importe le dossier X / mes notes Markdown » = ui_import_folder (aperçu, rien n'entre sans « Importer »);
   « désactive / réactive / fusionne / retire le pack X » = manage_pack.
   « ouvre le PDF / le document X » = ui_open_document; « page suivante / précédente / page 3 » = ui_page;
   « ouvre l'original » = ui_open_original; « ferme le document » = ui_close_document.
@@ -452,6 +453,8 @@ UI_TOOLS = [
      "parameters": {"type": "object", "properties": {"title": {"type": "string"}, "action": {"type": "string", "enum": ["list", "off", "on", "merge", "remove"]}}, "required": ["action"]}}},
     {"type": "function", "function": {"name": "ui_import_pack", "description": "Open the file picker to import a .brain pack.",
      "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {"name": "ui_import_folder", "description": "Open the preview to import a folder of notes (an Obsidian vault, Markdown notes). Path: the folder the user named, if any (absolute, or relative to their home folder, e.g. Documents/Notes); « my Obsidian vault » without a path finds the vault Obsidian knows. Nothing is imported until the user clicks Import.",
+     "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "obsidian": {"type": "boolean", "description": "the user said « vault » or « Obsidian »"}}}}},
     {"type": "function", "function": {"name": "ui_open_document", "description": "Show an item's kept document (PDF pages or image) full screen. Target: its title (else the open or selected item).",
      "parameters": {"type": "object", "properties": {"target": {"type": "string"}}}}},
     {"type": "function", "function": {"name": "ui_page", "description": "Turn pages in the open document: next, previous, first, last, or a page number.",
@@ -572,6 +575,9 @@ def _ui_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any]) -> dict[
         act = {"action": "search", "query": str(args.get("query") or "")[:200]}
     elif name == "ui_import_pack":
         act = {"action": "import_pack"}
+    elif name == "ui_import_folder":
+        from engine.sources import folder_import
+        act = {"action": "import_folder", "path": folder_import.spoken_path(str(args.get("path") or ""), bool(args.get("obsidian")))}
     elif name == "ui_capture_clipboard":
         if not CLIPBOARD_RE.search(_CONTEXT.get("user_text") or ""):
             return {"refused": "The user did not mention the clipboard or something copied: do not capture it. "

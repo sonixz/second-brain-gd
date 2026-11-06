@@ -702,6 +702,34 @@ func _e2e() -> void:
 	brain.call("ask_about", graph.find_node("Links make constellations"), "Links make constellations")
 	check(asked_cp.mentions.size() == 1 and asked_cp.chips_box.visible, "« Ask about this » pins a graph item to the active agent's next question")
 	asked_cp.clear_mentions()
+	# Loop 39: import a folder of notes (an Obsidian vault) as a layer.
+	var fv_root := OS.get_environment("SBGD_HOME").path_join("Test vault")
+	for fv_rel in [".obsidian/app.json", "Projects/Garden/Garden plan.md", "Areas/Soil.md", "Start here.md", "Templates/Daily.md"]:
+		DirAccess.make_dir_recursive_absolute(fv_root.path_join(str(fv_rel)).get_base_dir())
+		var fv_f := FileAccess.open(fv_root.path_join(str(fv_rel)), FileAccess.WRITE)
+		fv_f.store_string({"Projects/Garden/Garden plan.md": "---\ntags: [garden]\n---\nCompost from [[Soil]]. Also [[Not written yet]].",
+			"Areas/Soil.md": "Loam and compost. #soil", "Start here.md": "See [[Garden plan]].",
+			"Templates/Daily.md": "{{date}}"}.get(str(fv_rel), "{}"))
+		fv_f.close()
+	var fv_dlg: AcceptDialog = brain.call("import_folder", fv_root)
+	var fv_scanned := await wait_until(func() -> bool: return not (fv_dlg.get("scan") as Dictionary).is_empty(), 15.0)
+	var fv_scan: Dictionary = fv_dlg.get("scan")
+	check(fv_scanned and str(fv_scan.get("kind", "")) == "obsidian" and int(fv_scan.get("notes", 0)) == 3
+		and int(fv_scan.get("unresolved", 0)) == 1 and int(fv_scan.get("templates", 0)) == 1,
+		"a dropped folder opens the preview: Obsidian vault detected, 3 notes, 1 link to a missing note, templates left out (%s)" % (fv_dlg.get("detect_label") as Label).text)
+	check(graph.find_node("Garden plan") == "", "nothing is imported before « Import »")
+	await fv_dlg.call("run_import")
+	var fv_report: Dictionary = fv_dlg.get("report")
+	var fv_in := await wait_until(func() -> bool: return graph.find_node("Garden plan") != "", 15.0)
+	check(fv_in and int(fv_report.get("created", 0)) == 3 and int(fv_report.get("resolved", 0)) == 2
+		and (fv_dlg.get("result_label") as RichTextLabel).text.contains("Not written yet"),
+		"Import brings the notes in as a layer, with the author's links, and lists the link that points nowhere")
+	check(graph.find_node("Garden") != "" or graph.anchors.has("space:" + str(graph.nodes.get(graph.find_node("Garden plan"), {}).get("space_id", ""))),
+		"the vault's folders become places (Projects/Garden is the project Garden)")
+	await app.backend.api.call_api("/packs/layers/" + str(fv_report.get("layer_id", "")), true, HTTPClient.METHOD_DELETE)
+	fv_dlg.hide()
+	await brain.call("refresh_graph")
+	check(graph.find_node("Garden plan") == "", "the imported layer is removed in one go")
 	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
 	var l14_welcome := graph.find_node("Welcome to your Second Brain")
 	var l14_pathed := await wait_until(func() -> bool: return graph.path_ids.size() >= 2, 10.0)

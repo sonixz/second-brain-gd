@@ -55,6 +55,7 @@
         <ul>
           <li><a href="#agents-profiles">Archivist and Sparring</a></li>
           <li><a href="#internet">Internet</a></li>
+          <li><a href="#folder-import">Import a folder (Obsidian…)</a></li>
           <li><a href="#mentions">Ask about precise items (@)</a></li>
           <li><a href="#missions">Missions</a></li>
           <li><a href="#extension">Browser extension</a></li>
@@ -509,6 +510,31 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             <i>reference card</i> with what the search said and the link, and the reply says so.</li>
           <li>What comes from the web is <b>data</b>: no agent ever follows instructions found in a page.</li>
           <li>Turn it off: <code>PATCH /assistant/settings {"web_access": false}</code>.</li>
+        </ul>
+      </section>
+
+      <section class="doc" id="folder-import">
+        <p class="kicker">Use</p>
+        <h2>Import a folder of notes (Obsidian, Markdown)</h2>
+        <p>Already keep notes as Markdown files, in Obsidian or elsewhere? Drop the folder on the window, or click
+          <b>+ Folder</b> in the Places panel, or say “importe mon vault Obsidian”. The app reads the folder and tells
+          you what it found (“Obsidian vault detected”) before anything comes in: notes, links, places, themes, the
+          links that point to notes not written yet, and the cost.</p>
+        <figure class="shot doc-shot"><img src="assets/showcase/folder-import.webp" alt="The Import a folder dialog: Obsidian vault detected, 51 notes, 96 links, the report after import" loading="lazy" width="1280" height="800"><figcaption>A public vault (kepano/kepano-obsidian, MIT licence) after import: what came in, and the links that point nowhere.</figcaption></figure>
+        <ul>
+          <li><b>No AI call for the structure.</b> Each note becomes an item named after its file (that is how
+            Obsidian links). Front matter becomes fields and stays readable at the top of the item; <code>[[links]]</code>
+            (with a folder, a heading or an alias, in tables too) become <i>your</i> links; front-matter tags and
+            <code>#tags</code> become themes.</li>
+          <li><b>Your folders become places.</b> PARA folders are understood: <i>Projects/Kitchen</i> becomes the
+            project Kitchen, <i>Areas/…</i> an area. Untick <i>Keep your folders as places</i> to send everything to the
+            Inbox instead. Template folders are left out.</li>
+          <li><b>The only cost</b> is the meaning index (a few cents for thousands of notes), done in the background.
+            The archivist then adds links by meaning on top of yours.</li>
+          <li><b>It is a layer</b>, like a pack: switch it off, merge it into your Brain or remove it in one go
+            (Captures → Brain packs). Import the same folder again later: only new and changed notes come in.</li>
+          <li>Not yet: pictures and files embedded in notes (<code>![[…]]</code>), Logseq outlines and Notion exports
+            are the next step.</li>
         </ul>
       </section>
 

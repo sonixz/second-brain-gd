@@ -616,6 +616,13 @@ func _build_left_panel() -> void:
 	addf.tooltip_text = I18n.t("Add a PDF, Word, Markdown or text file. You can also drop files on the window, or paste a link in the capture bar.")
 	addf.pressed.connect(_pick_file)
 	srow.add_child(addf)
+	var addd := Button.new()
+	addd.name = "ImportFolderButton"
+	addd.text = I18n.t("+ Folder")
+	addd.theme_type_variation = "GhostButton"
+	addd.tooltip_text = I18n.t("Import a folder of notes (an Obsidian vault, Markdown notes). You can also drop a folder on the window.")
+	addd.pressed.connect(_pick_folder)
+	srow.add_child(addd)
 	sources_box = VBoxContainer.new()
 	sources_box.add_theme_constant_override("separation", 0)
 	col.add_child(sources_box)
@@ -682,7 +689,9 @@ func _undo_toast() -> void:
 # ---------------------------------------------------------------- sources
 func _on_files_dropped(files: PackedStringArray) -> void:
 	for f in files:
-		if f.get_extension().to_lower() == "brain":
+		if DirAccess.dir_exists_absolute(f):  # a folder: the import preview (Loop 39)
+			await import_folder(f)
+		elif f.get_extension().to_lower() == "brain":
 			await import_pack(f)
 		else:
 			await add_source_file(f)
@@ -709,6 +718,37 @@ func _pick_file() -> void:
 		_file_dialog.files_selected.connect(func(paths: PackedStringArray) -> void: _on_files_dropped(paths))
 		add_child(_file_dialog)
 	_file_dialog.popup_centered_ratio(0.6)
+
+
+var _folder_dialog: FileDialog
+var folder_import: AcceptDialog      # the open « Import a folder » dialog (tests)
+
+
+func _pick_folder() -> void:
+	if _folder_dialog == null:
+		_folder_dialog = FileDialog.new()
+		_folder_dialog.file_mode = FileDialog.FILE_MODE_OPEN_DIR
+		_folder_dialog.access = FileDialog.ACCESS_FILESYSTEM
+		_folder_dialog.use_native_dialog = true
+		_folder_dialog.dir_selected.connect(func(dir: String) -> void: import_folder(dir))
+		add_child(_folder_dialog)
+	_folder_dialog.popup_centered_ratio(0.6)
+
+
+## « Import a folder… », a dropped folder, or « importe mon vault Obsidian »: the preview, then the import.
+func import_folder(dir: String) -> AcceptDialog:
+	if folder_import != null and is_instance_valid(folder_import):
+		folder_import.queue_free()
+	folder_import = preload("res://scenes/brain/folder_import_dialog.gd").new().setup(app, dir)
+	folder_import.connect("imported", func(_r: Dictionary) -> void:
+		await refresh_graph()
+		await refresh_spaces())
+	folder_import.connect("add_documents", func(paths: Array) -> void:
+		for p in paths.slice(0, 50):
+			await add_source_file(str(p)))
+	add_child(folder_import)
+	folder_import.call("open")
+	return folder_import
 
 
 func add_source_file(path: String) -> bool:
@@ -913,6 +953,12 @@ func run_ui_actions(actions: Array) -> void:
 			"import_pack":
 				await set_view("captures")
 				captures_view.open_packs().pick_file()
+			"import_folder":
+				var where := str(a.get("path", ""))
+				if where != "":
+					import_folder(where)
+				else:
+					_pick_folder()
 			"pack_exported":
 				show_toast(I18n.t("Pack saved: %s") % str(a.get("path", "")).get_file())
 				last_pack_export = str(a.get("path", ""))
