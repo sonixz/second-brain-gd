@@ -9,6 +9,8 @@ documented and shown before the next starts. The same rules apply to every chang
 - Your data never lives in the repository: `%LOCALAPPDATA%\SecondBrainGD` (Linux `~/.local/share/second-brain-gd`),
   or `SBGD_HOME` to use another folder (a throwaway one for experiments).
 - An OpenAI key is optional for most work; the tests never use one (they use a fake model).
+- Running from the source without the editor (`godot --path .`)? After pulling, run `godot --headless --path . --import`
+  once: it refreshes Godot's list of named classes, which only the editor updates by itself.
 
 ## Test
 ```bash

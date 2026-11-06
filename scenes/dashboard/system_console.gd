@@ -130,7 +130,9 @@ func _ready() -> void:
 	sources_card = InfoCard.new().setup(I18n.t("Sources & memory"))
 	grid.add_child(sources_card)
 
-	body.add_child(DataPanel.new().setup(app))  # Your data: backups, export, packs, repair, start fresh, uninstall
+	# Your data: backups, export, packs, repair, start fresh, uninstall. Loaded by path, not by its class name:
+	# running from the source without the editor, Godot's class list can lag behind a new class (2026-11-05).
+	body.add_child(preload("res://scenes/dashboard/data_panel.gd").new().setup(app))
 
 	billing_panel = BillingPanel.new().setup(app)
 	billing_panel.name = "BillingPanel"
