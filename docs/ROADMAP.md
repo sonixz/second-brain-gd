@@ -140,6 +140,12 @@ missions.
   routine », ceilings; (2) remembered answers, notification, save-directly mode, week-to-week history and
   links, a How-to guide.
 
+## Next: import a folder, Obsidian and other note apps (owner, 2026-11-06)
+
+« Import a folder… » (or a folder dropped on the window) detects the source without putting it forward
+(« Obsidian vault detected »): notes, front matter, `[[links]]`, tags and folders are read without a model,
+shown in a preview with counts and cost, and imported as a layer. Two loops; see docs/plan-loops-import.md.
+
 ## Next: @ mentions (owner, 2026-11-06)
 
 Typing `@` in the assistant or an agent's panel offers Brain items by title (search as you type); the chosen
