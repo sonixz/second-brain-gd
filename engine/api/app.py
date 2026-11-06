@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 import platform
 import secrets
 import sys
@@ -53,12 +55,19 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
         worker = meaning.Worker(layout.database, client_or_none)
         worker.start()
         app.state.meaning_worker = worker
+        from engine import backups
+
+        backup_worker = backups.Worker(layout)  # the automatic backup (Loop 29), a minute after start
+        if os.environ.get("SBGD_BACKUPS") != "off":
+            backup_worker.start()
+        app.state.backup_worker = backup_worker
         if on_started is not None:
             on_started()
         try:
             yield
         finally:
             worker.stop()
+            backup_worker.stop()
             agents.stop_all()
 
     def client_or_none():
@@ -162,4 +171,7 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
 
     app.include_router(make_browser_router(layout, require_token, port))
     app.include_router(make_pack_router(layout, require_token, client_or_none))
+    from engine.api.backup_routes import make_router as make_backup_router
+
+    app.include_router(make_backup_router(layout, require_token))
     return app

@@ -153,8 +153,10 @@ def export(db_path: Path, selection: dict[str, Any], out_dir: Path, title: str, 
             _copy(conn, "note_related", f"owner IN ({qn}) AND other IN ({qn})", ids + ids)
             n["sources"] = _copy(conn, "sources", f"note_id IN ({qn})", ids)
             _copy(conn, "source_chunks", "source_id IN (SELECT id FROM main.sources)", [])
+            n["pictures"] = _copy(conn, "source_images", "source_id IN (SELECT id FROM main.sources)", [])  # Loop 25
             version = conn.execute("SELECT MAX(version) FROM main.schema_migrations").fetchone()[0]
             originals = [r[0] for r in conn.execute("SELECT DISTINCT original FROM main.sources WHERE original IS NOT NULL")]
+            pictures = [r[0] for r in conn.execute("SELECT DISTINCT original FROM main.source_images")]
             conn.commit()
             conn.execute("DETACH DATABASE src")
             conn.execute("VACUUM")
@@ -165,7 +167,9 @@ def export(db_path: Path, selection: dict[str, Any], out_dir: Path, title: str, 
 
         root = db_path.parent.parent if db_path.parent.name == "data" else db_path.parent
         files = [(rel, kept_files.resolve(root, rel)) for rel in originals] if include_originals else []
-        files = [(rel, p) for rel, p in files if p is not None]
+        # a page's pictures always travel with it: a few small files that its card and reading view show
+        files += [(rel, kept_files.resolve(root, rel)) for rel in pictures if rel not in originals or not include_originals]
+        files = [(rel, p) for rel, p in dict(files).items() if p is not None]
         n["originals"] = len(files)
         manifest = {"format": FORMAT, "version": PACK_VERSION, "title": title.strip()[:120] or "Brain pack",
                     "author": author.strip()[:120], "licence": licence.strip()[:120],
@@ -343,6 +347,14 @@ def import_pack(db_path: Path, path: Path) -> dict[str, Any]:
                     conn.execute("INSERT INTO source_chunks (source_id, idx, text, embedding, model) VALUES (?, ?, ?, ?, ?)",
                                  (sid, c["idx"], c["text"], c["embedding"] if same_model else None,
                                   c["model"] if same_model else None))
+                try:  # packs made before Loop 25 have no pictures table
+                    pics = list(src.execute("SELECT * FROM source_images WHERE source_id = ?", (s["id"],)))
+                except sqlite3.OperationalError:
+                    pics = []
+                for pic in pics:
+                    cols = {k: pic[k] for k in pic.keys() if k in set(_cols_main(conn, "source_images"))}
+                    cols["source_id"] = sid
+                    _insert(conn, "source_images", cols)
             root = db_path.parent.parent if db_path.parent.name == "data" else db_path.parent
             kept = import_originals(path, root)
             counts = {"items": len(ours), "places": len(space_map), "links": links, "vectors_copied": vectors,

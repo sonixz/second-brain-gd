@@ -62,6 +62,8 @@ Expected size: about +30–40 MB over the Godot export. **Confidence 85 % Window
 Tests: back up → restore into an empty folder → compare everything; Start fresh → nothing of the old Brain is left
 except what is kept on purpose; restore an older-schema backup. **Confidence 85 %.**
 
+**Done 2026-11-05** (docs/architecture/backups.md). Checked on a read-only copy of the owner's real Brain: backup 0.08 s, the second one copies no file, restore into an empty folder gives identical tables and files, Start fresh then restoring its safety copy gives the starting Brain back. Encryption: not done, as decided.
+
 ## Loop 30 — "Your data" in the engine room
 
 | What | How |

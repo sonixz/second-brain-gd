@@ -15,7 +15,7 @@ from typing import Any, Callable
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import HTMLResponse
 
-from engine import brain, database
+from engine import appstate, brain, database
 from engine.assistant.llm import make_client
 from engine.paths import Layout
 from engine.voice import secrets
@@ -31,10 +31,10 @@ border-radius:8px;padding:8px 14px;font-weight:600;cursor:pointer}}</style></hea
 
 
 def get_key(conn) -> str:
-    key = database.get_setting(conn, "capture_key")
+    key = appstate.get(conn, "capture_key")
     if not key:
         key = pysecrets.token_urlsafe(18)
-        database.set_setting(conn, "capture_key", key)
+        appstate.set(conn, "capture_key", key)
     return key
 
 
@@ -77,7 +77,7 @@ def make_router(layout: Layout, auth: Callable[..., None], port: int) -> APIRout
     @r.post("/brain/capture-link/rotate", dependencies=[Depends(auth)])
     def rotate() -> dict[str, Any]:
         with database.session(layout.database) as conn:
-            database.set_setting(conn, "capture_key", None)
+            appstate.set(conn, "capture_key", None)
             key = get_key(conn)
         return {"port": port, "bookmarklet": bookmarklet(port, key)}
 
