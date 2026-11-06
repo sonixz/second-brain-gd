@@ -42,12 +42,7 @@ func setup(a: SbApp) -> CapturesView:
 	browser.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	browser.pressed.connect(show_bookmarklet)
 	head.add_child(browser)
-	var packs_btn := Button.new()
-	packs_btn.text = I18n.t("Packs…")
-	packs_btn.tooltip_text = I18n.t("Export part of your Brain as a .brain file, or import one as a layer")
-	packs_btn.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	packs_btn.pressed.connect(func() -> void: open_packs())
-	head.add_child(packs_btn)
+	# Packs moved to the engine room, Your data (Loop 30); a dropped .brain file and the voice still open them here.
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED

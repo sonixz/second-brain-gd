@@ -227,7 +227,9 @@ func _on_located(result: Dictionary) -> void:
 	var py: Dictionary = result["python"]
 	app.backend.python = py
 	_log("ui", "info", I18n.t("Using Python %s at %s") % [py["version"], py["executable"]])
-	var err := runner.start(str(py["executable"]), app.backend.data_dir)
+	var extra := PackedStringArray(["--repair"]) if app.setup_repair else PackedStringArray()
+	app.setup_repair = false
+	var err := runner.start(str(py["executable"]), app.backend.data_dir, extra)
 	if err != OK:
 		_fail(I18n.t("Could not start the setup process (%s).") % error_string(err), I18n.t("Check that the data folder is writable: %s") % app.backend.data_dir)
 

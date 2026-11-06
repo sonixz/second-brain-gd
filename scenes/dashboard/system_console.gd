@@ -130,6 +130,8 @@ func _ready() -> void:
 	sources_card = InfoCard.new().setup(I18n.t("Sources & memory"))
 	grid.add_child(sources_card)
 
+	body.add_child(DataPanel.new().setup(app))  # Your data: backups, export, packs, repair, start fresh, uninstall
+
 	billing_panel = BillingPanel.new().setup(app)
 	billing_panel.name = "BillingPanel"
 	body.add_child(billing_panel)

@@ -37,6 +37,23 @@ func _run() -> void:
 	app.show_console()
 	await pause(6.0)
 	await shot("06-engine-room")
+	var dp: DataPanel = app.current().find_child("DataPanel", true, false)
+	if dp != null:  # Your data: a backup taken, the card scrolled into view, then the typed-word guard
+		await dp.back_up_now()
+		await dp.back_up_now()
+		var sc0: ScrollContainer = app.current().find_children("*", "ScrollContainer", true, false)[0]
+		sc0.scroll_vertical = int(dp.global_position.y - (sc0.get_child(0) as Control).global_position.y - 4.0)
+		await pause(1.0)
+		await shot("08-your-data")
+		var rows: Array = dp.last.get("backups", [])
+		if not rows.is_empty():
+			dp._restore(str((rows[0] as Dictionary).get("id", "")), SbFormat.datetime_text(str((rows[0] as Dictionary).get("created_at", ""))))
+			await pause(0.8)
+			await shot("09-restore-confirm")
+			for c in dp.get_children():
+				if c is ConfirmationDialog:
+					c.queue_free()
+			await pause(0.3)
 	var scrolls := app.current().find_children("*", "ScrollContainer", true, false)
 	if not scrolls.is_empty():  # down to the real costs (OpenAI billing)
 		var sc: ScrollContainer = scrolls[0]

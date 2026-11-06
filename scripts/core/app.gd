@@ -65,6 +65,16 @@ func start_setup() -> void:
 	_switch(SETUP.instantiate(), "setup")
 
 
+## "Repair the installation" (engine room, Your data): the setup runs again with --repair, which rebuilds the
+## Python environment; the data is not touched.
+var setup_repair := false
+
+
+func repair_installation() -> void:
+	setup_repair = true
+	start_setup()
+
+
 func show_console() -> void:
 	_switch(CONSOLE.instantiate(), "console")
 

@@ -163,7 +163,8 @@ guide(
     "Export part of your Brain as one <code>.brain</code> file, and bring in a pack someone shared, as a layer you "
     "can switch off.",
     [],
-    [("Open <b>Captures</b>, then <b>Packs…</b> (or say <span class=\"say\">export the Kitchen renovation project</span>). "
+    [("Open the engine room (the status pill at the top right), then <b>Your data → Packs…</b> (or say "
+      "<span class=\"say\">export the Kitchen renovation project</span>). "
       "Choose what leaves: a place, a theme, a search or chosen items.",
       "Before anything is written, the preview says what will leave (7 items, 3 sources) and what never does: "
       "your keys, settings, conversations and costs."),
@@ -183,6 +184,34 @@ guide(
      ("An imported pack looks wrong.", "Switch its layer off, or remove it: your own items are never changed by an "
       "import.")],
     [("Brain packs", "docs.html#packs")],
+    "The Brain")
+
+guide(
+    "backups", "Back up and restore", "scripted", 3,
+    "Your whole Brain is backed up by itself every day; back up any time, bring any day back, or move it all to "
+    "another computer. Nothing is ever erased without a checked backup first.",
+    [],
+    [("Open the engine room (the status pill at the top right): the <b>Your data</b> card.",
+      "When the last backup was taken, where backups go and how often (every day by default). Here the orange line "
+      "says they sit on the Brain's own disk: <b>Choose…</b> another disk, a USB key or a synced folder (OneDrive) so "
+      "they survive a disk failure."),
+     ("<b>Back up now</b> (or say <span class=\"say\">back up now</span>).",
+      "Everything: items, documents and pictures, conversations, your agents, the undo history, settings. Never your "
+      "API key. Files already backed up are not copied again, and the backup is read back and checked."),
+     ("Next to a backup, <b>Restore…</b>, then type the word it asks for.",
+      "Typing the word is the only way: no click by mistake, and never by voice."),
+     ("Confirm.",
+      "Your Brain is back to that moment. The state just before is kept as a <i>safety copy</i> in the list: "
+      "<b>Restore</b> it to undo the restore."),
+     ("<b>Export everything…</b>",
+      "One <code>.zip</code> file with the whole Brain. On the other computer: <b>Import a backup file…</b>, then "
+      "restore it."),
+     ],
+    [("“The backup failed: cannot write”.", "The chosen folder is gone (a USB key not plugged in?): choose it again or "
+      "another one."),
+     ("You want to start over.", "<b>Start fresh…</b> in the same card: a checked backup first, then an empty Brain; "
+      "Restore brings the old one back.")],
+    [("Backups", "docs.html#backups")],
     "The Brain")
 
 guide(

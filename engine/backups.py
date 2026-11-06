@@ -11,7 +11,8 @@ Layout of a destination folder (another disk, OneDrive, a USB key; <data>/backup
                                                   is their fingerprint, so a daily backup only adds new files
 
 Every backup is reopened and checked before it counts. Rotation keeps the newest of each of the last 7 days,
-4 weeks and 6 months, plus the safety copies of the last 30 days; files no backup uses any more are removed.
+4 weeks and 6 months, the last 5 manual backups, and the safety copies of the last 30 days; files no backup uses
+any more are removed.
 
 Restoring copies the chosen backup's files back, replaces the database, and applies the newer migrations when
 the backup is older. Starting fresh replaces it with a new Brain. Both take a verified backup first: no backup,
@@ -38,7 +39,7 @@ FORMAT = "sbgd-backup"
 FORMAT_VERSION = 1
 KINDS = ("auto", "manual", "before-restore", "before-fresh")
 DEFAULTS = {"destination": "", "every_hours": 24, "enabled": True}
-KEEP_DAYS, KEEP_WEEKS, KEEP_MONTHS, KEEP_SAFETY_DAYS = 7, 4, 6, 30
+KEEP_DAYS, KEEP_WEEKS, KEEP_MONTHS, KEEP_SAFETY_DAYS, KEEP_MANUAL = 7, 4, 6, 30, 5
 COUNTED = ("notes", "spaces", "links", "sources", "source_images", "assistant_messages", "assistant_actions")
 _LOCK = threading.Lock()  # one backup, restore or fresh start at a time
 
@@ -345,6 +346,8 @@ def keep_set(manifests: list[dict[str, Any]], now: datetime | None = None) -> se
     for when, m in dated:
         if m["kind"].startswith("before-") and now - when <= timedelta(days=KEEP_SAFETY_DAYS):
             keep.add(m["id"])
+    keep |= {m["id"] for _, m in dated if m["kind"] == "manual"}.intersection(
+        [m["id"] for _, m in dated if m["kind"] == "manual"][:KEEP_MANUAL])  # the ones you asked for, even on the same day
     return keep
 
 
@@ -464,3 +467,93 @@ class Worker(threading.Thread):
                 _record(self.layout, "error", f"Automatic backup failed: {str(exc)[:200]}")
             if self.stopped.wait(self.every_s):
                 return
+
+
+# ---------------------------------------------------------------- one file, to move to another computer
+EXPORT_PREFIX = "sbgd-backup/"
+MAX_IMPORT_BYTES = 20 * 1024 ** 3      # unpacked, all files together
+MAX_IMPORT_FILES = 200_000
+
+
+def export_file(layout: Layout, out_dir: Path | None = None) -> dict[str, Any]:
+    """A fresh backup, packed into one zip: its database, manifest and every file it uses."""
+    import zipfile
+
+    snap = backup(layout, "manual")
+    base = base_dir(layout)
+    m = _manifest(base / "snapshots" / snap["id"])
+    out_dir = out_dir or layout.root / "exports"
+    out_dir.mkdir(parents=True, exist_ok=True)
+    path = out_dir / f"second-brain-backup-{datetime.now().strftime('%Y-%m-%d-%H%M%S')}.zip"  # local time: what the user reads
+    tmp = path.with_suffix(".part")
+    with zipfile.ZipFile(tmp, "w", zipfile.ZIP_DEFLATED, allowZip64=True) as z:
+        z.write(base / "snapshots" / snap["id"] / "manifest.json", EXPORT_PREFIX + "manifest.json")
+        z.write(base / "snapshots" / snap["id"] / "brain.sqlite3", EXPORT_PREFIX + "brain.sqlite3")
+        for rel in (m or {}).get("originals", []):
+            f = base / rel
+            if f.is_file():
+                z.write(f, EXPORT_PREFIX + rel, compress_type=zipfile.ZIP_STORED)  # PDFs and pictures are already packed
+    tmp.replace(path)
+    return {"path": str(path), "bytes": path.stat().st_size, "backup": snap["id"], "counts": snap["counts"]}
+
+
+def import_file(layout: Layout, path: Path) -> dict[str, Any]:
+    """Reads a backup file (from another computer) into this Brain's backups, checked, ready to restore.
+    Careful with what it reads: only its own entries, no path outside, sizes capped, every file must hash to
+    its name, and the result is verified like any backup. Nothing of the current Brain changes here."""
+    import re
+    import zipfile
+
+    allowed = re.compile(r"^sbgd-backup/(manifest\.json|brain\.sqlite3|originals/[0-9a-f]{2}/[0-9a-f]{64}\.[a-z0-9]{1,8})$")
+    try:
+        z = zipfile.ZipFile(path)
+    except (OSError, zipfile.BadZipFile) as exc:
+        raise BackupError(f"not a backup file: {exc}") from exc
+    with z:
+        infos = z.infolist()
+        if len(infos) > MAX_IMPORT_FILES or sum(i.file_size for i in infos) > MAX_IMPORT_BYTES:
+            raise BackupError("this backup file is too large")
+        names = {i.filename for i in infos if not i.is_dir()}
+        if any(not allowed.match(n) for n in names) or EXPORT_PREFIX + "manifest.json" not in names:
+            raise BackupError("not a Second Brain GD backup file")
+        try:
+            m = json.loads(z.read(EXPORT_PREFIX + "manifest.json"))
+        except ValueError as exc:
+            raise BackupError("its manifest cannot be read") from exc
+        if m.get("format") != FORMAT or int(m.get("version", 0)) > FORMAT_VERSION:
+            raise BackupError("this backup was made by a newer version of the app: update the app first")
+        base = base_dir(layout)
+        snap_id = f"{str(m.get('id', 'backup'))[:24]}-imported"
+        snap_id = "".join(c for c in snap_id if c.isalnum() or c in "-_")
+        target = base / "snapshots" / snap_id
+        if target.exists():
+            return {"id": snap_id, "already": True, "created_at": m.get("created_at"), "counts": m.get("counts")}
+        partial = base / "snapshots" / (snap_id + ".partial")
+        shutil.rmtree(partial, ignore_errors=True)
+        partial.mkdir(parents=True)
+        try:
+            for name in sorted(names):
+                rel = name[len(EXPORT_PREFIX):]
+                if rel.startswith("originals/"):
+                    dst = base / rel
+                    if dst.is_file():
+                        continue
+                    data = z.read(name)
+                    if hashlib.sha256(data).hexdigest() != Path(rel).stem:
+                        raise BackupError(f"a file in the backup is damaged ({Path(rel).name[:12]}…)")
+                    dst.parent.mkdir(parents=True, exist_ok=True)
+                    dst.write_bytes(data)
+                else:
+                    with z.open(name) as src, (partial / rel).open("wb") as out:
+                        shutil.copyfileobj(src, out)
+            m["kind"] = m.get("kind", "manual")
+            problems = _verify(base, partial, m, deep=False)
+            if problems:
+                raise BackupError("the backup file does not read back correctly: " + "; ".join(problems[:3]))
+            m["id"] = snap_id
+            (partial / "manifest.json").write_text(json.dumps(m, indent=1), encoding="utf-8")
+            partial.replace(target)
+        except Exception:
+            shutil.rmtree(partial, ignore_errors=True)
+            raise
+    return {"id": snap_id, "already": False, "created_at": m.get("created_at"), "counts": m.get("counts")}

@@ -18,7 +18,7 @@ var _final: Dictionary = {}
 var _timer: Timer
 
 
-func start(python: String, data_dir: String) -> Error:
+func start(python: String, data_dir: String, extra: PackedStringArray = PackedStringArray()) -> Error:
 	if is_running():
 		return ERR_BUSY
 	var runtime := data_dir.path_join("runtime")
@@ -34,6 +34,7 @@ func start(python: String, data_dir: String) -> Error:
 	exit_code = -1
 	var args := PackedStringArray([SbPaths.bootstrap_script(), "setup", "--quiet", "--data-dir", data_dir,
 		"--events", events_path, "--parent-pid", str(OS.get_process_id())])
+	args.append_array(extra)
 	pid = OS.create_process(python, args, false)
 	if pid <= 0:
 		pid = -1

@@ -6,6 +6,8 @@
   POST /data/backups/{id}/verify        reopen and check one backup (files included)
   POST /data/backups/{id}/restore       {"confirm": "RESTORE"}: a verified safety copy first, then replace
   POST /data/fresh                      {"confirm": "START FRESH"}: a verified safety copy first, then a new Brain
+  POST /data/export                     everything in one file (exports/), to move to another computer
+  POST /data/import                     {"path"}: a backup file read into this Brain's backups, ready to restore
 
 Restoring and starting fresh need the confirmation word: the app asks the user to type it. Nothing here is
 reachable by voice except backing up and reading the status.
@@ -25,6 +27,10 @@ class SettingsIn(BaseModel):
     destination: str | None = Field(default=None, max_length=1000)
     every_hours: int | None = Field(default=None, ge=1, le=720)
     enabled: bool | None = None
+
+
+class PathIn(BaseModel):
+    path: str = Field(min_length=1, max_length=2000)
 
 
 class ConfirmIn(BaseModel):
@@ -71,5 +77,18 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         if body.confirm != "START FRESH":
             raise HTTPException(status_code=400, detail="Type START FRESH to confirm.")
         return guarded(lambda: backups.start_fresh(layout))
+
+    @r.post("/export")
+    def post_export() -> dict[str, Any]:
+        return guarded(lambda: backups.export_file(layout))
+
+    @r.post("/import")
+    def post_import(body: PathIn) -> dict[str, Any]:
+        from pathlib import Path
+
+        p = Path(body.path).expanduser()
+        if not p.is_file():
+            raise HTTPException(status_code=404, detail="File not found.")
+        return guarded(lambda: backups.import_file(layout, p))
 
     return r

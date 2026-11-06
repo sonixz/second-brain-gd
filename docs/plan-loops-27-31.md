@@ -79,6 +79,8 @@ except what is kept on purpose; restore an older-schema backup. **Confidence 85 
 
 **Confidence 85 %.**
 
+**Done 2026-11-05.** Also: rotation keeps the last 5 manual backups (two the same day were collapsing into one, seen in the screenshots); the typed-word dialog had a stretched height (fixed width label). Uninstall keeps the backups folder by default when it sits inside the data folder.
+
 ## Loop 31 — Before opening the repository
 
 | What | How |

@@ -51,3 +51,12 @@ static func number(value: Variant) -> String:
 	if value is float and is_equal_approx(value, roundf(value)) and absf(value) < 1e15:
 		return str(int(value))
 	return str(value)
+
+
+## A UTC time from the engine ("2026-11-05T19:40:12Z") as local "2026-11-05 15:40".
+static func datetime_text(iso: String) -> String:
+	if iso.length() < 16:
+		return iso
+	var unix := Time.get_unix_time_from_datetime_string(iso.trim_suffix("Z"))
+	unix += int(Time.get_time_zone_from_system().get("bias", 0)) * 60
+	return Time.get_datetime_string_from_unix_time(unix, true).left(16)

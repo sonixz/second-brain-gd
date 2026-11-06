@@ -146,8 +146,9 @@ def stop_server(layout: Layout, timeout: float = 5.0) -> dict[str, Any]:
 
 class Installer:
     def __init__(self, layout: Layout, events: EventWriter, port: int | None = None,
-                 parent_pid: int | None = None, start_service: bool = True) -> None:
+                 parent_pid: int | None = None, start_service: bool = True, repair: bool = False) -> None:
         self.layout = layout
+        self.repair = repair  # "Repair the installation": rebuild the venv and reinstall, data untouched
         self.events = events
         self.port_override = port
         self.parent_pid = parent_pid
@@ -339,6 +340,10 @@ class Installer:
             self.state["venv_python"] = str(sys.executable)
             return
         current = "%d.%d" % sys.version_info[:2]
+        if self.repair and self.layout.venv.exists():
+            stop_server(self.layout)  # its files are in use while the engine runs (Windows)
+            self.emit("venv", "repair", "progress", "Repair: removing the virtual environment to rebuild it…", 0.1)
+            shutil.rmtree(self.layout.venv, ignore_errors=True)
         existing = self._venv_version()
         if existing and existing.rsplit(".", 1)[0] == current:
             self.emit("venv", "check", "skipped", f"Virtual environment OK (Python {existing})", 1.0,
@@ -386,7 +391,7 @@ class Installer:
                       lock_sha256=digest[:12])
             self._mark("dependencies", "ok", lock_sha256=digest, bundled=True)
             return
-        previous = self.state.get("steps", {}).get("dependencies", {})
+        previous = {} if self.repair else self.state.get("steps", {}).get("dependencies", {})
         if previous.get("status") == "ok" and previous.get("lock_sha256") == digest and self._deps_importable():
             self.emit("dependencies", "check", "skipped", "Locked dependencies already installed", 1.0,
                       lock_sha256=digest[:12])

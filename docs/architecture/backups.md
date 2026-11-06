@@ -24,7 +24,7 @@ Credential Manager (or the private file on Linux). Not the Python runtime, the a
 ## Kinds and rotation
 `auto` (every N hours while the app is open, default 24, first check a minute after start), `manual`,
 `before-restore`, `before-fresh`. Rotation keeps the newest backup of each of the last 7 days, 4 weeks and 6
-months, every safety copy of the last 30 days, and always the newest; originals no kept backup uses are removed.
+months, the last 5 manual backups, every safety copy of the last 30 days, and always the newest; originals no kept backup uses are removed.
 
 ## Verify
 After writing, each backup is reopened: database checksum, `PRAGMA quick_check`, counts against the manifest,

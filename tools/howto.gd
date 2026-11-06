@@ -28,7 +28,7 @@ func _run() -> void:
 ## One screenshot per step, numbered like the steps in guides.py.
 func step(what: String, keep_toast: bool = false) -> void:
 	step_n += 1
-	if not keep_toast and b.get("toast") != null:
+	if not keep_toast and is_instance_valid(b) and b.get("toast") != null:  # b is freed while the engine room shows
 		(b.get("toast") as Control).visible = false
 	await shot("%02d" % step_n)
 	print("step %02d: %s" % [step_n, what])
@@ -226,12 +226,34 @@ func guide_graph() -> void:
 
 
 # ---------------------------------------------------------------- 10. Share a project as a pack (scripted)
+## The engine room's Your data card (Loop 30), scrolled into view.
+func open_your_data() -> DataPanel:
+	app.show_console()
+	await pause(3.0)
+	var dp: DataPanel = app.current().find_child("DataPanel", true, false)
+	var sc: ScrollContainer = app.current().find_children("*", "ScrollContainer", true, false)[0]
+	await pause(0.5)
+	sc.scroll_vertical = int(dp.global_position.y - (sc.get_child(0) as Control).global_position.y - 4.0)
+	await pause(0.6)
+	return dp
+
+
+func back_to_brain() -> void:
+	app.show_brain()
+	await pause(3.0)
+	b = app.current()
+	g = b.get("graph")
+	stage()
+
+
 func guide_packs() -> void:
-	await b.call("set_view", "captures")
-	await pause(0.8)
-	var cv: CapturesView = b.get("captures_view")
-	var pd := cv.open_packs()
+	var dp := await open_your_data()
+	dp._open_packs()
 	await pause(1.2)
+	var pd: PacksDialog = null
+	for c in dp.get_children():
+		if c is PacksDialog:
+			pd = c
 	pd.scope.select(1)
 	pd._fill_values()
 	for i in pd.value.item_count:
@@ -243,7 +265,7 @@ func guide_packs() -> void:
 	pd.size = Vector2i(760, 640)
 	pd.position = (root.size - pd.size) / 2
 	await pause(1.5)
-	await step("Captures → Packs…: choose what leaves, see it before")
+	await step("engine room → Your data → Packs…: choose what leaves, see it before")
 	await pd.do_export()
 	await pause(1.0)
 	await step("export: one .brain file")
@@ -251,8 +273,7 @@ func guide_packs() -> void:
 	await pause(1.5)
 	await step("import a pack someone shared: it becomes a layer")
 	pd.queue_free()
-	await b.call("set_view", "graph")
-	await pause(1.0)
+	await back_to_brain()
 	await b.call("refresh_graph")
 	await settle(30.0)
 	g.zoom_to(0.45, Vector2(-60, 0), 0.3)
@@ -658,3 +679,37 @@ func guide_images() -> void:
 	await pause(1.5)
 	await step("ask about it: the answer comes from the picture")
 	edge(["close"])
+
+
+# ---------------------------------------------------------------- Back up and restore (scripted)
+func guide_backups() -> void:
+	var dp := await open_your_data()
+	await pause(0.8)
+	await step("the engine room, Your data: where backups go, how often")
+	await dp.back_up_now()
+	await pause(0.8)
+	await step("Back up now: a full backup, read back and checked")
+	var rows: Array = dp.last.get("backups", [])
+	var first: Dictionary = rows[0]
+	dp._restore(str(first.get("id", "")), SbFormat.datetime_text(str(first.get("created_at", ""))))
+	await pause(0.6)
+	var dlg: ConfirmationDialog = null
+	for c in dp.get_children():
+		if c is ConfirmationDialog:
+			dlg = c
+	var edit: LineEdit = dlg.find_children("*", "LineEdit", true, false)[0]
+	edit.text = I18n.t("RESTORE")
+	edit.text_changed.emit(edit.text)
+	await pause(0.5)
+	await step("Restore…: type the word; a safety copy comes first")
+	dlg.queue_free()
+	await dp.restore(str(first.get("id", "")))
+	await pause(0.8)
+	await step("restored, and the state before it kept as a safety copy")
+	dp._export()
+	for i in 40:
+		await pause(0.5)
+		if dp.result_label.text.begins_with(I18n.t("Saved: %s (%s). Copy it to the other computer, then Import a backup file there.").get_slice("%s", 0)):
+			break
+	await pause(0.5)
+	await step("Export everything: one file to move your Brain to another computer")

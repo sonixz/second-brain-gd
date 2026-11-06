@@ -168,6 +168,10 @@ class BackupTests(unittest.TestCase):
         self.assertNotIn("safety-old", keep)
         self.assertNotIn("auto-199", keep)
         self.assertLessEqual(len(keep), 7 + 4 + 6 + 1)
+        manual = [{"id": f"m{i}", "kind": "manual", "created_at": (now - timedelta(minutes=i)).strftime("%Y-%m-%dT%H:%M:%SZ")}
+                  for i in range(8)]
+        kept = backups.keep_set(manual, now)
+        self.assertEqual(kept, {f"m{i}" for i in range(5)})  # the last 5 you asked for, all on the same day
 
     def test_files_no_backup_uses_any_more_are_removed(self):
         a = Brain(self.dir / "a", self.dir / "dest").fill()
@@ -225,3 +229,71 @@ class PackPictureTests(unittest.TestCase):
             conn.close()
             self.assertEqual(len(rels), 1)
             self.assertTrue((b.layout.root / rels[0]).is_file())
+
+
+class MoveToAnotherComputerTests(unittest.TestCase):
+    def test_export_one_file_then_import_and_restore_elsewhere(self):
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(os.environ, {"SBGD_OCR": "off", "SBGD_SEED": ""}):
+            a = Brain(Path(tmp) / "a", Path(tmp) / "dest-a").fill()
+            out = backups.export_file(a.layout)
+            self.assertTrue(Path(out["path"]).is_file())
+            b = Brain(Path(tmp) / "b", Path(tmp) / "dest-b")  # another computer, its own backups
+            imported = backups.import_file(b.layout, Path(out["path"]))
+            self.assertEqual(backups.verify(b.layout, imported["id"]), [])
+            backups.restore(b.layout, imported["id"])
+            self.assertEqual(tables(a.layout.database), tables(b.layout.database))
+
+    def test_a_foreign_or_tampered_file_is_refused(self):
+        import zipfile
+
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(os.environ, {"SBGD_OCR": "off", "SBGD_SEED": ""}):
+            a = Brain(Path(tmp) / "a", Path(tmp) / "dest").fill()
+            evil = Path(tmp) / "evil.zip"
+            with zipfile.ZipFile(evil, "w") as z:
+                z.writestr("sbgd-backup/manifest.json", json.dumps({"format": "sbgd-backup", "version": 1}))
+                z.writestr("sbgd-backup/../../outside.txt", "nope")
+            with self.assertRaises(backups.BackupError):
+                backups.import_file(a.layout, evil)
+            self.assertFalse((Path(tmp) / "outside.txt").exists())
+            good = Path(backups.export_file(a.layout)["path"])
+            bad = Path(tmp) / "bad.zip"
+            with zipfile.ZipFile(good) as zin, zipfile.ZipFile(bad, "w") as zout:
+                for i in zin.infolist():
+                    data = zin.read(i.filename)
+                    zout.writestr(i, data + b"x" if "/originals/" in i.filename else data)
+            b = Brain(Path(tmp) / "b", Path(tmp) / "dest-b")
+            with self.assertRaises(backups.BackupError):
+                backups.import_file(b.layout, bad)
+            self.assertEqual(backups.list_backups(b.layout), [])
+
+
+class VoiceAndRepairTests(unittest.TestCase):
+    def test_back_up_by_voice_and_ask_when(self):
+        from engine.assistant import core
+
+        with tempfile.TemporaryDirectory() as tmp, mock.patch.dict(os.environ, {"SBGD_OCR": "off", "SBGD_SEED": ""}):
+            a = Brain(Path(tmp) / "a", Path(tmp) / "dest").fill()
+            with database.session(a.layout.database) as conn:
+                done = core.run_tool(conn, "backup_now", {}, [])
+                told = core.run_tool(conn, "backup_status", {}, [])
+            self.assertTrue(done["backed_up"])
+            self.assertEqual(told["kept"], 1)
+            self.assertIn("never by voice", told["note"])
+
+    def test_repair_rebuilds_the_environment_and_reinstalls(self):
+        from engine.installer import cli, steps
+
+        self.assertTrue(cli._parser().parse_args(["setup", "--repair"]).repair)
+        with tempfile.TemporaryDirectory() as tmp:
+            layout = Layout(Path(tmp))
+            (layout.venv / "lib").mkdir(parents=True)
+            inst = steps.Installer(layout, mock.MagicMock(), repair=True)
+            inst.bundled = None
+            inst._mark = lambda *a, **k: None
+            inst.state = {"steps": {"dependencies": {"status": "ok"}}}
+            with mock.patch.object(steps, "stop_server") as stopped, \
+                    mock.patch("venv.EnvBuilder.create", side_effect=RuntimeError("stop here")):
+                with self.assertRaises((steps.SetupFailed, RuntimeError)):
+                    inst.step_venv()
+            stopped.assert_called_once()
+            self.assertFalse((layout.venv / "lib").exists())

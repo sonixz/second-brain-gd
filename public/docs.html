@@ -41,6 +41,7 @@
           <li><a href="#install">Install</a></li>
           <li><a href="#openai-key">Your OpenAI key</a></li>
           <li><a href="#data">Where your data lives</a></li>
+          <li><a href="#backups">Backups, restore, start fresh</a></li>
           <li><a href="#language">English or French</a></li>
         </ul>
         <h4>Use</h4>
@@ -173,6 +174,35 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         </table>
         <p>Models can be changed in the engine room; every call's cost is shown, and your real bill can be read
           live (see <a href="#costs">Real AI costs</a>).</p>
+      </section>
+
+      <section class="doc" id="backups">
+        <p class="kicker">Start</p>
+        <h2>Backups, restore, start fresh</h2>
+        <p>Your whole Brain is backed up by itself, every day by default, while the app is open. Everything is in:
+          items, documents and page pictures, conversations, your agents, the undo history, settings. Never your API
+          key: it stays in the credential store. Each backup is read back and checked before it counts.</p>
+        <p>All of it is in the engine room (the status pill at the top right), <b>Your data</b>:
+          step by step in <a href="howto.html#backups">How-to → Back up and restore</a>.</p>
+        <table>
+          <thead><tr><th>In Your data</th><th>What it does</th></tr></thead>
+          <tbody>
+            <tr><td><b>Back up now</b> (or say “back up now”)</td><td>A full backup; files already backed up are not copied again.</td></tr>
+            <tr><td><b>Choose…</b></td><td>Where backups go. Until you choose, they sit in your data folder, on the Brain's own disk: they protect you from mistakes, not from a disk failure. Pick another disk, a USB key or a synced folder (OneDrive).</td></tr>
+            <tr><td><b>Automatic</b></td><td>Every 6 or 12 hours, every day, every 3 days, every week, or off. Kept: the newest of each of the last 7 days, 4 weeks and 6 months, your last 5 manual backups, and 30 days of safety copies.</td></tr>
+            <tr><td><b>Restore…</b></td><td>Your Brain goes back to that backup. You type a word to confirm; the state just before is kept as a safety copy (restore it to undo). An older backup gets the newer database changes.</td></tr>
+            <tr><td><b>Export everything…</b> / <b>Import a backup file…</b></td><td>One file to move your Brain to another computer; there it is checked, then you restore it.</td></tr>
+            <tr><td><b>Packs…</b></td><td>Share a project, or bring in someone's pack as a layer (<a href="#packs">Brain packs</a>).</td></tr>
+            <tr><td><b>Repair the installation…</b></td><td>Rebuilds the engine's Python environment; your data is not touched.</td></tr>
+            <tr><td><b>Start fresh…</b></td><td>A checked backup first, then an empty Brain with its starter notes. Your key, preferences and browser pairing stay.</td></tr>
+            <tr><td><b>Uninstall…</b></td><td>Removes your Brain, your API keys and the app's preferences from the computer, keeping your backups if you want. Then delete the app's folder yourself.</td></tr>
+          </tbody>
+        </table>
+        <div class="callout"><p><b>Not encrypted.</b> Backups are plain files, like your Brain itself. If they go to a
+          cloud folder, its protection is the cloud's; on a laptop, turn on BitLocker (Windows) or your system's disk
+          encryption. Restoring or erasing is never possible by voice.</p></div>
+        <p>For developers: <code>engine/backups.py</code>, <code>docs/architecture/backups.md</code>, routes under
+          <code>/data</code> in the <a href="#api">local API</a>.</p>
       </section>
 
       <section class="doc" id="language">
@@ -733,10 +763,10 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
         <h2>Brain packs: share part of your brain</h2>
         <p>A pack is a <code>.brain</code> file you can share, archive or use to restart a project elsewhere.
           Imported, it becomes a <b>layer</b>: switch it off, merge it, or remove it without touching your own items.</p>
-        <figure class="shot doc-shot"><img src="assets/showcase/packs.webp" alt="The Brain packs dialog exporting one place" loading="lazy" width="1280" height="800"><figcaption>Captures → Packs…: export one place, with a preview.</figcaption></figure>
+        <figure class="shot doc-shot"><img src="assets/showcase/packs.webp" alt="The Brain packs dialog exporting one place" loading="lazy" width="1280" height="800"><figcaption>Brain packs: export one place, with a preview of what leaves.</figcaption></figure>
         <h3>Export</h3>
         <ol class="steps-doc">
-          <li><p>Open <b>Captures → Packs…</b> (or say “export the Renovation project”).</p></li>
+          <li><p>Open <b>the engine room → Your data → Packs…</b> (or say “export the Renovation project”).</p></li>
           <li><p>Choose what leaves: everything, a place, a theme, a search, or chosen items. The preview lists
             exactly what will be written before anything is.</p></li>
           <li><p>Add a title, author, licence and description, tick <b>include originals</b> if you want the PDFs and

@@ -474,6 +474,10 @@ UI_TOOLS = [
      "parameters": {"type": "object", "properties": {"change": {"type": "string", "enum": ["faster", "slower", "normal"]}}, "required": ["change"]}}},
     {"type": "function", "function": {"name": "undo_last_action", "description": "Undo the most recent change the assistant made (a filed note, a task, a list item...).",
      "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {"name": "backup_now", "description": "Back up the whole Brain now (« fais une sauvegarde », « back up now »). Restoring or erasing is NEVER done by voice: for that the user goes to the engine room, Your data.",
+     "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {"name": "backup_status", "description": "When the last backup was taken, where backups go, how many are kept (« c'était quand la dernière sauvegarde? »).",
+     "parameters": {"type": "object", "properties": {}}}},
 ]
 TOOLS = TOOLS + UI_TOOLS
 _UI: dict[str, list[dict[str, Any]]] = {"actions": []}  # interface actions requested during the current chat turn
@@ -578,6 +582,28 @@ def _ui_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any]) -> dict[
         act = {"action": "weekly_review"}
     _UI["actions"].append(act)
     return {"done": True, "shown_to_user": act}
+
+
+def _backup_tool(conn: sqlite3.Connection, name: str) -> Any:
+    """Back up now, or tell about the backups (Loop 30). Restoring and starting fresh are never voice actions."""
+    from engine import backups
+    from engine.paths import Layout
+    from engine.sources import originals
+
+    layout = Layout(originals.data_root(conn))
+    if name == "backup_now":
+        conn.commit()  # the backup reads the database through its own connection
+        try:
+            out = backups.backup(layout, "manual")
+        except (backups.BackupError, OSError) as exc:
+            return {"error": f"the backup failed: {exc}"}
+        return {"backed_up": True, "items": out["counts"]["notes"], "files": out["originals"],
+                "seconds": out["seconds"], "where": str(backups.destination(layout))}
+    st = backups.status(layout)
+    return {"last_backup": st["last"], "age_hours": st["age_hours"], "where": st["destination"],
+            "same_disk_as_the_brain": st["same_disk"], "kept": len(st["backups"]),
+            "automatic_every_hours": st["settings"]["every_hours"] if st["settings"]["enabled"] else None,
+            "note": "To restore or start fresh, the user goes to the engine room, Your data (never by voice)."}
 
 
 def _pack_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any]) -> Any:
@@ -695,6 +721,8 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
                                     kind=str(args.get("kind") or "project"))
         _UI["actions"].append({"action": "context", "context": ctx})
         return {"done": True, "context": ctx, "shown_to_user": {"action": "context"}}
+    if name in ("backup_now", "backup_status"):
+        return _backup_tool(conn, name)
     if name == "undo_last_action":
         row = conn.execute("SELECT id, kind FROM assistant_actions WHERE undone_at IS NULL ORDER BY id DESC LIMIT 1").fetchone()
         if row is None:

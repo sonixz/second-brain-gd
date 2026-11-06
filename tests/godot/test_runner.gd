@@ -795,6 +795,34 @@ func _e2e() -> void:
 	check(int(db.get("schema_version", 0)) >= 1, "database schema is migrated")
 	check(int(proc.get("pid", 0)) == app.backend.server_pid(), "status pid matches runtime/server.json")
 	check(proc.get("rss_bytes") != null, "API memory is measured")
+	# Your data (Loop 30): back up now, the list, a typed word guards restoring, a restore, the folder removal.
+	var dp: DataPanel = console.find_child("DataPanel", true, false)
+	check(dp != null, "the engine room has a Your data card")
+	if dp != null:
+		var backed := await dp.back_up_now()
+		check(backed and str(dp.last.get("last", {}).get("kind", "")) == "manual" and dp.state_label.text.contains("✓"),
+			"Back up now: a checked backup, shown in the card (%s)" % dp.state_label.text)
+		var rows := (dp.last.get("backups", []) as Array)
+		check(not rows.is_empty() and dp.list_box.get_child_count() >= 2, "the backups are listed with Restore")
+		var cw := dp.confirm_word("Restore", "test", "RESTORE")
+		check(cw.get_ok_button().disabled, "restoring waits for the typed word")
+		var cedit: LineEdit = cw.find_children("*", "LineEdit", true, false)[0]
+		cedit.text = "restore"
+		cedit.text_changed.emit(cedit.text)
+		check(not cw.get_ok_button().disabled, "typing the word unlocks it")
+		cw.queue_free()
+		var restored := await dp.restore(str((rows[0] as Dictionary).get("id", "")))
+		check(restored and dp.result_label.text.contains("safety copy"), "a restore keeps a safety copy (%s)" % dp.result_label.text.left(60))
+	var tree_dir := OS.get_environment("SBGD_HOME").path_join("remove-tree-test")
+	DirAccess.make_dir_recursive_absolute(tree_dir.path_join("backups/brain-x"))
+	DirAccess.make_dir_recursive_absolute(tree_dir.path_join("data/notes"))
+	FileAccess.open(tree_dir.path_join("data/notes/a.txt"), FileAccess.WRITE).store_string("x")
+	FileAccess.open(tree_dir.path_join("backups/brain-x/keep.txt"), FileAccess.WRITE).store_string("x")
+	var resisted := DataPanel.remove_tree(tree_dir, tree_dir.path_join("backups"))
+	check(resisted == 0 and not DirAccess.dir_exists_absolute(tree_dir.path_join("data"))
+		and FileAccess.file_exists(tree_dir.path_join("backups/brain-x/keep.txt")),
+		"uninstalling removes the folder but keeps the backups when asked")
+	DataPanel.remove_tree(tree_dir)
 	# The console shows the latest 40 operations; the setup may be older than that by now, so ask for more.
 	var all_events: Dictionary = await app.backend.api.call_api("/system/events?limit=500")
 	var events: Array = (all_events["data"] as Dictionary).get("events", []) if all_events["ok"] else []

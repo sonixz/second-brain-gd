@@ -25,6 +25,8 @@ def _parser() -> argparse.ArgumentParser:
                            help="the API stops by itself when this process exits")
             s.add_argument("--quiet", action="store_true", help="do not echo events on stdout")
             s.add_argument("--no-start", action="store_true", help="install only, do not start the API")
+            s.add_argument("--repair", action="store_true",
+                           help="rebuild the Python environment from scratch (the data is not touched)")
     return p
 
 
@@ -40,7 +42,7 @@ def run(argv: list[str]) -> int:
     run_id = uuid.uuid4().hex[:12]
     events = EventWriter(args.events, run_id, echo=not args.quiet)
     installer = Installer(layout, events, port=args.port, parent_pid=args.parent_pid,
-                          start_service=not args.no_start)
+                          start_service=not args.no_start, repair=args.repair)
     try:
         installer.run()
         return 0
