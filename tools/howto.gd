@@ -282,6 +282,47 @@ func guide_packs() -> void:
 	await step("its items join the graph, in their own place")
 
 
+# ---------------------------------------------------------------- Bring your Obsidian vault (no model call)
+func guide_vault() -> void:
+	await overview()
+	var dlg: AcceptDialog = b.call("import_folder", file("My vault"))
+	await wait_until(func() -> bool: return not (dlg.get("scan") as Dictionary).is_empty(), 15.0)
+	await pause(1.0)
+	await step("drop the vault: the preview says what it found")
+	await dlg.call("run_import")
+	await pause(1.0)
+	await step("Import: the report, links found and the ones pointing nowhere")
+	dlg.hide()
+	await b.call("refresh_graph")
+	await settle(30.0)
+	g.zoom_to(0.42, Vector2(-60, 0), 0.3)
+	await pause(2.0)
+	calm()
+	await step("folders became places, links are the author's")
+	var beds := node_like(["raised", "beds"])
+	if beds != "":
+		g.zoom_level("read", beds)
+		g.select(beds)
+	await pause(3.0)
+	calm()
+	await step("the note's picture is kept with it")
+	var dp := await open_your_data()
+	dp._open_packs()
+	await pause(1.5)
+	var pd: PacksDialog = null
+	for c in dp.get_children():
+		if c is PacksDialog:
+			pd = c
+	if pd != null:
+		pd.size = Vector2i(760, 760)
+		pd.position = (root.size - pd.size) / 2
+	await pause(1.5)
+	await step("the vault is a layer: off, merge or remove")
+	if pd != null:
+		pd.queue_free()
+	await back_to_brain()
+
+
 # ---------------------------------------------------------------- 4. Find how two ideas connect (real answers)
 func guide_connect() -> void:
 	await overview()

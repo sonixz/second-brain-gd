@@ -189,6 +189,37 @@ guide(
     "The Brain")
 
 guide(
+    "vault", "Bring your Obsidian vault", "scripted", 3,
+    "Bring a folder of Markdown notes (an Obsidian vault here) into your Brain, with its links, places and pictures, "
+    "without any AI call, and as a layer you can remove in one go.",
+    ["A folder of notes: an Obsidian vault, a Logseq graph, a Notion export or plain Markdown files"],
+    [("Drop the vault's folder on the window (or click <b>+ Folder</b> in Places, or say <span class=\"say\">importe "
+      "mon vault Obsidian</span>).",
+      "Nothing comes in yet. The preview says what it found: <i>Obsidian vault detected</i>, 14 notes, 20 links, "
+      "9 places, the 2 links that point to notes not written yet, the template folder left out, the picture that "
+      "comes along, and the cost: less than a cent, for the meaning of the notes only."),
+     ("Press <b>Import</b>.",
+      "The report: 14 new items, 18 of 20 links found their note, and the two that point nowhere, named. The "
+      "structure was read on your computer, without the AI."),
+     ("Close the dialog and look at the graph.",
+      "Your folders became places: <i>1. Projects/Garden redesign</i> is the project Garden redesign, <i>2. Areas/"
+      "Health</i> an area, <i>4. Archives</i> the archive. Each note's links are your links; tags became themes."),
+     ("Zoom into <i>Raised beds</i>.",
+      "The note's picture is kept with it and shows on its card. Its front matter (tags, status, dates) stays "
+      "readable at the top. Later, the Archivist adds links by meaning on top of yours."),
+     ("Open the engine room (the status pill at the top), then <b>Your data → Packs…</b>.",
+      "The vault is a layer: switch it off to hide it, merge it to make it yours, or remove it in one go. Import "
+      "the same folder again later: only new and changed notes come in."),
+     ],
+    [("The preview says <i>Markdown folder</i>, not <i>Obsidian vault</i>.", "The folder has no <code>.obsidian</code> "
+      "folder; links and tags are read the same way."),
+     ("A link points nowhere.", "Its note does not exist in the folder (Obsidian shows it greyed out too). It stays "
+      "as written in the item."),
+     ("A PDF inside a note did not come.", "Only pictures come along for now; drop the PDF itself to add it.")],
+    [("Import a folder", "docs.html#folder-import")],
+    "The Brain")
+
+guide(
     "backups", "Back up and restore", "scripted", 3,
     "Your whole Brain is backed up by itself every day; back up any time, bring any day back, or move it all to "
     "another computer. Nothing is ever erased without a checked backup first.",

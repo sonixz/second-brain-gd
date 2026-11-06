@@ -854,7 +854,6 @@
  "%d notes · %d links · %d attachments · %d places · %d themes": "%d notes · %d liens · %d pièces jointes · %d lieux · %d thèmes",
  "%d links point to notes that do not exist yet (%s…): they stay as written.": "%d liens pointent vers des notes qui n’existent pas encore (%s…) : ils restent tels quels.",
  "%d template notes are left out.": "%d notes gabarits sont laissées de côté.",
- "Pictures and files inside notes are not brought in yet (%d).": "Les images et fichiers intégrés aux notes ne sont pas encore importés (%d).",
  "The vault is in a subfolder: that one is imported.": "Le vault est dans un sous-dossier : c’est lui qui est importé.",
  "Already imported: %d new, %d changed, %d unchanged.": "Déjà importé : %d nouvelles, %d modifiées, %d inchangées.",
  "Estimated cost: %s for the meaning of the notes; no AI call for the structure.": "Coût estimé : %s pour le sens des notes; aucun appel à l’IA pour la structure.",
@@ -867,5 +866,8 @@
  "Pointing nowhere: %s": "Vers nulle part : %s",
  "It is a layer: switch it off, merge it or remove it in Brain packs.": "C’est une couche : désactive-la, fusionne-la ou retire-la dans les packs du Brain.",
  "+ Folder": "+ Dossier",
- "Import a folder of notes (an Obsidian vault, Markdown notes). You can also drop a folder on the window.": "Importe un dossier de notes (un vault Obsidian, des notes Markdown). Tu peux aussi déposer un dossier sur la fenêtre."
+ "Import a folder of notes (an Obsidian vault, Markdown notes). You can also drop a folder on the window.": "Importe un dossier de notes (un vault Obsidian, des notes Markdown). Tu peux aussi déposer un dossier sur la fenêtre.",
+ "%d pictures inside notes come along, attached to their note.": "%d images intégrées aux notes suivent, attachées à leur note.",
+ "Other files inside notes stay out for now (%d).": "Les autres fichiers intégrés aux notes restent de côté pour l’instant (%d).",
+ "Notion export detected: « %s »": "Export Notion détecté : « %s »"
 }

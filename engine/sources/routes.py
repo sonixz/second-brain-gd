@@ -165,7 +165,7 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         from engine.sources import render
 
         doc = document(source_id)
-        if doc["kind"] == "html" and doc["images"] and page == 1:  # a web page's card shows its main image
+        if doc["kind"] in ("html", "text") and doc["images"] and page == 1:  # a web page's (or a note's) main image
             return get_image(source_id, 0)
         if not doc["viewable"] or doc["mode"] != "pages":
             raise HTTPException(status_code=404, detail="No page images for this source.")

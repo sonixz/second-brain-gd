@@ -67,8 +67,10 @@ static func datetime_text(iso: String) -> String:
 ## a "#" heading its words. A mission's draft is written in Markdown (Loop 36).
 static func plain(text: String) -> String:
 	var out := text
+	out = RegEx.create_from_string("!\\[\\[[^\\]\\n]+\\]\\]|!\\[[^\\]\\n]*\\]\\([^)\\n]+\\)").sub(out, "", true)  # a picture: shown on the card
 	out = RegEx.create_from_string("\\s*\\[(?i:source|sources|lien|link)\\]\\(https?://[^)\\s]+\\)").sub(out, "", true)  # « [source](url) »: a pointer
 	out = RegEx.create_from_string("\\[([^\\]\\n]+)\\]\\((https?://[^)\\s]+)\\)").sub(out, "$1", true)
+	out = RegEx.create_from_string("\\[\\[[^\\]|\\n]+\\|([^\\]\\n]+)\\]\\]").sub(out, "$1", true)  # [[Note|shown]]
 	out = RegEx.create_from_string("\\[\\[([^\\]\\n]+)\\]\\]").sub(out, "$1", true)
 	out = RegEx.create_from_string("(?m)^(\\s*)[-*] \\[ \\] ").sub(out, "$1☐ ", true)
 	out = RegEx.create_from_string("(?m)^(\\s*)[-*] \\[[xX]\\] ").sub(out, "$1☑ ", true)
@@ -76,4 +78,5 @@ static func plain(text: String) -> String:
 	out = RegEx.create_from_string("(?m)^#{1,6}\\s+").sub(out, "", true)
 	out = RegEx.create_from_string("\\*\\*([^*\\n]+)\\*\\*").sub(out, "$1", true)
 	out = RegEx.create_from_string("(?<![\\w*])\\*([^*\\n]+)\\*(?![\\w*])").sub(out, "$1", true)
+	out = RegEx.create_from_string("\\n{3,}").sub(out, "\n\n", true)
 	return out

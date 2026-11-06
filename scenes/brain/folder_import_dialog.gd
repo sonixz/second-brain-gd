@@ -101,6 +101,7 @@ func _kind_line(kind: String, folder: String) -> String:
 	match kind:
 		"obsidian": return I18n.t("Obsidian vault detected: « %s »") % folder
 		"logseq": return I18n.t("Logseq graph detected: « %s »") % folder
+		"notion": return I18n.t("Notion export detected: « %s »") % folder
 		"linked": return I18n.t("Linked notes: « %s »") % folder
 		"markdown": return I18n.t("Markdown folder: « %s »") % folder
 		"documents": return I18n.t("Folder of documents: « %s »") % folder
@@ -135,8 +136,11 @@ func refresh() -> void:
 		lines.append(I18n.t("%d links point to notes that do not exist yet (%s…): they stay as written.") % [int(scan["unresolved"]), ", ".join(names)])
 	if int(scan.get("templates", 0)) > 0:
 		lines.append(I18n.t("%d template notes are left out.") % int(scan["templates"]))
-	if int(scan.get("embeds", 0)) > 0:
-		lines.append(I18n.t("Pictures and files inside notes are not brought in yet (%d).") % int(scan["embeds"]))
+	var pics := int(scan.get("pictures", 0))
+	if pics > 0:
+		lines.append(I18n.t("%d pictures inside notes come along, attached to their note.") % pics)
+	if int(scan.get("embeds", 0)) > pics:
+		lines.append(I18n.t("Other files inside notes stay out for now (%d).") % (int(scan["embeds"]) - pics))
 	if bool(scan.get("inner", false)):
 		lines.append(I18n.t("The vault is in a subfolder: that one is imported."))
 	var again: Dictionary = scan["again"] if scan.get("again") is Dictionary else {}

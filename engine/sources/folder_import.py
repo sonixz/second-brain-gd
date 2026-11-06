@@ -15,8 +15,9 @@ import re
 import sqlite3
 import uuid
 from datetime import datetime, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any
+from urllib.parse import unquote
 
 from engine import brain
 from engine.events import utc_now
@@ -36,6 +37,12 @@ LINK_RE = re.compile(r"(!?)\[\[([^\[\]\n]{1,300})\]\]")
 FENCE_RE = re.compile(r"```.*?```|`[^`\n]*`", re.DOTALL)
 TAG_RE = re.compile(r"(?:(?<=\s)|^)#([\w][\w/-]{0,48})", re.UNICODE)
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}")
+MD_LINK_RE = re.compile(r"(!?)\[([^\]\n]*)\]\(<?([^)<>\n]+?)>?\)")   # [text](other note.md), ![alt](pic.png)
+NOTION_ID = re.compile(r"\s+[0-9a-f]{32}$")                          # « Page title 1a2b…(32 hex) » in a Notion export
+LOGSEQ_PROP = re.compile(r"^\s*([A-Za-z][\w-]{0,40}):: ?(.*)$")
+LOGSEQ_TAG = re.compile(r"#\[\[([^\]\n]{1,60})\]\]")
+PICTURE_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".webp"}
+MAX_PICTURES = 12
 
 PARA = {"projects": "project", "projets": "project", "project": "project", "projet": "project",
         "areas": "area", "area": "area", "domaines": "area", "domaine": "area", "zones": "area",
@@ -160,11 +167,21 @@ def walk(root: Path) -> tuple[list[Path], list[Path], list[Path], int, int]:
     return md, docs, att, skipped, templates
 
 
-def detect(root: Path, md: list[Path], docs: list[Path], linked: bool) -> str:
+def flavour(root: Path, md: list[Path]) -> str:
+    """What the folder says about itself before any note is read: obsidian, logseq, notion, or ""."""
     if (root / ".obsidian").is_dir():
         return "obsidian"
     if (root / "logseq").is_dir() and (root / "pages").is_dir():
         return "logseq"
+    if md and sum(1 for p in md if NOTION_ID.search(p.stem)) * 2 >= len(md):
+        return "notion"
+    return ""
+
+
+def detect(root: Path, md: list[Path], docs: list[Path], linked: bool) -> str:
+    f = flavour(root, md)
+    if f:
+        return f
     if md and linked:
         return "linked"
     if md:
@@ -172,26 +189,81 @@ def detect(root: Path, md: list[Path], docs: list[Path], linked: bool) -> str:
     return "documents" if docs else "empty"
 
 
+def _logseq_title(stem: str) -> str:
+    """« a___b » is the namespace « a/b »; « 2026_11_01 » a journal day; special characters are URL-encoded."""
+    t = unquote(stem).replace("___", "/")
+    m = re.fullmatch(r"(\d{4})_(\d{2})_(\d{2})", t)
+    return f"{m.group(1)}-{m.group(2)}-{m.group(3)}" if m else t
+
+
+def _logseq_props(body: str) -> tuple[dict[str, Any], str]:
+    """Page properties: the first lines written « key:: value »."""
+    props: dict[str, Any] = {}
+    lines = body.split("\n")
+    i = 0
+    while i < len(lines):
+        m = LOGSEQ_PROP.match(lines[i].lstrip("- ") if i == 0 else lines[i])
+        if not m:
+            break
+        val = m.group(2).strip()
+        vals = [v.strip().strip("[]").strip() for v in val.split(",")] if m.group(1).lower() in ("tags", "alias", "aliases") else val
+        props[m.group(1)] = vals
+        i += 1
+    return props, "\n".join(lines[i:]).lstrip("\n")
+
+
 class Note:
-    def __init__(self, root: Path, path: Path):
+    def __init__(self, root: Path, path: Path, kind: str = ""):
         self.path = path
         self.rel = path.relative_to(root).as_posix()
-        self.title = path.stem.strip() or "Untitled"
-        raw = path.read_text(encoding="utf-8", errors="replace").lstrip("﻿").replace("\r\n", "\n")
+        stem = path.stem.strip()
+        self.title = (NOTION_ID.sub("", stem) if kind == "notion" else _logseq_title(stem) if kind == "logseq" else stem) or "Untitled"
+        raw = path.read_text(encoding="utf-8", errors="replace").lstrip("\ufeff").replace("\r\n", "\n")
         self.raw_hash = _hash(raw)
         self.props, body, self.malformed = front_matter(raw)
+        if kind == "logseq":
+            more, body = _logseq_props(body)
+            self.props.update(more)
+            if isinstance(self.props.get("title"), str) and self.props["title"].strip():
+                self.title = self.props.pop("title").strip()
+            body = LOGSEQ_TAG.sub(lambda m: "#" + re.sub(r"\s+", "-", m.group(1).strip()), body)
+        if kind == "notion":
+            body = re.sub(r"^#\s+" + re.escape(self.title) + r"\s*\n", "", body, count=1)  # the title, again
         shown = [f"{k}: {', '.join(_as_list(v)) if isinstance(v, list) else v}" for k, v in self.props.items()
                  if k.casefold() not in HIDDEN_PROPS and v not in (None, "", [])]
         if shown:  # properties stay readable, and the links they hold ([[Albums]]) become links
             body = "\n".join(shown) + ("\n\n" + body if body.strip() else "")
-        self.folders = [p for p in Path(self.rel).parent.parts if p not in ("", ".")]
+        self.folders = [NOTION_ID.sub("", p) if kind == "notion" else p for p in Path(self.rel).parent.parts if p not in ("", ".")]
         bare = FENCE_RE.sub(" ", body)
         self.links = [(bool(m.group(1)), *parse_link(m.group(2))) for m in LINK_RE.finditer(bare)]
+        # Markdown links to other notes or pictures, by path from this note: [text](Other%20note.md), ![](img.png)
+        self.md_links = []
+        for m in MD_LINK_RE.finditer(bare):
+            raw_target = m.group(3).strip()
+            if raw_target.startswith(("http:", "https:", "mailto:", "#")):
+                continue
+            target = unquote(raw_target.split(" \"")[0])
+            if not target or re.match(r"^[a-z]+:", target, re.I):
+                continue
+            self.md_links.append((bool(m.group(1)), m.group(2), self.near(target)))
         tags = [t.lstrip("#") for t in _as_list(self.props.get("tags") or self.props.get("tag"))]
         tags += [m.group(1) for m in TAG_RE.finditer(bare)]
         self.tags = list(dict.fromkeys(t.lower() for t in tags if t and not t.replace("/", "").isdigit()))[:30]
         self.aliases = _as_list(self.props.get("aliases") or self.props.get("alias"))
         self.body = body
+        self.pictures: list[tuple[Path, str]] = []
+        self.targets: list[Note] = []
+
+    def near(self, target: str) -> str:
+        """A relative link as a path from the vault root (posix, « ../ » resolved)."""
+        parts: list[str] = []
+        for p in (PurePosixPath(self.rel).parent / target.replace("\\", "/")).parts:
+            if p == "..":
+                if parts:
+                    parts.pop()
+            elif p not in (".", ""):
+                parts.append(p)
+        return "/".join(parts)
 
 
 class Resolver:
@@ -206,6 +278,11 @@ class Resolver:
             self.by_path[_fold(n.rel[:-3] if n.rel.lower().endswith(".md") else n.rel.rsplit(".", 1)[0])] = n
             for a in n.aliases:
                 self.by_stem.setdefault(_fold(a), []).append(n)
+
+    def by_file(self, rel: str) -> Note | None:
+        """A note by its path from the vault root (a Markdown link), « .md » optional."""
+        key = _fold(rel[:-3] if rel.lower().endswith(".md") else rel)
+        return self.by_path.get(key)
 
     def find(self, target: str, source: Note) -> tuple[Note | None, bool]:
         """(note, ambiguous)."""
@@ -235,20 +312,39 @@ def _read(root: Path) -> dict[str, Any]:
     md, docs, att, skipped, templates = walk(root)
     if len(md) > MAX_NOTES:
         raise ImportError_(f"more than {MAX_NOTES} notes: import a part of this folder")
+    kind0 = flavour(root, md)
     notes: list[Note] = []
     for p in md:
         try:
-            notes.append(Note(root, p))
+            notes.append(Note(root, p, kind0))
         except OSError:
             skipped += 1
     res = Resolver(notes)
+    by_name: dict[str, list[Path]] = {}
+    by_rel: dict[str, Path] = {}
+    for a in att:
+        by_name.setdefault(a.name.casefold(), []).append(a)
+        by_rel[a.relative_to(root).as_posix().casefold()] = a
+
+    def picture(n: Note, ref: str, alt: str) -> None:
+        """An embedded picture, found the Obsidian way: its path from the vault or the note, else its name anywhere."""
+        if Path(ref).suffix.lower() not in PICTURE_SUFFIXES or len(n.pictures) >= MAX_PICTURES:
+            return
+        hit = by_rel.get(ref.casefold()) or by_rel.get(n.near(ref).casefold())
+        if hit is None:
+            cands = by_name.get(Path(ref).name.casefold(), [])
+            hit = min(cands, key=lambda c: len(str(c))) if cands else None
+        if hit is not None and all(hit != p for p, _ in n.pictures):
+            n.pictures.append((hit, alt or hit.stem))
+
     links = resolved = ambiguous = embeds = 0
     unresolved: dict[str, int] = {}
     for n in notes:
-        n.targets = []
-        for is_embed, target, _h, _a in n.links:
+        for is_embed, target, _h, alias in n.links:
             if Path(target).suffix.lower() in ATTACH_SUFFIXES:
                 embeds += 1  # an image, a PDF, an Obsidian base: an attachment, not a note
+                if is_embed:
+                    picture(n, target, alias)
                 continue
             if "<%" in target or "{{" in target or "}}" in target:
                 continue  # a template placeholder
@@ -261,7 +357,24 @@ def _read(root: Path) -> dict[str, Any]:
             ambiguous += int(amb)
             if hit is not n:
                 n.targets.append(hit)
-    linked = any(n.links for n in notes)
+        for is_embed, text, rel in n.md_links:
+            if Path(rel).suffix.lower() in ATTACH_SUFFIXES:
+                embeds += 1
+                if is_embed:
+                    picture(n, rel, text)
+                continue
+            if not rel.lower().endswith(".md"):
+                continue
+            links += 1
+            hit = res.by_file(rel)
+            if hit is None:
+                name = NOTION_ID.sub("", Path(rel).stem) if kind0 == "notion" else Path(rel).stem
+                unresolved[name] = unresolved.get(name, 0) + 1
+                continue
+            resolved += 1
+            if hit is not n:
+                n.targets.append(hit)
+    linked = any(n.links or any(r.lower().endswith(".md") for _e, _t, r in n.md_links) for n in notes)
     tokens = sum(min(len(n.title) + len(n.body) + 2, NOTE_TEXT_LIMIT) for n in notes) // 4
     return {"root": root, "notes": notes, "docs": docs, "attachments": att, "skipped": skipped,
             "kind": detect(root, md, docs, linked), "links": links, "resolved": resolved, "ambiguous": ambiguous,
@@ -305,6 +418,10 @@ def place_for(note: Note, vault: str) -> tuple[str, str]:
     """(place name, PARA kind) for a note: its top folder, understood when it is a PARA folder."""
     if not note.folders:
         return vault, "resource"
+    if _fold(note.folders[0]) == "pages":  # Logseq: pages are the graph itself, journals its days
+        return vault, "resource"
+    if _fold(note.folders[0]) == "journals":
+        return "Journals", "resource"
     top = _clean_place(note.folders[0])
     kind = PARA.get(_fold(top))
     if kind:
@@ -340,7 +457,7 @@ def _known(conn: sqlite3.Connection, layer_id: str) -> dict[str, tuple[str, str]
     return out
 
 
-LABELS = {"obsidian": "Obsidian vault", "logseq": "Logseq graph", "linked": "Linked notes",
+LABELS = {"obsidian": "Obsidian vault", "logseq": "Logseq graph", "notion": "Notion export", "linked": "Linked notes",
           "markdown": "Markdown folder", "documents": "Folder of documents", "empty": "Nothing to import"}
 
 
@@ -375,6 +492,7 @@ def scan(conn: sqlite3.Connection, path: str, keep_folders: bool = True) -> dict
             "notes": len(notes), "links": r["links"], "resolved": r["resolved"], "ambiguous": r["ambiguous"],
             "unresolved": len(unresolved), "unresolved_list": [{"target": k, "count": v} for k, v in unresolved[:50]],
             "attachments": len(r["attachments"]), "embeds": r["embeds"], "documents": len(r["docs"]),
+            "pictures": sum(len(n.pictures) for n in notes),
             "document_paths": [str(p) for p in r["docs"][:500]],
             "folders": len(places), "places": [{"name": n, "kind": k} for n, k in places[:40]],
             "tags": len({t for n in notes for t in n.tags}), "skipped": r["skipped"], "malformed": r["malformed"][:20],
@@ -395,7 +513,21 @@ def _body(n: Note, res: Resolver) -> str:
             return m.group(0)
         shown = alias or ((hit.title + " › " + heading) if heading else "")
         return f"[[{hit.title}|{shown}]]" if shown else f"[[{hit.title}]]"
-    body = LINK_RE.sub(repl, n.body).rstrip()
+    def md_repl(m: re.Match) -> str:
+        if m.group(1):
+            return m.group(0)  # a picture: kept as written (it is attached to the item)
+        raw = m.group(3).strip()
+        if raw.startswith(("http:", "https:", "mailto:", "#")):
+            return m.group(0)
+        target = unquote(raw.split(" \"")[0])
+        if not target.lower().endswith(".md"):
+            return m.group(0)
+        hit = res.by_file(n.near(target))
+        if hit is None:
+            return m.group(0)
+        text = m.group(2).strip()
+        return f"[[{hit.title}|{text}]]" if text and text != hit.title else f"[[{hit.title}]]"
+    body = MD_LINK_RE.sub(md_repl, LINK_RE.sub(repl, n.body)).rstrip()
     inline = {m.group(1).lower() for m in TAG_RE.finditer(FENCE_RE.sub(" ", n.body))}
     extra = [t for t in n.tags if t not in inline and re.fullmatch(r"[\w][\w/-]{0,48}", t)]
     if extra:
@@ -496,6 +628,11 @@ def run(conn: sqlite3.Connection, path: str, keep_folders: bool = True) -> dict[
                             summary=summary[:2000] if summary else None, themes=n.tags[:10],
                             filed=1 if keep_folders else 0,
                             proposal={"path": n.rel, "hash": n.raw_hash, "properties": props, "aliases": n.aliases})
+    # Pictures embedded in notes: kept as originals, attached to their item (its card shows the first).
+    pictured = 0
+    for n in notes:
+        if n.pictures and (n.rel not in known or known[n.rel][1] != n.raw_hash):
+            pictured += _attach(conn, ids[n.rel], n, now)
     # The author's links, resolved the Obsidian way (not by our title match), then the themes.
     layer_notes = [ids[n.rel] for n in notes]
     for nid in layer_notes:
@@ -527,4 +664,38 @@ def run(conn: sqlite3.Connection, path: str, keep_folders: bool = True) -> dict[
             "unresolved_list": [{"target": k, "count": v} for k, v in unresolved[:50]],
             "places": len(spaces) if keep_folders else 1, "tags": len({t for n in notes for t in n.tags}),
             "attachments": len(r["attachments"]), "documents": len(r["docs"]), "malformed": r["malformed"][:20],
-            "templates": r["templates"]}
+            "templates": r["templates"], "pictures": pictured}
+
+
+def _attach(conn: sqlite3.Connection, note_id: str, n: Note, now: str) -> int:
+    """The note's pictures as a document of the item (no AI call): the Markdown file kept as the original."""
+    from engine.sources import images, originals
+
+    for old in conn.execute("SELECT id FROM sources WHERE note_id = ? AND uri LIKE 'vault:%'", (note_id,)).fetchall():
+        conn.execute("DELETE FROM sources WHERE id = ?", (old["id"],))
+    root = originals.data_root(conn)
+    try:
+        rel, nbytes = originals.keep_file(root, n.path)
+    except OSError:
+        return 0
+    sid = uuid.uuid4().hex[:16]
+    conn.execute("INSERT INTO sources (id, kind, uri, title, mime, bytes, content_hash, status, note_id, chunks, created_at,"
+                 " updated_at, original, original_bytes) VALUES (?, 'file', ?, ?, 'text/markdown', ?, ?, 'ready', ?, 0, ?, ?, ?, ?)",
+                 (sid, "vault:" + n.rel, n.title[:300], nbytes, n.raw_hash, note_id, now, now, rel, nbytes))
+    kept = 0
+    for path, alt in n.pictures:
+        try:
+            data = path.read_bytes()
+        except OSError:
+            continue
+        mime = images.sniff(data)
+        dims = images.size_of(data) if mime else None
+        if mime is None or len(data) > images.MAX_IMAGE_BYTES:
+            continue
+        prel, pbytes = originals.keep_bytes(root, data, images.KEEP_TYPES[mime])
+        conn.execute("INSERT INTO source_images (source_id, idx, original, mime, bytes, width, height, url, alt, caption,"
+                     " description, seen_text, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, NULL, ?)",
+                     (sid, kept, prel, mime, pbytes, dims[0] if dims else None, dims[1] if dims else None,
+                      "vault:" + path.name, str(alt)[:300], now))
+        kept += 1
+    return kept

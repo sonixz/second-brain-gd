@@ -75,7 +75,17 @@ Full detail in docs/plan-loops-import.md.
   without a model; missing links as « to create » nodes; preview with counts and cost; a layer like packs;
   re-import adds only what changed; an honest report (links resolved and unresolved, with the list).
   Tests on a synthetic vault.
-- **40 (Import B).** Attachments `![[…]]`; Logseq; Notion export; the owner's tries on public vaults
+- **40 (Import B) — done 2026-11-06.** Pictures embedded in notes (wiki and Markdown embeds, found by path or by
+  name anywhere in the vault, 12 per note) are kept as originals and attached to their item; its card shows the
+  first (sources route: a note's main image). Markdown links between notes ([text](other.md), « ../ », URL
+  encoding) resolve like wiki links. Logseq: page properties « key:: value », aliases, #[[tags]], namespaces
+  (a___b), journal days, places Pages and Journals. Notion export: 32-hex ids taken out of titles and folders,
+  the repeated « # Title » removed, links between pages kept (CSV rows: the pages already carry them). Cards hide
+  picture embeds and show a link's alias. Measured on logseq/docs (MIT, pages only): 319 pages in 0.11 s, 977
+  links resolved; the rest are pages Logseq makes implicitly. Guide « Bring your Obsidian vault » with our own
+  sample vault (tools/howto/files/My vault, no third-party content). Tests: 4 more Python tests (12 in all) and
+  one Godot check.
+- **40 (Import B), as planned.** Attachments `![[…]]`; Logseq; Notion export; the owner's tries on public vaults
   (kepano/kepano-obsidian, SoRobby/ObsidianStarterVault and logseq/docs are MIT; obsidianmd/obsidian-help
   has no licence: local tries only); fixes from those tries; How-to guide « Bring your Obsidian vault ».
 

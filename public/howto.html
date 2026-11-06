@@ -47,6 +47,7 @@
           <li><a href="#scanned-pdf">Read a scanned PDF</a></li>
           <li><a href="#graph">Find your way in the graph</a></li>
           <li><a href="#packs">Share a project as a pack</a></li>
+          <li><a href="#vault">Bring your Obsidian vault</a></li>
           <li><a href="#backups">Back up and restore</a></li>
         </ul>
         <h4>Find and connect</h4>
@@ -90,6 +91,9 @@
           <a class="guide-card" href="#packs"><img src="assets/howto/packs/04.webp" alt="" loading="lazy" width="1280" height="800">
             <span class="guide-card-body"><b>Share a project as a pack</b><span>Export part of your Brain as one .brain file, and bring in a pack someone shared, as a layer you can switch off.</span>
             <span class="guide-card-meta">4 min · 4 steps · App only</span></span></a>
+          <a class="guide-card" href="#vault"><img src="assets/howto/vault/05.webp" alt="" loading="lazy" width="1280" height="800">
+            <span class="guide-card-body"><b>Bring your Obsidian vault</b><span>Bring a folder of Markdown notes (an Obsidian vault here) into your Brain, with its links, places and pictures, without any AI call, and as a layer you can remove in one go.</span>
+            <span class="guide-card-meta">3 min · 5 steps · App only</span></span></a>
           <a class="guide-card" href="#backups"><img src="assets/howto/backups/05.webp" alt="" loading="lazy" width="1280" height="800">
             <span class="guide-card-body"><b>Back up and restore</b><span>Your whole Brain is backed up by itself every day; back up any time, bring any day back, or move it all to another computer. Nothing is ever erased without a checked backup first.</span>
             <span class="guide-card-meta">3 min · 5 steps · App only</span></span></a>
@@ -285,6 +289,37 @@
         </ol>
         <h3>If it does not work</h3><ul class="guide-trouble"><li><b>“Nothing to export”.</b> The selection is empty: choose another place or search.</li><li><b>An imported pack looks wrong.</b> Switch its layer off, or remove it: your own items are never changed by an import.</li></ul>
         <p class="guide-next">More: <a href="docs.html#packs">Brain packs</a></p>
+      </section>
+
+      <section class="doc guide" id="vault">
+        <p class="kicker">The Brain · 3 min · 5 steps</p>
+        <h2>Bring your Obsidian vault <span class="badge badge-scripted" title="No model answer matters in this guide">App only</span></h2>
+        <p class="guide-goal">Bring a folder of Markdown notes (an Obsidian vault here) into your Brain, with its links, places and pictures, without any AI call, and as a layer you can remove in one go.</p>
+        <div class="callout"><p><b>You need</b></p><ul><li>A folder of notes: an Obsidian vault, a Logseq graph, a Notion export or plain Markdown files</li></ul></div>
+        <ol class="guide-steps">
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Drop the vault's folder on the window (or click <b>+ Folder</b> in Places, or say <span class="say">importe mon vault Obsidian</span>).</p><p class="guide-see">Nothing comes in yet. The preview says what it found: <i>Obsidian vault detected</i>, 14 notes, 20 links, 9 places, the 2 links that point to notes not written yet, the template folder left out, the picture that comes along, and the cost: less than a cent, for the meaning of the notes only.</p></div>
+            <figure class="shot"><img src="assets/howto/vault/01.webp" alt="Bring your Obsidian vault, step 1 of 5: Drop the vault&#x27;s folder on the window (or click + Folder in Places, or say importe mon vault Obsidian)." loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Press <b>Import</b>.</p><p class="guide-see">The report: 14 new items, 18 of 20 links found their note, and the two that point nowhere, named. The structure was read on your computer, without the AI.</p></div>
+            <figure class="shot"><img src="assets/howto/vault/02.webp" alt="Bring your Obsidian vault, step 2 of 5: Press Import." loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Close the dialog and look at the graph.</p><p class="guide-see">Your folders became places: <i>1. Projects/Garden redesign</i> is the project Garden redesign, <i>2. Areas/Health</i> an area, <i>4. Archives</i> the archive. Each note's links are your links; tags became themes.</p></div>
+            <figure class="shot"><img src="assets/howto/vault/03.webp" alt="Bring your Obsidian vault, step 3 of 5: Close the dialog and look at the graph." loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Zoom into <i>Raised beds</i>.</p><p class="guide-see">The note's picture is kept with it and shows on its card. Its front matter (tags, status, dates) stays readable at the top. Later, the Archivist adds links by meaning on top of yours.</p></div>
+            <figure class="shot"><img src="assets/howto/vault/04.webp" alt="Bring your Obsidian vault, step 4 of 5: Zoom into Raised beds." loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Open the engine room (the status pill at the top), then <b>Your data → Packs…</b>.</p><p class="guide-see">The vault is a layer: switch it off to hide it, merge it to make it yours, or remove it in one go. Import the same folder again later: only new and changed notes come in.</p></div>
+            <figure class="shot"><img src="assets/howto/vault/05.webp" alt="Bring your Obsidian vault, step 5 of 5: Open the engine room (the status pill at the top), then Your data → Packs…." loading="lazy" width="1280" height="800"></figure>
+          </li>
+        </ol>
+        <h3>If it does not work</h3><ul class="guide-trouble"><li><b>The preview says <i>Markdown folder</i>, not <i>Obsidian vault</i>.</b> The folder has no <code>.obsidian</code> folder; links and tags are read the same way.</li><li><b>A link points nowhere.</b> Its note does not exist in the folder (Obsidian shows it greyed out too). It stays as written in the item.</li><li><b>A PDF inside a note did not come.</b> Only pictures come along for now; drop the PDF itself to add it.</li></ul>
+        <p class="guide-next">More: <a href="docs.html#folder-import">Import a folder</a></p>
       </section>
 
       <section class="doc guide" id="backups">

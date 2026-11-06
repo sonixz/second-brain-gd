@@ -100,6 +100,8 @@ func _unit() -> void:
 	check(SbFormat.number(42.0) == "42", "whole JSON numbers display without decimals")
 	check(SbFormat.plain("**Recipe:** [Roast chicken](https://x.org/a), 4 servings [source](https://x.org/a).\n- [ ] carrots\nFor [[Dinner 1]]")
 		== "Recipe: Roast chicken, 4 servings.\n☐ carrots\nFor Dinner 1", "an item's card in the graph shows Markdown as plain text")
+	check(SbFormat.plain("Beds ![[a.png]] see [[Garden plan|the plan]]\n\n\n![x](https://i.org/p.png)end") == "Beds  see the plan\n\nend",
+		"a card hides picture embeds (the picture shows beside) and shows a link's alias")
 	for name in SbTheme.THEMES:
 		SbTheme.apply(name)
 		check(SbTheme.current == name and SbTheme.build() != null, "theme %s applies" % name)
