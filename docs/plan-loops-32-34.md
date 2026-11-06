@@ -91,6 +91,11 @@ with Loop 34's real run.
 | Real run | On the real model, the current week's flyers; cost and time measured; findings checked by hand against the flyers. |
 | Recipes in the Brain | Checked after approval: items, links to ingredients and to the plan, source links work. |
 
+**Done 2026-11-06** (docs/agents/cuisinplan-method.md): three real runs; all three flyers readable through flyer
+sites without the extension; 23 specials checked by hand against their pages (match); 0.41 $ for a full week.
+Owner's part: paste the method into Cuisin'Plan (or ask the Builder), switch on its Missions capability, reload the
+extension (1.1.0) for pages that need the browser. The How-to guide recorded on the real model is still to do.
+
 **Confidence**: mechanics 80 %, real recipes with sources 75 %, **reading the flyers 55 %** (the fragile part: flyer
 sites change and some are images). If a store cannot be read, the report says so plainly and the mission asks the
 user (e.g. paste or photograph the flyer: pictures already go through OCR and vision).
