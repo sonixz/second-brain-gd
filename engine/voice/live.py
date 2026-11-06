@@ -271,6 +271,7 @@ class LiveSession:
         self.responding = False
         self.ended: str | None = None
         self.mic_bytes = 0
+        self.fingerprint = ""
 
     # -- helpers
     def _db(self) -> sqlite3.Connection:
@@ -308,8 +309,36 @@ class LiveSession:
         finally:
             conn.close()
 
+    def settings_fingerprint(self) -> str:
+        """What the session was configured with: the agent's profile (instructions, capabilities) and the app's
+        language. When it changes during the conversation (the user edits the agent in ⓘ), the session is updated."""
+        import hashlib
+
+        from engine.assistant import agents
+
+        conn = self._db()
+        try:
+            prof = agents.profile(conn, self.agent)
+            key = json.dumps([prof.get("instructions"), prof.get("capabilities"), database.get_setting(conn, "ui_language")],
+                             ensure_ascii=False, sort_keys=True, default=str)
+        finally:
+            conn.close()
+        return hashlib.sha256(key.encode("utf-8")).hexdigest()
+
+    async def _refresh_if_changed(self) -> bool:
+        """Before the reply to what the user is saying: new instructions, tools and language if they changed
+        (2026-11-05: Internet switched on for the Agent Builder mid-conversation was not seen until a new one)."""
+        fp = await asyncio.to_thread(self.settings_fingerprint)
+        if fp == self.fingerprint:
+            return False
+        self.fingerprint = fp
+        instructions, tools, language = await asyncio.to_thread(lambda: (self.instructions(), self.tools(), self.language()))
+        await self.up.send(session_update(instructions, self.voice, self.s["live_transcribe_model"], tools, language))
+        return True
+
     async def start(self) -> None:
         await self.up.connect()
+        self.fingerprint = self.settings_fingerprint()
         await self.up.send(session_update(self.instructions(), self.voice, self.s["live_transcribe_model"], self.tools(),
                                           self.language()))
 
@@ -423,6 +452,7 @@ class LiveSession:
             elif t == "input_audio_buffer.speech_started":
                 self.last_speech = time.monotonic()
                 await self.send_json({"type": "speech_started"})
+                await self._refresh_if_changed()  # the agent's settings, changed while talking, apply to this reply
             elif t == "conversation.item.input_audio_transcription.completed":
                 text = str(ev.get("transcript") or "").strip()
                 if text:

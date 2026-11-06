@@ -540,7 +540,7 @@
  "Saved in %s.": "Enregistrée dans %s.",
  "Saved in its card.": "Enregistré dans sa carte.",
  "Saved to %s. Keep going.": "Enregistré dans %s. Continue.",
- "Saved ✓ · applies from the next message (a live conversation: from the next one)": "Enregistré ✓ · s'applique dès le prochain message (une conversation live : dès la prochaine)",
+ "Saved ✓ · applies from the next message, live conversations included": "Enregistré ✓ · s’applique dès le prochain message, conversations Live comprises",
  "Saved, but: %s": "Enregistré, mais : %s",
  "Saved.": "Enregistré.",
  "Saved: %s (%s). Copy it to the other computer, then Import a backup file there.": "Enregistré : %s (%s). Copie-le sur l’autre ordinateur, puis Importer une sauvegarde là-bas.",

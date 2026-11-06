@@ -82,6 +82,46 @@ class LiveTests(unittest.TestCase):
         self.assertTrue({"search_notes", "ui_open_view", "add_task", "focus_project", "end_conversation"} <= names)
         self.assertTrue(all("function" not in t for t in s["tools"]))  # flat Realtime format
 
+    def test_settings_changed_during_the_conversation_apply_to_the_next_reply(self):
+        """The owner switched Internet on for the Agent Builder in the middle of a live conversation (2026-11-05)."""
+        from engine.assistant import agents
+
+        self.sess = live.LiveSession(self.db, self.up, dict(live.DEFAULTS), "marin", self.rec.json, self.rec.audio_out,
+                                     FakeChat(), agent="builder")
+
+        async def switch_internet_on():
+            with database.session(self.db) as conn:
+                caps = agents.profile(conn, "builder")["capabilities"]
+                agents.update(conn, "builder", {"capabilities": caps + ["internet", "browser"]})
+            for _ in range(1):
+                await self.sess.mic(SECOND)
+                await asyncio.sleep(0.05)
+
+        before_tools = None
+
+        async def go():
+            nonlocal before_tools
+            await self.sess.start()
+            before_tools = {t["name"] for t in self.up.sent[0]["session"]["tools"]}
+            pump = asyncio.create_task(self.sess.pump())
+            await switch_internet_on()
+            await asyncio.sleep(0.2)
+            await self.sess.close()
+            await asyncio.wait_for(pump, 5)
+
+        with database.session(self.db) as conn:  # the builder starts without Internet
+            caps = agents.profile(conn, "builder")["capabilities"]
+            agents.update(conn, "builder", {"capabilities": [c for c in caps if c not in ("internet", "browser")]})
+        asyncio.run(go())
+        updates = [e for e in self.up.sent if e["type"] == "session.update"]
+        self.assertNotIn("web_search", before_tools)
+        self.assertEqual(len(updates), 2, "one at the start, one when the settings changed")
+        self.assertIn("web_search", {t["name"] for t in updates[1]["session"]["tools"]})
+
+    def test_unchanged_settings_send_no_extra_update(self):
+        self.run_turns(2)
+        self.assertEqual(sum(1 for e in self.up.sent if e["type"] == "session.update"), 1)
+
     def test_spoken_request_runs_the_same_tools_and_drives_the_interface(self):
         self.run_turns(1)
         t = self.rec.types()

@@ -3,7 +3,7 @@ extends ScrollContainer
 ## An agent's settings (ⓘ in its title bar), shown in a floating tile: name, model, capabilities (each an on/off
 ## switch, its tools listed),
 ## first words, instructions. Every change is saved at once (capabilities, model) or with Save (text) and applies
-## from the next message (a live conversation: from the next one). Built-in agents can go back to the original;
+## from the next message, in a live conversation too (from the next thing said). Built-in agents can go back to the original;
 ## custom agents can be deleted. « Ask the Builder » hands the change over to the Agent Builder, by voice.
 
 signal changed
@@ -196,7 +196,7 @@ func _patch(fields: Dictionary) -> bool:
 		return r["ok"]
 	if r["ok"]:
 		prof = r["data"]
-		status.text = I18n.t("Saved ✓ · applies from the next message (a live conversation: from the next one)")
+		status.text = I18n.t("Saved ✓ · applies from the next message, live conversations included")
 		changed.emit()
 	else:
 		status.text = I18n.t("Could not save: %s") % str(r.get("error", ""))
