@@ -114,6 +114,13 @@ Principles:
 | **14 — Search and connect in the graph** ✅ 2026-11-03 | Results light up in the graph with the reason. The path between two items. Accept or dismiss a related idea. Edit text in the card |
 | **15 — Large volume and timeline** ✅ 2026-11-03 | Thousands of items stay fluid (faster layout, only visible items drawn). A timeline view of captures |
 
+## Next: @ mentions (owner, 2026-11-06)
+
+Typing `@` in the assistant or an agent's panel offers Brain items by title (search as you type); the chosen
+items are pinned as the context of that question, so the answer comes from them rather than from guessed
+retrieval. By voice: « dans la recette du poulet, … » resolves to the item. Idea seen in
+github.com/timskillet/second-brain (files only there); ours targets any Brain item. One loop.
+
 ## Later: data analysis and reports (brainstorm 2026-11-06, parked)
 
 The owner wants this kept for later; the product focus stays on the Brain and missions for now.
