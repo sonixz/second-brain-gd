@@ -393,8 +393,9 @@ def system_prompt(conn: sqlite3.Connection, m: dict[str, Any]) -> str:
 
 
 def run_tool(conn: sqlite3.Connection, client: Any, m: dict[str, Any], name: str, args: dict[str, Any],
-             sources: list[dict[str, str]]) -> tuple[Any, str | None]:
-    """One tool call. Returns (result for the model, new status or None)."""
+             sources: list[dict[str, str]], spent: list[float] | None = None) -> tuple[Any, str | None]:
+    """One tool call. Returns (result for the model, new status or None). What a tool costs (a web search) is
+    appended to spent."""
     if name == "set_plan":
         old = {s["title"]: s for s in m.get("plan") or []}
         steps = [str(s).strip()[:200] for s in args.get("steps") or [] if str(s).strip()][:12]
@@ -449,7 +450,7 @@ def run_tool(conn: sqlite3.Connection, client: Any, m: dict[str, Any], name: str
         from engine.assistant import web
 
         _feed(m, "search", str(args.get("query") or ""))
-        return web.search(conn, client, str(args.get("query") or ""), sources), None
+        return web.search(conn, client, str(args.get("query") or ""), sources, spent), None
     if name == "read_page":
         from engine.assistant import web
 
@@ -539,6 +540,7 @@ def step(db_path: Any, client: Any, mission_id: str) -> str:
         calls = msg.get("tool_calls") or []
         status = "running"
         sources: list[dict[str, str]] = []
+        searches: list[float] = []  # web searches: their tokens and their fee
         if not calls:
             text = (msg.get("content") or "").strip()
             msgs.append({"role": "assistant", "content": text})
@@ -554,14 +556,14 @@ def step(db_path: Any, client: Any, mission_id: str) -> str:
                 except ValueError:
                     args = {}
                 try:
-                    result, new = run_tool(conn, client, m, call["function"]["name"], args, sources)
+                    result, new = run_tool(conn, client, m, call["function"]["name"], args, sources, searches)
                 except Exception as exc:  # one tool failing never ends the mission
                     result, new = {"error": str(exc)[:300]}, None
                 if new and status == "running":
                     status = new
                 msgs.append({"role": "tool", "tool_call_id": call["id"],
                              "content": json.dumps(result, ensure_ascii=False)[:READ_LIMIT + 2000]})
-        m = _save(conn, m, messages=msgs, status=status, cost=round(m["cost"] + cost, 6), rounds=m["rounds"] + 1,
+        m = _save(conn, m, messages=msgs, status=status, cost=round(m["cost"] + cost + sum(searches), 6), rounds=m["rounds"] + 1,
                   model=res["model"], elapsed_s=m["elapsed_s"] + time.monotonic() - t0)
         return status
 

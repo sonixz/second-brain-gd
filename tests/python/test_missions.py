@@ -254,6 +254,15 @@ class MissionTests(unittest.TestCase):
             agents.update(conn, "archivist", {"missions": {}})
             self.assertEqual(missions.limits(conn, "archivist")["max_cost"], missions.DEFAULT_MAX_COST)
 
+    def test_a_web_search_counts_in_the_missions_cost(self):
+        from engine.assistant import web
+
+        mid = self.start()
+        client = Scripted(TURNS[1:2])  # web_search + note_findings + step_done
+        missions.step(self.db, client, mid)
+        # one round of 1000+200 tokens (gpt-6-sol: 0.004) + the search's tokens + its fee
+        self.assertGreater(self.get(mid)["cost"], 0.004 + web.SEARCH_FEE_USD - 1e-9)
+
     def test_run_again_and_the_month_summary(self):
         mid = self.start()
         with database.session(self.db) as conn:

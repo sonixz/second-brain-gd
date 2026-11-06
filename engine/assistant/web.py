@@ -19,15 +19,22 @@ def enabled(conn: sqlite3.Connection) -> bool:
     return database.get_setting(conn, "web_access", True) is not False
 
 
-def search(conn: sqlite3.Connection, client: Any, query: str, sources: list[dict[str, str]]) -> dict[str, Any]:
-    from engine.assistant.core import _usage_event
+SEARCH_FEE_USD = 0.025  # OpenAI's hosted web search, per call, on top of its tokens (list price, approximate)
+
+
+def search(conn: sqlite3.Connection, client: Any, query: str, sources: list[dict[str, str]],
+           spent: list[float] | None = None) -> dict[str, Any]:
+    """spent: the search's cost (tokens and the per-call fee) is appended to it (a mission counts it)."""
+    from engine.assistant.core import PRICED, _usage_event
 
     query = (query or "").strip()[:400]
     if not query:
         return {"error": "empty query"}
     model = str(database.get_setting(conn, "web_search_model", "gpt-4o-mini"))
     res = client.web_search(model, query)
-    _usage_event(conn, "web_search", res["model"], res["usage"], client.provider)
+    cost = _usage_event(conn, "web_search", res["model"], res["usage"], client.provider)
+    if spent is not None and client.provider in PRICED:
+        spent.append(cost + SEARCH_FEE_USD)
     for s in res["sources"]:  # a title can carry line breaks (a PDF's cover): one line each
         s["title"] = " ".join(str(s.get("title") or s["url"]).split())
         if s["url"] not in [x["url"] for x in sources]:

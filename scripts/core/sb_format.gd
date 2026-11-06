@@ -60,3 +60,20 @@ static func datetime_text(iso: String) -> String:
 	var unix := Time.get_unix_time_from_datetime_string(iso.trim_suffix("Z"))
 	unix += int(Time.get_time_zone_from_system().get("bias", 0)) * 60
 	return Time.get_datetime_string_from_unix_time(unix, true).left(16)
+
+
+## Markdown as plain text, for text drawn without formatting (an item's card in the graph): **bold** and
+## *italic* lose their marks, [text](url) keeps its text ([source](url) goes), [[Title]] its title, a checklist "- [ ]" becomes "☐",
+## a "#" heading its words. A mission's draft is written in Markdown (Loop 36).
+static func plain(text: String) -> String:
+	var out := text
+	out = RegEx.create_from_string("\\s*\\[(?i:source|sources|lien|link)\\]\\(https?://[^)\\s]+\\)").sub(out, "", true)  # « [source](url) »: a pointer
+	out = RegEx.create_from_string("\\[([^\\]\\n]+)\\]\\((https?://[^)\\s]+)\\)").sub(out, "$1", true)
+	out = RegEx.create_from_string("\\[\\[([^\\]\\n]+)\\]\\]").sub(out, "$1", true)
+	out = RegEx.create_from_string("(?m)^(\\s*)[-*] \\[ \\] ").sub(out, "$1☐ ", true)
+	out = RegEx.create_from_string("(?m)^(\\s*)[-*] \\[[xX]\\] ").sub(out, "$1☑ ", true)
+	out = RegEx.create_from_string("(?m)^(\\s*)[-*] ").sub(out, "$1• ", true)
+	out = RegEx.create_from_string("(?m)^#{1,6}\\s+").sub(out, "", true)
+	out = RegEx.create_from_string("\\*\\*([^*\\n]+)\\*\\*").sub(out, "$1", true)
+	out = RegEx.create_from_string("(?<![\\w*])\\*([^*\\n]+)\\*(?![\\w*])").sub(out, "$1", true)
+	return out

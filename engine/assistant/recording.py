@@ -56,7 +56,8 @@ def _save() -> None:
 def _kind(messages: list[dict[str, Any]], json_mode: bool) -> str:
     """Calls are replayed in order within their kind: the same agent (system prompt) and the same mode."""
     system = str(messages[0].get("content", "")) if messages and messages[0].get("role") == "system" else ""
-    return ("json:" if json_mode else "chat:") + re.sub(r"\s+", " ", system[:80])
+    mode = "json:" if json_mode else ("mission:" if "TU ES EN MISSION" in system else "chat:")  # a mission runs on
+    return mode + re.sub(r"\s+", " ", system[:80])  # its own thread: its calls keep their own order
 
 
 def _slim(value: Any) -> Any:

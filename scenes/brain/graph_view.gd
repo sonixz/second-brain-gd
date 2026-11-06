@@ -1166,6 +1166,7 @@ func _draw_card(n: Dictionary, p: Vector2, reading: bool) -> void:
 	var text := body if reading else summary
 	if text == "":
 		text = summary if reading else body.left(240)
+	text = SbFormat.plain(text)  # drawn as plain text: no Markdown marks
 	var lines_room := int(maxf(0.0, (rect.end.y - pad - y) / (fs * 1.35)))
 	if lines_room > 0 and text != "":
 		draw_multiline_string(_font, Vector2(x, y), text, HORIZONTAL_ALIGNMENT_LEFT, width, fs, lines_room,

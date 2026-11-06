@@ -98,6 +98,8 @@ func _unit() -> void:
 	check(SbFormat.bytes(null) == SbFormat.NA, "missing measurement shows Not available")
 	check(SbFormat.local_time("2026-11-03T00:55:55.859Z") != SbFormat.NA, "ISO timestamps are formatted")
 	check(SbFormat.number(42.0) == "42", "whole JSON numbers display without decimals")
+	check(SbFormat.plain("**Recipe:** [Roast chicken](https://x.org/a), 4 servings [source](https://x.org/a).\n- [ ] carrots\nFor [[Dinner 1]]")
+		== "Recipe: Roast chicken, 4 servings.\n☐ carrots\nFor Dinner 1", "an item's card in the graph shows Markdown as plain text")
 	for name in SbTheme.THEMES:
 		SbTheme.apply(name)
 		check(SbTheme.current == name and SbTheme.build() != null, "theme %s applies" % name)

@@ -439,6 +439,85 @@ func guide_own_agent() -> void:
 		await step("ⓘ its settings: switches, model, instructions")
 
 
+# ---------------------------------------------------------------- Plan the week's meals with a mission (real answers)
+## Loop 36: the Archivist gets the Missions capability, then a real mission on the real web (recorded once): the
+## week's specials, a question, real recipes, a draft approved into the Brain, and its cost in the engine room.
+func guide_mission() -> void:
+	await overview()
+	await app.backend.api.call_api("/assistant/agents/archivist", true, HTTPClient.METHOD_PATCH,
+		JSON.stringify({"missions": {"max_cost": 1.0, "max_minutes": 12}}))
+	var panel: SbFloatingPanel = b.call("agent_panel", "archivist")
+	panel.reveal()
+	panel.dock = "right"
+	panel.dock_size = 540.0
+	panel.layout_changed.emit()
+	await b.call("show_agent_info", "archivist")
+	await pause(1.0)
+	var sett: SbAgentSettings = b.get("agent_settings")
+	(sett.checks["missions"] as CheckButton).button_pressed = true
+	await wait_until(func() -> bool: return "missions" in (sett.prof.get("capabilities", []) as Array), 10.0)
+	await pause(0.6)
+	var sw := (sett.checks["missions"] as Control).get_parent() as Control  # the Missions switch, its block below
+	sett.scroll_vertical = maxi(0, int(sw.position.y) - 12)
+	await pause(0.8)
+	await step("ⓘ: switch Missions on, its ceiling below")
+	b.call("close_agent_settings")
+	var chat: AssistantPanel = b.call("chat_panel", "archivist")
+	var card: Control = chat.mission_card
+	chat.mission_row.visible = true
+	chat.mission_edit.text = "This week's dinners from the Maxi flyer: 3 suppers with real recipes, and the grocery list"
+	await pause(0.8)
+	await step("Mission…: say what the job is")
+	await chat.start_mission(chat.mission_edit.text)
+	await wait_until(func() -> bool:
+		var plan: Array = (card.get("mission") as Dictionary).get("plan", [])
+		return plan.any(func(st: Dictionary) -> bool: return st.get("status", "") == "done") \
+			or str((card.get("mission") as Dictionary).get("status", "")) != "running", 240.0)
+	await pause(1.0)
+	await step("it works in the background: the plan, ticked step by step")
+	await wait_until(func() -> bool: return str((card.get("mission") as Dictionary).get("status", "")) != "running", 420.0)
+	if str((card.get("mission") as Dictionary).get("status", "")) == "waiting":  # the recorded run did not ask
+		var boxes: Array = card.get("choice_boxes")
+		for i in mini(3, boxes.size()):
+			(boxes[i] as BaseButton).button_pressed = true
+		await card.call("answer")
+	await wait_until(func() -> bool:
+		return str((card.get("mission") as Dictionary).get("status", "")) in ["draft", "stopped", "failed"], 420.0)
+	(card.get("draft_open") as Dictionary)[0] = true
+	card.call("_rebuild")
+	await pause(1.0)
+	await step("the draft: real recipes with their links, the plan, the list")
+	await card.call("approve")
+	await wait_until(func() -> bool: return str((card.get("mission") as Dictionary).get("status", "")) == "saved", 60.0)
+	await pause(1.5)
+	await step("approve: everything is saved at once, one Undo removes it")
+	await b.call("refresh_graph")
+	await settle(10.0)
+	var res: Dictionary = (card.get("mission") as Dictionary).get("result", {}) if (card.get("mission") as Dictionary).get("result") is Dictionary else {}
+	var ids: Array = res.get("note_ids", [])
+	if not ids.is_empty():
+		g.zoom_level("read", str(ids[0]))
+		await pause(3.0)
+	calm()
+	await step("the recipes in your Brain, linked to the week's plan")
+	app.show_console()
+	await pause(4.0)
+	var console: Control = app.current()
+	var mp: Control = console.find_child("MissionsPanel", true, false)
+	if mp != null:
+		await mp.call("refresh")
+		var ms: Array = mp.get("missions")
+		if not ms.is_empty():
+			mp.set("open_id", str((ms[0] as Dictionary).get("id", "")))
+			mp.call("_rebuild")
+		await pause(0.6)
+		var sc := mp.get_parent().get_parent() as ScrollContainer
+		if sc != null:
+			sc.scroll_vertical = int(mp.position.y) - 8
+	await pause(0.8)
+	await step("the engine room: what it did, its sources, what it cost")
+
+
 # ---------------------------------------------------------------- 6. Connect your browser (real Edge, real answers)
 ## A real Microsoft Edge on the Windows desktop, driven by tools/howto/edge.ps1: a throwaway profile (no sign-in),
 ## the extension loaded from browser-extension/. Its screenshots are the Edge window itself, toolbar and all.

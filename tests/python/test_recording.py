@@ -45,6 +45,20 @@ class ReplayTest(unittest.TestCase):
             with self.assertRaises(Exception):
                 chat.complete("m", now)  # nothing left: the guide must be recorded again
 
+    def test_a_missions_calls_keep_their_own_order(self):
+        """A mission runs on its own thread while the agent chats: its calls replay in their own line."""
+        persona = {"role": "system", "content": "Tu es l'archiviste"}
+        mission = {"role": "system", "content": "Tu es l'archiviste\nTU ES EN MISSION. Objectif: le menu"}
+        self.assertTrue(recording._kind([mission], False).startswith("mission:"))
+        self.assertNotEqual(recording._kind([persona], False), recording._kind([mission], False))
+        say = lambda text: {"role": "assistant", "content": text}
+        self._write([{"kind": recording._kind([mission], False), "seen": [], "message": say("plan")},
+                     {"kind": recording._kind([persona], False), "seen": [], "message": say("hello")}])
+        with mock.patch.dict(os.environ, {"SBGD_RECORDING": str(self.path), "SBGD_ASSISTANT_PROVIDER": "replay"}):
+            chat = recording.ReplayChat()
+            self.assertEqual(chat.complete("m", [persona])["message"]["content"], "hello")  # chat first, this time
+            self.assertEqual(chat.complete("m", [mission])["message"]["content"], "plan")
+
     def test_web_searches_replay_and_embeddings_stay_local(self):
         self._write([], [{"query": "q", "result": {"text": "answer", "sources": []}}])
         with mock.patch.dict(os.environ, {"SBGD_RECORDING": str(self.path), "SBGD_ASSISTANT_PROVIDER": "replay"}):

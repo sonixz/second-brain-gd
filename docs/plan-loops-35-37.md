@@ -47,6 +47,19 @@ Docs link updated.
 
 **Confidence 80 %** (the recording of mission calls is the new part).
 
+**Done 2026-11-06.** Guide `mission` (How-to, group Agents, 7 steps, **Real answers**): recorded once on gpt-6-sol
+with the real web (Maxi flyer November 5–11 on circulaires.club and aubaine.ca, three RICARDO recipes): 15 rounds,
+7 searches, about 0.52 $. Every price it noted (8) checked against the recorded pages. Replayed without network.
+What the recording needed: a mission's calls are replayed in their own order (`mission:` kind), the guide's cost cap
+per guide (1 $ for this one), and `SBGD_ENV_KEYS` so a worktree finds the main checkout's `.env.keys`.
+Found on the way and fixed:
+- a mission's cost left out its web searches (shown 0.33 $ for 0.52 $): their tokens and per-call fee now count,
+  so the ceiling holds;
+- costs recorded or replayed for a guide were shown as 0 $;
+- the saved recipes showed raw Markdown (`**`, `[source](…)`) in the graph's card: the card now draws plain text.
+The real model did not ask a question this time (the goal left no choice to the user): the guide says when it asks.
+Not done: the separate scripted "voice hand-over" guide; the guide's troubleshooting says it can be asked in Live.
+
 ## Loop 37 — Fixes from the owner's real use
 
 Starts after the owner has run at least one mission on their own Brain with Cuisin'Plan (method from

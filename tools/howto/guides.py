@@ -24,9 +24,11 @@ GUIDES: list[dict] = []
 
 
 def guide(id: str, title: str, kind: str, minutes: int, goal: str, needs: list[str], steps: list[tuple[str, str]],
-          trouble: list[tuple[str, str]], docs: list[tuple[str, str]], group: str, edge: bool = False) -> None:
+          trouble: list[tuple[str, str]], docs: list[tuple[str, str]], group: str, edge: bool = False,
+          cost_cap: float = COST_CAP_USD, token_cap: int = TOKEN_CAP) -> None:
     GUIDES.append({"id": id, "title": title, "kind": kind, "minutes": minutes, "goal": goal, "needs": needs,
-                   "steps": steps, "trouble": trouble, "docs": docs, "group": group, "edge": edge})
+                   "steps": steps, "trouble": trouble, "docs": docs, "group": group, "edge": edge,
+                   "cost_cap": cost_cap, "token_cap": token_cap})
 
 
 def by_id(gid: str) -> dict:
@@ -401,6 +403,48 @@ guide(
     [("What an agent is", "docs.html#agents-profiles")],
     "Agents")
 
+guide(
+    "mission", "Plan the week's meals with a mission", "real", 5,
+    "Give an agent a real job: it reads this week's flyer, asks which specials you want, finds real recipes and "
+    "proposes the week; nothing enters your Brain before you approve.",
+    ["Your OpenAI key", "An internet connection (the flyer and the recipes are read on the web)"],
+    [("Press <b>ⓘ</b> in the Archivist's title bar and switch <b>Missions</b> on.",
+      "A <i>Missions</i> block appears under the switches: the most a mission may cost and how long it may work, and "
+      "the model it thinks with. Here 1 $ and 12 minutes."),
+     ("Click <b>Mission…</b> at the top of its panel and say what the job is: <span class=\"say\">This week's "
+      "dinners from the Maxi flyer: 3 suppers with real recipes, and the grocery list</span>.",
+      "Nothing has started yet. A mission is for a job that takes several searches, many pages and, when a choice "
+      "is yours, a question to you."),
+     ("Press <b>Start</b> and let it work. You can keep using the app.",
+      "The card shows its plan, ticked step by step, the page it is reading and what it costs so far. Here it found "
+      "this week's Maxi flyer (November 5 to 11) on two flyer sites and read it. <b>Stop</b> ends it at any time, "
+      "keeping what it found."),
+     ("When the card says <b>Draft ready</b>, read the draft; click a line to open it.",
+      "Three real RICARDO recipes, each with its link, servings and times, the flyer price next to the special it "
+      "uses (whole chicken $2.49/lb) with its source, and one grocery list linked to the three dinners. Nothing is "
+      "saved yet. Here the job left no choice to you, so it did not ask: when one is yours (which specials, how many "
+      "people), it asks first, with boxes to tick."),
+     ("Press <b>Approve and save</b> (or <b>Change</b> and say what, or <b>Discard</b>).",
+      "The four items are created at once, in one new place, <i>Meal planning</i>, with their themes and links. One "
+      "<b>Undo</b> in the Archivist's panel removes them all."),
+     ("Zoom into the new items in the graph.",
+      "The recipes are items like any other: found again by search, by meaning, or by asking the Archivist. The "
+      "grocery list links to the three dinners."),
+     ("Open the engine room (the status pill at the top) and click the mission in the <b>Missions</b> card.",
+      "What it did and cost: its plan with a note per step, the 8 specials it noted with a <i>source</i> link each, "
+      "the recipes it read, the draft and the items saved. When this guide was recorded: 15 rounds, under 2 "
+      "minutes, about $0.52 (the model and 7 web searches). "
+      "<b>Run again</b> does the same job next week."),
+     ],
+    [("It stopped at the ceiling.", "It keeps what it found; raise the ceiling in ⓘ → Missions and press <b>Run "
+      "again</b> in the engine room."),
+     ("A store's site refuses to be read.", "The mission tries another source, or reads the page through your browser "
+      "when the <a href=\"docs.html#extension\">extension</a> is paired."),
+     ("No <b>Mission…</b> button.", "Switch the agent's <b>Missions</b> capability on (ⓘ). You can also ask the agent, "
+      "typed or by voice in Live: <span class=\"say\">make this week's menu</span>.")],
+    [("Missions", "docs.html#missions")],
+    "Agents", cost_cap=1.0, token_cap=900_000)
+
 # GUIDES-END
 
 
@@ -430,7 +474,7 @@ def _cost(gid: str) -> int:
     total_tokens = sum(tokens.values())
     print(f"{gid}: {len(rec['calls'])} model calls, {len(rec.get('web', []))} web searches, "
           + ", ".join(f"{m} {t:,} tokens" for m, t in tokens.items()) + f"; priced part about ${known:.3f}")
-    return 0 if known <= COST_CAP_USD and total_tokens <= TOKEN_CAP else 1
+    return 0 if known <= by_id(gid)["cost_cap"] and total_tokens <= by_id(gid)["token_cap"] else 1
 
 
 if __name__ == "__main__":

@@ -193,8 +193,11 @@ def _journal(conn: sqlite3.Connection, kind: str, note_id: str | None, before: A
     return int(cur.lastrowid)
 
 
+PRICED = ("openai", "record", "replay")  # the real model, also when a How-to guide records or replays it
+
+
 def _usage_event(conn: sqlite3.Connection, what: str, model: str, usage: dict[str, Any], provider: str) -> float:
-    cost = estimate_cost(model, usage) if provider == "openai" else 0.0
+    cost = estimate_cost(model, usage) if provider in PRICED else 0.0
     price = f"≈ ${cost:.4f}" if cost is not None else "cost unknown (no price for this model)"
     database.record_event(conn, {"timestamp": utc_now(), "component": "assistant", "stage": what, "status": "ok",
                                  "message": f"{what}: {model}, {usage.get('prompt_tokens', 0)}+"

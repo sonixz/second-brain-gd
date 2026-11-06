@@ -50,7 +50,9 @@ for G in "${GUIDES[@]}"; do
     if [[ $RECORD -eq 1 ]]; then
       PROVIDER=record
       rm -f "$REC"
-      RUN=("$HOME/.local/bin/dotenvx" run --quiet -- env -u OPENAI_ADMIN_KEY)
+      # In a git worktree the .env.keys file stays in the main checkout: SBGD_ENV_KEYS points to it.
+      KEYS=(); [[ -n "${SBGD_ENV_KEYS:-}" ]] && KEYS=(-fk "$SBGD_ENV_KEYS")
+      RUN=("$HOME/.local/bin/dotenvx" run --quiet "${KEYS[@]}" -- env -u OPENAI_ADMIN_KEY)
     else
       PROVIDER=replay
       [[ -f "$REC" ]] || { echo "$G: no recording yet (run tools/howto.sh --record $G)" >&2; FAILED=1; continue; }
