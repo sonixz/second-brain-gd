@@ -36,6 +36,9 @@ signal activated(agent: String)       # the user typed, spoke or clicked here: F
 var agent := "archivist"             # an agent id (engine/assistant/agents.py): archivist, sparring, or a custom one
 var intro := ""                      # what a non-archivist agent says first (from its profile)
 var draft_box: VBoxContainer         # Sparring's synthesis waiting for approval
+var mission_card: PanelContainer     # the agent's mission (Loop 33): MissionCard, loaded by path
+var mission_row: HBoxContainer       # « Mission… »: what the agent should do
+var mission_edit: LineEdit
 
 
 func setup(a: SbApp, b: Control, who: String = "archivist") -> AssistantPanel:
@@ -65,8 +68,36 @@ func setup(a: SbApp, b: Control, who: String = "archivist") -> AssistantPanel:
 		activated.emit(agent)
 		brain.call("toggle_live"))
 	head.add_child(live_button)
+	var mission_button := Button.new()
+	mission_button.text = I18n.t("Mission…")
+	mission_button.theme_type_variation = "GhostButton"
+	mission_button.tooltip_text = I18n.t("Give this agent a longer job: it plans, researches, asks you when it needs a choice, and shows a draft before saving anything")
+	mission_button.pressed.connect(func() -> void:
+		activated.emit(agent)
+		mission_row.visible = not mission_row.visible
+		if mission_row.visible:
+			mission_edit.grab_focus())
+	head.add_child(mission_button)
+	head.move_child(mission_button, 0)
 	app.live.state_changed.connect(_on_live_state)
 	_on_live_state(app.live.state)
+	mission_row = HBoxContainer.new()
+	mission_row.visible = false
+	mission_row.add_theme_constant_override("separation", 6)
+	add_child(mission_row)
+	mission_edit = LineEdit.new()
+	mission_edit.placeholder_text = I18n.t("What should it do? e.g. this week's menu from the grocery specials")
+	mission_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	mission_edit.text_submitted.connect(func(_t: String) -> void: start_mission(mission_edit.text))
+	mission_row.add_child(mission_edit)
+	var go := Button.new()
+	go.text = I18n.t("Start")
+	go.theme_type_variation = "PrimaryButton"
+	go.pressed.connect(func() -> void: start_mission(mission_edit.text))
+	mission_row.add_child(go)
+	mission_card = preload("res://scenes/components/mission_card.gd").new().setup(app, agent)
+	mission_card.connect("saved", func(_n: int) -> void: brain_changed.emit())
+	add_child(mission_card)
 	scroll = ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
@@ -112,8 +143,20 @@ func _process(delta: float) -> void:
 		thinking.text = I18n.t("Thinking") + ".".repeat(1 + int(_dots_t * 3.0) % 3)
 
 
+## Starts a mission for this agent; its card follows it.
+func start_mission(goal: String) -> void:
+	goal = goal.strip_edges()
+	if goal.length() < 4:
+		return
+	var res: Dictionary = await mission_card.call("start_mission", goal)
+	if res.get("ok", false):
+		mission_edit.text = ""
+		mission_row.visible = false
+
+
 ## Loads today's conversation, then the morning briefing (spoken once per day).
 func start() -> void:
+	mission_card.call("refresh")
 	var st := await app.backend.api.call_api("/assistant/status")
 	var data: Dictionary = st["data"] if st["ok"] else {}
 	configured = bool(data.get("configured", false))

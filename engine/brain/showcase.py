@@ -216,6 +216,10 @@ class ShowcaseChat(FakeChat):
         if json_mode and "ARCHIVISTE" in system:
             return {"message": {"role": "assistant", "content": json.dumps(_file(json.loads(last["content"])))},
                     "usage": usage, "model": model}
+        from engine import missions
+
+        if tools and missions.is_mission(messages):
+            return {"message": missions.scripted_reply(messages), "usage": usage, "model": model}
         scripted = _scripted(system, messages, [t["function"]["name"] for t in tools or []])
         if scripted is not None:
             return {"message": scripted, "usage": usage, "model": model}

@@ -206,9 +206,10 @@ def get(conn: sqlite3.Connection, mission_id: str) -> dict[str, Any]:
     return public(m)
 
 
-def listing(conn: sqlite3.Connection, limit: int = 20) -> list[dict[str, Any]]:
-    ids = [r[0] for r in conn.execute("SELECT id FROM missions ORDER BY (status IN ('running','waiting','draft')) DESC,"
-                                      " updated_at DESC LIMIT ?", (max(1, min(limit, 100)),))]
+def listing(conn: sqlite3.Connection, limit: int = 20, agent: str | None = None) -> list[dict[str, Any]]:
+    where, args = ("WHERE agent = ?", [agent]) if agent else ("", [])
+    ids = [r[0] for r in conn.execute(f"SELECT id FROM missions {where} ORDER BY (status IN ('running','waiting','draft'))"
+                                      " DESC, updated_at DESC LIMIT ?", (*args, max(1, min(limit, 100))))]
     return [get(conn, i) for i in ids]
 
 
@@ -261,7 +262,10 @@ def revise(conn: sqlite3.Connection, mission_id: str, changes: str) -> dict[str,
     return m
 
 
-def stop(conn: sqlite3.Connection, mission_id: str, reason: str = "stopped by the user") -> dict[str, Any]:
+def stop(conn: sqlite3.Connection, mission_id: str, reason: str = "") -> dict[str, Any]:
+    from engine.assistant.core import said
+
+    reason = reason or said(conn, "stopped by you; what it found is kept", "arrêtée par toi; ce qu'elle a trouvé est gardé")
     m = _row(conn, mission_id)
     if m["status"] in DONE:
         return m
@@ -473,7 +477,8 @@ def step(db_path: Any, client: Any, mission_id: str) -> str:
         spent = max(m["cost"] / m["max_cost"] if m["max_cost"] else 0, m["elapsed_s"] / 60.0 / m["max_minutes"]
                     if m["max_minutes"] else 0, m["rounds"] / MAX_ROUNDS)
         if spent >= 1.0:
-            reason = "ceiling reached (cost, time or rounds): what was found is kept"
+            reason = core.said(conn, "ceiling reached (cost, time or rounds): what was found is kept",
+                               "plafond atteint (coût, temps ou tours) : ce qui a été trouvé est gardé")
             _feed(m, "stopped", reason)
             _save(conn, m, status="stopped", reason=reason)
             return "stopped"
@@ -596,7 +601,7 @@ def chat_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], agent: 
     try:
         if name == "start_mission":
             m = start(conn, agent, str(args.get("goal") or ""))
-            return {"started": True, "mission_id": m["id"], "ui": {"action": "mission", "id": m["id"]},
+            return {"started": True, "mission_id": m["id"], "ui": {"action": "mission", "id": m["id"], "agent": m["agent"]},
                     "tell_the_user": "The mission runs in the background; its card shows the plan and progress. "
                                      "It will ask if it needs a choice. Say so in one short sentence."}
         if name == "mission_status":
@@ -628,3 +633,74 @@ def chat_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], agent: 
     except MissionError as exc:
         return {"error": str(exc)}
     return {"error": f"unknown tool {name}"}
+
+
+# ---------------------------------------------------------------- a scripted mission (tests, screenshots; no network)
+def is_mission(messages: list[dict[str, Any]]) -> bool:
+    return bool(messages) and "TU ES EN MISSION" in str(messages[0].get("content", ""))
+
+
+_SCRIPT = {
+    "en": {"plan": ["Find this week's specials", "Ask which ones tempt you", "Find real recipes using them",
+                    "Weekly plan and grocery list"],
+           "specials": [{"product": "Whole chicken", "store": "Maxi", "price": "2.49/lb", "url": "https://example.com/maxi"},
+                        {"product": "Lean ground beef, 900 g", "store": "Maxi", "price": "9.00", "url": "https://example.com/maxi"},
+                        {"product": "Broccoli crown", "store": "IGA", "price": "1.44", "url": "https://example.com/iga"},
+                        {"product": "Russet potatoes, 10 lb", "store": "Provigo", "price": "1.99", "url": "https://example.com/provigo"}],
+           "question": "Which specials tempt you this week?",
+           "title": "Weekly menu from the specials", "summary": "Two suppers built on the chicken and the potatoes on "
+                    "special this week, from real recipes (links kept), and the grocery list.",
+           "place": "Cooking",
+           "items": [{"title": "Roast chicken with lemon", "kind": "reference", "url": "https://example.org/roast-chicken",
+                      "body": "4 servings · 1 h 15.\n\nIngredients: 1 whole chicken, 1 lemon, butter, salt.\n\nUses the "
+                              "chicken on special.", "themes": ["recipe", "chicken"]},
+                     {"title": "Shepherd's pie", "kind": "reference", "url": "https://example.org/shepherds-pie",
+                      "body": "4 servings · 1 h.\n\nIngredients: 450 g ground beef, 680 g potatoes, corn, milk.",
+                      "themes": ["recipe", "beef"]},
+                     {"title": "Menu — week of November 9", "kind": "note",
+                      "body": "- Monday: [[Roast chicken with lemon]]\n- Wednesday: [[Shepherd's pie]]\n\nGrocery list: "
+                              "lemon, butter, corn, milk.", "themes": ["menu"]}]},
+    "fr": {"plan": ["Trouver les rabais de la semaine", "Te demander lesquels te tentent", "Trouver de vraies recettes avec",
+                    "Menu de la semaine et liste d'épicerie"],
+           "specials": [{"produit": "Poulet entier", "magasin": "Maxi", "prix": "2,49 $/lb", "url": "https://example.com/maxi"},
+                        {"produit": "Bœuf haché maigre, 900 g", "magasin": "Maxi", "prix": "9,00 $", "url": "https://example.com/maxi"},
+                        {"produit": "Couronne de brocoli", "magasin": "IGA", "prix": "1,44 $", "url": "https://example.com/iga"},
+                        {"produit": "Pommes de terre Russet, 10 lb", "magasin": "Provigo", "prix": "1,99 $", "url": "https://example.com/provigo"}],
+           "question": "Lesquels de ces rabais te tentent cette semaine?",
+           "title": "Menu de la semaine avec les rabais", "summary": "Deux soupers bâtis sur le poulet et les pommes de "
+                    "terre en rabais cette semaine, à partir de vraies recettes (liens gardés), et la liste d'épicerie.",
+           "place": "Cuisine",
+           "items": [{"title": "Poulet rôti au citron", "kind": "reference", "url": "https://example.org/poulet-roti",
+                      "body": "4 portions · 1 h 15.\n\nIngrédients: 1 poulet entier, 1 citron, beurre, sel.\n\nUtilise le "
+                              "poulet en rabais.", "themes": ["recette", "poulet"]},
+                     {"title": "Pâté chinois", "kind": "reference", "url": "https://example.org/pate-chinois",
+                      "body": "4 portions · 1 h.\n\nIngrédients: 450 g de bœuf haché, 680 g de pommes de terre, maïs, lait.",
+                      "themes": ["recette", "bœuf"]},
+                     {"title": "Menu — semaine du 9 novembre", "kind": "note",
+                      "body": "- Lundi: [[Poulet rôti au citron]]\n- Mercredi: [[Pâté chinois]]\n\nÉpicerie: citron, beurre, "
+                              "maïs, lait.", "themes": ["menu"]}]},
+}
+
+
+def scripted_reply(messages: list[dict[str, Any]]) -> dict[str, Any]:
+    """The same mission every time, in the app's language: plan, specials, a question, then a draft."""
+    lang = "fr" if "français québécois naturel par défaut" in str(messages[0].get("content", "")) else "en"
+    s = _SCRIPT[lang]
+    n = sum(1 for m in messages if m.get("role") == "assistant" and m.get("tool_calls"))
+
+    def c(name: str, **args: Any) -> dict[str, Any]:
+        return {"id": f"s{n}_{name}", "type": "function", "function": {"name": name, "arguments": json.dumps(args, ensure_ascii=False)}}
+
+    answered = any(str(m.get("content", "")).startswith("Réponse de l'utilisateur") for m in messages if m.get("role") == "user")
+    if n == 0:
+        calls = [c("set_plan", steps=s["plan"])]
+    elif n == 1:
+        calls = [c("web_search", query="Maxi IGA Provigo flyer this week"), c("note_findings", kind="specials", rows=s["specials"]),
+                 c("step_done", step=1, note="4")]
+    elif not answered:
+        calls = [c("ask_user", question=s["question"], choices=[r.get("product") or r.get("produit") for r in s["specials"]],
+                   multiple=True)]
+    else:
+        calls = [c("step_done", step=2), c("step_done", step=3),
+                 c("propose_draft", title=s["title"], summary=s["summary"], place=s["place"], items=s["items"])]
+    return {"role": "assistant", "content": None, "tool_calls": calls}

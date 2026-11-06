@@ -760,6 +760,32 @@ func _e2e() -> void:
 	check(SbTheme.current == "evening" and app.current_screen == "brain", "theme switch keeps you in the brain")
 	check(app.audio.playlist.size() >= 2 and app.audio.theme_name == "evening", "music follows the theme")
 	app.set_theme_choice("auto")
+	# Missions (Loop 33): « Mission… » starts one; its card shows the plan, the question with choices, the draft;
+	# approving saves the items (scripted mission of the fake model).
+	var mchat: AssistantPanel = app.current().call("chat_panel", "archivist")
+	var mcard: Control = mchat.mission_card
+	mchat.mission_row.visible = true
+	mchat.mission_edit.text = "This week's menu from the grocery specials"
+	await mchat.start_mission(mchat.mission_edit.text)
+	var m_asked := await wait_until(func() -> bool:
+		return str((mcard.get("mission") as Dictionary).get("status", "")) == "waiting", 30.0)
+	check(m_asked and mcard.visible and (mcard.get("choice_boxes") as Array).size() == 4 and not mchat.mission_row.visible,
+		"a mission plans, keeps the specials and asks which ones (its card shows the choices)")
+	if m_asked:
+		((mcard.get("choice_boxes") as Array)[0] as BaseButton).button_pressed = true
+		await mcard.call("answer")
+	var m_drafted := await wait_until(func() -> bool:
+		return str((mcard.get("mission") as Dictionary).get("status", "")) == "draft", 30.0)
+	check(m_drafted and ((mcard.get("mission") as Dictionary).get("plan", []) as Array).all(func(st: Dictionary) -> bool: return st["status"] == "done"),
+		"after the answer the mission shows its draft, every step ticked")
+	if m_drafted:
+		await mcard.call("approve")
+	var msaved := await wait_until(func() -> bool:
+		return str((mcard.get("mission") as Dictionary).get("status", "")) == "saved", 15.0)
+	var mres: Dictionary = (mcard.get("mission") as Dictionary).get("result", {})
+	check(msaved and (mres.get("note_ids", []) as Array).size() == 3, "approving saves the draft's items in the Brain")
+	mcard.visible = false
+	notes_before_restart += (mres.get("note_ids", []) as Array).size()  # the mission's items are kept too
 	# FR / EN (Loop 26): English by default; the switch rebuilds the screen in French and tells the engine.
 	check(I18n.lang == "en", "English is the app's language by default")
 	check(app.current().find_child("LangFR", true, false) is Button, "the FR / EN switch is in the top bar")

@@ -55,6 +55,7 @@
         <ul>
           <li><a href="#agents-profiles">Archivist and Sparring</a></li>
           <li><a href="#internet">Internet</a></li>
+          <li><a href="#missions">Missions</a></li>
           <li><a href="#extension">Browser extension</a></li>
           <li><a href="#pictures">Pictures from pages</a></li>
           <li><a href="#browser">Bookmark (no extension)</a></li>
@@ -508,6 +509,36 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           <li>What comes from the web is <b>data</b>: no agent ever follows instructions found in a page.</li>
           <li>Turn it off: <code>PATCH /assistant/settings {"web_access": false}</code>.</li>
         </ul>
+      </section>
+
+      <section class="doc" id="missions">
+        <p class="kicker">Use</p>
+        <h2>Missions: give an agent a real job</h2>
+        <p>A conversation is for questions. A <b>mission</b> is for a job that takes several searches, many pages and a
+          decision from you: “this week's menu from the IGA, Maxi and Provigo specials”, “compare three heat pumps for
+          my house”. Click <b>Mission…</b> at the top of an agent's panel and say what it should do, or ask the agent
+          (typed or by voice) when it has the <i>Missions</i> capability: it starts the mission and says so in one
+          sentence.</p>
+        <figure class="shot doc-shot"><img src="assets/showcase/mission-question.webp" alt="A mission card in the Archivist's panel, waiting for the user to pick the specials" loading="lazy" width="1280" height="800"><figcaption>The mission found the specials and asks which ones tempt you.</figcaption></figure>
+        <ul>
+          <li><b>It works in the background</b>, on the agent's model (not the small voice model): a plan you see ticked
+            step by step, what it is doing (“Reading…”), the cost so far, and <b>Stop</b>.</li>
+          <li><b>It asks when the choice is yours</b>: a question with boxes to tick (or your own words). It waits; a
+            sound tells you.</li>
+          <li><b>Nothing is invented</b>: a price, a fact, a recipe comes from a page it read, and the link is kept.
+            Pages built by script or that block robots are read through your browser when the
+            <a href="#extension">extension</a> is paired (in a background tab, closed after).</li>
+          <li><b>Nothing enters the Brain before you approve.</b> The draft is shown in full: <b>Approve and save</b>,
+            <b>Change</b> (say what), or <b>Discard</b>. Approved, every item is created at once, with its source link
+            and themes, linked to the others, in the place the mission chose; one Undo removes them all.</li>
+          <li><b>A ceiling</b> on every mission: 1 $ and 15 minutes of work by default
+            (<code>PUT /missions/settings</code>). Near it, the agent wraps up with what it has; at it, the mission stops
+            and keeps what it found. It survives closing the app and resumes.</li>
+        </ul>
+        <figure class="shot doc-shot"><img src="assets/showcase/mission-draft.webp" alt="The mission's draft: two recipes with their links and the weekly menu, with Approve and save" loading="lazy" width="1280" height="800"><figcaption>The draft, to approve, change or discard.</figcaption></figure>
+        <p>Measured on the first real mission (gpt-6-sol): the week's Maxi flyer, four specials with prices and dates,
+          the question, two real recipes read: 13 rounds, under a minute, about 0.27 $. API: <code>/missions</code>
+          (start, follow, answer, revise, approve, stop).</p>
       </section>
 
       <section class="doc" id="extension">

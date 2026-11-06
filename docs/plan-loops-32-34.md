@@ -74,6 +74,14 @@ transcription saved; prices for dated names. Then one real run on the real model
 
 Screens reviewed in English and French; How-to guide "Give an agent a mission". **Confidence 80 %.**
 
+**Done 2026-11-06.** The card in every agent's panel (Mission… button; plan, feed, cost, Stop; the question with
+boxes; the draft with Approve and save / Discard / Change; saved), opened by itself when an agent starts a mission
+from chat or voice. A long draft scrolls inside the card, its buttons stay in view. Screens:
+docs/screenshots/missions-en, missions-fr; docs page section "Missions". The fake model plays a scripted mission
+(tests, screenshots). Not done here: a missions list with their cost in the engine room, and the ceiling in the
+agent's settings (the default is set with PUT /missions/settings); the How-to guide recorded on the real model goes
+with Loop 34's real run.
+
 ## Loop 34 — First real mission: the weekly menu from the specials
 
 | What | How |

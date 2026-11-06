@@ -1,6 +1,6 @@
 """Missions (Loop 32): an agent's longer job in the background.
 
-  GET  /missions                   the recent missions, active first
+  GET  /missions?agent=&limit=     the recent missions (of one agent), active first
   GET  /missions/{id}              one mission: plan, feed, findings, question, draft, cost
   POST /missions                   {agent, goal, max_cost?, max_minutes?}: start one
   POST /missions/{id}/answer       {answer: text or [choices]}: the mission resumes
@@ -13,7 +13,7 @@ from __future__ import annotations
 
 from typing import Any, Callable
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Query
 from pydantic import BaseModel, Field
 
 from engine import database, missions
@@ -67,8 +67,8 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         return run(go)
 
     @r.get("")
-    def listing() -> dict[str, Any]:
-        return {"missions": run(missions.listing)}
+    def listing(agent: str | None = Query(default=None, max_length=40), limit: int = Query(20, ge=1, le=100)) -> dict[str, Any]:
+        return {"missions": run(missions.listing, limit, agent)}
 
     @r.get("/{mission_id}")
     def one(mission_id: str) -> dict[str, Any]:

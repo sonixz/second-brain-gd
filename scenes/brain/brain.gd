@@ -917,6 +917,10 @@ func run_ui_actions(actions: Array) -> void:
 				if agent_panels.has(made):
 					(agent_panels[made] as SbFloatingPanel).reveal()
 				show_toast(I18n.t("“%s” is ready: talk to it in its own panel.") % str(a.get("name", made)))
+			"mission":  # an agent started a mission (chat or voice): its card follows it
+				var who := str(a.get("agent", "archivist"))
+				agent_panel(who).reveal()
+				await chat_panel(who).mission_card.call("follow")
 			"synthesis_draft":
 				var drafter := str(a.get("agent", "sparring"))
 				agent_panel(drafter).reveal()

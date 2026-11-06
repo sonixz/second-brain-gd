@@ -143,7 +143,7 @@ class MissionTests(unittest.TestCase):
         st = self.run_until_pause(client, mid)
         self.assertEqual(st, "stopped")
         m = self.get(mid)
-        self.assertIn("ceiling", m["reason"])
+        self.assertIn("ceiling", m["reason"])  # English app
         self.assertTrue(m["plan"])  # what was done is kept
 
     def test_wrap_up_is_asked_near_the_ceiling(self):
@@ -191,7 +191,7 @@ class MissionTests(unittest.TestCase):
             core._CONTEXT["user_text"] = "fais-moi le menu"
             out = core.run_tool(conn, "start_mission", {"goal": "Le menu de la semaine"}, [])
             self.assertTrue(out["started"])
-            self.assertIn({"action": "mission", "id": out["mission_id"]}, core._UI["actions"])
+            self.assertIn({"action": "mission", "id": out["mission_id"], "agent": "archivist"}, core._UI["actions"])
             mid = out["mission_id"]
         client = Scripted(TURNS)
         self.run_until_pause(client, mid)
@@ -229,6 +229,16 @@ class MissionTests(unittest.TestCase):
         finally:
             w.stop()
             w.join(5)
+
+    def test_the_scripted_mission_of_the_fake_model(self):
+        from engine.assistant.llm import FakeChat
+
+        mid = self.start()
+        self.assertEqual(self.run_until_pause(FakeChat(), mid), "waiting")
+        with database.session(self.db) as conn:
+            missions.answer(conn, mid, ["Whole chicken"])
+        self.assertEqual(self.run_until_pause(FakeChat(), mid), "draft")
+        self.assertEqual(len(self.get(mid)["draft"]["items"]), 3)
 
 
 if __name__ == "__main__":

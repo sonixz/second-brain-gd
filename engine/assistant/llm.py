@@ -213,6 +213,10 @@ class FakeChat:
         FakeChat.last_messages = messages
         last = messages[-1]
         usage = {"prompt_tokens": 100, "completion_tokens": 20}
+        from engine import missions
+
+        if tools and missions.is_mission(messages):  # a scripted mission (Loop 33: tests, screenshots)
+            return {"message": missions.scripted_reply(messages), "usage": usage, "model": model}
         if isinstance(last.get("content"), list):  # an image to describe (vision)
             return {"message": {"role": "assistant", "content": "Image de test: un schéma avec trois boîtes reliées."},
                     "usage": usage, "model": model}
