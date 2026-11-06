@@ -61,6 +61,12 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
         if os.environ.get("SBGD_BACKUPS") != "off":
             backup_worker.start()
         app.state.backup_worker = backup_worker
+        from engine import missions
+
+        mission_worker = missions.Worker(layout, lambda: make_client(key_store.get(layout, "openai")[0]))
+        if os.environ.get("SBGD_MISSIONS") != "off":  # missions (Loop 32): resumes those running at the last stop
+            mission_worker.start()
+        app.state.mission_worker = mission_worker
         if on_started is not None:
             on_started()
         try:
@@ -68,6 +74,7 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
         finally:
             worker.stop()
             backup_worker.stop()
+            mission_worker.stop()
             agents.stop_all()
 
     def client_or_none():
@@ -174,4 +181,7 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
     from engine.api.backup_routes import make_router as make_backup_router
 
     app.include_router(make_backup_router(layout, require_token))
+    from engine.api.mission_routes import make_router as make_mission_router
+
+    app.include_router(make_mission_router(layout, require_token))
     return app

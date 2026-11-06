@@ -35,6 +35,9 @@ CAPABILITIES: dict[str, dict[str, Any]] = {
                   "tools": ["draft_synthesis", "save_synthesis"]},
     "agents": {"label": "Manage agents", "description": "read agents, draft a new or changed agent, save it on your “yes”",
                "tools": ["list_agents", "get_agent", "draft_agent", "save_agent"]},
+    "missions": {"label": "Missions", "description": "longer jobs in the background: a plan, research, a question when it needs your choice, a draft you approve",
+                 "tools": ["start_mission", "mission_status", "answer_mission", "approve_mission", "revise_mission",
+                           "stop_mission"]},
     "interface": {"label": "Drive the interface", "description": "zoom, filter, open views, items and documents, voice speed",
                   "tools": ["ui_open_agent", "ui_open_view", "ui_open_project", "ui_open_note", "ui_set_theme", "ui_set_volume",
                             "ui_start_weekly_review", "ui_zoom", "ui_open_document", "ui_page", "ui_open_original",
@@ -50,6 +53,7 @@ CAPABILITIES_FR = {
     "organise": ("Organiser le graphe", "classer, déplacer, relier, délier, supprimer, gérer les places, les packs, annuler, sauvegarder"),
     "synthesis": ("Synthèse approuvée", "enregistrer une synthèse de la conversation, seulement après ton « oui »"),
     "agents": ("Gérer les agents", "lire les agents, rédiger un agent nouveau ou modifié, l’enregistrer sur ton « oui »"),
+    "missions": ("Missions", "des travaux plus longs en arrière-plan : un plan, des recherches, une question quand il faut ton choix, un livrable que tu approuves"),
     "interface": ("Piloter l’interface", "zoomer, filtrer, ouvrir les vues, éléments et documents, vitesse de la voix"),
 }
 MODELS_FR = {"gpt-6-sol": "gpt-6-sol · rapide, précis (par défaut)", "gpt-6-astra": "gpt-6-astra · raisonne plus, plus lent",
@@ -431,4 +435,6 @@ AGENT_TOOLS = [
 
 def all_tools(core_tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """Every tool any agent may get; each agent then keeps those of its capabilities."""
-    return core_tools + SYNTHESIS_TOOLS + AGENT_TOOLS
+    from engine import missions
+
+    return core_tools + SYNTHESIS_TOOLS + AGENT_TOOLS + missions.CHAT_TOOLS

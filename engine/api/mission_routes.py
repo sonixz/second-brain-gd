@@ -1,0 +1,97 @@
+"""Missions (Loop 32): an agent's longer job in the background.
+
+  GET  /missions                   the recent missions, active first
+  GET  /missions/{id}              one mission: plan, feed, findings, question, draft, cost
+  POST /missions                   {agent, goal, max_cost?, max_minutes?}: start one
+  POST /missions/{id}/answer       {answer: text or [choices]}: the mission resumes
+  POST /missions/{id}/revise       {changes}: the mission works again on its draft
+  POST /missions/{id}/approve      the draft becomes items in the Brain (one undo)
+  POST /missions/{id}/stop         stop it (what it found is kept)
+  GET/PUT /missions/settings       default ceiling {max_cost, max_minutes}
+"""
+from __future__ import annotations
+
+from typing import Any, Callable
+
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+
+from engine import database, missions
+from engine.paths import Layout
+
+
+class StartIn(BaseModel):
+    agent: str = Field(default="archivist", max_length=40)
+    goal: str = Field(min_length=4, max_length=2000)
+    max_cost: float | None = Field(default=None, gt=0, le=20)
+    max_minutes: float | None = Field(default=None, gt=0, le=240)
+
+
+class AnswerIn(BaseModel):
+    answer: str | list[str]
+
+
+class ReviseIn(BaseModel):
+    changes: str = Field(min_length=1, max_length=4000)
+
+
+class SettingsIn(BaseModel):
+    max_cost: float | None = Field(default=None, gt=0, le=20)
+    max_minutes: float | None = Field(default=None, gt=0, le=240)
+
+
+def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
+    r = APIRouter(prefix="/missions", dependencies=[Depends(auth)])
+
+    def run(fn: Callable[..., Any], *args: Any) -> Any:
+        try:
+            with database.session(layout.database) as conn:
+                out = fn(conn, *args)
+                if isinstance(out, dict) and "id" in out and "goal" in out:
+                    return missions.get(conn, out["id"])
+                return out
+        except missions.MissionError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+    @r.get("/settings")
+    def get_settings() -> dict[str, Any]:
+        return run(missions.settings)
+
+    @r.put("/settings")
+    def put_settings(body: SettingsIn) -> dict[str, Any]:
+        def go(conn):
+            s = missions.settings(conn)
+            s.update({k: v for k, v in body.model_dump().items() if v is not None})
+            database.set_setting(conn, "missions", s)
+            return s
+        return run(go)
+
+    @r.get("")
+    def listing() -> dict[str, Any]:
+        return {"missions": run(missions.listing)}
+
+    @r.get("/{mission_id}")
+    def one(mission_id: str) -> dict[str, Any]:
+        return run(missions.get, mission_id)
+
+    @r.post("")
+    def start(body: StartIn) -> dict[str, Any]:
+        return run(missions.start, body.agent, body.goal, body.max_cost, body.max_minutes)
+
+    @r.post("/{mission_id}/answer")
+    def answer(mission_id: str, body: AnswerIn) -> dict[str, Any]:
+        return run(missions.answer, mission_id, body.answer)
+
+    @r.post("/{mission_id}/revise")
+    def revise(mission_id: str, body: ReviseIn) -> dict[str, Any]:
+        return run(missions.revise, mission_id, body.changes)
+
+    @r.post("/{mission_id}/approve")
+    def approve(mission_id: str) -> dict[str, Any]:
+        return run(missions.approve, mission_id)
+
+    @r.post("/{mission_id}/stop")
+    def stop(mission_id: str) -> dict[str, Any]:
+        return run(missions.stop, mission_id)
+
+    return r

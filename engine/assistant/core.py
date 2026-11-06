@@ -231,6 +231,10 @@ def undo(conn: sqlite3.Connection, action_id: int) -> dict[str, Any]:
         from engine.assistant.actions import undo_link_action
 
         undo_link_action(conn, kind, row["note_id"], before, after)
+    elif kind == "mission_saved":  # an approved mission: all its items at once (Loop 32)
+        from engine import missions
+
+        missions.undo_saved(conn, after)
     elif kind == "create_project":
         conn.execute("UPDATE spaces SET archived_at = ? WHERE id = ?", (utc_now(), row["note_id"]))
     elif kind in ("create_note", "add_task"):
@@ -689,6 +693,15 @@ def _browser_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], act
 
 
 def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions: list[dict[str, Any]]) -> Any:
+    from engine import missions
+
+    if name in missions.CHAT_TOOL_NAMES:
+        out = missions.chat_tool(conn, name, args, str(_CONTEXT.get("agent") or "archivist"),
+                                 str(_CONTEXT.get("user_text") or ""), _CLIENT.get("c"))
+        ui = out.pop("ui", None)
+        if ui:
+            _UI["actions"].append(ui)
+        return out
     if name.startswith("ui_"):
         return _ui_tool(conn, name, args)
     if name in ("export_pack", "manage_pack"):

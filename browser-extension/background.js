@@ -158,7 +158,44 @@ async function run(cmd) {
     if (tabId === undefined) throw new Error(t("noTab"));
     return capture(tabId, { selectionOnly: !!cmd.selection_only, place: cmd.place || "", byVoice: true });
   }
+  if (cmd.action === "read") return readPage(cmd.url);
   throw new Error(`unknown command ${cmd.action}`);
+}
+
+// A mission reads a page as the user's browser shows it (pages built by script, flyers, sites that block robots):
+// opened in a background tab, scrolled to the end so lazy parts load, its text read, then closed. Nothing is sent
+// to the Brain as a capture. Needs the optional “read the pages the Brain opens” permission.
+async function readPage(url) {
+  if (!/^https?:\/\//i.test(url || "")) throw new Error(t("onlyHttpOpen"));
+  if (!(await canReadTabs())) throw new Error(t("mayNotRead"));
+  const tab = await chrome.tabs.create({ url, active: false });
+  try {
+    await waitLoaded(tab.id, 30000);
+    const [res] = await chrome.scripting.executeScript({ target: { tabId: tab.id }, func: scrollAndRead });
+    const page = (res && res.result) || {};
+    return { url: page.url || url, title: page.title || "", text: page.text || "" };
+  } finally {
+    await chrome.tabs.remove(tab.id).catch(() => {});
+  }
+}
+
+// Runs inside the page: scrolls down step by step (up to ~20 s), waits for content to settle, returns the text.
+async function scrollAndRead() {
+  const pause = (ms) => new Promise((r) => setTimeout(r, ms));
+  await pause(1500);
+  let last = -1;
+  for (let i = 0; i < 40; i++) {
+    window.scrollBy(0, Math.max(400, window.innerHeight * 0.9));
+    await pause(450);
+    const h = document.documentElement.scrollHeight;
+    if (window.innerHeight + window.scrollY >= h - 4) {
+      if (h === last) break;
+      last = h;
+      await pause(900);
+    }
+  }
+  return { url: location.href, title: document.title || "",
+           text: document.body ? document.body.innerText.slice(0, 400000) : "" };
 }
 
 async function waitLoaded(tabId, ms = 15000) {

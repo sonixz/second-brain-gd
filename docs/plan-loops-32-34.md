@@ -52,6 +52,15 @@ transcription saved; prices for dated names. Then one real run on the real model
 
 **Confidence 80 %** (mechanics), 90 % for 32a.
 
+**Done 2026-11-06** (docs/architecture/missions.md).
+- 32a: the cause of the lost sentences: the account no longer has access to `gpt-4o-mini-transcribe` inside a
+  realtime session (`model_not_found`), and the failure event was ignored. Measured: only `gpt-realtime-whisper` and
+  `gpt-live-transcribe` work now. The session tries them in order, switches on a refusal, remembers the one that
+  works and shows a lost sentence in the chat. Checked on the real API (first sentence lost with the old model,
+  second one transcribed and saved). Prices: gpt-6-sol / astra / luna from OpenAI's page, dated names matched.
+- 32b: engine, API, the extension's background read (1.1.0: reload it), tests (12). First real mission: 13 rounds,
+  56 s, 0.27 $, real specials and two real recipes with their links.
+
 ## Loop 33 — Missions in the app
 
 | What | How |
