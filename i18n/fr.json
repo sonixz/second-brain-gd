@@ -37,6 +37,7 @@
  "%s · similarity %d%%": "%s · similarité %d%%",
  "(overdue)": "(en retard)",
  "(The Agent Builder always keeps this one.)": "(Le Créateur d’agents garde toujours celle-ci.)",
+ "(what you said could not be written down: say it again)": "(ta phrase n’a pas pu être transcrite : redis-la)",
  "+ Add a folder": "+ Ajouter un dossier",
  "+ File": "+ Fichier",
  "+ New project in %s…": "+ Nouveau projet dans %s…",

@@ -9,6 +9,7 @@ engine -> Godot:  binary frames = the assistant's voice, PCM16 LE mono 24 kHz
                   {"type": "ready", "model", "voice"}
                   {"type": "speech_started"}                 the user started talking: stop playback
                   {"type": "user_text", "text"}               what the user said (transcribed)
+                  {"type": "transcription_failed", "model", "switched", "message"}   a sentence could not be written down
                   {"type": "assistant_delta", "text"} / {"type": "assistant_text", "text"}
                   {"type": "audio_start", "item_id"} / {"type": "audio_done"}
                   {"type": "tool", "name"}                    the assistant is using a tool
@@ -28,6 +29,7 @@ import base64
 import json
 import math
 import os
+import re
 import sqlite3
 import struct
 import time
@@ -39,9 +41,12 @@ from engine import database
 
 REALTIME_WS = "wss://api.openai.com/v1/realtime?model="
 SAMPLE_RATE = 24000
-# Measured 2026-11-03: inside a realtime session, gpt-realtime-whisper and gpt-live-transcribe are refused
-# (model_not_found); gpt-4o-mini-transcribe and whisper-1 are accepted.
-DEFAULTS = {"live_model": "gpt-realtime-2.1-mini", "live_transcribe_model": "gpt-4o-mini-transcribe",
+# Which transcription models a realtime session accepts changes with the account: measured 2026-11-03,
+# gpt-4o-mini-transcribe and whisper-1 worked; measured 2026-11-06, only gpt-realtime-whisper and gpt-live-transcribe
+# do (the others fail with model_not_found / permission_error, and every spoken sentence was lost silently).
+# So the session tries them in order and remembers the one that works (setting live_transcribe_model).
+TRANSCRIBE_MODELS = ["gpt-realtime-whisper", "gpt-live-transcribe", "gpt-4o-mini-transcribe", "whisper-1"]
+DEFAULTS = {"live_model": "gpt-realtime-2.1-mini", "live_transcribe_model": "gpt-realtime-whisper",
             "live_max_minutes": 20, "live_session_cap_usd": 1.0, "live_idle_minutes": 3}
 LIVE_MODELS = ["gpt-realtime-2.1-mini", "gpt-realtime-2.1"]
 # USD per 1M tokens (text in, text cached, text out, audio in, audio cached, audio out), OpenAI list prices
@@ -53,7 +58,8 @@ PRICES = {
 LIVE_RULES = """
 Tu es maintenant en CONVERSATION VOCALE en temps réel. Parle naturellement, comme au téléphone: phrases courtes,
 une idée à la fois, pas de listes ni de crochets lus à voix haute (dis simplement le titre de la note).
-Si l'utilisateur t'interrompt, arrête-toi et écoute. Si tu n'es pas sûre d'avoir compris, demande.
+N'annonce jamais une action sans la faire: appelle l'outil tout de suite, dans le même tour, puis dis ce que tu as
+trouvé ou fait (pas « je vais chercher… » suivi d'un silence). Si l'utilisateur t'interrompt, arrête-toi et écoute. Si tu n'es pas sûre d'avoir compris, demande.
 « On travaille sur <projet> » = focus_project (id via get_structure), puis parle de ce projet.
 « Merci, c'est tout », « bye », « on arrête » = end_conversation après une courte salutation."""
 LIVE_TOOLS = [
@@ -76,7 +82,7 @@ def realtime_tools(chat_tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
 
 
 def cost_of(model: str, usage: dict[str, Any] | None) -> float | None:
-    p = PRICES.get(model)
+    p = PRICES.get(model) or PRICES.get(re.sub(r"-\d{4}-\d{2}-\d{2}$", "", model or ""))
     if p is None or not usage:
         return None if p is None else 0.0
     i = usage.get("input_token_details") or {}
@@ -272,6 +278,9 @@ class LiveSession:
         self.ended: str | None = None
         self.mic_bytes = 0
         self.fingerprint = ""
+        self.transcribe = str(settings.get("live_transcribe_model") or TRANSCRIBE_MODELS[0])
+        self.transcribe_tried: set[str] = set()
+        self.lost_sentences = 0
 
     # -- helpers
     def _db(self) -> sqlite3.Connection:
@@ -333,13 +342,40 @@ class LiveSession:
             return False
         self.fingerprint = fp
         instructions, tools, language = await asyncio.to_thread(lambda: (self.instructions(), self.tools(), self.language()))
-        await self.up.send(session_update(instructions, self.voice, self.s["live_transcribe_model"], tools, language))
+        await self.up.send(session_update(instructions, self.voice, self.transcribe, tools, language))
         return True
+
+    async def _transcription_failed(self, ev: dict[str, Any]) -> None:
+        """What the user said could not be written down. When the model is refused (not available to this account),
+        switch to the next one for the rest of the conversation and remember it; tell the app either way."""
+        err = ev.get("error") or {}
+        self.lost_sentences += 1
+        refused = err.get("code") == "model_not_found" or err.get("type") == "permission_error"
+        nxt = None
+        if refused:
+            self.transcribe_tried.add(self.transcribe)
+            nxt = next((m for m in TRANSCRIBE_MODELS if m not in self.transcribe_tried), None)
+        if nxt:
+            self.transcribe = nxt
+            instructions, tools, language = await asyncio.to_thread(
+                lambda: (self.instructions(), self.tools(), self.language()))
+            await self.up.send(session_update(instructions, self.voice, self.transcribe, tools, language))
+            await asyncio.to_thread(self._remember_transcribe, nxt)
+        await self.send_json({"type": "transcription_failed", "model": self.transcribe, "switched": bool(nxt),
+                              "message": str(err.get("message") or "")[:200]})
+
+    def _remember_transcribe(self, model: str) -> None:
+        conn = self._db()
+        try:
+            database.set_setting(conn, "live_transcribe_model", model)
+            conn.commit()
+        finally:
+            conn.close()
 
     async def start(self) -> None:
         await self.up.connect()
         self.fingerprint = self.settings_fingerprint()
-        await self.up.send(session_update(self.instructions(), self.voice, self.s["live_transcribe_model"], self.tools(),
+        await self.up.send(session_update(self.instructions(), self.voice, self.transcribe, self.tools(),
                                           self.language()))
 
     async def mic(self, pcm: bytes) -> None:
@@ -415,7 +451,7 @@ class LiveSession:
         if self.ended:
             return
         if refocus:
-            await self.up.send(session_update(self.instructions(), self.voice, self.s["live_transcribe_model"],
+            await self.up.send(session_update(self.instructions(), self.voice, self.transcribe,
                                               self.tools(), self.language()))
         await self.up.send({"type": "response.create"})
 
@@ -453,6 +489,8 @@ class LiveSession:
                 self.last_speech = time.monotonic()
                 await self.send_json({"type": "speech_started"})
                 await self._refresh_if_changed()  # the agent's settings, changed while talking, apply to this reply
+            elif t == "conversation.item.input_audio_transcription.failed":
+                await self._transcription_failed(ev)
             elif t == "conversation.item.input_audio_transcription.completed":
                 text = str(ev.get("transcript") or "").strip()
                 if text:

@@ -39,6 +39,20 @@ class SpyUpstream(live.FakeUpstream):
         await super().send(ev)
 
 
+class RefusingUpstream(SpyUpstream):
+    """An account where some transcription models are refused (seen 2026-11-06: gpt-4o-mini-transcribe)."""
+
+    def __init__(self, refused):
+        super().__init__()
+        self.refused = set(refused)
+        self.model_t = ""
+
+    async def send(self, ev):
+        if ev.get("type") == "session.update":
+            self.model_t = ev["session"]["audio"]["input"]["transcription"]["model"]
+        await super().send(ev)
+
+
 class LiveTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
@@ -146,6 +160,31 @@ class LiveTests(unittest.TestCase):
         self.assertEqual([(m["role"], m["content"]) for m in h][-2:],
                          [("user", "Montre-moi mes projets."), ("assistant", "C'est ouvert, voici tes projets.")])
         self.assertTrue(h[-1]["meta"]["live"])
+
+    def test_refused_transcription_model_switches_and_is_remembered(self):
+        up = RefusingUpstream({"gpt-realtime-whisper"})
+        orig = up._q.put
+
+        async def put(ev):
+            if ev and ev.get("type") == "conversation.item.input_audio_transcription.completed" and up.model_t in up.refused:
+                ev = {"type": "conversation.item.input_audio_transcription.failed", "item_id": ev["item_id"],
+                      "error": {"type": "invalid_request_error", "code": "model_not_found", "message": "no access"}}
+            await orig(ev)
+        up._q.put = put
+        self.up = up
+        self.sess = live.LiveSession(self.db, up, dict(live.DEFAULTS), "marin", self.rec.json, self.rec.audio_out,
+                                     FakeChat())
+        self.run_turns(2)
+        failed = [m for m in self.rec.msgs if m["type"] == "transcription_failed"]
+        self.assertEqual(len(failed), 1)
+        self.assertTrue(failed[0]["switched"])
+        self.assertEqual(failed[0]["model"], "gpt-live-transcribe")
+        # the second sentence is written down and saved
+        self.assertIn({"type": "user_text", "text": "Montre-moi mes projets."}, self.rec.msgs)
+        with database.session(self.db) as conn:
+            self.assertEqual(database.get_setting(conn, "live_transcribe_model"), "gpt-live-transcribe")
+            h = core.history(conn, core.today_conversation(), 10)
+        self.assertIn("user", [m["role"] for m in h])
 
     def test_goodbye_ends_the_conversation(self):
         self.run_turns(3)

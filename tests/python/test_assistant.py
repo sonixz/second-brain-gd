@@ -103,7 +103,11 @@ class AssistantTests(unittest.TestCase):
 
     def test_cost_estimate(self):
         self.assertAlmostEqual(estimate_cost("gpt-4o-mini", {"prompt_tokens": 1_000_000, "completion_tokens": 0}), 0.15)
-        self.assertIsNone(estimate_cost("gpt-6-sol", {"prompt_tokens": 10, "completion_tokens": 10}))
+        self.assertAlmostEqual(estimate_cost("gpt-6-sol", {"prompt_tokens": 1_000_000, "completion_tokens": 100_000}), 3.0)
+        # a dated name is priced as its model (2026-11-05: web search showed "cost unknown" for this one)
+        self.assertAlmostEqual(estimate_cost("gpt-4o-mini-2024-07-18", {"prompt_tokens": 1_000_000,
+                                                                        "completion_tokens": 0}), 0.15)
+        self.assertIsNone(estimate_cost("some-unknown-model", {"prompt_tokens": 10, "completion_tokens": 10}))
 
 
 if __name__ == "__main__":

@@ -14,8 +14,15 @@ import urllib.request
 from typing import Any
 
 API = "https://api.openai.com/v1"
-# List prices in USD per 1M tokens, used for estimates shown to the user only.
-PRICES = {"gpt-4o": (2.50, 10.00), "gpt-4o-mini": (0.15, 0.60)}
+# List prices in USD per 1M tokens (input, output; standard, short context), used for estimates shown to the user
+# only. OpenAI's pricing page, read 2026-11-06. A dated name (gpt-4o-mini-2024-07-18) is priced as its model.
+PRICES = {"gpt-4o": (2.50, 10.00), "gpt-4o-mini": (0.15, 0.60),
+          "gpt-6-sol": (2.00, 10.00), "gpt-6-astra": (10.00, 50.00), "gpt-6-luna": (0.10, 0.50)}
+_DATED = re.compile(r"-\d{4}-\d{2}-\d{2}$")
+
+
+def price_of(model: str) -> tuple[float, float] | None:
+    return PRICES.get(model) or PRICES.get(_DATED.sub("", model or ""))
 TTS_PRICE_PER_1M_CHARS = 15.0  # rough estimate for gpt-4o-mini-tts
 
 
@@ -80,9 +87,10 @@ def estimate_cost(model: str, usage: dict[str, Any] | None) -> float | None:
     """None when the model's price is unknown (never invent a number)."""
     if not usage:
         return 0.0
-    if model not in PRICES:
+    price = price_of(model)
+    if price is None:
         return None
-    pin, pout = PRICES[model]
+    pin, pout = price
     return round((usage.get("prompt_tokens", 0) * pin + usage.get("completion_tokens", 0) * pout) / 1e6, 6)
 
 

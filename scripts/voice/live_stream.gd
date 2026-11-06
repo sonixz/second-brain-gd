@@ -89,6 +89,8 @@ func _handle(msg: Dictionary) -> void:
 			speech_started.emit()
 		"user_text":
 			user_text.emit(str(msg.get("text", "")))
+		"transcription_failed":  # shown in the chat so a lost sentence is never silent
+			user_text.emit(I18n.t("(what you said could not be written down: say it again)"))
 		"assistant_delta":
 			assistant_delta.emit(str(msg.get("text", "")))
 		"assistant_text":
