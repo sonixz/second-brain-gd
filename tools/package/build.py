@@ -37,7 +37,7 @@ BASE_URL = "https://github.com/astral-sh/python-build-standalone/releases/downlo
 DROP = ["test", "idlelib", "tkinter", "turtledemo", "turtle.py", "ensurepip", "lib2to3", "pydoc_data", "venv"]
 DROP_TOP = ["tcl", "share", "include"]
 # What the app folder holds besides the Godot export (the engine is plain Python source, readable by anyone).
-APP_PARTS = ["engine", "browser-extension", "README.md", "LICENSE"]
+APP_PARTS = ["engine", "browser-extension", "README.md", "LICENSE", "THIRD_PARTY_NOTICES.md"]
 
 
 def sha256(path: Path) -> str:
@@ -161,6 +161,12 @@ def app(target: str) -> Path:
         shutil.rmtree(dest)
     dest.mkdir(parents=True)
     godot_export(target, dest)
+    licenses = dest / "LICENSES"  # Godot's licence and its components must travel with the exported app
+    licenses.mkdir()
+    subprocess.run([os.environ.get("GODOT", "godot"), "--headless", "--path", str(ROOT), "--script",
+                    "res://tools/package/licenses.gd", "--", str(licenses / "godot.txt")], check=True, capture_output=True)
+    if not (licenses / "godot.txt").is_file() or (licenses / "godot.txt").stat().st_size < 1000:
+        raise SystemExit("Godot's licence notices could not be written")
     for part in APP_PARTS:
         src = ROOT / part
         if src.is_dir():

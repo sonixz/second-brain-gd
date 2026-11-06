@@ -2,70 +2,53 @@
 
 **Your knowledge. Your system. Your control.**
 
-Second Brain GD is an open-source, local-first second brain you can talk to. Give it anything (a thought,
-a link, a PDF, a photo, your voice): an archivist files it with the CODE method and PARA, links it by meaning
-to what you already know, and you explore it all in a living graph you can zoom into until the text is there.
-Godot is the interface, a local Python engine runs the services, and everything stays in your user folder.
+Second Brain GD is a local-first second brain you can talk to. Give it anything (a thought, a link, a PDF, a
+scanned letter, a picture, a web page from your browser, your voice): an archivist files it with the CODE method
+and PARA, links it by meaning to what you already know, and you explore it all in a living graph you can zoom into
+until the text is there. Agents think with you (Sparring) or are made to measure by an Agent Builder that interviews
+you. Godot is the interface, a local Python engine does the work, and your Brain stays in a folder on your computer.
 
-> Status: **Loop 15**, in active development. Intake and archivist, semantic zoom, originals and PDF viewer,
-> zones, filters, paths, timeline, brain packs, push-to-talk and live conversation. See [STATUS.md](STATUS.md)
-> and the journal on the landing page (`public/index.html`).
-
-**Documentation:** open [`public/docs.html`](public/docs.html) — install, the archivist, the graph, voice
-commands, and integration tutorials (browser bookmarklet, local HTTP API, brain packs, real AI costs).
-
-The repository is **private** during development.
-
-![The graph: one zone per place, the Inbox in the middle, the assistant answering on the left](docs/screenshots/showcase/01-graph-overview.png)
+![The graph: one zone per place, the Inbox in the middle, the Archivist on the left](docs/screenshots/showcase/01-graph-overview.png)
 
 | Zoom in: items become cards | Your PDFs, page by page | How is X connected to Y? |
 |---|---|---|
 | ![Cards](docs/screenshots/showcase/04-graph-cards.png) | ![Document viewer](docs/screenshots/showcase/07-document-viewer.png) | ![Path](docs/screenshots/showcase/10-path.png) |
 
-The screenshots come from a scripted example brain (`SBGD_SHOT_SIZE=1600x1000 ./tools/showcase.sh`):
-no OpenAI calls, no personal data, rendered on a private virtual display.
+## Get it
 
-## Quick start on Windows
+**The package (Windows, Linux):** unzip `SecondBrainGD-windows.zip` (or `-linux`) anywhere, run `SecondBrainGD.exe`
+(`SecondBrainGD.x86_64`), press **Setup**. It brings its own Python with everything installed: no Python to
+install, no administrator rights, setup takes a few seconds. Check the download against its `SHA256SUMS`.
 
-### 1. Prerequisites
+**From the source (developers):** Godot 4.7 (standard build), Python 3.12 or 3.13, Git. Clone, open `project.godot`
+in Godot, press **Run**, then **Setup**: it creates a private virtual environment and installs 15 hash-locked
+packages. Details: [`public/docs.html#install`](public/docs.html).
 
-| Tool | Version | Where |
-|---|---|---|
-| Godot | 4.7 (standard build, not .NET) | https://godotengine.org/download/windows/ |
-| Python | 3.12 or 3.13 | https://www.python.org/downloads/ |
-| Git | any recent | https://git-scm.com/download/win |
+**Your OpenAI key** (optional, asked after setup, stored in the Windows Credential Manager or a private file):
+filing, summaries, meaning search, voice, image descriptions. Without it the app still captures, shows and
+searches by words. You pay OpenAI directly for what you use; the engine room shows the real costs.
 
-When installing Python from python.org, tick **"Add python.exe to PATH"**. The Microsoft Store Python 3.12/3.13
-also works (tested). Nothing needs administrator rights, and Docker is not used.
+**English or French:** the FR / EN switch at the top right.
 
-### 2. Clone and open
-
-```powershell
-git clone git@github.com:sonixz/second-brain-gd.git C:\git\second-brain-gd
-```
-
-Start Godot, choose **Import**, select `C:\git\second-brain-gd\project.godot`, then press **Run** (F5).
-
-### 3. Press Setup
-
-The app finds Python, creates a private virtual environment, installs the locked dependencies (internet access
-to PyPI is needed the first time, about 30 MB), creates the SQLite database, starts the local API and verifies it.
-Then the **System Console** opens.
-
-On the next launch the welcome screen says **Installed** and **Start** takes a few seconds: completed steps are
-verified and skipped.
-
-### Where are my files?
-
-| What | Location on Windows |
+## What stays where
+| What | Where (Windows) |
 |---|---|
-| Everything | `%LOCALAPPDATA%\SecondBrainGD` |
-| Database | `...\data\second_brain.sqlite3` |
-| Logs | `...\logs\bootstrap.log`, `...\logs\server.log` |
-| Settings | `...\config.json` (for example `{"port": 8765}`) |
+| Your Brain (database, kept files, logs) | `%LOCALAPPDATA%\SecondBrainGD` (Linux: `~/.local/share/second-brain-gd`) |
+| Backups | chosen in the engine room, **Your data** (until then `...\backups`) |
+| Your API keys | Windows Credential Manager (Linux: a private file in the data folder) |
 
-Linux uses `~/.local/share/second-brain-gd`, macOS `~/Library/Application Support/SecondBrainGD`.
-Set `SBGD_HOME` to use another folder. Nothing is ever written inside the repository.
+Nothing leaves your computer except what you send to OpenAI (and the web pages the agents fetch when Internet is
+on). Backups, restore, start fresh and uninstall: the engine room, **Your data**
+([docs](public/docs.html#backups)).
+
+## Documentation
+- **[Docs](public/docs.html)**: install, the archivist, the graph, voice commands, agents, browser extension,
+  packs, backups, local API, troubleshooting.
+- **[How-to](public/howto.html)**: thirteen step-by-step guides captured from the real app.
+- [CONTRIBUTING.md](CONTRIBUTING.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) ·
+  [audit before going public](docs/audit-before-public.md)
+
+**Status:** in active development (Loop 31). The repository is private for now; its licence is not chosen yet.
 
 ## Using it
 
@@ -146,22 +129,25 @@ The Godot test presses the real Setup button headless and checks the System Cons
 ## Repository layout
 
 ```
-scenes/        Godot screens (startup/, dashboard/) and UI components
+scenes/        Godot screens (startup/, brain/, dashboard/) and UI components
 scripts/       GDScript: core/ (app, theme, paths), setup/ (Python locator, bootstrap runner), monitoring/ (API client)
 engine/        Python: bootstrap.py, installer/, database/ (+ migrations), api/, monitoring/
 browser-extension/  the Edge/Chrome extension (Manifest V3): pairing, send page/selection, voice open/add/close
 tests/         python/ (unittest), godot/ (headless end-to-end)
 public/        landing page and docs (open public/index.html or public/docs.html, no build)
 docs/          architecture/, troubleshooting, screenshots
-tools/         test.sh, test.ps1, capture.sh / showcase.sh (screenshots on a private virtual display),
+tools/         test.sh, test.ps1, showcase.sh / howto.sh (screenshots on a private virtual display),
+               package/ (the packages with their own Python), i18n.py (the French translations),
                web_images.gd (PNG → WebP for the site)
+i18n/          fr.json: every interface text, English → French
 ```
 
-## Documentation
+## Architecture notes
 
 - [Architecture overview](docs/architecture/overview.md)
 - [Event protocol (Python → Godot)](docs/architecture/events-protocol.md)
 - [Process lifecycle](docs/architecture/process-lifecycle.md)
 - [Knowledge model, Whisper and agents plan](docs/architecture/knowledge-model.md)
+- [Backups](docs/architecture/backups.md) · [Brain packs](docs/architecture/packs.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [STATUS](STATUS.md) · [BACKLOG](BACKLOG.md) · [DEVLOG](DEVLOG.md)

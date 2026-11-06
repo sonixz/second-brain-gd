@@ -201,6 +201,18 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         <div class="callout"><p><b>Not encrypted.</b> Backups are plain files, like your Brain itself. If they go to a
           cloud folder, its protection is the cloud's; on a laptop, turn on BitLocker (Windows) or your system's disk
           encryption. Restoring or erasing is never possible by voice.</p></div>
+        <h3 id="uninstall">Uninstall by hand</h3>
+        <p><b>Uninstall…</b> in Your data does all of this for you. By hand, with the app closed:</p>
+        <ol class="steps-doc">
+          <li><p>Delete the data folder: <code>%LOCALAPPDATA%\SecondBrainGD</code> on Windows,
+            <code>~/.local/share/second-brain-gd</code> on Linux (keep its <code>backups</code> folder if you want them).</p></li>
+          <li><p>Windows: open <b>Credential Manager</b> → <b>Windows Credentials</b> and remove the entries
+            <code>openai@SecondBrainGD</code> and <code>openai_admin@SecondBrainGD</code> (or one named <code>SecondBrainGD</code>).
+            Linux: the keys were in the data folder, already gone.</p></li>
+          <li><p>Delete the app's preferences: the <code>Second Brain GD</code> folder under <code>%APPDATA%\Godot\app_userdata</code>
+            (Linux: <code>~/.local/share/godot/app_userdata</code>).</p></li>
+          <li><p>Delete the app's folder, and remove the browser extension from <code>edge://extensions</code> if you added it.</p></li>
+        </ol>
         <p>For developers: <code>engine/backups.py</code>, <code>docs/architecture/backups.md</code>, routes under
           <code>/data</code> in the <a href="#api">local API</a>.</p>
       </section>

@@ -92,6 +92,8 @@ except what is kept on purpose; restore an older-schema backup. **Confidence 85 
 
 **Confidence 90 %** for the audit itself; the music is the open question.
 
+**Done 2026-11-05**: see docs/audit-before-public.md. History clean (fake test keys only; the committed .env holds only encrypted values, the private key was never committed). Godot's licence notices were missing from the package: added. Open for the owner: rotate the three keys, decide about versioning .env, the ElevenLabs plan for the audio, two third-party pages stored in the How-to recordings, the licence.
+
 ---
 
 ## What the owner can test meanwhile
