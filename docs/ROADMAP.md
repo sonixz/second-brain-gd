@@ -114,6 +114,29 @@ Principles:
 | **14 — Search and connect in the graph** ✅ 2026-11-03 | Results light up in the graph with the reason. The path between two items. Accept or dismiss a related idea. Edit text in the card |
 | **15 — Large volume and timeline** ✅ 2026-11-03 | Thousands of items stay fluid (faster layout, only visible items drawn). A timeline view of captures |
 
+## Later: data analysis and reports (brainstorm 2026-11-06, parked)
+
+The owner wants this kept for later; the product focus stays on the Brain and missions for now.
+
+- **Goal.** Any agent can analyse any data the owner drops (JSON, CSV, .ics calendar, Excel) and answer with
+  an interactive, high-quality report. First real case: the owner's time entries and full calendar since
+  2026-01-01 (« détaille-moi la semaine 14 : interne contre projet, les projets qui ont pris le plus de temps »).
+- **Data.** A generic import into a local analysis base (DuckDB) that infers the columns. The agent gets the
+  schema and sample rows; nothing is specific to time entries.
+- **Compute.** Read-only SQL by default (exact, no file access). Model-written Python only in a sandbox
+  (Pyodide, Python in WebAssembly in the browser sandbox, vendored in the repo), never run freely on Windows.
+- **Numbers never come from the model.** Every figure comes from a query; a « Show the query » button under
+  each chart; the agent reads its results before writing; « Run again for next week » replays the queries
+  with no model call.
+- **Display.** Vega-Lite specs (a general chart grammar) rendered by one polished, vendored template
+  (palette, light and dark, tooltips, data table, clean PDF print), served by the local engine and opened
+  in the browser. Free agent HTML and JS only in an isolated page (separate origin, no network, no access to
+  the engine). In the app: a report card with key figures, and the report saved as a Brain node linked to
+  what it covers.
+- **Order.** Generic import and SQL tool, then Vega-Lite reports and a « Reports » agent capability, then
+  sandboxed free HTML, then Pyodide only if SQL falls short on real cases.
+- **Open questions.** The files' source tool and format; whether entry descriptions may be sent to the model.
+
 ## Model cadence (owner's OpenAI project, 2026-11-02)
 
 | Use | Now | To evaluate in Loop 4 |
