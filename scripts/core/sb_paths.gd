@@ -25,8 +25,19 @@ static func data_dir() -> String:
 	return xdg.path_join(APP_DIR_LINUX)
 
 
+## The folder holding engine/ (and, in a package, python/ and browser-extension/): the project folder when
+## running from source, the executable's folder in an exported app (res:// is then inside the .pck).
 static func repo_root() -> String:
+	if OS.has_feature("template"):
+		return OS.get_executable_path().get_base_dir()
 	return ProjectSettings.globalize_path("res://").trim_suffix("/")
+
+
+## The Python shipped with the app (Loop 28, tools/package/build.py), "" when there is none (running from source).
+static func bundled_python() -> String:
+	var py := repo_root().path_join("python")
+	py = py.path_join("python.exe") if OS.get_name() == "Windows" else py.path_join("bin").path_join("python3")
+	return py if FileAccess.file_exists(py) else ""
 
 
 static func bootstrap_script() -> String:

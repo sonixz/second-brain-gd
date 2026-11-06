@@ -47,6 +47,7 @@ func _run() -> void:
 	OS.unset_environment("OPENAI_ADMIN_KEY")
 	# The agent room installs from a tiny local fixture (a fake app-server), never the 160 MB download.
 	OS.set_environment("SBGD_AGENTS_MANIFEST", ProjectSettings.globalize_path("res://tests/fixtures/agents/manifest.json"))
+	OS.set_environment("SBGD_AGENTS", "install")  # on demand since Loop 28: the test installs the fixture at setup
 	SbSettings.set_value("assistant", "speaks", true)
 	SbSettings.set_value("onboarding", "voice_done", false)
 	if OS.get_environment("SBGD_HOME") == "":

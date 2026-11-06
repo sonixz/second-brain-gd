@@ -1,0 +1,21 @@
+{
+  "comment": "The Python shipped inside Second Brain GD (Loop 28). python-build-standalone, pinned: release, file and SHA-256 (cross-checked with the release's SHA256SUMS on 2026-11-05). Change all three together.",
+  "python": "3.12",
+  "release": "20261021",
+  "targets": {
+    "windows": {
+      "file": "cpython-3.12.15+20261021-x86_64-pc-windows-msvc-install_only_stripped.tar.gz",
+      "sha256": "aac5d331fc3307343f95928fdbea4583f0d53973d08c7e1d081884fbd229a0e1",
+      "pip_platforms": ["win_amd64"],
+      "site_packages": "Lib/site-packages",
+      "interpreter": "python.exe"
+    },
+    "linux": {
+      "file": "cpython-3.12.15+20261021-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz",
+      "sha256": "6d7521138fd33afddc1ccd08abb007d9a2829e38117c2576f9efdc0ec73ce772",
+      "pip_platforms": ["manylinux_2_28_x86_64", "manylinux_2_17_x86_64", "manylinux2014_x86_64", "linux_x86_64"],
+      "site_packages": "lib/python3.12/site-packages",
+      "interpreter": "bin/python3"
+    }
+  }
+}

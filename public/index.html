@@ -57,7 +57,7 @@
           </div>
           <ul class="stats" aria-label="Project facts">
             <li><b>100%</b> on your disk</li>
-            <li><b>27</b> loops shipped</li>
+            <li><b>28</b> loops shipped</li>
             <li><b>400</b> automated tests</li>
             <li><b>2 OS</b> Windows &amp; Linux</li>
           </ul>
@@ -488,6 +488,7 @@
           <button type="button" class="phase-brain" data-target="loop-25" title="Loop 25: Pictures that matter"><span class="dot"></span>25</button>
           <button type="button" class="phase-foundation" data-target="loop-26" title="Loop 26: English or French"><span class="dot"></span>26</button>
           <button type="button" class="phase-foundation" data-target="loop-27" title="Loop 27: Fewer dependencies"><span class="dot"></span>27</button>
+          <button type="button" class="phase-foundation" data-target="loop-28" title="Loop 28: Python inside the app"><span class="dot"></span>28</button>
         </div>
         <div class="phases" role="group" aria-label="Filter loops by phase">
           <button type="button" data-phase="all" aria-pressed="true">All</button>
@@ -499,6 +500,16 @@
           <button type="button" class="phase-foundation" data-phase="foundation" aria-pressed="false">Foundations</button>
         </div>
         <div class="loops collapsed">
+          <article class="loop-card phase-foundation" id="loop-28" data-phase="foundation" data-loop="28" data-date="Nov 5, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-28.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 28</span> · Foundations · <time datetime="2026-11-05">Nov 5, 2026</time></p>
+              <h3><button type="button" class="loop-open">Python inside the app</button></h3>
+              <p class="excerpt">The app now ships with its own Python, the locked dependencies already inside: unzip, run, press Setup. No Python to install, no virtual environment, nothing downloaded; setup takes about four seconds on Windows instead of half a minute. That Python is private to the app, off your PATH and out of the registry. It is a pinned python-build-standalone build, its checksum verified, and the build script runs the real setup with it (SQLite full-text search, every migration, the engine) before calling a package good; a manual GitHub workflow rebuilds both packages and never publishes. The agent room is no longer downloaded at setup: only if you open it, on your yes. Windows package: 79 MB.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>The app now ships with its own Python, the locked dependencies already inside: unzip, run, press Setup. No Python to install, no virtual environment, nothing downloaded; setup takes about four seconds on Windows instead of half a minute. That Python is private to the app, off your PATH and out of the registry. It is a pinned python-build-standalone build, its checksum verified, and the build script runs the real setup with it (SQLite full-text search, every migration, the engine) before calling a package good; a manual GitHub workflow rebuilds both packages and never publishes. The agent room is no longer downloaded at setup: only if you open it, on your yes. Windows package: 79 MB. <a href="docs.html#install">Install →</a></p></div>
+            </div>
+          </article>
           <article class="loop-card phase-foundation" id="loop-27" data-phase="foundation" data-loop="27" data-date="Nov 5, 2026">
             <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-27.webp" alt="" loading="lazy" width="720" height="450"></div>
             <div class="loop-body">
@@ -830,7 +841,7 @@
             </div>
           </article>
         </div>
-        <p class="center"><button type="button" class="btn loops-more">Show all 33 loops</button></p>
+        <p class="center"><button type="button" class="btn loops-more">Show all 34 loops</button></p>
         <dialog class="reader" id="reader" aria-labelledby="reader-title">
           <button class="reader-close" type="button" aria-label="Close">✕</button>
           <div class="reader-img"></div>

@@ -40,6 +40,9 @@ static func save_custom_python(path: String) -> void:
 
 static func candidates() -> Array[Dictionary]:
 	var list: Array[Dictionary] = []
+	var bundled := SbPaths.bundled_python()
+	if bundled != "":  # the app's own Python comes first: nothing to install
+		list.append({"label": I18n.t("Python shipped with the app"), "cmd": bundled, "args": []})
 	var custom := custom_python()
 	if custom != "":
 		list.append({"label": I18n.t("%s (custom)") % custom, "cmd": custom, "args": []})

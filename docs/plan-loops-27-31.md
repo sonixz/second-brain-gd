@@ -43,6 +43,8 @@ Result expected: 27 → about 15 packages. Tests: credential store (save, read, 
 
 Expected size: about +30–40 MB over the Godot export. **Confidence 85 % Windows, 75 % Linux.**
 
+**Done 2026-11-05.** Runtime: Windows 50 MB, Linux 94 MB unpacked; Windows app zip 79 MB (the Godot template is 109 MB of it). Checked for real: the Linux runtime runs the whole setup in 9.8 s, the Windows one in 3.7 s on Windows, and the exported Windows app (headless, autosetup, throwaway data folder) found its own Python, set up and started the engine, which stopped with the app. The Linux app export needs Godot's Linux templates, not installed on the owner's machine: the GitHub workflow installs them (pinned, SHA-512 checked). The workflow has not been run yet: it is manual, the owner starts it.
+
 ## Loop 29 — Backups (the engine)
 
 | What | How |

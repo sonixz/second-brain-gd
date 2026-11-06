@@ -93,8 +93,25 @@
       <section class="doc" id="install">
         <p class="kicker">Start</p>
         <h2>Install</h2>
-        <p>Second Brain GD runs from the source checkout. You need three things, and none of them needs
-          administrator rights or Docker.</p>
+        <h3>The package (no Python to install)</h3>
+        <p>The package holds the app, the engine and <b>its own Python</b> with every dependency already in place:
+          unzip <code>SecondBrainGD-windows.zip</code> (or <code>-linux</code>) anywhere, run
+          <code>SecondBrainGD.exe</code> (<code>SecondBrainGD.x86_64</code>), press <b>Setup</b>. Setup takes a few
+          seconds: no virtual environment, nothing downloaded. That Python is private to the app: not on your PATH,
+          not in the registry, it changes nothing else on the computer. Check a download against the
+          <code>SHA256SUMS</code> file that comes with it. The agent room (Codex, about 160 MB) is not in the package:
+          it is downloaded the first time you open it, if you say yes.</p>
+        <p>How the package is built, so anyone can rebuild it and compare: <code>tools/package/build.py</code> takes a
+          python-build-standalone CPython whose file and SHA-256 are pinned in <code>tools/package/runtime.json</code>,
+          installs the hash-locked wheels of <code>engine/requirements.lock</code> into it, and
+          <code>tools/package/check_runtime.py</code> runs the real setup with it (SQLite FTS5 and WAL, every migration,
+          the engine, <code>/health</code>). A manual GitHub workflow does the same for both systems and keeps the
+          zips as artifacts; it never publishes.</p>
+        <p>On Linux, local OCR of scanned pages needs <code>tesseract-ocr</code> from your distribution (optional), and
+          your API key is kept in a private file only you can read.</p>
+        <h3>From the source (developers)</h3>
+        <p>The same app runs from the source checkout with a Python of your own. You need three things, and none of
+          them needs administrator rights or Docker.</p>
         <table>
           <thead><tr><th>Tool</th><th>Version</th><th>Notes</th></tr></thead>
           <tbody>
@@ -109,8 +126,8 @@
 <pre><code>git clone git@github.com:sonixz/second-brain-gd.git C:\git\second-brain-gd</code></pre></li>
           <li><p>Start Godot, choose <b>Import</b>, select <code>project.godot</code>, then press <b>Run</b> (F5).</p></li>
           <li><p>Press <b>Setup</b>. The app finds Python, creates a private virtual environment, installs the
-            hash-locked dependencies (about 30 MB from PyPI the first time), creates the database, starts the local
-            engine and verifies it. Each step streams its progress.</p></li>
+            hash-locked dependencies (15 packages, about 25 MB from PyPI the first time), creates the database,
+            starts the local engine and verifies it. Each step streams its progress.</p></li>
           <li><p>Add your OpenAI key when asked (or skip and add it later), and you land in the graph with a short
             <b>Getting started</b> guide.</p></li>
         </ol>

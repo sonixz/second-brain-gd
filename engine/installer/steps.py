@@ -49,6 +49,21 @@ STEPS: list[tuple[str, float, str]] = [
 ]
 
 
+def bundled_runtime() -> dict[str, Any] | None:
+    """The Python shipped inside the app (Loop 28, tools/package/build.py) carries a marker next to itself: then
+    there is no virtual environment to create and nothing to install, its own site-packages hold the locked
+    dependencies. None when running on a Python installed separately (developer mode)."""
+    for base in {Path(sys.prefix), Path(sys.base_prefix)}:
+        marker = base / "sbgd-runtime.json"
+        if marker.is_file():
+            try:
+                data = json.loads(marker.read_text(encoding="utf-8"))
+            except (OSError, ValueError):
+                return None
+            return data if data.get("format") == "sbgd-runtime" else None
+    return None
+
+
 def is_store_python() -> bool:
     markers = ("WindowsApps", "PythonSoftwareFoundation.Python")
     return sys.platform == "win32" and any(m in sys.base_prefix or m in sys.executable for m in markers)
@@ -138,6 +153,7 @@ class Installer:
         self.parent_pid = parent_pid
         self.start_service = start_service
         self.state: dict[str, Any] = {}
+        self.bundled: dict[str, Any] | None = bundled_runtime()  # the app's own Python (Loop 28), or None
         self._done_weight = 0.0
         self._db_ready = False
         self._pending_db_events: list[dict[str, Any]] = []
@@ -232,6 +248,13 @@ class Installer:
             "implementation": sys.implementation.name,
             "store_python": is_store_python(),
         }
+        self.bundled = bundled_runtime()
+        if self.bundled:  # the app's own Python: no venv needed, nothing else to check here
+            info["bundled"] = True
+            self.state = load_state(self.layout)
+            self.state["python"] = info
+            self.emit("python", "check", "ok", f"Python {info['version']} shipped with the app", 1.0, **info)
+            return
         try:
             import ensurepip  # noqa: F401
             import venv  # noqa: F401
@@ -305,7 +328,16 @@ class Installer:
             return None
         return out.stdout.strip() if out.returncode == 0 else None
 
+    def engine_python(self) -> Path:
+        """The interpreter that runs the engine: the app's own Python, or the virtual environment's."""
+        return Path(sys.executable) if self.bundled else self.layout.venv_python
+
     def step_venv(self) -> None:
+        if self.bundled:
+            self.emit("venv", "check", "skipped", "No virtual environment needed: the app's own Python is used", 1.0)
+            self._mark("venv", "ok", bundled=True)
+            self.state["venv_python"] = str(sys.executable)
+            return
         current = "%d.%d" % sys.version_info[:2]
         existing = self._venv_version()
         if existing and existing.rsplit(".", 1)[0] == current:
@@ -335,7 +367,7 @@ class Installer:
 
     def _deps_importable(self) -> bool:
         try:
-            out = subprocess.run([str(self.layout.venv_python), "-c", "import fastapi, uvicorn, psutil, websockets, pypdfium2"],
+            out = subprocess.run([str(self.engine_python()), "-c", "import fastapi, uvicorn, psutil, websockets, pypdfium2"],
                                  capture_output=True, timeout=60, **_no_window())
         except (OSError, subprocess.TimeoutExpired):
             return False
@@ -343,6 +375,17 @@ class Installer:
 
     def step_dependencies(self) -> None:
         digest = lock_sha256()
+        if self.bundled:  # installed when the package was built, from this very lock
+            if self.bundled.get("lock_sha256") != digest:
+                self.fail("dependencies", "The app's Python was built for other dependencies than this engine.",
+                          hint="Download the app again: its parts come from different versions.")
+            if not self._deps_importable():
+                self.fail("dependencies", "The app's Python cannot import its packages.",
+                          hint="Download the app again (an antivirus may have removed a file).")
+            self.emit("dependencies", "check", "skipped", "Packages shipped with the app, checked", 1.0,
+                      lock_sha256=digest[:12])
+            self._mark("dependencies", "ok", lock_sha256=digest, bundled=True)
+            return
         previous = self.state.get("steps", {}).get("dependencies", {})
         if previous.get("status") == "ok" and previous.get("lock_sha256") == digest and self._deps_importable():
             self.emit("dependencies", "check", "skipped", "Locked dependencies already installed", 1.0,
@@ -395,13 +438,21 @@ class Installer:
         self._mark("dependencies", "ok", lock_sha256=digest)
 
     def step_agents(self) -> None:
-        """Downloads the pinned Codex app-server. Never fatal: offline or failed, the rest of the app works
-        and the agent room offers a retry."""
+        """The agent room (Codex app-server, about 160 MB) is optional since Loop 28: it is downloaded the first
+        time the agent room is opened, when the user clicks Install. An existing install is checked here.
+        SBGD_AGENTS=install downloads it during setup (tests, developers); SBGD_AGENTS=off skips even the check.
+        Never fatal: offline or failed, the rest of the app works and the agent room offers a retry."""
         from engine.agents import install
 
-        if os.environ.get("SBGD_AGENTS") == "off":
+        mode = os.environ.get("SBGD_AGENTS", "")
+        if mode == "off":
             self.emit("agents", "skip", "skipped", "Agent room: turned off (SBGD_AGENTS=off)", 1.0)
             self._mark("agents", "skipped")
+            return
+        if mode != "install" and install.installed_info(self.layout) is None:
+            self.emit("agents", "skip", "skipped",
+                      "Agent room: downloaded only if you open it (about 160 MB, on your yes)", 1.0)
+            self._mark("agents", "on_demand")
             return
         try:
             info = install.install(self.layout, lambda stage, frac, msg: self.emit("agents", stage, "progress", msg, frac))
@@ -482,7 +533,7 @@ class Installer:
         token = secrets.token_urlsafe(32)
         atomic_write_json_text(self.layout.token_file, token)
         instance_id = uuid.uuid4().hex
-        cmd = [str(self.layout.venv_python), "-m", "engine.api.server", "--data-dir", str(self.layout.root),
+        cmd = [str(self.engine_python()), "-m", "engine.api.server", "--data-dir", str(self.layout.root),
                "--port", str(port), "--instance-id", instance_id]
         if self.parent_pid:
             cmd += ["--parent-pid", str(self.parent_pid)]

@@ -8,6 +8,7 @@ the real API or spend the user's credit. Tests that need a key set their own.
 import os
 
 os.environ["SBGD_KEYRING_SERVICE"] = "SecondBrainGD-test"
+os.environ["SBGD_AGENTS"] = "install"  # the agent room is on demand since Loop 28; the tests install the fixture
 os.environ.pop("OPENAI_API_KEY", None)
 os.environ.pop("OPENAI_ADMIN_KEY", None)
 

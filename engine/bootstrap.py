@@ -30,13 +30,16 @@ def main():
             "supported_range": ">=%d.%d,<%d.%d" % (MIN + MAX_EXCLUSIVE),
             "platform": sys.platform,
         }
+        # The app's own Python (Loop 28) needs no venv: its marker sits next to it.
+        bundled = any(os.path.isfile(os.path.join(p, "sbgd-runtime.json")) for p in {sys.prefix, sys.base_prefix})
+        info["bundled"] = bundled
         if _version_ok():
             try:
                 import ensurepip  # noqa: F401
                 import venv  # noqa: F401
                 info["venv_available"] = True
             except ImportError:
-                info["venv_available"] = False
+                info["venv_available"] = bundled
         print(json.dumps(info))
         return 0 if info["compatible"] else 3
     if not _version_ok():

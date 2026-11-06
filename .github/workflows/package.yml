@@ -1,0 +1,63 @@
+# Builds the Second Brain GD packages (Loop 28): the Godot export, the engine and its own Python, for Windows
+# and Linux. Started by hand only (Actions → Package → Run workflow). It never publishes anything: the zips and
+# their SHA256SUMS are left as this run's artifacts; the owner decides what to publish, and where.
+name: Package
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  GODOT_VERSION: "4.7.2-stable"
+  GODOT_SHA512: "9aa00f7a605200940bce3027a567b782f49bd8e940dd06ae9e987bd65aee1b1467edd56ed84fcdcbdd44354bf613bdbb4e5d2913e925850368e150c59ed54c65"
+  TEMPLATES_SHA512: "ca4d71c4d7b81dfc15d1a98baa07534aa95b03fdda78a0075b06672e1648d2e5f40980c9adc28d23e1b92e732ee7bf3461997aa804af74ec2fcd7a93ccb84079"
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Godot and its export templates (pinned, checksums verified)
+        run: |
+          base="https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}"
+          curl -sSfL -o godot.zip "$base/Godot_v${GODOT_VERSION}_linux.x86_64.zip"
+          curl -sSfL -o templates.tpz "$base/Godot_v${GODOT_VERSION}_export_templates.tpz"
+          echo "${GODOT_SHA512}  godot.zip" | sha512sum -c -
+          echo "${TEMPLATES_SHA512}  templates.tpz" | sha512sum -c -
+          unzip -q godot.zip && mv "Godot_v${GODOT_VERSION}_linux.x86_64" /usr/local/bin/godot
+          dir="$HOME/.local/share/godot/export_templates/${GODOT_VERSION/-/.}"
+          mkdir -p "$dir" && unzip -q templates.tpz -d tpl && mv tpl/templates/* "$dir/"
+      - name: Build both packages
+        run: |
+          python3 tools/package/build.py app --target windows
+          python3 tools/package/build.py app --target linux
+      - name: Check the Linux runtime for real (setup, migrations, engine, /health)
+        run: python3 tools/package/check_runtime.py dist/SecondBrainGD-linux/python/bin/python3
+      - uses: actions/upload-artifact@v4
+        with:
+          name: second-brain-gd-packages
+          path: |
+            dist/SecondBrainGD-windows.zip
+            dist/SecondBrainGD-linux.zip
+            dist/SHA256SUMS
+          retention-days: 14
+
+  check-windows:
+    needs: build
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with:
+          name: second-brain-gd-packages
+          path: dist
+      - name: Check the Windows runtime for real on Windows
+        shell: pwsh
+        run: |
+          Expand-Archive dist/SecondBrainGD-windows.zip -DestinationPath dist
+          python tools/package/check_runtime.py dist/SecondBrainGD-windows/python/python.exe
