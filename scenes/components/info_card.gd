@@ -69,9 +69,41 @@ func set_rows(rows: Array) -> void:
 		v.mouse_filter = Control.MOUSE_FILTER_PASS
 		if str(r[1]) == SbFormat.na() or str(r[1]) == SbFormat.NA:
 			v.add_theme_color_override("font_color", SbTheme.FAINT)
+		elif is_local_path(str(r[1])):  # a folder or file on this computer: a click opens it
+			make_openable(v, str(r[1]))
 		elif r.size() > 2:
 			v.add_theme_color_override("font_color", r[2])
 		_grid.add_child(v)
+
+
+## An absolute path that exists on this computer ("C:\…", "/home/…"), not a web address.
+static func is_local_path(text: String) -> bool:
+	var t := text.strip_edges()
+	if t == "" or t.contains("://") or t.contains("\n"):
+		return false
+	var absolute := t.begins_with("/") or (t.length() > 2 and t[1] == ":" and (t[2] == "\\" or t[2] == "/"))
+	return absolute and (DirAccess.dir_exists_absolute(t) or FileAccess.file_exists(t))
+
+
+## The label opens its path when clicked: a folder in the file manager, a file shown in its folder.
+static func make_openable(v: Label, path: String) -> void:
+	v.add_theme_color_override("font_color", SbTheme.MINT)
+	v.mouse_filter = Control.MOUSE_FILTER_STOP
+	v.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
+	v.tooltip_text = path + "\n" + I18n.t("Click to open in your file manager")
+	v.gui_input.connect(func(e: InputEvent) -> void:
+		if e is InputEventMouseButton and (e as InputEventMouseButton).pressed \
+				and (e as InputEventMouseButton).button_index == MOUSE_BUTTON_LEFT:
+			open_path(path))
+
+
+static func open_path(path: String) -> void:
+	if OS.get_environment("SBGD_TEST_NO_SHELL") == "1":
+		return
+	if DirAccess.dir_exists_absolute(path):
+		OS.shell_open(path)
+	else:
+		OS.shell_show_in_file_manager(path)
 
 
 func set_footer(text: String) -> void:

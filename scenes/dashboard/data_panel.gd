@@ -8,7 +8,7 @@ extends PanelContainer
 var app: SbApp
 var state_label: Label
 var warn_label: Label
-var where_label: Label
+var where_label: LineEdit
 var freq: OptionButton
 var list_box: VBoxContainer
 var result_label: Label
@@ -67,10 +67,17 @@ func _ready() -> void:
 	wl.text = I18n.t("Backups go to")
 	wl.theme_type_variation = "Muted"
 	where_row.add_child(wl)
-	where_label = Label.new()
+	where_label = LineEdit.new()  # read-only, but the path can be selected and copied
+	where_label.editable = false
+	where_label.selecting_enabled = true
+	where_label.add_theme_color_override("font_uneditable_color", SbTheme.TEXT)
 	where_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	where_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	where_row.add_child(where_label)
+	var open_dir := Button.new()
+	open_dir.text = I18n.t("Open folder")
+	open_dir.tooltip_text = I18n.t("Show the backups folder in your file manager")
+	open_dir.pressed.connect(open_backups_folder)
+	where_row.add_child(open_dir)
 	var choose := Button.new()
 	choose.text = I18n.t("Choose…")
 	choose.tooltip_text = I18n.t("Another disk, a USB key or a synced folder (OneDrive): they survive a disk failure")
@@ -240,6 +247,17 @@ func back_up_now() -> bool:
 		_say(I18n.t("The backup failed: %s") % _error_text(r), true)
 	await refresh()
 	return r["ok"]
+
+
+## Opens the backups folder in the system's file manager (created first if no backup went there yet).
+func open_backups_folder() -> String:
+	var dir := str(last.get("destination", ""))
+	if dir == "":
+		return ""
+	DirAccess.make_dir_recursive_absolute(dir)
+	if OS.get_environment("SBGD_TEST_NO_SHELL") != "1":
+		OS.shell_open(dir)
+	return dir
 
 
 func _choose_destination() -> void:

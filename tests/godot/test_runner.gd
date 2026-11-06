@@ -796,12 +796,23 @@ func _e2e() -> void:
 	check(int(proc.get("pid", 0)) == app.backend.server_pid(), "status pid matches runtime/server.json")
 	check(proc.get("rss_bytes") != null, "API memory is measured")
 	# Your data (Loop 30): back up now, the list, a typed word guards restoring, a restore, the folder removal.
+	var home_dir := OS.get_environment("SBGD_HOME")
+	check(InfoCard.is_local_path(home_dir) and not InfoCard.is_local_path("http://127.0.0.1:8765")
+		and not InfoCard.is_local_path("/no/such/folder/sbgd") and not InfoCard.is_local_path("ok · 12 ms"),
+		"engine-room values that are folders or files on this computer are recognised (and only those)")
+	var openable := 0
+	for l in console.find_children("*", "Label", true, false):
+		if (l as Label).mouse_default_cursor_shape == Control.CURSOR_POINTING_HAND and InfoCard.is_local_path((l as Label).text):
+			openable += 1
+	check(openable >= 2, "the database file and the data folder open with a click (%d paths)" % openable)
 	var dp: DataPanel = console.find_child("DataPanel", true, false)
 	check(dp != null, "the engine room has a Your data card")
 	if dp != null:
 		var backed := await dp.back_up_now()
 		check(backed and str(dp.last.get("last", {}).get("kind", "")) == "manual" and dp.state_label.text.contains("✓"),
 			"Back up now: a checked backup, shown in the card (%s)" % dp.state_label.text)
+		check(dp.open_backups_folder() != "" and dp.where_label.text == str(dp.last.get("destination", "")) and not dp.where_label.editable,
+			"the backups folder can be opened, and its path selected and copied")
 		var rows := (dp.last.get("backups", []) as Array)
 		check(not rows.is_empty() and dp.list_box.get_child_count() >= 2, "the backups are listed with Restore")
 		var cw := dp.confirm_word("Restore", "test", "RESTORE")
