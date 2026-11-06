@@ -114,6 +114,11 @@ Principles:
 | **14 — Search and connect in the graph** ✅ 2026-11-03 | Results light up in the graph with the reason. The path between two items. Accept or dismiss a related idea. Edit text in the card |
 | **15 — Large volume and timeline** ✅ 2026-11-03 | Thousands of items stay fluid (faster layout, only visible items drawn). A timeline view of captures |
 
+## Loops 37 to 42 (planned 2026-11-06)
+
+Missions in real use (37), @ mentions (38), folder import (39–40), routines (41–42); the owner paces each
+loop. See docs/plan-loops-37-42.md.
+
 ## Next: routines, scheduled missions (owner, 2026-11-06)
 
 A routine is a mission on a schedule, so a standard workflow runs by itself (« chaque vendredi, prépare les
