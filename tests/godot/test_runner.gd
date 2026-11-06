@@ -587,6 +587,15 @@ func _e2e() -> void:
 	sett.model_option.item_selected.emit(2)
 	var remodel := await wait_until(func() -> bool: return str(sett.prof.get("model", "")) == "gpt-4o", 5.0)
 	check(remodel, "the model can be changed (%s)" % str(sett.prof.get("model", "")))
+	check(not sett.missions_box.visible, "no mission ceiling shown while the agent may not run missions")
+	(sett.checks["missions"] as CheckButton).button_pressed = true
+	check(sett.missions_box.visible, "the Missions capability shows the agent's mission ceiling")
+	sett.m_cost.value = 0.5
+	var ceiled := await wait_until(func() -> bool:
+		return is_equal_approx(float((sett.prof.get("missions", {}) as Dictionary).get("max_cost", 0.0)), 0.5), 5.0)
+	var lim := await app.backend.api.call_api("/missions/limits?agent=sparring", true)
+	check(ceiled and lim["ok"] and is_equal_approx(float((lim["data"] as Dictionary).get("max_cost", 0.0)), 0.5),
+		"the agent's mission ceiling is saved and used by its next mission (0.50 $)")
 	sett.instructions.text = str(sett.instructions.text) + "\n- Termine toujours par une question."
 	sett.instructions.text_changed.emit()
 	await sett._patch({"instructions": sett.instructions.text})
@@ -831,6 +840,26 @@ func _e2e() -> void:
 		if (l as Label).mouse_default_cursor_shape == Control.CURSOR_POINTING_HAND and InfoCard.is_local_path((l as Label).text):
 			openable += 1
 	check(openable >= 2, "the database file and the data folder open with a click (%d paths)" % openable)
+	var mp: Control = console.find_child("MissionsPanel", true, false)
+	check(mp != null, "the engine room has a Missions card")
+	if mp != null:
+		await mp.call("refresh")
+		var mlist: Array = mp.get("missions")
+		var m_shown := mlist.size() > 0 and mp.find_child("Mission_" + str((mlist[0] as Dictionary).get("id", "")), true, false) != null
+		check(m_shown and str(mp.get("summary_label").text).contains("1"),
+			"the Missions card lists the missions and this month's cost (%s)" % str(mp.get("summary_label").text))
+		if m_shown:
+			var first: Dictionary = mlist[0]
+			mp.set("open_id", str(first.get("id", "")))
+			mp.call("_rebuild")
+			var detail: RichTextLabel = mp.find_child("MissionDetail", true, false)
+			check(detail != null and detail.text.contains("[url=") and detail.text.contains("Maxi"),
+				"a mission opens on its plan, findings with source links and the answer given")
+			await mp.call("_again", str(first.get("id", "")))
+			var again_id := str(mp.get("open_id"))
+			check(again_id != "" and again_id != str(first.get("id", "")), "« Run again » starts the same goal as a new mission")
+			if again_id != "":
+				await app.backend.api.call_api("/missions/%s/stop" % again_id, true, HTTPClient.METHOD_POST, "{}")
 	var dp: DataPanel = console.find_child("DataPanel", true, false)
 	check(dp != null, "the engine room has a Your data card")
 	if dp != null:

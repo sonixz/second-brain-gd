@@ -531,14 +531,19 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           <li><b>Nothing enters the Brain before you approve.</b> The draft is shown in full: <b>Approve and save</b>,
             <b>Change</b> (say what), or <b>Discard</b>. Approved, every item is created at once, with its source link
             and themes, linked to the others, in the place the mission chose; one Undo removes them all.</li>
-          <li><b>A ceiling</b> on every mission: 1 $ and 15 minutes of work by default
-            (<code>PUT /missions/settings</code>). Near it, the agent wraps up with what it has; at it, the mission stops
-            and keeps what it found. It survives closing the app and resumes.</li>
+          <li><b>A ceiling</b> on every mission: 1 $ and 15 minutes of work by default. Each agent can have its own
+            (and its own mission model) in its settings (ⓘ), under <i>Missions</i>. Near it, the agent wraps up with
+            what it has; at it, the mission stops and keeps what it found. It survives closing the app and resumes.</li>
+          <li><b>What missions cost</b> is in the engine room, card <i>Missions</i>: each mission with its agent,
+            status, rounds, minutes and cost, this month's total; click one to see its plan, findings with their
+            source links, your answer and the draft. <b>Run again</b> starts the same goal with the same agent
+            (next week's menu).</li>
         </ul>
+        <figure class="shot doc-shot"><img src="assets/showcase/mission-engine-room.webp" alt="The Missions card of the engine room: a saved mission opened on its plan, specials with source links, the answer and the draft" loading="lazy" width="1280" height="800"><figcaption>In the engine room: what a mission did and cost, with every source one click away.</figcaption></figure>
         <figure class="shot doc-shot"><img src="assets/showcase/mission-draft.webp" alt="The mission's draft: two recipes with their links and the weekly menu, with Approve and save" loading="lazy" width="1280" height="800"><figcaption>The draft, to approve, change or discard.</figcaption></figure>
         <p>Measured on the first real mission (gpt-6-sol): the week's Maxi flyer, four specials with prices and dates,
           the question, two real recipes read: 13 rounds, under a minute, about 0.27 $. API: <code>/missions</code>
-          (start, follow, answer, revise, approve, stop).</p>
+          (start, follow, answer, revise, approve, stop, again, limits).</p>
       </section>
 
       <section class="doc" id="extension">

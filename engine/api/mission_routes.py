@@ -1,6 +1,8 @@
 """Missions (Loop 32): an agent's longer job in the background.
 
-  GET  /missions?agent=&limit=     the recent missions (of one agent), active first
+  GET  /missions?agent=&limit=     the recent missions (of one agent), active first, and what they cost this month
+  GET  /missions/limits?agent=     the ceiling and model a new mission of this agent gets (its own, else the global)
+  POST /missions/{id}/again        the same goal with the same agent, as a new mission
   GET  /missions/{id}              one mission: plan, feed, findings, question, draft, cost
   POST /missions                   {agent, goal, max_cost?, max_minutes?}: start one
   POST /missions/{id}/answer       {answer: text or [choices]}: the mission resumes
@@ -68,7 +70,15 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
 
     @r.get("")
     def listing(agent: str | None = Query(default=None, max_length=40), limit: int = Query(20, ge=1, le=100)) -> dict[str, Any]:
-        return {"missions": run(missions.listing, limit, agent)}
+        return {"missions": run(missions.listing, limit, agent), "summary": run(missions.summary)}
+
+    @r.get("/limits")
+    def limits(agent: str | None = Query(default=None, max_length=40)) -> dict[str, Any]:
+        return run(missions.limits, agent)
+
+    @r.post("/{mission_id}/again")
+    def again(mission_id: str) -> dict[str, Any]:
+        return run(missions.again, mission_id)
 
     @r.get("/{mission_id}")
     def one(mission_id: str) -> dict[str, Any]:

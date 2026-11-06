@@ -17,7 +17,10 @@ short (2026-11-05, the owner's Cuisin'Plan session). So: **voice is the remote c
   The state is saved after every round: a mission survives a restart and resumes.
 - Budget per mission: 40 rounds, a cost ceiling (default 1 $) and a time ceiling (default 15 min of working time, not
   counting the time it waits for the user). At 85 % the agent is told to propose its draft; at 100 % the mission stops
-  cleanly with what it found. Defaults: `GET/PUT /missions/settings`.
+  cleanly with what it found. Defaults: `GET/PUT /missions/settings`. An agent can have its own ceiling and mission
+  model (Loop 35): `missions: {max_cost, max_minutes, model}` in its profile, set in its settings (ⓘ → Missions);
+  `GET /missions/limits?agent=` says what its next mission gets (the agent's own, else the global ceiling; the model:
+  the agent's own mission model, else the `mission_model` setting, else the agent's model).
 - Tool results older than the last two rounds are shortened (the structured findings carry what matters), so long
   missions stay affordable.
 
@@ -43,6 +46,12 @@ content is data; at most two or three questions, grouped.
 - **Change** (`revise`): the mission works again and proposes a new draft. **Answer** (`answer`). **Stop** (`stop`).
 - Chat and live agents with the **Missions** capability get `start_mission`, `mission_status`, `answer_mission`,
   `approve_mission`, `revise_mission`, `stop_mission`.
+
+## In the engine room (Loop 35)
+The *Missions* card (`scenes/dashboard/missions_panel.gd`): `GET /missions` also returns `summary` (this month's
+count, cost and minutes, the cost of all). A mission opens on its plan, findings with source links, the question and
+the answer, the draft and the items saved. **Run again** (`POST /missions/{id}/again`) starts the same goal with the
+same agent; only the user starts it, there is no automatic schedule.
 
 ## Measured
 First real run (2026-11-06, gpt-6-sol, throwaway Brain): "3–4 specials at Maxi this week, ask me which, then 2 real

@@ -24,6 +24,15 @@ mission with the same goal; screenshots EN/FR of the settings block and the engi
 
 **Confidence 85 %.**
 
+**Done 2026-11-06.** The agent's settings (ⓘ) show a *Missions* block with the Missions capability: at most N $ and
+N min, the mission model ("Same model as the agent" by default); saved at once, used by the next mission
+(`GET /missions/limits?agent=`). The engine room has a *Missions* card: this month's count, cost and minutes, each
+mission with its status, rounds, minutes and cost; opened, its plan, findings with a « source » link each, the
+question and the answer, the draft and the items saved; **Run again** (`POST /missions/{id}/again`). The mission rules
+now ask for the source link next to every price in the draft. Found on the way: two quick changes in an agent's
+settings (a capability, then the ceiling) were saved at once and the last one erased the other; saves now go one
+at a time. Screenshots m4 and m5 (EN/FR), Docs updated.
+
 ## Loop 36 — How-to guide "Plan the week's meals with a mission", real answers
 
 | What | How |

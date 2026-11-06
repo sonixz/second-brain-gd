@@ -134,6 +134,9 @@ func _ready() -> void:
 	# running from the source without the editor, Godot's class list can lag behind a new class (2026-11-05).
 	body.add_child(preload("res://scenes/dashboard/data_panel.gd").new().setup(app))
 
+	# Missions (Loop 35): what they did and cost, « Run again ».
+	body.add_child(preload("res://scenes/dashboard/missions_panel.gd").new().setup(app))
+
 	billing_panel = BillingPanel.new().setup(app)
 	billing_panel.name = "BillingPanel"
 	body.add_child(billing_panel)

@@ -46,4 +46,34 @@ func _run() -> void:
 	await card.call("approve")
 	await pause(2.5)
 	await shot("m3-saved")
+	# Loop 35: the agent's own mission ceiling, then the missions in the engine room.
+	await app.backend.api.call_api("/assistant/agents/archivist", true, HTTPClient.METHOD_PATCH,
+		JSON.stringify({"missions": {"max_cost": 0.75, "max_minutes": 10, "model": ""}}))
+	await b.call("show_agent_info", "archivist")
+	await pause(1.0)
+	var sett: SbAgentSettings = b.get("agent_settings")
+	if sett != null and sett.missions_box != null:
+		sett.missions_box.visible = true
+		await pause(0.3)
+		sett.ensure_control_visible(sett.missions_box)
+		sett.scroll_vertical = int(sett.missions_box.position.y) - 40
+	await pause(0.8)
+	await shot("m4-agent-ceiling")
+	b.call("close_agent_settings")
+	app.show_console()
+	await pause(4.0)
+	var console: Control = app.current()
+	var mp: Control = console.find_child("MissionsPanel", true, false)
+	if mp != null:
+		await mp.call("refresh")
+		var ms: Array = mp.get("missions")
+		if not ms.is_empty():
+			mp.set("open_id", str((ms[0] as Dictionary).get("id", "")))
+			mp.call("_rebuild")
+		await pause(0.5)
+		var sc := mp.get_parent().get_parent() as ScrollContainer
+		if sc != null:
+			sc.scroll_vertical = int(mp.position.y) - 8
+	await pause(0.8)
+	await shot("m5-engine-room")
 	await finish()

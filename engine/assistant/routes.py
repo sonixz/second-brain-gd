@@ -30,6 +30,7 @@ class AgentIn(BaseModel):
     letter: str | None = Field(default=None, max_length=2)
     color: str | None = Field(default=None, max_length=8)
     intro: str | None = Field(default=None, max_length=600)
+    missions: dict[str, Any] | None = None  # {max_cost, max_minutes, model}: the agent's own mission ceiling
 
 
 class SpeakIn(BaseModel):

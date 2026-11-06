@@ -240,6 +240,48 @@ class MissionTests(unittest.TestCase):
         self.assertEqual(self.run_until_pause(FakeChat(), mid), "draft")
         self.assertEqual(len(self.get(mid)["draft"]["items"]), 3)
 
+    def test_the_agents_own_ceiling_and_model_are_used(self):
+        with database.session(self.db) as conn:
+            agents.update(conn, "archivist", {"missions": {"max_cost": 0.4, "max_minutes": 7, "model": "gpt-6-luna"}})
+            lim = missions.limits(conn, "archivist")
+        self.assertEqual((lim["max_cost"], lim["max_minutes"], lim["model"]), (0.4, 7.0, "gpt-6-luna"))
+        m = self.get(self.start())
+        self.assertEqual((m["max_cost"], m["max_minutes"]), (0.4, 7.0))
+        client = Scripted(TURNS)
+        missions.step(self.db, client, m["id"])
+        self.assertEqual(client.sent[-1]["model"], "gpt-6-luna")
+        with database.session(self.db) as conn:  # back to the global ceiling
+            agents.update(conn, "archivist", {"missions": {}})
+            self.assertEqual(missions.limits(conn, "archivist")["max_cost"], missions.DEFAULT_MAX_COST)
+
+    def test_run_again_and_the_month_summary(self):
+        mid = self.start()
+        with database.session(self.db) as conn:
+            with self.assertRaises(missions.MissionError):
+                missions.again(conn, mid)  # still going
+            missions.stop(conn, mid)
+            conn.execute("UPDATE missions SET cost = 0.3, elapsed_s = 90 WHERE id = ?", (mid,))
+            new = missions.again(conn, mid)
+            self.assertNotEqual(new["id"], mid)
+            self.assertEqual(new["goal"], "Le menu de la semaine avec les rabais")
+            s = missions.summary(conn)
+        self.assertEqual((s["count"], s["cost"], s["minutes"]), (2, 0.3, 1.5))
+
+    def test_the_routes_for_limits_again_and_summary(self):
+        from types import SimpleNamespace
+        from fastapi import HTTPException
+        from engine.api.mission_routes import make_router
+
+        r = make_router(SimpleNamespace(database=self.db), lambda: None)
+        ep = {(rt.path, next(iter(rt.methods))): rt.endpoint for rt in r.routes}
+        mid = self.start()
+        self.assertEqual(ep[("/missions/limits", "GET")](agent="archivist")["max_cost"], missions.DEFAULT_MAX_COST)
+        with self.assertRaises(HTTPException):
+            ep[("/missions/{mission_id}/again", "POST")](mid)
+        ep[("/missions/{mission_id}/stop", "POST")](mid)
+        self.assertNotEqual(ep[("/missions/{mission_id}/again", "POST")](mid)["id"], mid)
+        body = ep[("/missions", "GET")](agent=None, limit=20)
+        self.assertEqual((len(body["missions"]), body["summary"]["count"]), (2, 2))
 
 if __name__ == "__main__":
     unittest.main()

@@ -172,6 +172,9 @@ def _builtins() -> dict[str, dict[str, Any]]:
     }
 
 
+BUILTIN_FIELDS = ("instructions", "capabilities", "model", "name", "missions")
+
+
 def _stored(conn: sqlite3.Connection) -> dict[str, dict[str, Any]]:
     v = database.get_setting(conn, "agent_profiles")
     return v if isinstance(v, dict) else {}
@@ -183,8 +186,8 @@ def profiles(conn: sqlite3.Connection) -> list[dict[str, Any]]:
     out = []
     for aid, base in _builtins().items():
         over = stored.get(aid) or {}
-        out.append({**base, **{k: v for k, v in over.items() if k in ("instructions", "capabilities", "model", "name")},
-                    "modified": bool(over)})
+        out.append({**base, **{k: v for k, v in over.items() if k in BUILTIN_FIELDS},
+                    "modified": bool(set(over) - {"missions"})})
     for aid, p in stored.items():
         if aid not in _builtins() and isinstance(p, dict):
             out.append({**p, "id": aid, "builtin": False, "modified": False})
@@ -306,6 +309,23 @@ def _clean(fields: dict[str, Any]) -> dict[str, Any]:
         out["color"] = re.sub(r"[^0-9a-fA-F]", "", str(fields["color"]))[:6] or "a9d4ff"
     if fields.get("intro") is not None:
         out["intro"] = str(fields["intro"]).strip()[:600]
+    if isinstance(fields.get("missions"), dict):
+        out["missions"] = mission_limits(fields["missions"])
+    return out
+
+
+def mission_limits(v: dict[str, Any]) -> dict[str, Any]:
+    """An agent's own mission ceiling and model; a missing value means the global one."""
+    out: dict[str, Any] = {}
+    try:
+        if v.get("max_cost"):
+            out["max_cost"] = round(min(max(float(v["max_cost"]), 0.05), 20.0), 2)
+        if v.get("max_minutes"):
+            out["max_minutes"] = round(min(max(float(v["max_minutes"]), 1.0), 240.0), 1)
+    except (TypeError, ValueError):
+        pass
+    if v.get("model"):
+        out["model"] = str(v["model"]).strip()[:40]
     return out
 
 
@@ -333,7 +353,7 @@ def update(conn: sqlite3.Connection, agent: str, fields: dict[str, Any]) -> dict
     stored = _stored(conn)
     data = _clean(fields)
     if agent in _builtins():
-        data = {k: v for k, v in data.items() if k in ("instructions", "capabilities", "model", "name")}
+        data = {k: v for k, v in data.items() if k in BUILTIN_FIELDS}
     stored[agent] = {**(stored.get(agent) or {}), **data}
     database.set_setting(conn, "agent_profiles", stored)
     return profile(conn, agent)

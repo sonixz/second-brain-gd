@@ -50,7 +50,9 @@ quand tu lui poses une question (ask_user). Méthode:
    des choix courts et clairs: UN choix par élément (un rabais, une option), jamais des groupes d'éléments dans un
    même choix (jusqu'à 30 choix). Au plus deux ou trois questions dans toute la mission: regroupe les questions.
 5. Termine par propose_draft: le livrable complet, en éléments (titre, contenu en Markdown, lien source, thèmes). Relie
-   les éléments entre eux avec [[Titre exact]] dans le contenu. Rien n'est enregistré avant son approbation.
+   les éléments entre eux avec [[Titre exact]] dans le contenu. Chaque prix ou fait du contenu garde son lien source
+   juste à côté (« [source](lien) »), pour que l'utilisateur vérifie d'un clic. Rien n'est enregistré avant son
+   approbation.
 Règles:
 - JAMAIS inventer: un fait, un prix, une recette viennent d'une page que tu as lue (read_page ou read_in_browser), et
   le lien est gardé. Recopie prix et conditions tels que la page les donne, sans en ajouter (« avec carte »,
@@ -184,7 +186,7 @@ def start(conn: sqlite3.Connection, agent: str, goal: str, max_cost: float | Non
     if len(goal) < 4:
         raise MissionError("say what the mission is for")
     agent = agents.name(conn, agent)
-    s = settings(conn)
+    s = limits(conn, agent)
     now = utc_now()
     mid = "m" + uuid.uuid4().hex[:11]
     conn.execute("INSERT INTO missions (id, agent, goal, status, max_cost, max_minutes, created_at, updated_at)"
@@ -200,6 +202,36 @@ def start(conn: sqlite3.Connection, agent: str, goal: str, max_cost: float | Non
 def settings(conn: sqlite3.Connection) -> dict[str, Any]:
     v = database.get_setting(conn, "missions") or {}
     return {"max_cost": float(v.get("max_cost", DEFAULT_MAX_COST)), "max_minutes": float(v.get("max_minutes", DEFAULT_MAX_MINUTES))}
+
+
+def limits(conn: sqlite3.Connection, agent: str | None) -> dict[str, Any]:
+    """The ceiling and model a new mission of this agent gets: the agent's own, else the global ones."""
+    from engine.assistant import agents
+
+    p = agents.profile(conn, agent)
+    own = p.get("missions") or {}
+    s = settings(conn)
+    return {"max_cost": float(own.get("max_cost") or s["max_cost"]),
+            "max_minutes": float(own.get("max_minutes") or s["max_minutes"]),
+            "model": own.get("model") or database.get_setting(conn, "mission_model") or p.get("model") or "gpt-6-sol"}
+
+
+def again(conn: sqlite3.Connection, mission_id: str) -> dict[str, Any]:
+    """The same goal, with the same agent, as a new mission (next week's menu)."""
+    m = _row(conn, mission_id)
+    if m["status"] in ("running", "waiting", "draft"):
+        raise MissionError("this mission is still going: finish or stop it first")
+    return start(conn, m["agent"], m["goal"])
+
+
+def summary(conn: sqlite3.Connection) -> dict[str, Any]:
+    """What missions cost: this month and in all, for the engine room."""
+    month = utc_now()[:7]
+    q = "SELECT COUNT(*), COALESCE(SUM(cost), 0), COALESCE(SUM(elapsed_s), 0) FROM missions"
+    n, cost, secs = conn.execute(q + " WHERE substr(created_at, 1, 7) = ?", (month,)).fetchone()
+    n_all, cost_all, _ = conn.execute(q).fetchone()
+    return {"month": month, "count": n, "cost": round(float(cost), 4), "minutes": round(float(secs) / 60.0, 1),
+            "count_all": n_all, "cost_all": round(float(cost_all), 4)}
 
 
 def get(conn: sqlite3.Connection, mission_id: str) -> dict[str, Any]:
@@ -491,7 +523,9 @@ def step(db_path: Any, client: Any, mission_id: str) -> str:
             msgs.append({"role": "user", "content": WRAP_UP})
         _shorten_old(msgs)
         prof = agents.profile(conn, m["agent"])
-        prof = {**prof, "model": database.get_setting(conn, "mission_model") or prof.get("model")}
+        model = limits(conn, m["agent"])["model"]
+        if model != prof.get("model"):  # a mission model of its own: not the agent's setting
+            prof = {**prof, "model": model, "model_setting": None}
         full = [{"role": "system", "content": system_prompt(conn, m)}] + msgs
         try:
             res = core.complete_agent(conn, client, prof, full, tools=tools_for(conn, m["agent"]))

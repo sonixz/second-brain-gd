@@ -22,6 +22,11 @@ var intro_edit: LineEdit
 var instructions: TextEdit
 var save_button: Button
 var checks: Dictionary = {}   # capability -> CheckButton (on/off switch)
+var missions_box: VBoxContainer  # the agent's own mission ceiling (Loop 35), shown with the Missions capability
+var m_cost: SpinBox
+var m_minutes: SpinBox
+var m_model: OptionButton
+var _patching := false
 
 
 func setup(a: SbApp, id: String, profile: Dictionary, capabilities: Dictionary, model_list: Array) -> SbAgentSettings:
@@ -106,6 +111,9 @@ func setup(a: SbApp, id: String, profile: Dictionary, capabilities: Dictionary, 
 		tools.text = "      " + ", ".join((c.get("tools", []) as Array).map(func(t: Variant) -> String: return str(t)))
 		row.add_child(tools)
 
+	# Missions: the agent's own ceiling and model (shown when it may run missions)
+	_missions_block(box)
+
 	# First words (custom agents)
 	if not bool(prof.get("builtin", false)):
 		box.add_child(_overline(I18n.t("FIRST WORDS")))
@@ -174,6 +182,75 @@ func setup(a: SbApp, id: String, profile: Dictionary, capabilities: Dictionary, 
 	return self
 
 
+## Maximum cost and minutes per mission, and the model missions think with ("Same as the agent" by default).
+## A change is saved at once and applies to the next mission started.
+func _missions_block(box: VBoxContainer) -> void:
+	missions_box = VBoxContainer.new()
+	missions_box.name = "MissionsBlock"
+	missions_box.add_theme_constant_override("separation", 6)
+	missions_box.visible = "missions" in (prof.get("capabilities", []) as Array)
+	box.add_child(missions_box)
+	missions_box.add_child(_overline(I18n.t("MISSIONS · CEILING PER MISSION")))
+	var own: Dictionary = prof.get("missions", {}) if prof.get("missions") is Dictionary else {}
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 8)
+	missions_box.add_child(row)
+	m_cost = _spin(0.05, 20.0, 0.05, float(own.get("max_cost", 1.0)), " $")
+	m_cost.name = "MissionCost"
+	m_cost.tooltip_text = I18n.t("A mission stops cleanly at this cost, with what it found so far")
+	row.add_child(_labelled(I18n.t("At most"), m_cost))
+	m_minutes = _spin(1.0, 240.0, 1.0, float(own.get("max_minutes", 15.0)), " min")
+	m_minutes.name = "MissionMinutes"
+	m_minutes.tooltip_text = I18n.t("Working time only: the time it waits for your answer does not count")
+	row.add_child(_labelled(I18n.t("and"), m_minutes))
+	m_model = OptionButton.new()
+	m_model.name = "MissionModel"
+	m_model.tooltip_text = I18n.t("The model missions think with: a strong one does the long jobs better")
+	m_model.add_item(I18n.t("Same model as the agent"))
+	m_model.set_item_metadata(0, "")
+	for m in models:
+		m_model.add_item(str((m as Dictionary).get("label", (m as Dictionary).get("id", ""))))
+		m_model.set_item_metadata(m_model.item_count - 1, str((m as Dictionary).get("id", "")))
+		if str((m as Dictionary).get("id", "")) == str(own.get("model", "")):
+			m_model.select(m_model.item_count - 1)
+	m_model.item_selected.connect(func(_i: int) -> void: _save_missions())
+	missions_box.add_child(m_model)
+	m_cost.value_changed.connect(func(_v: float) -> void: _save_missions())
+	m_minutes.value_changed.connect(func(_v: float) -> void: _save_missions())
+	var hint := Label.new()
+	hint.theme_type_variation = "Muted"
+	hint.add_theme_font_size_override("font_size", 12)
+	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	hint.text = I18n.t("Applies to the next mission. What missions cost is in the engine room.")
+	missions_box.add_child(hint)
+
+
+func _spin(lo: float, hi: float, step: float, v: float, suffix: String) -> SpinBox:
+	var sp := SpinBox.new()
+	sp.min_value = lo
+	sp.max_value = hi
+	sp.step = step
+	sp.value = v
+	sp.suffix = suffix
+	sp.custom_minimum_size = Vector2(110, 0)
+	return sp
+
+
+func _labelled(text: String, c: Control) -> HBoxContainer:
+	var h := HBoxContainer.new()
+	h.add_theme_constant_override("separation", 6)
+	var l := Label.new()
+	l.text = text
+	h.add_child(l)
+	h.add_child(c)
+	return h
+
+
+func _save_missions() -> void:
+	await _patch({"missions": {"max_cost": m_cost.value, "max_minutes": m_minutes.value,
+		"model": str(m_model.get_item_metadata(m_model.selected))}})
+
+
 func _overline(text: String) -> Label:
 	var l := Label.new()
 	l.text = text
@@ -186,12 +263,19 @@ func _save_capabilities() -> void:
 	for k in checks:
 		if (checks[k] as CheckButton).button_pressed:
 			caps.append(k)
+	if missions_box != null:
+		missions_box.visible = "missions" in caps
 	await _patch({"capabilities": caps})
 
 
-## Saves fields at once; the next message (or live session) uses them.
+## Saves fields at once; the next message (or live session) uses them. One save at a time: two at once
+## (a capability switched, then the ceiling changed) would each write the whole profile and the last one would win.
 func _patch(fields: Dictionary) -> bool:
+	while _patching and is_inside_tree():
+		await get_tree().process_frame
+	_patching = true
 	var r := await app.backend.api.call_api("/assistant/agents/" + agent_id, true, HTTPClient.METHOD_PATCH, JSON.stringify(fields))
+	_patching = false
 	if not is_inside_tree():
 		return r["ok"]
 	if r["ok"]:
