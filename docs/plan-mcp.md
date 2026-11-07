@@ -35,6 +35,14 @@ fast-forward main, push.
 - **Two writers at once** (the archivist and Claude Code, or two Claude Codes) is one problem: a single write queue
   in the engine; write tools carry the version of the item they read and get « changed since you read it » instead
   of overwriting; an item being filed by the archivist is held until it is done.
+- **The archivist is the only door, told and enforced.** Told: the server's instructions at connection (the
+  protocol, and the owner's archivist instructions: places, filing rules), every write tool's description, and
+  refusals that explain the protocol (« refused: no source; a proposal needs … »). Enforced: there is no direct
+  write tool at all. A client gets `propose_item` (title, content, source, suggested place, reason) and
+  `propose_change` (move, link, unlink, field, trash: what and why); the engine checks the format, the archivist
+  files or checks it with the owner's rules, then it is applied or drafted per the client's setting; the client
+  gets a receipt (« filed in Cuisine, linked to Paella du samedi » / « refused: duplicate of X »). Whether Claude
+  Code shows the server's instructions to its model is checked in MCP-A; the single door holds either way.
 - **Security for now:** local only (127.0.0.1), a token per client. Endpoint hardening and token management are
   revisited later.
 
@@ -70,8 +78,8 @@ Click: the details (clients, servers, recent calls, costs) in a small panel; the
 
 ## MCP-B — MCP in, write
 
-- **Levels** per client, like the agents' capabilities: Read · Add (notes, typed items, links, to the Inbox) ·
-  Organise (move, link, unlink, file the Inbox, edit fields, create a project, trash).
+- **Levels** per client: Read · Propose items (`propose_item`) · Propose changes (`propose_change`). No direct write
+  tool exists; both go through the archivist (see « The archivist is the only door »).
 - **Draft first (default).** Writes from a client wait in a card (« Claude Code propose 12 changements ») to approve
   all, some or none; a switch per client allows direct writes once trusted.
 - **Through the archivist.** Added items are captures the archivist files with the owner's instructions;
