@@ -74,6 +74,15 @@ recipes: 31 lines in 5 aisles. Screenshots docs/screenshots/table-en and table-f
   the PDF opens. If Edge is missing or refuses, the HTML opens and Ctrl+P saves a PDF.
 - By voice: « exporte la recette de paella en PDF », « imprime la liste d'épicerie ».
 
+**Done 2026-11-07.** engine/brain/export_doc.py: one Letter page per item (print CSS, @page letter): a recipe
+with its facts, kept picture (embedded, no network), ingredients beside the numbered steps, rescaled when printed
+for other servings (« 82 g de beurre », cans as printed); a grocery list as two columns of boxes by aisle; any
+other item as its text (light Markdown). The PDF: Edge headless (--headless=new, a temporary profile removed
+after, no window), 1.2 s on the owner's PC; without Edge the HTML opens (Ctrl+P). Files in <data>/exports.
+POST /brain/export; « PDF » in the table (ticked recipes or the rows), « PDF for the fridge » in the grocery
+dialog; the voice tool export_document (« exporte la recette de paella en PDF »). Tests: test_export.py (4), a
+Godot check. Screenshots docs/screenshots/export-fr (our own sample recipe).
+
 ## Later — fill by identifier
 
 DOI → Crossref, ISBN → Open Library, a page's schema.org data; BibTeX and Zotero import as « Article » items;

@@ -270,7 +270,7 @@ def save_grocery(conn: sqlite3.Connection, picks: list[dict[str, Any]], lang: st
              else f"Grocery list, {months[now.month - 1]} {now.day}")
     lines = [("Pour : " if fr else "For: ") + ", ".join(f"[[{r['title']}]]" for r in g["recipes"])]
     for grp in g["groups"]:
-        lines.append(grp["name"] + "\n" + "\n".join(f"- [ ] {i['text']}" for i in grp["items"]))
+        lines.append("## " + grp["name"] + "\n" + "\n".join(f"- [ ] {i['text']}" for i in grp["items"]))
     note = brain.create_note(conn, title, "\n\n".join(lines), None, kind="note", source="typed")
     checklist = None
     try:

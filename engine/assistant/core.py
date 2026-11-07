@@ -408,6 +408,9 @@ TOOLS = [
     {"type": "function", "function": {"name": "set_item_fields", "description": "Change a typed item's fields (« la paella, mets 6 portions », « marque-la essayée », « note 5 »). type: recipe or a type from list_item_types. An empty value clears a field.",
         "parameters": {"type": "object", "properties": {"item": {"type": "string"}, "type": {"type": "string"},
                                                         "fields": {"type": "object"}}, "required": ["item", "fields"]}}},
+    {"type": "function", "function": {"name": "export_document", "description": "Print items on Letter paper: a PDF (Edge, no window) that opens for the user (« exporte la recette de paella en PDF », « imprime la liste d'épicerie »). servings: a recipe printed for that many.",
+        "parameters": {"type": "object", "properties": {"items": {"type": "array", "items": {"type": "string"}, "description": "ids or what the user calls them"},
+                                                        "servings": {"type": "number"}, "title": {"type": "string"}}, "required": ["items"]}}},
     {"type": "function", "function": {"name": "list_item_types", "description": "Item types (recipe, and those defined for agents) with their fields and how many items each has.",
         "parameters": {"type": "object", "properties": {}}}},
     {"type": "function", "function": {"name": "define_item_type", "description": "Create (or update) a type of item with its fields, as the user or an agent's instructions describe it (« fiche Livre : auteur, année, lu ou non »). kinds: text, number, minutes, rating (0-5), choice (with choices), list, checkbox, url, date, ingredients, steps.",
@@ -897,6 +900,24 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
         if out.get("changed"):
             _UI["actions"].append({"action": "refresh"})
         return out
+    if name == "export_document":
+        from engine.assistant import actions as act
+        from engine.brain import export_doc
+
+        ids, unclear = [], []
+        for ref in (args.get("items") or [])[:60]:
+            hit = act.resolve_item(conn, str(ref), _CLIENT.get("c"))
+            if "id" in hit:
+                ids.append(hit["id"])
+            else:
+                unclear.append({"ref": ref, **hit})
+        if not ids:
+            return {"error": "no item found", "unclear": unclear}
+        serv = {i: float(args["servings"]) for i in ids} if args.get("servings") else {}
+        out = export_doc.export(conn, ids, "pdf", str(args.get("title") or ""), ui_language(conn), serv)
+        _UI["actions"].append({"action": "open_file", "path": out["pdf"] or out["html"]})
+        return {"exported": out["title"], "pdf": bool(out["pdf"]), "note": out["why"], "unclear": unclear,
+                "shown_to_user": {"action": "open_file"}}
     if name in ("item_fields", "set_item_fields", "list_item_types", "define_item_type", "save_typed_item"):
         return _typed_tool(conn, name, args, actions)
     if name in ("find_items", "move_items", "unlink_items", "link_items", "remove_tag", "trash_items", "remove_place"):

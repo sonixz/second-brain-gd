@@ -16,7 +16,7 @@ func base_url() -> String:
 func timeout_for(path_and_query: String, method: int) -> float:
 	var path := path_and_query.get_slice("?", 0)  # « /sources/<id>/reread?job=… » is still a long reading
 	if method == HTTPClient.METHOD_POST and (path.begins_with("/sources/file") or path.begins_with("/sources/audio") or path.begins_with("/sources/url")
-			or path.ends_with("/reread") or path.begins_with("/data/") or path.begins_with("/brain/import/")):
+			or path.ends_with("/reread") or path.begins_with("/data/") or path.begins_with("/brain/import/") or path == "/brain/export"):
 		return 600.0  # also backups, restore, export (Your data), a folder or zip import (1,000 notes)
 	if path.begins_with("/assistant") or path.begins_with("/agents") or path.begins_with("/billing") or path.begins_with("/packs"):
 		return 90.0

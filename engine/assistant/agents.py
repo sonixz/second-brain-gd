@@ -26,7 +26,7 @@ CAPABILITIES: dict[str, dict[str, Any]] = {
                 "tools": ["open_web_page", "close_browser_tabs"]},
     "capture": {"label": "Capture", "description": "add notes, web pages, the page in your browser, the clipboard",
                 "tools": ["create_note", "add_web_page", "capture_browser_tab", "ui_capture_clipboard", "set_working_context",
-                          "save_typed_item", "define_item_type"]},
+                          "save_typed_item", "define_item_type", "export_document"]},
     "organise": {"label": "Organise the graph", "description": "file, move, link, unlink, delete, manage places, packs, undo, back up",
                  "tools": ["move_items", "link_items", "unlink_items", "remove_tag", "trash_items", "remove_place", "set_item_fields",
                            "update_note", "related_idea", "undo_last_action", "create_project", "add_task",

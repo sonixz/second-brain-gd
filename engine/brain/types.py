@@ -219,14 +219,23 @@ def ingredient_line(i: dict[str, Any], lang: str = "fr") -> str:
              "en": {"tbsp": "tbsp", "tsp": "tsp"}}
     unit = i.get("unit")
     shown = words.get(lang, {}).get(unit, unit) if unit else ""
+    if shown and float(i["qty"]) >= 2 and unit not in ("tbsp", "tsp", "ml", "l", "g", "kg", "mg", "cl", "dl", "lb", "oz"):
+        shown = {"leaf": "leaves", "pinch": "pinches", "bunch": "bunches", "feuille": "feuilles"}.get(shown, shown + "s")
     parts = [fmt_qty(i["qty"], unit) + (f"–{fmt_qty(i['qty_max'], unit)}" if i.get("qty_max") else "")]
     if shown:
         parts.append(shown)
+    name = str(i.get("name", ""))
+
+    def of(word: str) -> str:  # « 82 g de beurre », « 30 ml d'huile » (English needs nothing)
+        if lang != "fr":
+            return ""
+        return "d’" if re.match(r"[aeiouyhàâéèêëîïôûœ]", word, re.I) else "de "
     if i.get("size"):
-        parts.append(f"{fmt_qty(i['size']['qty'], i['size']['unit'])} {i['size']['unit']}")
+        size = f"{float(i['size']['qty']):g} {i['size']['unit']}".replace(".", ",")  # as printed on the can
+        parts.append(f"de {size}" if lang == "fr" else size)
     if i.get("metric") and unit not in ("ml", "l", "g", "kg"):
         parts.append(f"({fmt_qty(i['metric']['qty'], i['metric']['unit'])} {i['metric']['unit']})")
-    line = " ".join(parts) + " " + str(i.get("name", ""))
+    line = " ".join(parts) + " " + ((of(name) if unit else "") + name).replace("’ ", "’")
     return line + (f", {i['note']}" if i.get("note") else "")
 
 

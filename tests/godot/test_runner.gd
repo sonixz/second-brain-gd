@@ -40,6 +40,7 @@ func _run() -> void:
 	# The engine started by this test uses a fake transcription provider: no OpenAI call, no cost.
 	OS.set_environment("SBGD_VOICE_PROVIDER", "fake")
 	OS.set_environment("SBGD_ASSISTANT_PROVIDER", "fake")
+	OS.set_environment("SBGD_NO_OPEN", "1")  # exports are not opened in a viewer during tests
 	OS.set_environment("SBGD_KEYRING_SERVICE", "SecondBrainGD-test")  # never the user's real key
 	OS.set_environment("SBGD_BILLING_PROVIDER", "fake")
 	OS.set_environment("SBGD_SEED", "demo")  # the demo areas and notes the flow below relies on
@@ -830,6 +831,10 @@ func _e2e() -> void:
 	var tb_saved := await wait_until(func() -> bool: return (tb_dlg.find_child("SaveGrocery", true, false) as Button).text.begins_with("Saved"), 10.0)
 	check(tb_saved, "the grocery list is saved as a note (%s)" % (tb_dlg.find_child("SaveGrocery", true, false) as Button).text)
 	tb_dlg.hide()
+	var tb_exp: Dictionary = await tbv.call("export_items", tb_ids)
+	check(str(tb_exp.get("html", "")).ends_with(".html") and FileAccess.file_exists(str(tb_exp["html"]))
+		and FileAccess.get_file_as_string(str(tb_exp["html"])).contains("size: letter"),
+		"the ticked recipes print on Letter paper (%s)" % ("PDF" if tb_exp.get("pdf") != null else str(tb_exp.get("why", ""))))
 	await brain.set_view("graph")
 	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
 	var l14_welcome := graph.find_node("Welcome to your Second Brain")

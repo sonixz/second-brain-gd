@@ -116,6 +116,13 @@ class GroceryIn(BaseModel):
     save: bool = False
 
 
+class ExportIn(BaseModel):
+    ids: list[str] = Field(min_length=1, max_length=60)
+    format: Literal["pdf", "html"] = "pdf"
+    title: str = Field(default="", max_length=120)
+    servings: dict[str, float] = Field(default_factory=dict)  # recipe id -> servings to print
+
+
 class PropsIn(BaseModel):
     type: str = Field(min_length=1, max_length=40)
     props: dict[str, Any] = Field(default_factory=dict)
@@ -257,6 +264,16 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         def go(conn):
             fn = table.save_grocery if body.save else table.grocery
             return fn(conn, body.picks, ui_language(conn))
+        return run(go)
+
+    @r.post("/export")
+    def post_export(body: ExportIn) -> dict[str, Any]:
+        """Items on paper (Loop 37D): a Letter HTML page, and a PDF printed by Edge headless when asked."""
+        from engine.assistant.core import ui_language
+        from engine.brain import export_doc
+
+        def go(conn):
+            return export_doc.export(conn, body.ids, body.format, body.title, ui_language(conn), body.servings)
         return run(go)
 
     @r.get("/types")

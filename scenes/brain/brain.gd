@@ -82,6 +82,7 @@ static func nav_views() -> Array:
 var today_view: TodayView
 var projects_view: ProjectsView
 var table_view: PanelContainer     # Loop 37C (preloaded script)
+var last_opened_file := ""         # the last file an assistant action opened (tests)
 var agents_view: AgentsView
 var view_buttons: Dictionary = {}
 # Sources
@@ -934,6 +935,10 @@ func run_ui_actions(actions: Array) -> void:
 	for item in actions:
 		var a: Dictionary = item
 		match str(a.get("action", "")):
+			"open_file":  # an export made by voice (Loop 37D): the PDF opens in the user's viewer
+				if str(a.get("path", "")) != "" and OS.get_environment("SBGD_NO_OPEN") == "":
+					OS.shell_open(str(a["path"]))
+				last_opened_file = str(a.get("path", ""))
 			"open_view":
 				if str(a.get("view", "")) == "table":
 					table_view.set("type_id", str(a.get("type", "")))

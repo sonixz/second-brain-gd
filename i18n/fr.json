@@ -919,5 +919,9 @@
  "servings": "portions",
  "%d rows": "%d lignes",
  "Saved: %s": "Enregistré : %s",
- "Table": "Tableau"
+ "Table": "Tableau",
+ "Saves the list, then prints it on Letter paper with boxes to tick": "Enregistre la liste, puis l’imprime en format Lettre avec des cases à cocher",
+ "Preparing the PDF…": "Préparation du PDF…",
+ "Print the ticked recipes (or these rows) on Letter paper: a PDF opens": "Imprimer les recettes cochées (ou ces lignes) en format Lettre : un PDF s’ouvre",
+ "PDF for the fridge": "PDF pour le frigo"
 }

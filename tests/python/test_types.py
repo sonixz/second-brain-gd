@@ -144,7 +144,7 @@ class TypedItemTests(unittest.TestCase):
         acts: list = []
         out = assistant.run_tool(self.conn, "item_fields", {"item": "paella du samedi", "servings": 6}, acts)
         self.assertEqual((out["type"], out["scaled_from"], out["fields"]["servings"]), ("recipe", 4, 6))
-        self.assertIn("560 ml riz à paella", out["fields"]["ingredients"][0])
+        self.assertIn("560 ml de riz à paella", out["fields"]["ingredients"][0])
         self.assertEqual(out["fields"]["ingredients"][-1], "Sel et poivre")
         self.assertEqual(out["fields"]["steps"][0], "Dans une grande poêle, dorer l'oignon dans l'huile.")
         out = assistant.run_tool(self.conn, "set_item_fields", {"item": "Paella du samedi", "fields": {"tried": True}}, acts)
@@ -176,7 +176,7 @@ class TypedItemTests(unittest.TestCase):
         self.assertEqual([i["qty"] for i in big], [562.5, 1.5, None])
         self.assertEqual(types.ingredient_line(big[1]), "1 ½ oignon")
         self.assertEqual(types.ingredient_line(recipe.scale([recipe.parse_ingredient("2 c. à soupe (30 ml) d'huile")], 2)[0]),
-                         "4 c. à soupe (60 ml) huile")
+                         "4 c. à soupe (60 ml) d’huile")
 
 
 if __name__ == "__main__":

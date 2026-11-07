@@ -70,6 +70,14 @@ func setup(a: SbApp) -> PanelContainer:
 	csv.tooltip_text = I18n.t("Save these rows as a CSV file (Excel)")
 	csv.pressed.connect(_export_csv)
 	bar.add_child(csv)
+	var pdf := Button.new()
+	pdf.name = "PdfButton"
+	pdf.text = "PDF"
+	pdf.tooltip_text = I18n.t("Print the ticked recipes (or these rows) on Letter paper: a PDF opens")
+	pdf.pressed.connect(func() -> void:
+		var ids: Array = picked.keys() if not picked.is_empty() else (data.get("rows", []) as Array).slice(0, 60).map(func(r: Variant) -> String: return str((r as Dictionary)["id"]))
+		await export_items(ids))
+	bar.add_child(pdf)
 	tree = Tree.new()
 	tree.name = "Rows"
 	tree.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -366,6 +374,28 @@ func _export_csv() -> void:
 	fd.popup_centered_ratio(0.6)
 
 
+var last_export: Dictionary = {}   # the last export's result (tests)
+
+
+## Items on Letter paper: the engine writes the page, Edge prints the PDF, and it opens (the page when no PDF).
+func export_items(ids: Array, title: String = "", servings: Dictionary = {}) -> Dictionary:
+	if ids.is_empty():
+		return {}
+	failed.emit(I18n.t("Preparing the PDF…"))
+	var res := await app.backend.api.call_api("/brain/export", true, HTTPClient.METHOD_POST,
+		JSON.stringify({"ids": ids, "format": "pdf", "title": title, "servings": servings}))
+	if not res["ok"]:
+		failed.emit(str((res["data"] as Dictionary).get("detail", res["error"])))
+		return {}
+	last_export = res["data"]
+	var path := str(last_export.get("pdf")) if last_export.get("pdf") != null else str(last_export.get("html", ""))
+	if str(last_export.get("why", "")) != "":
+		failed.emit(str(last_export["why"]))
+	if path != "" and OS.get_environment("SBGD_NO_OPEN") == "":
+		OS.shell_open(path)
+	return last_export
+
+
 ## The grocery list: the ticked recipes, their servings (changeable), the ingredients added up by aisle.
 func open_grocery() -> AcceptDialog:
 	if grocery_dialog != null and is_instance_valid(grocery_dialog):
@@ -395,7 +425,17 @@ func open_grocery() -> AcceptDialog:
 	save.text = I18n.t("Save the list")
 	save.tooltip_text = I18n.t("A note linked to the recipes, and the lines added to your « Épicerie » checklist")
 	save.theme_type_variation = "PrimaryButton"
-	box.add_child(save)
+	var buttons := HBoxContainer.new()
+	buttons.add_theme_constant_override("separation", 8)
+	box.add_child(buttons)
+	save.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	buttons.add_child(save)
+	var print_b := Button.new()
+	print_b.name = "PrintGrocery"
+	print_b.text = I18n.t("PDF for the fridge")
+	print_b.tooltip_text = I18n.t("Saves the list, then prints it on Letter paper with boxes to tick")
+	buttons.add_child(print_b)
+	var saved_id := {"id": ""}
 	var servings: Dictionary = {}
 	for r in data.get("rows", []):
 		var row: Dictionary = r
@@ -432,11 +472,20 @@ func open_grocery() -> AcceptDialog:
 			JSON.stringify({"picks": picks.call(), "save": true}))
 		if res["ok"]:
 			var d: Dictionary = res["data"]
+			saved_id["id"] = str(d.get("note_id", ""))
 			save.text = I18n.t("Saved: « %s »") % str(d.get("title", "")) + ((" · " + I18n.t("added to %s") % str(d["checklist"])) if d.get("checklist") != null else "")
 			changed.emit()
 		else:
 			save.disabled = false
 			failed.emit(str((res["data"] as Dictionary).get("detail", res["error"]))))
+	print_b.pressed.connect(func() -> void:
+		if str(saved_id["id"]) == "":
+			save.pressed.emit()
+			var end := Time.get_ticks_msec() + 10000
+			while str(saved_id["id"]) == "" and Time.get_ticks_msec() < end and is_instance_valid(dlg):
+				await get_tree().process_frame
+		if str(saved_id["id"]) != "":
+			await export_items([saved_id["id"]]))
 	add_child(dlg)
 	dlg.popup_centered_clamped(Vector2i(660, 520))
 	redo.call()
