@@ -402,6 +402,24 @@ TOOLS = [
                                                          "selection_only": {"type": "boolean"}, "place": {"type": "string"}}}}},
     {"type": "function", "function": {"name": "close_browser_tabs", "description": "Close tabs the Brain opened (« ferme-la » = last, « ferme les onglets que tu as ouverts » = all). Never closes the user's own tabs. Needs the browser extension.",
         "parameters": {"type": "object", "properties": {"which": {"type": "string", "enum": ["last", "all"]}}}}},
+    {"type": "function", "function": {"name": "item_fields", "description": "Read a typed item's fields (a recipe: servings, times, ingredients with quantities, steps, rating). servings: rescale the ingredients (« la paella pour 6 »). Answer ingredient and step questions from this, not from memory.",
+        "parameters": {"type": "object", "properties": {"item": {"type": "string", "description": "id or what the user calls it"},
+                                                        "servings": {"type": "number"}}, "required": ["item"]}}},
+    {"type": "function", "function": {"name": "set_item_fields", "description": "Change a typed item's fields (« la paella, mets 6 portions », « marque-la essayée », « note 5 »). type: recipe or a type from list_item_types. An empty value clears a field.",
+        "parameters": {"type": "object", "properties": {"item": {"type": "string"}, "type": {"type": "string"},
+                                                        "fields": {"type": "object"}}, "required": ["item", "fields"]}}},
+    {"type": "function", "function": {"name": "list_item_types", "description": "Item types (recipe, and those defined for agents) with their fields and how many items each has.",
+        "parameters": {"type": "object", "properties": {}}}},
+    {"type": "function", "function": {"name": "define_item_type", "description": "Create (or update) a type of item with its fields, as the user or an agent's instructions describe it (« fiche Livre : auteur, année, lu ou non »). kinds: text, number, minutes, rating (0-5), choice (with choices), list, checkbox, url, date, ingredients, steps.",
+        "parameters": {"type": "object", "properties": {"name_en": {"type": "string"}, "name_fr": {"type": "string"},
+                                                        "fields": {"type": "array", "items": {"type": "object", "properties": {
+                                                            "key": {"type": "string"}, "en": {"type": "string"}, "fr": {"type": "string"},
+                                                            "kind": {"type": "string"}, "choices": {"type": "array", "items": {"type": "string"}}}}}},
+                       "required": ["fields"]}}},
+    {"type": "function", "function": {"name": "save_typed_item", "description": "Save a new item of a type with its fields (a recipe the user dictates, a book…). place: a place name (optional).",
+        "parameters": {"type": "object", "properties": {"title": {"type": "string"}, "type": {"type": "string"},
+                                                        "fields": {"type": "object"}, "place": {"type": "string"}},
+                       "required": ["title", "type", "fields"]}}},
     {"type": "function", "function": {"name": "find_items", "description": "Find items by what the user calls them (words or meaning) or list everything in one place (e.g. place « Inbox »). Returns id, exact title, place and type (PDF, page HTML, note dictée...). Use it BEFORE acting on items you have not seen in this turn.",
         "parameters": {"type": "object", "properties": {"query": {"type": "string"}, "place": {"type": "string", "description": "a place name, e.g. Inbox or Recherche d'emploi"}}}}},
     {"type": "function", "function": {"name": "move_items", "description": "Move (file, re-file, « détacher de l'Inbox », « mets X dans Y ») one or more items into a place. Items by exact title or id; place by name. Reports moved / already_there / not_found / ambiguous: report exactly that.",
@@ -701,6 +719,69 @@ def _browser_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], act
     return {"changed": 1, "added": out.get("title"), "place": out.get("place"), "receipt": out.get("receipt")}
 
 
+def _typed_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions: list[dict[str, Any]]) -> Any:
+    """Typed items (Loop 37B): read and change fields, define a type, save an item of a type."""
+    from engine.assistant import actions as act
+    from engine.brain import types
+    from engine.sources import recipe
+
+    lang = ui_language(conn)
+    try:
+        if name == "list_item_types":
+            return {"types": [{"id": t["id"], "name": t["fr"] if lang == "fr" else t["en"], "count": t["count"],
+                               "fields": [f["key"] + ":" + f["kind"] for f in t["fields"]]} for t in types.list_types(conn)]}
+        if name == "define_item_type":
+            t = types.define_type(conn, str(args.get("name_en") or ""), str(args.get("name_fr") or ""),
+                                  list(args.get("fields") or []), str(_CONTEXT.get("agent") or "assistant"))
+            return {"defined": t["id"], "fields": [f["key"] for f in t["fields"]]}
+        if name == "save_typed_item":
+            t = types.get_type(conn, str(args.get("type") or ""))
+            if t is None:
+                return {"error": "unknown type: define it first with define_item_type"}
+            place = act.resolve_place(conn, str(args.get("place") or "")) if args.get("place") else None
+            note = brain.create_note(conn, str(args.get("title") or t["fr"]).strip()[:200], "",
+                                     place["id"] if place else None, kind="reference", source="agent")
+            out = types.set_props(conn, note["id"], t["id"], dict(args.get("fields") or {}), merge=False, rewrite_body=True)
+            aid = _journal(conn, "create_note", note["id"], None, {"title": note["title"]}, f"fiche {t['id']}")
+            actions.append({"action_id": aid, "kind": "create_note", "note_id": note["id"], "title": note["title"]})
+            _UI["actions"].append({"action": "refresh"})
+            return {"saved": note["id"], "title": note["title"], "fields": list(out["props"].keys())}
+        hit = act.resolve_item(conn, str(args.get("item") or ""), _CLIENT.get("c"))
+        if "candidates" in hit:
+            return {"ambiguous": hit["candidates"]}
+        if "id" not in hit:
+            return {"error": "no such item"}
+        nid = hit["id"]
+        current = types.get_props(conn, nid)
+        if name == "set_item_fields":
+            type_id = str(args.get("type") or (current or {}).get("type") or "")
+            if not type_id:
+                return {"error": "this item has no type: give one (recipe, or define_item_type)"}
+            out = types.set_props(conn, nid, type_id, dict(args.get("fields") or {}), merge=True, rewrite_body=True)
+            _UI["actions"].append({"action": "refresh"})
+            return {"updated": nid, "type": type_id, "fields": out["props"]}
+        if not current:
+            n = brain.get_note(conn, nid)
+            return {"id": nid, "title": n["title"], "type": None, "text": n["body"][:4000]}
+        props = dict(current["props"])
+        out: dict[str, Any] = {"id": nid, "title": brain.get_note(conn, nid)["title"], "type": current["type"]}
+        if props.get("ingredients"):
+            factor = 1.0
+            want = args.get("servings")
+            if want and props.get("servings"):
+                factor = float(want) / float(props["servings"])
+                out["scaled_from"] = props["servings"]
+                props["servings"] = want
+            ings = recipe.scale(props["ingredients"], factor) if factor != 1.0 else props["ingredients"]
+            props["ingredients"] = [types.ingredient_line(i, lang) if factor != 1.0 else i.get("raw") for i in ings]
+        if props.get("steps"):
+            props["steps"] = [s["text"] for s in props["steps"]]
+        out["fields"] = props
+        return out
+    except types.TypeError_ as exc:
+        return {"error": str(exc)}
+
+
 def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions: list[dict[str, Any]]) -> Any:
     from engine import missions
 
@@ -810,6 +891,8 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
         if out.get("changed"):
             _UI["actions"].append({"action": "refresh"})
         return out
+    if name in ("item_fields", "set_item_fields", "list_item_types", "define_item_type", "save_typed_item"):
+        return _typed_tool(conn, name, args, actions)
     if name in ("find_items", "move_items", "unlink_items", "link_items", "remove_tag", "trash_items", "remove_place"):
         from engine.assistant import actions as act
 

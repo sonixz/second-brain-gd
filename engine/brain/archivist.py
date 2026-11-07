@@ -209,6 +209,9 @@ def file_item(conn: sqlite3.Connection, client: Any, note_id: str, min_confidenc
         if existing:
             target, new_space = existing["id"], None
     item_type = prop.get("item_type") if prop.get("item_type") in ITEM_TYPES else ("reference" if src else "note")
+    typed = conn.execute("SELECT type FROM item_props WHERE note_id = ?", (note_id,)).fetchone()
+    if typed:  # a typed item (a recipe read from its page) keeps its type whatever the model says
+        item_type = typed["type"]
     themes = [t for t in (theme_name(x) for x in _json_list(prop.get("themes"), 3, 40)) if t]
     entities = prop.get("entities") if isinstance(prop.get("entities"), dict) else {}
     entities = {k: _json_list(entities.get(k), 8, 80) for k in ("people", "organizations", "concepts", "places", "dates")}
@@ -286,7 +289,18 @@ def item(conn: sqlite3.Connection, note_id: str, with_body: bool = False) -> dic
             "key_points": m.get("key_points", []), "entities": m.get("entities", {}), "themes": m.get("themes", []),
             "language": m.get("language"), "confidence": m.get("confidence"), "filed": bool(m.get("filed", 0)),
             "question": m.get("question"), "receipt": m.get("receipt"),
-            "source": _source(conn, src), **({"body": n["body"]} if with_body else {})}
+            "source": _source(conn, src), **({"body": n["body"]} if with_body else {}), **_typed(conn, note_id)}
+
+
+def _typed(conn: sqlite3.Connection, note_id: str) -> dict[str, Any]:
+    """A typed item's fields and its type's definition (Loop 37B); nothing for a plain item."""
+    from engine.brain import types
+
+    p = types.get_props(conn, note_id)
+    if not p:
+        return {}
+    t = types.get_type(conn, p["type"])
+    return {"item_type": p["type"], "props": p["props"], "type_def": t}
 
 
 def _source(conn: sqlite3.Connection, src: Any) -> dict[str, Any] | None:

@@ -71,6 +71,9 @@ Details from docs/plan-loops-35-37.md (Loop 37), plus what was left from Loop 36
   no transcription model at first; once allowed (2026-11-07), a real 29-second French memo gave 4 items (2 tasks,
   the paella filed in Cuisine) for 0.65 ¢. Memo words follow the app language. Screenshots docs/screenshots/audio-memos-en/-fr.
 
+- **Next (agreed 2026-11-07):** typed items, the table view and the Letter export, in docs/plan-typed-table-export.md
+  (Loop 37 B–D); fill by identifier (DOI, ISBN, Zotero) later.
+
 ## Loop 38 — @ mentions
 
 **Done 2026-11-06.** engine/brain/mentions.py (suggest by title, no model; context block with each item's text,

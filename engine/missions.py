@@ -91,7 +91,10 @@ MISSION_TOOLS: list[dict[str, Any]] = [
                 "title": {"type": "string"}, "kind": {"type": "string", "enum": list(ITEM_KINDS)},
                 "body": {"type": "string", "description": "Markdown; [[Exact title]] links to other items"},
                 "url": {"type": "string", "description": "the source page"},
-                "themes": {"type": "array", "items": {"type": "string"}}}, "required": ["title", "body"]}}},
+                "themes": {"type": "array", "items": {"type": "string"}},
+                "type": {"type": "string", "description": "a typed item: recipe, or a type from list_item_types"},
+                "fields": {"type": "object", "description": "its fields, e.g. a recipe: servings, prep_min, cook_min, ingredients (lines), steps (lines), rating"}},
+                "required": ["title", "body"]}}},
             "required": ["title", "summary", "items"]}}},
     {"type": "function", "function": {"name": "give_up", "description": "End the mission when the goal cannot be reached at all; explain why.",
         "parameters": {"type": "object", "properties": {"reason": {"type": "string"}}, "required": ["reason"]}}},
@@ -345,6 +348,12 @@ def approve(conn: sqlite3.Connection, mission_id: str, client: Any = None) -> di
         kind = it.get("kind") if it.get("kind") in ITEM_KINDS else ("reference" if url else "note")
         note = brain.create_note(conn, str(it.get("title") or "Item")[:200], body, space_id, kind, source="agent")
         ids.append(note["id"])
+        if it.get("type") and isinstance(it.get("fields"), dict):  # a typed item (Loop 37B): its fields as data
+            from engine.brain import types
+            try:
+                types.set_props(conn, note["id"], str(it["type"]), it["fields"], merge=False, rewrite_body=not body)
+            except types.TypeError_:
+                pass  # an unknown type: the item stays a plain item with its text
     for nid in ids:  # links between items created in the same draft, whatever the order
         brain._sync_links_and_tags(conn, nid)
     aid = core._journal(conn, "mission_saved", ids[0] if ids else None, None,

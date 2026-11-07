@@ -365,6 +365,12 @@ def ingest_page(conn: sqlite3.Connection, client: Any | None, url: str, title: s
     kept = originals.keep_bytes(originals.data_root(conn), html.encode("utf-8"), "html") if html else None
     out = ingest(conn, client, "url", url, (title or page_title or url)[:300], readable, "text/html",
                  len(html.encode("utf-8")) if html else len(readable), space_id, original=kept, text_engine="browser")
+    if html and not out.get("duplicate") and out.get("note_id"):  # a recipe page: its fields, read without AI (37B)
+        from engine.sources import recipe
+
+        rec = recipe.apply(conn, out["note_id"], html, url)
+        if rec is not None:
+            out = {**get_source(conn, out["id"]), "duplicate": False, "summary": out.get("summary"), "recipe": rec}
     if pictures and not out.get("duplicate"):  # the few pictures worth keeping, as the browser showed them
         from engine.sources import images
 
@@ -387,9 +393,13 @@ def ingest_url(conn: sqlite3.Connection, client: Any | None, url: str, space_id:
             pages = None
     out = ingest(conn, client, "url", url.strip(), title, text, mime, size, space_id, original=kept, pages=pages)
     if ext == "html" and not out.get("duplicate"):  # its main image and its figures, downloaded too
-        from engine.sources import images
+        from engine.sources import images, recipe
 
         raw = data.decode("utf-8", errors="replace")
+        if out.get("note_id"):  # a recipe page: its fields, read without AI (37B)
+            rec = recipe.apply(conn, out["note_id"], raw, url.strip())
+            if rec is not None:
+                out = {**get_source(conn, out["id"]), "duplicate": False, "summary": out.get("summary"), "recipe": rec}
         chosen = images.pick_from_html(raw, url.strip())
         if chosen:
             out["images"] = images.keep_for_source(conn, client, out["id"], images.fetch_all(chosen), title, text,

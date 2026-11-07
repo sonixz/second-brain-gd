@@ -95,6 +95,20 @@ class NotePatch(BaseModel):
     due_date: str | None = Field(default=None, max_length=10)
 
 
+class TypeIn(BaseModel):
+    name_en: str = Field(default="", max_length=60)
+    name_fr: str = Field(default="", max_length=60)
+    fields: list[dict[str, Any]] = Field(default_factory=list, max_length=30)
+    id: str | None = Field(default=None, max_length=40)
+    created_by: str | None = Field(default=None, max_length=60)
+
+
+class PropsIn(BaseModel):
+    type: str = Field(min_length=1, max_length=40)
+    props: dict[str, Any] = Field(default_factory=dict)
+    rewrite: bool = True
+
+
 def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     r = APIRouter(prefix="/brain", dependencies=[Depends(auth)])
 
@@ -199,6 +213,27 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     def get_feed(limit: int = Query(50, ge=1, le=500)) -> dict[str, Any]:
         from engine.brain import archivist
         return {"items": run(archivist.feed, limit)}
+
+    @r.get("/types")
+    def get_types() -> dict[str, Any]:
+        """Item types (Loop 37B): the recipe, and the ones agents defined, with their fields and counts."""
+        from engine.brain import types
+        return {"types": run(types.list_types)}
+
+    @r.post("/types")
+    def post_type(body: TypeIn) -> dict[str, Any]:
+        from engine.brain import types
+        return run(types.define_type, body.name_en, body.name_fr, body.fields, body.created_by or "user", body.id)
+
+    @r.post("/items/{note_id}/props")
+    def post_props(note_id: str, body: PropsIn) -> dict[str, Any]:
+        """Sets an item's fields (merged with the ones it has; an empty value clears one); its text follows."""
+        from engine.brain import types
+
+        def go(conn):
+            brain.get_note(conn, note_id)
+            return types.set_props(conn, note_id, body.type, body.props, merge=True, rewrite_body=body.rewrite)
+        return run(go)
 
     @r.get("/items/{note_id}")
     def get_item(note_id: str) -> dict[str, Any]:
