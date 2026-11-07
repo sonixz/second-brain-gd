@@ -979,5 +979,15 @@
  "A moment to come back to, e.g. before a big clean-up": "Un moment où revenir, par ex. avant un grand ménage",
  "created a project": "a créé un projet",
  "Make a restore point": "Créer un point de retour",
- "linked": "a lié"
+ "linked": "a lié",
+ "unreachable: %s": "injoignable : %s",
+ "Only %s": "Seulement %s",
+ "%d tools": "%d outils",
+ "MCP out · last call: %s · %s": "MCP sortant · dernier appel : %s · %s",
+ "MCP out: %d servers ready for the agents": "MCP sortant : %d serveurs prêts pour les agents",
+ "+ Connect %s": "+ Brancher %s",
+ "Another server: https://…/mcp": "Un autre serveur : https://…/mcp",
+ "All agents": "Tous les agents",
+ "Connect": "Brancher",
+ "MCP servers for your agents (⇢ out)": "Serveurs MCP pour tes agents (⇢ sortant)"
 }

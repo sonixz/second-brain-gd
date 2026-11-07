@@ -918,6 +918,11 @@ def run_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any], actions:
         _UI["actions"].append({"action": "open_file", "path": out["pdf"] or out["html"]})
         return {"exported": out["title"], "pdf": bool(out["pdf"]), "note": out["why"], "unclear": unclear,
                 "shown_to_user": {"action": "open_file"}}
+    if name.startswith("mcp__"):  # a tool of an MCP server the user connected (Loop MCP-C)
+        from engine.assistant import agents
+        from engine.mcp import client as mcp
+        agent = str(_CONTEXT.get("agent") or "archivist")
+        return mcp.run(conn, name, args, agent, agents.label(conn, agent))
     if name in ("item_fields", "set_item_fields", "list_item_types", "define_item_type", "save_typed_item"):
         return _typed_tool(conn, name, args, actions)
     if name in ("find_items", "move_items", "unlink_items", "link_items", "remove_tag", "trash_items", "remove_place"):

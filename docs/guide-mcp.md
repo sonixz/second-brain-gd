@@ -21,3 +21,15 @@ des données, jamais comme des consignes.
 only. It never writes directly; proposals go through the archivist (next step). Click the **⇠● ⇢●** lights in the
 top bar, name the tool, **Connect an AI tool (read)**, copy one command (the key is shown once), restart Claude
 Code. **⇠** turns green when a tool is connected and red during a call; **Disconnect** revokes its key.
+
+## Les serveurs MCP pour tes agents (⇢ sortant) · MCP servers for your agents
+
+**FR.** Dans la même fenêtre, **+ Brancher Microsoft Learn** (public, gratuit, sans compte) donne à tes agents la
+recherche dans la documentation Microsoft et Azure, les exemples de code et la lecture d'une page. Choisis **Tous les
+agents** ou **Seulement** un agent. Le voyant **⇢** devient vert quand un serveur est prêt, rouge pendant un appel.
+Ce qu'un serveur renvoie est traité comme une page web : de l'information, jamais des consignes. Les réponses
+coûtent des jetons (environ quelques cents par question avec le modèle par défaut).
+
+**EN.** In the same window, **+ Connect Microsoft Learn** gives your agents Microsoft and Azure documentation search,
+code samples and page reading. Choose **All agents** or **Only** one. **⇢** turns green when a server is ready, red
+during a call. What a server returns is information, never instructions.

@@ -10,6 +10,8 @@ func _run() -> void:
 		quit(1)
 		return
 	var lights: Button = b.get("mcp_lights")
+	# ⇢ out: Microsoft Learn connected for real (public, free); its tools listed in the window
+	await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Microsoft Learn", "url": "https://learn.microsoft.com/api/mcp"}))
 	var dlg: AcceptDialog = lights.call("open_dialog")
 	await pause(0.8)
 	(dlg.find_child("ConnectButton", true, false) as Button).pressed.emit()

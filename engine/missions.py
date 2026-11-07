@@ -396,7 +396,8 @@ def tools_for(conn: sqlite3.Connection, agent: str) -> list[dict[str, Any]]:
         out += BROWSER_TOOLS
     if "read_brain" in caps:
         out += BRAIN_TOOLS
-    return out
+    from engine.mcp import client as mcp  # MCP servers allowed for this agent (Loop MCP-C)
+    return out + mcp.tool_defs(conn, agents.name(conn, agent))
 
 
 def system_prompt(conn: sqlite3.Connection, m: dict[str, Any]) -> str:
@@ -412,6 +413,14 @@ def run_tool(conn: sqlite3.Connection, client: Any, m: dict[str, Any], name: str
              sources: list[dict[str, str]], spent: list[float] | None = None) -> tuple[Any, str | None]:
     """One tool call. Returns (result for the model, new status or None). What a tool costs (a web search) is
     appended to spent."""
+    if name.startswith("mcp__"):  # a tool of an MCP server the user connected (Loop MCP-C)
+        from engine.assistant import agents
+        from engine.mcp import client as mcp
+        out = mcp.run(conn, name, args, m["agent"], agents.label(conn, m["agent"]))
+        _feed(m, "mcp", f"{out.get('server', 'MCP')} · {name.split('__')[-1]}")
+        if out.get("content") and str(args.get("url") or "").startswith("http"):
+            sources.append({"title": f"{out.get('server')} · {name.split('__')[-1]}", "url": str(args["url"])})
+        return out, None
     if name == "set_plan":
         old = {s["title"]: s for s in m.get("plan") or []}
         steps = [str(s).strip()[:200] for s in args.get("steps") or [] if str(s).strip()][:12]

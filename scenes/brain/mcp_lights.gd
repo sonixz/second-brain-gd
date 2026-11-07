@@ -11,6 +11,8 @@ var out_state := "off"
 var _pulse := 0.0
 var _flash_until := 0.0
 var _last_seen_call := ""
+var _last_out_call := ""
+var _out_flash_until := 0.0
 var dialog: AcceptDialog  # tests
 
 
@@ -42,19 +44,38 @@ func poll() -> void:
 		if _last_seen_call != "":
 			_flash_until = Time.get_ticks_msec() / 1000.0 + 1.4  # a short call still shows: the light stays red a moment
 		_last_seen_call = key
+	var out: Dictionary = status["out"] if status.get("out") is Dictionary else {}
+	var out_last: Dictionary = out["last"] if out.get("last") is Dictionary else {}
+	var out_key := str(out_last.get("at", ""))
+	if out_key != "" and out_key != _last_out_call:
+		if _last_out_call != "":
+			_out_flash_until = Time.get_ticks_msec() / 1000.0 + 1.4
+		_last_out_call = out_key
+	var out_ready := (out.get("servers", []) as Array).any(func(x: Variant) -> bool: return str((x as Dictionary).get("status", "")) == "ready")
+	out_state = "busy" if not (out.get("active", []) as Array).is_empty() or Time.get_ticks_msec() / 1000.0 < _out_flash_until \
+		else ("on" if out_ready else "off")
 	var busy := not (status.get("active", []) as Array).is_empty() or Time.get_ticks_msec() / 1000.0 < _flash_until
 	var connected := not (status.get("connected", []) as Array).is_empty()
 	in_state = "busy" if busy else ("on" if connected or not (status.get("clients", []) as Array).is_empty() else "off")
 	var waiting := int(status.get("pending", 0))
-	if last.is_empty():
+	if last.is_empty() and not out_last.is_empty():
+		tooltip_text = _out_tip(out, out_last)
+	elif last.is_empty():
 		tooltip_text = I18n.t("MCP: no AI tool connected yet. Click to connect Claude Code.") if (status.get("clients", []) as Array).is_empty() \
 			else I18n.t("MCP in: %d tools connected, no call yet") % (status.get("clients", []) as Array).size()
 	else:
 		tooltip_text = I18n.t("MCP in · last call: %s · %s") % [str(last.get("client", "")), str(last.get("tool", ""))] \
-			+ "\n" + I18n.t("MCP out: no server connected yet")
+			+ "\n" + _out_tip(out, out_last)
 	if waiting > 0:
 		tooltip_text += "\n" + I18n.t("%d proposals wait for your approval") % waiting
 	queue_redraw()
+
+
+func _out_tip(out: Dictionary, out_last: Dictionary) -> String:
+	if not out_last.is_empty():
+		return I18n.t("MCP out · last call: %s · %s") % [str(out_last.get("client", "")), str(out_last.get("tool", ""))]
+	var n := (out.get("servers", []) as Array).size()
+	return I18n.t("MCP out: no server connected yet") if n == 0 else I18n.t("MCP out: %d servers ready for the agents") % n
 
 
 func _color(state: String) -> Color:
@@ -135,6 +156,10 @@ func open_dialog() -> AcceptDialog:
 	var props_box := VBoxContainer.new()
 	props_box.name = "Proposals"
 	box.add_child(props_box)
+	var out_box := VBoxContainer.new()
+	out_box.name = "Servers"
+	out_box.add_theme_constant_override("separation", 6)
+	box.add_child(out_box)
 	var recent := RichTextLabel.new()
 	recent.name = "Recent"
 	recent.bbcode_enabled = true
@@ -194,6 +219,7 @@ func open_dialog() -> AcceptDialog:
 				str(x.get("client", "")), str(x.get("tool", "")), int(x.get("ms", 0))])
 		recent.text = ("[b]" + I18n.t("Recent calls") + "[/b]\n" + "\n".join(b)) if not b.is_empty() else ""
 		await _fill_proposals(props_box)
+		await _fill_servers(out_box)
 	connect_b.pressed.connect(func() -> void:
 		var res := await app.backend.api.call_api("/mcp/clients", true, HTTPClient.METHOD_POST,
 			JSON.stringify({"name": name_edit.text.strip_edges(), "level": "read"}))
@@ -253,6 +279,90 @@ func _fill_proposals(box: VBoxContainer) -> void:
 				_changed())
 			line.add_child(b)
 		box.add_child(line)
+
+
+## ⇢ out: the MCP servers the agents may use (Microsoft Learn suggested), who may use each, add or remove one.
+func _fill_servers(box: VBoxContainer) -> void:
+	for c in box.get_children():
+		c.queue_free()
+	var res := await app.backend.api.call_api("/mcp/servers")
+	var ag := await app.backend.api.call_api("/assistant/agents")
+	if not res["ok"] or not is_instance_valid(box):
+		return
+	var agents_list: Array = (ag["data"] as Dictionary).get("agents", []) if ag["ok"] else []
+	var head := Label.new()
+	head.theme_type_variation = "Heading"
+	head.text = I18n.t("MCP servers for your agents (⇢ out)")
+	box.add_child(head)
+	for sv in (res["data"] as Dictionary).get("servers", []):
+		var d: Dictionary = sv
+		var line := HBoxContainer.new()
+		line.add_theme_constant_override("separation", 8)
+		var l := Label.new()
+		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		l.clip_text = true
+		l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		var dot := "●" if str(d.get("status", "")) == "ready" else "○"
+		l.text = "%s %s · %s" % [dot, str(d.get("name", "")), I18n.t("%d tools") % (d.get("tools", []) as Array).size() if str(d.get("status", "")) == "ready" else I18n.t("unreachable: %s") % str(d.get("error", ""))]
+		l.add_theme_color_override("font_color", Color(0.55, 0.88, 0.65) if str(d.get("status", "")) == "ready" else SbTheme.WARM)
+		l.tooltip_text = str(d.get("url", "")) + "\n" + ", ".join(PackedStringArray((d.get("tools", []) as Array).map(func(t: Variant) -> String: return str((t as Dictionary).get("name", "")))))
+		line.add_child(l)
+		var who := OptionButton.new()
+		who.add_item(I18n.t("All agents"))
+		who.set_item_metadata(0, "*")
+		var current: Array = d.get("agents", ["*"])
+		for a in agents_list:
+			var ad: Dictionary = a
+			who.add_item(I18n.t("Only %s") % str(ad.get("name", ad.get("id", ""))))
+			who.set_item_metadata(who.item_count - 1, str(ad.get("id", "")))
+			if current.size() == 1 and str(current[0]) == str(ad.get("id", "")):
+				who.select(who.item_count - 1)
+		var sid := str(d["id"])
+		who.item_selected.connect(func(i: int) -> void:
+			await app.backend.api.call_api("/mcp/servers/%s/agents" % sid, true, HTTPClient.METHOD_POST,
+				JSON.stringify({"agents": [str(who.get_item_metadata(i))]})))
+		line.add_child(who)
+		var rm := Button.new()
+		rm.text = I18n.t("Remove")
+		rm.pressed.connect(func() -> void:
+			await app.backend.api.call_api("/mcp/servers/" + sid, true, HTTPClient.METHOD_DELETE)
+			await _fill_servers(box))
+		line.add_child(rm)
+		box.add_child(line)
+	for sg in (res["data"] as Dictionary).get("suggested", []):
+		var g: Dictionary = sg
+		var add := Button.new()
+		add.name = "AddSuggested"
+		add.text = I18n.t("+ Connect %s") % str(g.get("name", ""))
+		add.tooltip_text = str(g.get("about", ""))
+		add.pressed.connect(func() -> void:
+			add.disabled = true
+			add.text = I18n.t("Connecting…")
+			await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({"name": str(g["name"]), "url": str(g["url"])}))
+			await _fill_servers(box)
+			poll())
+		box.add_child(add)
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override("separation", 6)
+	var url := LineEdit.new()
+	url.placeholder_text = I18n.t("Another server: https://…/mcp")
+	url.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(url)
+	var other := Button.new()
+	other.text = I18n.t("Connect")
+	var err := Label.new()
+	err.theme_type_variation = "Muted"
+	err.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	other.pressed.connect(func() -> void:
+		var r := await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "", "url": url.text.strip_edges()}))
+		if not r["ok"]:
+			err.text = str((r["data"] as Dictionary).get("detail", r["error"]))
+			return
+		await _fill_servers(box)
+		poll())
+	row.add_child(other)
+	box.add_child(row)
+	box.add_child(err)
 
 
 func _changed() -> void:

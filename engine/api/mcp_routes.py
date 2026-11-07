@@ -23,6 +23,15 @@ class ClientIn(BaseModel):
     level: str = Field(default="read", max_length=20)
 
 
+class ServerIn(BaseModel):
+    name: str = Field(default="", max_length=40)
+    url: str = Field(min_length=8, max_length=500)
+
+
+class AgentsIn(BaseModel):
+    agents: list[str] = Field(default_factory=list, max_length=50)
+
+
 class LevelIn(BaseModel):
     level: str = Field(max_length=20)
     direct: bool | None = None
@@ -94,7 +103,11 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         with database.session(layout.database) as conn:
             clients = server.list_clients(conn)
             pending = conn.execute("SELECT COUNT(*) FROM mcp_proposals WHERE status = 'pending'").fetchone()[0]
-        return {**server.ACTIVITY.status(), "clients": clients, "pending": pending}
+            from engine.mcp import client as mcp
+            out_servers = [{k: s.get(k) for k in ("id", "name", "status", "error")} | {"tools": len(s.get("tools") or [])}
+                           for s in mcp.servers(conn)]
+        return {**server.ACTIVITY.status(), "clients": clients, "pending": pending,
+                "out": {**mcp.OUT.status(), "servers": out_servers}}
 
     @r.get("/mcp/clients", dependencies=[Depends(auth)])
     def get_clients() -> dict[str, Any]:
@@ -121,6 +134,51 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
                 return server.set_level(conn, cid, body.level)
             except server.McpError as exc:
                 raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @r.get("/mcp/servers", dependencies=[Depends(auth)])
+    def get_servers() -> dict[str, Any]:
+        """MCP servers the agents may use (Loop MCP-C), and the ones suggested."""
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            items = mcp.servers(conn)
+        have = {s.get("url") for s in items}
+        return {"servers": items, "suggested": [s for s in mcp.SUGGESTED if s["url"] not in have]}
+
+    @r.post("/mcp/servers", dependencies=[Depends(auth)])
+    def post_server(body: ServerIn) -> dict[str, Any]:
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            try:
+                return mcp.add_server(conn, body.name, body.url)
+            except mcp.McpClientError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @r.post("/mcp/servers/{sid}/refresh", dependencies=[Depends(auth)])
+    def post_server_refresh(sid: str) -> dict[str, Any]:
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            try:
+                mcp.get_server(conn, sid)
+            except mcp.McpClientError as exc:
+                raise HTTPException(status_code=404, detail=str(exc)) from exc
+            return mcp.refresh(conn, sid)
+
+    @r.post("/mcp/servers/{sid}/agents", dependencies=[Depends(auth)])
+    def post_server_agents(sid: str, body: AgentsIn) -> dict[str, Any]:
+        """Which agents may use this server: ["*"] for all of them."""
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            try:
+                return mcp.set_agents(conn, sid, body.agents)
+            except mcp.McpClientError as exc:
+                raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    @r.delete("/mcp/servers/{sid}", dependencies=[Depends(auth)])
+    def delete_server(sid: str) -> dict[str, Any]:
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            mcp.remove_server(conn, sid)
+        return {"removed": sid}
 
     @r.get("/mcp/proposals", dependencies=[Depends(auth)])
     def get_proposals(status: str = "pending") -> dict[str, Any]:

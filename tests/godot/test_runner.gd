@@ -886,6 +886,14 @@ func _e2e() -> void:
 	check(not tl_mine.is_empty() and not tl_point.is_empty() and int(tl_res.get("undone", 0)) >= 1 and graph.find_node("Idée venue de Claude Code") == "",
 		"the timeline shows Claude Code's changes after its automatic restore point; going back undoes them (%d undone)" % int(tl_res.get("undone", 0)))
 	tl_dlg.hide()
+	# Loop MCP-C: MCP servers for the agents: Microsoft Learn suggested, the ⇢ out light reported.
+	var sv: Dictionary = await app.backend.api.call_api("/mcp/servers")
+	var sv_suggested: Array = (sv["data"] as Dictionary).get("suggested", [])
+	var sv_status: Dictionary = await app.backend.api.call_api("/mcp/status")
+	var sv_bad: Dictionary = await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "x", "url": "http://example.com/mcp"}))
+	check(not sv_suggested.is_empty() and str((sv_suggested[0] as Dictionary).get("name", "")) == "Microsoft Learn"
+		and (sv_status["data"] as Dictionary).get("out") is Dictionary and str(lights.get("out_state")) == "off" and not sv_bad["ok"],
+		"MCP servers for the agents: Microsoft Learn is suggested, an unsafe address is refused, ⇢ out stays grey with none")
 	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
 	var l14_welcome := graph.find_node("Welcome to your Second Brain")
 	var l14_pathed := await wait_until(func() -> bool: return graph.path_ids.size() >= 2, 10.0)

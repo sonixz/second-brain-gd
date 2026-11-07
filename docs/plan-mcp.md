@@ -144,6 +144,17 @@ here » with a confirmation), opened from the MCP window. Tests: tests/python/te
 - Tests: connect to a recorded server (fixture), tools listed, a call from an agent, capability refused, server down,
   the light; one real call to Microsoft Learn (free).
 
+**C done 2026-11-07.** engine/mcp/client.py (standard library; JSON or event-stream answers; the session started
+again when a server forgets it; servers kept in the settings with their last tool list; tools that declare
+themselves destructive are not offered; results cut at 8,000 characters and marked as external data; the ⇢ light's
+activity). Agents get a server's tools as `mcp__<server>__<tool>` when the server is open to all agents or to them
+(agents.tools / allowed, missions.tools_for and run_tool, the assistant's run_tool). GET/POST/DELETE /mcp/servers,
+/refresh, /agents; « ⇢ out » in /mcp/status. The MCP window: servers with their state and tools, « All agents » or
+« Only <agent> », « + Connect Microsoft Learn », another address, remove. Real try: Microsoft Learn connected (3
+tools), the archivist answered « timer trigger Azure Functions en Python » with microsoft_code_sample_search and
+microsoft_docs_search and cited them (8 cents with gpt-6-sol before the result cut went from 12,000 to 8,000
+characters). Tests: tests/python/test_mcp_client.py (5, a local fake server), a Godot check.
+
 ## Later
 
 OAuth servers (GitHub, Google…), local stdio servers with approval, MCP resources (items as `brain://` resources)

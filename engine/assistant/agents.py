@@ -233,10 +233,14 @@ def persona(conn: sqlite3.Connection, agent: str | None) -> str:
 
 def tools(conn: sqlite3.Connection, agent: str | None, all_tools: list[dict[str, Any]]) -> list[dict[str, Any]]:
     allowed_names = set(profile(conn, agent)["tools"])
-    return [t for t in all_tools if t["function"]["name"] in allowed_names]
+    from engine.mcp import client as mcp  # the MCP servers this agent may use (Loop MCP-C)
+    return [t for t in all_tools if t["function"]["name"] in allowed_names] + mcp.tool_defs(conn, name(conn, agent))
 
 
 def allowed(conn: sqlite3.Connection, agent: str | None, tool: str) -> bool:
+    if tool.startswith("mcp__"):
+        from engine.mcp import client as mcp
+        return any(mcp.tool_name(s, t["name"]) == tool for s, t in mcp.for_agent(conn, name(conn, agent)))
     return tool in LIVE_ONLY or tool in profile(conn, agent)["tools"]
 
 
