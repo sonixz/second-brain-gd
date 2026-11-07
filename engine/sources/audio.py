@@ -256,10 +256,22 @@ def where_in(transcript: str, quote: str, seconds: float | None) -> float | None
     return None
 
 
-def _french_date(when: datetime) -> str:
-    months = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."]
+def _date(when: datetime, lang: str) -> str:
     local = when.astimezone()
-    return f"{local.day} {months[local.month - 1]} {local.year}, {local.hour}h{local.minute:02d}"
+    if lang == "fr":
+        months = ["janv.", "févr.", "mars", "avr.", "mai", "juin", "juil.", "août", "sept.", "oct.", "nov.", "déc."]
+        return f"{local.day} {months[local.month - 1]} {local.year}, {local.hour}h{local.minute:02d}"
+    months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    return f"{months[local.month - 1]} {local.day}, {local.year}, {local.hour}:{local.minute:02d}"
+
+
+# The memo's own words follow the interface language (the ideas keep the memo's language).
+LABELS = {"fr": {"memo": "Mémo vocal du {date} — {title}", "recorded": "Enregistré le {date}", "ideas": "Idées :",
+                 "transcript": "Transcription :", "from": "Du [[{memo}]]", "at": " · vers {clock}",
+                 "more": "… (suite dans l'audio)"},
+          "en": {"memo": "Voice memo, {date} — {title}", "recorded": "Recorded {date}", "ideas": "Ideas:",
+                 "transcript": "Transcript:", "from": "From [[{memo}]]", "at": " · at about {clock}",
+                 "more": "… (more in the audio)"}}
 
 
 def _transcribe(conn, client: Any, p: Path, langs: list[str]) -> tuple[dict[str, Any], str]:
@@ -338,9 +350,12 @@ def ingest_audio(conn, client: Any | None, path: str, space_id: str | None = Non
     s = structure(client, model, transcript, places)
     _usage_event(conn, "structure_memo", s["model"], s["usage"], client.provider)
     out = s["out"]
+    from engine.assistant.core import ui_language
+    lang = "fr" if ui_language(conn) == "fr" else "en"
+    L = LABELS[lang]
     when = datetime.strptime(info["recorded_at"], "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
     stamp = info["recorded_at"]
-    memo_title = f"Mémo vocal du {_french_date(when)} — {str(out.get('title') or p.stem).strip()[:80]}"
+    memo_title = L["memo"].format(date=_date(when, lang), title=str(out.get("title") or p.stem).strip()[:80])
     ideas = [i for i in (out.get("ideas") or []) if isinstance(i, dict) and str(i.get("title", "")).strip()][:MAX_IDEAS]
     by_name = {r["name"].casefold(): r["id"] for r in conn.execute("SELECT id, name FROM spaces")}
 
@@ -352,11 +367,11 @@ def ingest_audio(conn, client: Any | None, path: str, space_id: str | None = Non
     lines = []
     if out.get("summary"):
         lines.append(str(out["summary"]).strip())
-    lines.append(f"Enregistré le {_french_date(when)} · {_clock(seconds)} · {p.name}")
+    lines.append(L["recorded"].format(date=_date(when, lang)) + f" · {_clock(seconds)} · {p.name}")
     if ideas:
-        lines.append("Idées :\n" + "\n".join(f"- {str(i['title']).strip()[:120]}" for i in ideas))
-    shown = transcript if len(transcript) <= BODY_TRANSCRIPT else transcript[:BODY_TRANSCRIPT] + "… (suite dans l'audio)"
-    lines.append("Transcription :\n" + shown)
+        lines.append(L["ideas"] + "\n" + "\n".join(f"- {str(i['title']).strip()[:120]}" for i in ideas))
+    shown = transcript if len(transcript) <= BODY_TRANSCRIPT else transcript[:BODY_TRANSCRIPT] + L["more"]
+    lines.append(L["transcript"] + "\n" + shown)
     memo = brain.create_note(conn, memo_title, "\n\n".join(lines), space_id, kind="reference", source="voice")
     items = []
     for idea in ideas:
@@ -365,7 +380,7 @@ def ingest_audio(conn, client: Any | None, path: str, space_id: str | None = Non
         at = where_in(transcript, str(idea.get("quote", "")), seconds)
         tags = [re.sub(r"[^\w/-]", "", str(t).strip().lower().replace(" ", "-"))[:40] for t in (idea.get("tags") or [])][:2]
         body = [str(idea.get("text") or idea["title"]).strip()]
-        body.append(f"Du [[{memo_title}]]" + (f" · vers {_clock(at)}" if at is not None else ""))
+        body.append(L["from"].format(memo=memo_title) + (L["at"].format(clock=_clock(at)) if at is not None else ""))
         if any(tags):
             body.append(" ".join("#" + t for t in tags if t))
         note = brain.create_note(conn, str(idea["title"]).strip()[:200], "\n\n".join(body), place_of(idea), kind=kind,

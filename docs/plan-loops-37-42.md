@@ -68,7 +68,8 @@ Details from docs/plan-loops-35-37.md (Loop 37), plus what was left from Loop 36
   with « vers 1:32 », all dated when recorded; the memo keeps the audio and the full transcript (searchable).
   .ogg/.opus/.aac are refused with a way out (no converter is installed). scenes/brain/audio_import_dialog.gd
   (several files or a folder of memos at once, Stop after the memo under way). The owner's OpenAI project allows
-  no transcription model yet: to allow in Settings → Project → Limits before the first real memo.
+  no transcription model at first; once allowed (2026-11-07), a real 29-second French memo gave 4 items (2 tasks,
+  the paella filed in Cuisine) for 0.65 ¢. Memo words follow the app language. Screenshots docs/screenshots/audio-memos-en/-fr.
 
 ## Loop 38 — @ mentions
 

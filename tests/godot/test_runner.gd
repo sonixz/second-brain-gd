@@ -789,7 +789,7 @@ func _e2e() -> void:
 	await wait_until(func() -> bool: return graph.find_node("Paella aux fruits de mer dimanche") != "", 10.0)
 	var am_report := (am_dlg.get("result_label") as RichTextLabel).text
 	check(am_done and graph.find_node("Paella aux fruits de mer dimanche") != "" and am_report.contains("☐ Appeler le garage")
-		and am_report.contains("Mémo vocal du"), "the memo becomes ideas and a task in the graph, linked to it (%s)" % am_report.left(120).replace("\n", " / "))
+		and am_report.contains("Voice memo, Nov 5, 2026"), "the memo becomes ideas and a task in the graph, linked to it (%s)" % am_report.left(120).replace("\n", " / "))
 	am_dlg.hide()
 	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
 	var l14_welcome := graph.find_node("Welcome to your Second Brain")

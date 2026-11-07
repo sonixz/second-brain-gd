@@ -62,6 +62,7 @@ class AudioTests(unittest.TestCase):
         database.migrate(self.db)
         self.conn = database.connect(self.db)
         seed_all(self.conn)
+        database.set_setting(self.conn, "ui_language", "fr")  # the memo's own words follow the app's language
         self.memos = self.dir / "memos"
         self.memos.mkdir()
 
@@ -194,6 +195,14 @@ class AudioTests(unittest.TestCase):
         self.assertEqual(audio.usable_model(FakeChat()), "?", "a client that cannot list models: try in order")
         prev = audio.preview([str(make_wav(self.memos / "m.wav", 5))], True, None)
         self.assertEqual((prev["ready"], prev["model_ok"]), (1, False))
+
+    def test_in_english_the_memo_speaks_english(self):
+        database.set_setting(self.conn, "ui_language", "en")
+        res = audio.ingest_audio(self.conn, FakeChat(), str(make_wav(self.memos / "Recording_20261105_143200.wav", 40)))
+        memo = brain.get_note(self.conn, res["memo_id"])
+        self.assertTrue(memo["title"].startswith("Voice memo, Nov 5, 2026, 14:32 — "), memo["title"])
+        self.assertIn("Transcript:", memo["body"])
+        self.assertIn("at about 0:", brain.get_note(self.conn, res["items"][1]["id"])["body"])
 
     def test_where_an_idea_starts(self):
         t = "un deux trois quatre cinq six sept huit neuf dix"

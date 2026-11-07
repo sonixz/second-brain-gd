@@ -9,6 +9,7 @@ archivist in English while the screenshots are taken.
 from __future__ import annotations
 
 import json
+import os
 import re
 import sqlite3
 from datetime import datetime, timedelta, timezone
@@ -193,10 +194,50 @@ IMAGE_DESCRIPTION = ("A hand-drawn floor plan titled “Kitchen — new layout, 
                      "and “40 A for the cooktop!”.")
 
 
+MEMO_EN = {"title": "Errands, paella and the Brain", "summary": "Three things noted on the way back from the grocery store.",
+           "ideas": [{"title": "Call the garage about winter tires", "kind": "task", "tags": ["car"], "place": "",
+                      "text": "Call the garage to book the winter tires, ideally before Thursday.",
+                      "quote": "I really have to call the garage"},
+                     {"title": "Ask the Brain what I said last week", "kind": "idea", "tags": ["brain"], "place": "",
+                      "text": "Ask the Brain « what did I say last week about cooking » and get my memos back.",
+                      "quote": "it would be great to ask the Brain"},
+                     {"title": "Paella with the kids on Saturday", "kind": "idea", "tags": ["cooking"], "place": "",
+                      "text": "Saturday: a paella with the kids. They cut the vegetables, I take care of the seafood.",
+                      "quote": "on Saturday we could make a paella"},
+                     {"title": "Buy saffron for the paella", "kind": "task", "tags": ["cooking"], "place": "",
+                      "text": "Buy saffron for Saturday's paella.", "quote": "we need to buy saffron"}]}
+MEMO_FR = {"title": "Idées après l'épicerie", "summary": "Trois choses notées en revenant de l'épicerie.",
+           "ideas": [{"title": "Rappeler le garage pour les pneus d'hiver", "kind": "task", "tags": ["auto"], "place": "",
+                      "text": "Rappeler le garage pour les pneus d'hiver, idéalement avant jeudi.",
+                      "quote": "faut absolument que je rappelle le garage"},
+                     {"title": "Demander au Brain ce que j'ai dit la semaine passée", "kind": "idea", "tags": ["brain"],
+                      "place": "", "text": "Demander au Brain « qu'est-ce que j'ai dit la semaine passée sur la cuisine » "
+                      "et qu'il ressorte mes mémos.", "quote": "ce serait le fun de pouvoir demander"},
+                     {"title": "Paella avec les enfants samedi", "kind": "idea", "tags": ["cuisine"], "place": "",
+                      "text": "Samedi, une paella avec les enfants : eux coupent les légumes, moi les fruits de mer.",
+                      "quote": "on pourrait faire une paella avec les enfants"},
+                     {"title": "Acheter du safran pour la paella", "kind": "task", "tags": ["cuisine"], "place": "",
+                      "text": "Acheter du safran pour la paella de samedi.", "quote": "faudrait acheter du safran"}]}
+MEMO_TEXT_EN = ("OK, a few things on the way back from the grocery store. First, I really have to call the garage about "
+                "the winter tires, ideally before Thursday. Second thing, I was thinking: it would be great to ask the "
+                "Brain what I said last week about cooking and get my memos back. And last thing, on Saturday we could "
+                "make a paella with the kids, they cut the vegetables, I take care of the seafood. Oh, and we need to "
+                "buy saffron.")
+MEMO_TEXT_FR = ("Bon, OK. Quelques affaires en revenant de l'épicerie. Premièrement, faut absolument que je rappelle le "
+                "garage pour les pneus d'hiver avant jeudi, idéalement. Deuxième chose, j'ai pensé à ça : pour le Brain, "
+                "ce serait le fun de pouvoir demander qu'est-ce que j'ai dit la semaine passée sur la cuisine, pis qu'il "
+                "me ressorte mes mémos. Pis dernière affaire, pour samedi, on pourrait faire une paella avec les enfants, "
+                "eux autres coupent les légumes, moi je m'occupe des fruits de mer. Faudrait acheter du safran.")
+
+
 class ShowcaseChat(FakeChat):
     """Scripted stand-in for the showcase (no network): English archivist answers and file summaries."""
 
     provider = "showcase"
+
+    def transcribe(self, model: str, path: Any, languages: list[str] | None = None, prompt: str = "") -> dict[str, Any]:
+        fr = os.environ.get("SBGD_UI_LANG", "en") == "fr"
+        return {"text": MEMO_TEXT_FR if fr else MEMO_TEXT_EN, "seconds": None, "usage": {}}
 
     def embed(self, model: str, texts: list[str]) -> list[list[float]]:
         return [_embed(t) for t in texts]
@@ -208,6 +249,10 @@ class ShowcaseChat(FakeChat):
         system = str(messages[0].get("content", ""))
         if isinstance(last.get("content"), list):
             return {"message": {"role": "assistant", "content": IMAGE_DESCRIPTION}, "usage": usage, "model": model}
+        if json_mode and "mémo vocal" in system:  # a voice memo cut into ideas (Loop 37 screenshots)
+            fr = os.environ.get("SBGD_UI_LANG", "en") == "fr"
+            return {"message": {"role": "assistant", "content": json.dumps(MEMO_FR if fr else MEMO_EN, ensure_ascii=False)},
+                    "usage": usage, "model": model}
         if json_mode and "fiche de référence" in system:
             src = json.loads(last["content"])
             known = "brightline" in str(src.get("text", "")).lower()
