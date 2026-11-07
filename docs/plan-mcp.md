@@ -17,6 +17,27 @@ fast-forward main, push.
 | MCP-C | MCP out: the Connections card, Microsoft Learn first, server tools as agent capabilities, lights per server, costs | 1 | 75 % |
 | later | Servers that need a sign-in (OAuth: GitHub, Google), local stdio servers with approval, MCP resources and prompts | — | — |
 
+## Decisions from the owner's review (2026-11-07)
+
+- **A timeline to go back.** Every action is already journaled with its before and after. Restore points: one
+  automatically when a client's session starts writing (plus a full backup before its first write), others by hand
+  (« point de retour avant le grand ménage »). A timeline of changes (who: you, the archivist, Claude Code, an
+  agent; what; when) and « Go back to this moment »: everything after it undone in reverse order, for everyone or
+  for one author only; an action whose item was changed since is shown as a conflict, never overwritten silently.
+- **Everything that comes in goes through the archivist.** « Add » from a client is a normal capture: the
+  archivist files it with the owner's instructions and model (place, themes, links, duplicates); the client may
+  suggest a place, the archivist decides. « Organise » actions are checked against the archivist's rules before
+  they are applied or drafted. About one filing call per added item.
+- **Context cost is a design rule, not a blocker.** Short answers by default (search: 10 hits, 200-character
+  snippets; get_item: about 4,000 characters with « more »), lists paged by 25 with a cursor, and `overview`
+  instead of « read the whole graph » (places with counts, main themes, recent additions); the client goes down
+  where it needs.
+- **Two writers at once** (the archivist and Claude Code, or two Claude Codes) is one problem: a single write queue
+  in the engine; write tools carry the version of the item they read and get « changed since you read it » instead
+  of overwriting; an item being filed by the archivist is held until it is done.
+- **Security for now:** local only (127.0.0.1), a token per client. Endpoint hardening and token management are
+  revisited later.
+
 ## The lights (all loops)
 
 In the top bar, beside « Tout fonctionne »: two small, subtle dots, **⇠ in** and **⇢ out**. Grey when nothing is
@@ -37,7 +58,7 @@ Click: the details (clients, servers, recent calls, costs) in a small panel; the
   « mirrored » networking (the owner's choice), or a tiny relay script Claude Code starts, which reads the engine's
   port from runtime/server.json. No admin rights either way.
 - **Read tools** (short answers, paged, ids + titles + snippets; details on request):
-  `search` (words and meaning), `get_item` (text, fields, links, place), `list_places` (areas, projects, counts),
+  `overview` (places with counts, main themes, recent additions), `search` (words and meaning), `get_item` (text, fields, links, place), `list_places` (areas, projects, counts),
   `neighbours` (links and related ideas of an item), `path` (how two items connect), `recent`, `inbox`,
   `table` (rows of a type: recipes…), `item_types`. Item text is returned marked as data from the user's Brain
   (captured pages can contain instructions; the client is told they are content, not orders).
@@ -53,8 +74,13 @@ Click: the details (clients, servers, recent calls, costs) in a small panel; the
   Organise (move, link, unlink, file the Inbox, edit fields, create a project, trash).
 - **Draft first (default).** Writes from a client wait in a card (« Claude Code propose 12 changements ») to approve
   all, some or none; a switch per client allows direct writes once trusted.
+- **Through the archivist.** Added items are captures the archivist files with the owner's instructions;
+  organise actions are checked against its rules.
 - **Nothing is erased.** Trash only, undoable; every action journaled with its author; **« Undo everything Claude
-  Code did in this session »** in one click.
+  Code did in this session »** in one click; restore points and the timeline of changes (« go back to this moment »),
+  a full backup before a session's first write.
+- **One writer at a time.** A single write queue; version checks (« changed since you read it »); items being filed
+  are held.
 - **Rate limits** (e.g. 60 writes a minute, 500 a session) and a pause switch per client.
 - **No double work.** The same journal as the archivist; an item already filed is not filed twice.
 - Tests: each write tool at each level, refusals, drafts approved / rejected, session undo, rate limit.
