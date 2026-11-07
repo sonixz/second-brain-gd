@@ -592,7 +592,8 @@ func popup(js: String) -> String:
 
 func open_popup() -> void:
 	edge(["focus"])
-	edge(["eval", "/background.js", "chrome.action.openPopup().then(() => 'open')", "gesture"])
+	# Name the window: Edge refuses « openPopup() » when another app has the focus (« no active browser window »).
+	edge(["eval", "/background.js", "chrome.windows.getAll({windowTypes: ['normal']}).then(w => chrome.action.openPopup(w.length ? {windowId: w[0].id} : {})).then(() => 'open')", "gesture"])
 	await pause(1.2)
 
 
