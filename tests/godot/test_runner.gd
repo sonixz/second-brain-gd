@@ -58,6 +58,7 @@ func _run() -> void:
 	_unit()
 	await _perf_check()
 	await _drop_check()
+	await _calm_check()
 	var apic: Node = load("res://scripts/monitoring/api_client.gd").new()
 	check(apic.timeout_for("/sources/file", HTTPClient.METHOD_POST) >= 300.0, "reading a document may take minutes (OCR of many pages)")
 	check(apic.timeout_for("/sources", HTTPClient.METHOD_GET) <= 5.0, "a plain request still fails fast")
@@ -1029,6 +1030,60 @@ func _perf_check() -> void:
 	await process_frame
 	check(sim_ms < 60.0, "2,000 items: one layout step takes %.1f ms" % sim_ms)
 	check(g.draw_ms < 120.0, "2,000 items: one frame draws in %.1f ms" % g.draw_ms)
+	g.queue_free()
+
+
+## Loop 37: the graph glides and rests. A refresh with nothing new moves nothing; a slow, uneven frame rate
+## (24 fps with hitches) settles without shaking; a new item wakes it gently.
+func _calm_check() -> void:
+	var g := GraphView.new()
+	g.size = Vector2(1280, 800)
+	root.add_child(g)
+	g.set_process(false)
+	await process_frame
+	var cn: Array = [{"id": "space:k", "type": "space", "label": "Cuisine", "kind": "area"},
+		{"id": "space:s", "type": "space", "label": "Start", "kind": "resource"}]
+	var ce: Array = []
+	for i in 12:
+		cn.append({"id": "c%d" % i, "type": "note", "label": "Recette %d" % i, "kind": "note", "space_id": "k" if i < 9 else "s"})
+		ce.append({"from": "c%d" % i, "to": "space:k" if i < 9 else "space:s", "type": "space"})
+		if i > 0:
+			ce.append({"from": "c%d" % i, "to": "c%d" % (i - 1), "type": "related"})
+	for t in 4:
+		cn.append({"id": "tag:t%d" % t, "type": "tag", "label": "#t%d" % t, "weight": 3})
+		for i in range(t, 9, 2):
+			ce.append({"from": "c%d" % i, "to": "tag:t%d" % t, "type": "tag"})
+	var data := {"nodes": cn, "edges": ce}
+	g.set_graph(data)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5
+	for f in 900:  # 37 s at 24 fps, with one slow frame in ten
+		g._process(1.0 / 24.0 * (2.5 if rng.randf() < 0.1 else 1.0))
+	var rest := {}
+	for id in g.nodes:
+		rest[id] = (g.nodes[id] as Dictionary)["pos"]
+	var shake := 0
+	var last := {}
+	for f in 120:
+		g._process(1.0 / 24.0)
+		for id in g.nodes:
+			var step: Vector2 = ((g.nodes[id] as Dictionary)["pos"] as Vector2) - (rest[id] as Vector2)
+			if last.has(id) and step.length() > 0.05 and step.dot(last[id]) < 0.0:
+				shake += 1
+			last[id] = step
+	check(shake == 0, "a settled graph rests at 24 fps with hitches (%d shakes)" % shake)
+	g.set_graph(data)
+	var drift := 0.0
+	for f in 240:
+		g._process(1.0 / 60.0)
+	for id in g.nodes:
+		drift = maxf(drift, (((g.nodes[id] as Dictionary)["pos"] as Vector2) - (rest[id] as Vector2)).length())
+	check(drift < 1.0, "a refresh with nothing new leaves the graph still (moved %.1f px)" % drift)
+	(data["nodes"] as Array).append({"id": "c_new", "type": "note", "label": "Paella", "kind": "note", "space_id": "k"})
+	g.set_graph(data)
+	var h0 := g.heat
+	g._process(1.0 / 60.0)
+	check(h0 < 0.1 and g.heat > h0 and g.heat < 0.1, "a new item wakes the graph gently (heat %.3f → %.3f)" % [h0, g.heat])
 	g.queue_free()
 
 

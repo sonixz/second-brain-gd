@@ -44,6 +44,8 @@ var highlight: Dictionary = {}  # id -> true; empty = no filter
 var cam := Vector2.ZERO          # world point at the centre of the view
 var zoom := 1.0
 var heat := 1.0
+var _heat_goal := 0.0      # a gentle wake-up: heat rises to this over a moment instead of jumping (Loop 37)
+var _sim_acc := 0.0        # time not yet simulated: the layout advances in fixed 1/60 s steps at any frame rate
 var _t := 0.0
 var _dragging_node := ""
 var _panning := false
@@ -69,6 +71,10 @@ var _note_tags: Dictionary = {}
 var path_ids: Array = []
 const CELL := 100.0
 const CROWD := 4                  # a neighbouring cell with more items than this pushes as one body
+const CROWD_FROM := 600           # ... only in big graphs: below this, every push is exact, so nothing jolts
+const SIM_DT := 1.0 / 60.0        # one layout step
+const MAX_SPEED := 9.0            # world units per step: the graph glides, it never jumps
+const REST_SPEED := 0.04          # below this, once cooled, an item stops instead of trembling
 const NOTE_FIELDS := ["item_type", "origin", "created_at", "updated_at"]
 const DENSE := 350                # beyond this many items on screen, draw lighter (no halos, fewer labels)
 var _dense := false
@@ -126,6 +132,8 @@ func set_graph(data: Dictionary) -> Array[String]:
 		if not incoming.has(id):
 			nodes.erase(id)
 	var first_load := nodes.is_empty()
+	var before := nodes.size()
+	var before_edges := _edge_signature()
 	var i := 0
 	for id in incoming:
 		var src: Dictionary = incoming[id]
@@ -177,8 +185,25 @@ func set_graph(data: Dictionary) -> Array[String]:
 	_update_shown()
 	if graph_layout == "timeline":
 		_timeline_targets()
-	heat = 1.0
+	# A periodic refresh with nothing new leaves the graph at rest; a change wakes it gently.
+	if first_load:
+		heat = 1.0
+	elif not born.is_empty() or nodes.size() != before or _edge_signature() != before_edges:
+		reheat(0.3)
 	return born
+
+
+## Wakes the layout softly (a filter, a fold, a new item): heat climbs to this over about half a second.
+func reheat(h: float) -> void:
+	_heat_goal = maxf(_heat_goal, h)
+
+
+func _edge_signature() -> int:
+	var parts := PackedStringArray()
+	for e in edges:
+		parts.append("%s>%s:%s" % [e["from"], e["to"], e["type"]])
+	parts.sort()
+	return hash(",".join(parts))
 
 
 func _make_node(src: Dictionary, i: int, total: int, first_load: bool) -> Dictionary:
@@ -354,7 +379,7 @@ func _layout_anchors() -> void:
 func set_filter(f: Dictionary) -> void:
 	filter = f
 	_update_shown()
-	heat = maxf(heat, 0.5)
+	reheat(0.5)
 	queue_redraw()
 
 
@@ -373,7 +398,7 @@ func fold(space_id: String, on: bool) -> void:
 	else:
 		folded.erase(key)
 	_update_shown()
-	heat = maxf(heat, 0.5)
+	reheat(0.5)
 	queue_redraw()
 
 
@@ -523,7 +548,7 @@ func set_layout(mode: String) -> void:
 			if n.has("zone_pos"):
 				n["pos"] = n["zone_pos"]
 		_rebuild_sim()
-		heat = 0.4
+		reheat(0.4)
 		zoom_to(0.6, Vector2.ZERO)
 	queue_redraw()
 
@@ -628,9 +653,28 @@ func _process(delta: float) -> void:
 		cam = cam.lerp((nodes[follow]["pos"] as Vector2) - screen_offset / zoom, minf(1.0, delta * 8.0))
 	if graph_layout == "timeline":
 		_timeline_step(delta)
-	elif heat > 0.02:
-		_simulate(minf(delta, 0.05) * 60.0)
-		heat *= 0.995 if _sim_ids.size() < 600 else (0.985 if _sim_ids.size() < 2000 else 0.97)
+	else:
+		if _heat_goal > 0.0:  # wake up softly, then cool down as before
+			if heat < _heat_goal:
+				heat = move_toward(heat, _heat_goal, delta * 1.2)
+			if heat >= _heat_goal:
+				_heat_goal = 0.0
+		if heat > 0.02:
+			# Fixed steps whatever the frame rate: a slow frame runs two or three small steps, never one big
+			# one (a big step overshoots, and items start to shake). A big graph keeps to one step per frame.
+			_sim_acc = minf(_sim_acc + delta, SIM_DT * 3.0)
+			var steps := 0
+			var most := 3 if _sim_ids.size() < CROWD_FROM else 1
+			while _sim_acc >= SIM_DT and steps < most:
+				_simulate(1.0)
+				if _heat_goal <= 0.0:
+					heat *= 0.995 if _sim_ids.size() < 600 else (0.985 if _sim_ids.size() < 2000 else 0.97)
+				_sim_acc -= SIM_DT
+				steps += 1
+			if steps == most:
+				_sim_acc = 0.0
+		else:
+			_sim_acc = 0.0
 	queue_redraw()
 
 
@@ -705,7 +749,7 @@ func _simulate(step: float) -> void:
 	var centre: Dictionary = {}
 	for key in grid:
 		var members: PackedInt32Array = grid[key]
-		if members.size() > CROWD:
+		if members.size() > CROWD and n >= CROWD_FROM:
 			var c := Vector2.ZERO
 			for m in members:
 				c += pos[m]
@@ -777,7 +821,9 @@ func _simulate(step: float) -> void:
 		else:
 			f = force[i] - p * GRAVITY * 0.35
 		var v: Vector2 = ((node["vel"] as Vector2) + f * step * heat) * DAMPING
-		v = v.limit_length(18.0)
+		v = v.limit_length(MAX_SPEED)
+		if heat < 0.15 and v.length() < REST_SPEED:
+			v = Vector2.ZERO
 		node["vel"] = v
 		node["pos"] = p + v * step
 		_sim_pos[i] = node["pos"]
