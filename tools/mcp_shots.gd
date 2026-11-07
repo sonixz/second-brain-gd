@@ -56,4 +56,19 @@ func _run() -> void:
 	await pause(2.0)
 	calm()
 	await shot("m4-timeline")
+	tl.hide()
+	# MCP-D: a server's tools, key and budget; a search in the official registry
+	var dlg3: AcceptDialog = lights.call("open_dialog")
+	await pause(2.5)
+	for bt in dlg3.find_children("*", "Button", true, false):
+		if (bt as Button).text.begins_with("Tools") or (bt as Button).text.begins_with("Outils"):
+			(bt as Button).pressed.emit()
+			break
+	var search: LineEdit = dlg3.find_child("CatalogSearch", true, false)
+	if search != null:
+		search.text = "notion"
+		search.text_submitted.emit("notion")
+	await pause(5.0)
+	calm()
+	await shot("m5-catalogue")
 	quit(0)

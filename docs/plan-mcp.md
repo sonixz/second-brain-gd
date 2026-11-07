@@ -190,6 +190,22 @@ Brain keeps what the protocol does not do: permissions, secrets, budget, trust, 
 - Tests: a fake server with a key, paging and a write tool; the guard; the budget; one real call to a keyless
   catalogue server.
 
+**D done 2026-11-07.** Migration 0019 (mcp_usage, mcp_confirms). engine/mcp/client.py: a key per server in the OS
+credential store (provider « mcp-<id> »; « Bearer » added for Authorization), tools/list paging, every tool kept
+with `write` (not declared read-only), tools switched off per server, monthly usage (calls, result characters ÷ 4)
+and an optional cap, the outside-write guard (a pending confirmation per exact call, « Allow once » good for 15
+minutes, a refusal remembered), `risks` (agents reading the Brain with a writing server), event streams read as
+they come (progress on the ⇢ hover, « Stop the calls under way » cancels and tells the server), the 2024-11-05
+HTTP+SSE transport (GET stream, « endpoint » event, answers on the stream); a 401 says « add the key ».
+engine/mcp/catalog.py: the official registry (`/v0/servers?search=&version=latest`), each entry with its family
+(open / key / local; « sign-in » is discovered on connect until MCP-E), publisher from its namespace, source.
+Curated list checked by hand: Microsoft Learn, Context7, DeepWiki, Exa (all answered without an account). The MCP
+window scrolls; per server: tools on/off (✎ for writing ones), key, monthly budget, usage; confirmations and risk
+warnings; the catalogue (curated buttons, registry search, a pasted address). Not done: per-agent tool lists (per
+server only), listChanged (no standing stream; « refresh » and a reconnect cover it). Real calls: DeepWiki and the
+registry search, free. Tests: test_mcp_client.py (10: paging, guard, keys, off/agents/budget, progress and Stop,
+session restart, the older transport, catalogue families). Screenshot docs/screenshots/mcp-*/m5-catalogue.png.
+
 ### MCP-E — account sign-in (OAuth), server questions
 
 - **OAuth per the MCP spec.** Discovery (`/.well-known/oauth-protected-resource`, then the authorization server's

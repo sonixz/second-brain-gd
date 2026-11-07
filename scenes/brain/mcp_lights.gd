@@ -72,6 +72,10 @@ func poll() -> void:
 
 
 func _out_tip(out: Dictionary, out_last: Dictionary) -> String:
+	var act: Array = out.get("active", [])
+	if not act.is_empty():
+		var a0: Dictionary = act[0]
+		return I18n.t("MCP out · now: %s · %s") % [str(a0.get("client", "")), str(a0.get("tool", ""))] + (" · " + str(a0.get("progress", "")) if str(a0.get("progress", "")) != "" else "")
 	if not out_last.is_empty():
 		return I18n.t("MCP out · last call: %s · %s") % [str(out_last.get("client", "")), str(out_last.get("tool", ""))]
 	var n := (out.get("servers", []) as Array).size()
@@ -118,10 +122,15 @@ func open_dialog() -> AcceptDialog:
 	dlg.theme = app.theme
 	dlg.add_theme_stylebox_override("panel", SbTheme.box(SbTheme.PANEL, 0, SbTheme.BORDER, 1, 18))
 	dlg.ok_button_text = I18n.t("Close")
+	var scroll := ScrollContainer.new()  # the window grows with servers, proposals and the catalogue: it scrolls
+	scroll.custom_minimum_size = Vector2(690, 620)
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	dlg.add_child(scroll)
 	var box := VBoxContainer.new()
 	box.custom_minimum_size = Vector2(660, 0)
+	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	box.add_theme_constant_override("separation", 10)
-	dlg.add_child(box)
+	scroll.add_child(box)
 	var intro := Label.new()
 	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	intro.theme_type_variation = "Muted"
@@ -228,7 +237,7 @@ func open_dialog() -> AcceptDialog:
 		_show_commands(commands, res["data"])
 		fill.call())
 	app.get_tree().root.add_child(dlg)
-	dlg.popup_centered_clamped(Vector2i(720, 560))
+	dlg.popup_centered_clamped(Vector2i(730, 700))
 	fill.call()
 	return dlg
 
@@ -281,7 +290,8 @@ func _fill_proposals(box: VBoxContainer) -> void:
 		box.add_child(line)
 
 
-## ⇢ out: the MCP servers the agents may use (Microsoft Learn suggested), who may use each, add or remove one.
+## ⇢ out: the MCP servers the agents may use — state, monthly use, key, tools, who may use each; calls waiting for
+## the user's confirmation; agents that read the Brain and may write outside; the catalogue (curated + registry).
 func _fill_servers(box: VBoxContainer) -> void:
 	for c in box.get_children():
 		c.queue_free()
@@ -289,80 +299,252 @@ func _fill_servers(box: VBoxContainer) -> void:
 	var ag := await app.backend.api.call_api("/assistant/agents")
 	if not res["ok"] or not is_instance_valid(box):
 		return
+	var data: Dictionary = res["data"]
 	var agents_list: Array = (ag["data"] as Dictionary).get("agents", []) if ag["ok"] else []
 	var head := Label.new()
 	head.theme_type_variation = "Heading"
 	head.text = I18n.t("MCP servers for your agents (⇢ out)")
 	box.add_child(head)
-	for sv in (res["data"] as Dictionary).get("servers", []):
-		var d: Dictionary = sv
-		var line := HBoxContainer.new()
-		line.add_theme_constant_override("separation", 8)
-		var l := Label.new()
-		l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-		l.clip_text = true
-		l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		var dot := "●" if str(d.get("status", "")) == "ready" else "○"
-		l.text = "%s %s · %s" % [dot, str(d.get("name", "")), I18n.t("%d tools") % (d.get("tools", []) as Array).size() if str(d.get("status", "")) == "ready" else I18n.t("unreachable: %s") % str(d.get("error", ""))]
-		l.add_theme_color_override("font_color", Color(0.55, 0.88, 0.65) if str(d.get("status", "")) == "ready" else SbTheme.WARM)
-		l.tooltip_text = str(d.get("url", "")) + "\n" + ", ".join(PackedStringArray((d.get("tools", []) as Array).map(func(t: Variant) -> String: return str((t as Dictionary).get("name", "")))))
-		line.add_child(l)
-		var who := OptionButton.new()
-		who.add_item(I18n.t("All agents"))
-		who.set_item_metadata(0, "*")
-		var current: Array = d.get("agents", ["*"])
-		for a in agents_list:
-			var ad: Dictionary = a
-			who.add_item(I18n.t("Only %s") % str(ad.get("name", ad.get("id", ""))))
-			who.set_item_metadata(who.item_count - 1, str(ad.get("id", "")))
-			if current.size() == 1 and str(current[0]) == str(ad.get("id", "")):
-				who.select(who.item_count - 1)
-		var sid := str(d["id"])
-		who.item_selected.connect(func(i: int) -> void:
-			await app.backend.api.call_api("/mcp/servers/%s/agents" % sid, true, HTTPClient.METHOD_POST,
-				JSON.stringify({"agents": [str(who.get_item_metadata(i))]})))
-		line.add_child(who)
-		var rm := Button.new()
-		rm.text = I18n.t("Remove")
-		rm.pressed.connect(func() -> void:
-			await app.backend.api.call_api("/mcp/servers/" + sid, true, HTTPClient.METHOD_DELETE)
-			await _fill_servers(box))
-		line.add_child(rm)
-		box.add_child(line)
-	for sg in (res["data"] as Dictionary).get("suggested", []):
+	for cf in data.get("confirmations", []):
+		box.add_child(_confirm_row(cf, box))
+	for rk in data.get("risks", []):
+		var w := Label.new()
+		w.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		w.add_theme_color_override("font_color", SbTheme.WARM)
+		w.text = I18n.t("⚠ %s reads your Brain and may write outside with %s: each such call waits for your confirmation.") % [
+			str((rk as Dictionary).get("name", "")), ", ".join(PackedStringArray((rk as Dictionary).get("servers", [])))]
+		box.add_child(w)
+	for sv in data.get("servers", []):
+		box.add_child(_server_row(sv, agents_list, box))
+	if not (status.get("out", {}) as Dictionary).get("active", []).is_empty():
+		var stop := Button.new()
+		stop.text = I18n.t("Stop the calls under way")
+		stop.pressed.connect(func() -> void: await app.backend.api.call_api("/mcp/out/stop", true, HTTPClient.METHOD_POST, "{}"))
+		box.add_child(stop)
+	var cat := Label.new()
+	cat.theme_type_variation = "Muted"
+	cat.text = I18n.t("Catalogue — checked by hand, or search the official MCP registry:")
+	box.add_child(cat)
+	var sugg := HFlowContainer.new()
+	sugg.add_theme_constant_override("h_separation", 6)
+	box.add_child(sugg)
+	for sg in data.get("suggested", []):
 		var g: Dictionary = sg
 		var add := Button.new()
 		add.name = "AddSuggested"
 		add.text = I18n.t("+ Connect %s") % str(g.get("name", ""))
-		add.tooltip_text = str(g.get("about", ""))
+		add.tooltip_text = "%s · %s\n%s" % [str(g.get("publisher", "")), I18n.t("no account"), str(g.get("about", ""))]
 		add.pressed.connect(func() -> void:
 			add.disabled = true
 			add.text = I18n.t("Connecting…")
-			await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({"name": str(g["name"]), "url": str(g["url"])}))
+			await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify(
+				{"name": str(g["name"]), "url": str(g["url"]), "publisher": str(g.get("publisher", ""))}))
 			await _fill_servers(box)
 			poll())
-		box.add_child(add)
+		sugg.add_child(add)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 6)
-	var url := LineEdit.new()
-	url.placeholder_text = I18n.t("Another server: https://…/mcp")
-	url.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_child(url)
-	var other := Button.new()
-	other.text = I18n.t("Connect")
+	var q := LineEdit.new()
+	q.name = "CatalogSearch"
+	q.placeholder_text = I18n.t("Search the registry (notion, github, weather…) or paste https://…/mcp")
+	q.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.add_child(q)
+	var go := Button.new()
+	go.text = I18n.t("Search")
+	row.add_child(go)
+	box.add_child(row)
+	var results := VBoxContainer.new()
+	results.name = "CatalogResults"
+	box.add_child(results)
 	var err := Label.new()
 	err.theme_type_variation = "Muted"
 	err.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	other.pressed.connect(func() -> void:
-		var r := await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "", "url": url.text.strip_edges()}))
-		if not r["ok"]:
-			err.text = str((r["data"] as Dictionary).get("detail", r["error"]))
-			return
-		await _fill_servers(box)
-		poll())
-	row.add_child(other)
-	box.add_child(row)
 	box.add_child(err)
+	var do_search := func() -> void:
+		var text := q.text.strip_edges()
+		err.text = ""
+		for c in results.get_children():
+			c.queue_free()
+		if text.begins_with("https://") or text.begins_with("http://127.0.0.1"):
+			var r := await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "", "url": text}))
+			if not r["ok"]:
+				err.text = str((r["data"] as Dictionary).get("detail", r["error"]))
+				return
+			await _fill_servers(box)
+			poll()
+			return
+		var r2 := await app.backend.api.call_api("/mcp/catalog?q=" + text.uri_encode())
+		if not r2["ok"]:
+			err.text = str((r2["data"] as Dictionary).get("detail", r2["error"]))
+			return
+		for e in ((r2["data"] as Dictionary).get("results", []) as Array).slice(0, 12):
+			results.add_child(_catalog_row(e, box))
+		if results.get_child_count() == 0:
+			err.text = I18n.t("Nothing found in the registry.")
+	go.pressed.connect(func() -> void: do_search.call())
+	q.text_submitted.connect(func(_t: String) -> void: do_search.call())
+
+
+static func family_label(f: String) -> String:
+	return {"open": I18n.t("no account"), "key": I18n.t("key needed"), "signin": I18n.t("account sign-in"),
+		"local": I18n.t("local program")}.get(f, f)
+
+
+func _catalog_row(e: Variant, box: VBoxContainer) -> Control:
+	var d: Dictionary = e
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 6)
+	var l := Label.new()
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.clip_text = true
+	l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	l.text = "%s · %s · %s" % [str(d.get("name", "")), family_label(str(d.get("family", ""))), str(d.get("publisher", ""))]
+	l.tooltip_text = str(d.get("about", "")) + "\n" + str(d.get("source", "")) + ("\n" + str(d.get("key_about", "")) if str(d.get("key_about", "")) != "" else "")
+	line.add_child(l)
+	var fam := str(d.get("family", ""))
+	var key := LineEdit.new()
+	key.secret = true
+	key.placeholder_text = I18n.t("key") + (" (" + I18n.t("optional") + ")" if bool(d.get("key_optional", false)) else "")
+	key.custom_minimum_size = Vector2(130, 0)
+	key.visible = fam == "key" or bool(d.get("key_optional", false))
+	line.add_child(key)
+	var b := Button.new()
+	b.text = I18n.t("Connect") if fam != "local" else I18n.t("Later (local)")
+	b.disabled = fam == "local"
+	b.tooltip_text = I18n.t("Local programs come with the next step, with your approval") if fam == "local" else ""
+	b.pressed.connect(func() -> void:
+		b.disabled = true
+		var r := await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({
+			"name": str(d.get("name", "")).left(40), "url": str(d.get("url", "")), "key": key.text, "key_header": str(d.get("key_header", "Authorization")),
+			"publisher": str(d.get("publisher", "")), "source": str(d.get("source", ""))}))
+		if r["ok"]:
+			await _fill_servers(box)
+			poll()
+		else:
+			b.disabled = false
+			b.text = str((r["data"] as Dictionary).get("detail", r["error"])).left(40))
+	line.add_child(b)
+	return line
+
+
+func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control:
+	var d: Dictionary = sv
+	var sid := str(d["id"])
+	var wrap := VBoxContainer.new()
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 6)
+	wrap.add_child(line)
+	var ready := str(d.get("status", "")) == "ready"
+	var tools: Array = d.get("tools", [])
+	var off: Array = d.get("off", [])
+	var use: Dictionary = d.get("usage", {})
+	var l := Label.new()
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.clip_text = true
+	l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+	l.text = ("● %s · %s · %s" % [str(d.get("name", "")), I18n.t("%d of %d tools") % [tools.size() - off.size(), tools.size()],
+		I18n.t("%d calls, ≈ %s tokens this month") % [int(use.get("calls", 0)), _k(int(use.get("tokens", 0)))]]) if ready \
+		else "○ %s · %s" % [str(d.get("name", "")), I18n.t("unreachable: %s") % str(d.get("error", ""))]
+	l.add_theme_color_override("font_color", Color(0.55, 0.88, 0.65) if ready else SbTheme.WARM)
+	l.tooltip_text = "%s\n%s%s" % [str(d.get("url", "")), str(d.get("publisher", "")), ("\n" + I18n.t("key saved")) if bool(d.get("has_key", false)) else ""]
+	line.add_child(l)
+	var who := OptionButton.new()
+	who.add_item(I18n.t("All agents"))
+	who.set_item_metadata(0, "*")
+	var current: Array = d.get("agents", ["*"])
+	for a in agents_list:
+		var ad: Dictionary = a
+		who.add_item(I18n.t("Only %s") % str(ad.get("name", ad.get("id", ""))))
+		who.set_item_metadata(who.item_count - 1, str(ad.get("id", "")))
+		if current.size() == 1 and str(current[0]) == str(ad.get("id", "")):
+			who.select(who.item_count - 1)
+	who.item_selected.connect(func(i: int) -> void:
+		await app.backend.api.call_api("/mcp/servers/%s/agents" % sid, true, HTTPClient.METHOD_POST,
+			JSON.stringify({"agents": [str(who.get_item_metadata(i))]})))
+	line.add_child(who)
+	var more := Button.new()
+	more.text = I18n.t("Tools, key…")
+	line.add_child(more)
+	var rm := Button.new()
+	rm.text = I18n.t("Remove")
+	rm.pressed.connect(func() -> void:
+		await app.backend.api.call_api("/mcp/servers/" + sid, true, HTTPClient.METHOD_DELETE)
+		await _fill_servers(box))
+	line.add_child(rm)
+	var details := VBoxContainer.new()
+	details.visible = false
+	details.add_theme_constant_override("separation", 2)
+	wrap.add_child(details)
+	more.pressed.connect(func() -> void: details.visible = not details.visible)
+	for t in tools:
+		var td: Dictionary = t
+		var cb := CheckBox.new()
+		cb.text = str(td.get("name", "")) + ("   ✎ " + I18n.t("writes outside: confirmed at each call") if bool(td.get("write", false)) else "")
+		cb.tooltip_text = str(td.get("description", "")).left(300)
+		cb.button_pressed = not off.has(td.get("name", ""))
+		var tname := str(td.get("name", ""))
+		cb.toggled.connect(func(on: bool) -> void:
+			var now: Array = off.duplicate()
+			if on:
+				now.erase(tname)
+			elif not now.has(tname):
+				now.append(tname)
+			off = now
+			await app.backend.api.call_api("/mcp/servers/%s/off" % sid, true, HTTPClient.METHOD_POST, JSON.stringify({"off": now})))
+		details.add_child(cb)
+	var krow := HBoxContainer.new()
+	var key := LineEdit.new()
+	key.secret = true
+	key.placeholder_text = I18n.t("key saved (type to replace)") if bool(d.get("has_key", false)) else I18n.t("API key (kept in Windows' credential store)")
+	key.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	krow.add_child(key)
+	var ksave := Button.new()
+	ksave.text = I18n.t("Save the key")
+	ksave.pressed.connect(func() -> void:
+		await app.backend.api.call_api("/mcp/servers/%s/key" % sid, true, HTTPClient.METHOD_POST, JSON.stringify({"key": key.text}))
+		await _fill_servers(box))
+	krow.add_child(ksave)
+	details.add_child(krow)
+	var crow := HBoxContainer.new()
+	var cl := Label.new()
+	cl.text = I18n.t("Monthly budget (thousands of tokens, 0 = none):")
+	crow.add_child(cl)
+	var cap := SpinBox.new()
+	cap.min_value = 0
+	cap.max_value = 100000
+	cap.value = int(d.get("cap_tokens", 0)) / 1000
+	cap.value_changed.connect(func(v: float) -> void:
+		await app.backend.api.call_api("/mcp/servers/%s/cap" % sid, true, HTTPClient.METHOD_POST, JSON.stringify({"tokens": int(v) * 1000})))
+	crow.add_child(cap)
+	details.add_child(crow)
+	return wrap
+
+
+static func _k(n: int) -> String:
+	return ("%.1f k" % (n / 1000.0)) if n >= 1000 else str(n)
+
+
+func _confirm_row(cf: Variant, box: VBoxContainer) -> Control:
+	var d: Dictionary = cf
+	var line := HBoxContainer.new()
+	var l := Label.new()
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size.x = 300
+	l.add_theme_color_override("font_color", Color(0.95, 0.75, 0.35))
+	l.text = I18n.t("%s wants to use %s · %s:") % [str(d.get("agent", "")), str(d.get("server_name", "")), str(d.get("tool", ""))] + " " + JSON.stringify(d.get("args", {})).left(160)
+	line.add_child(l)
+	var cid := str(d["id"])
+	for choice in [["approve", I18n.t("Allow once")], ["refuse", I18n.t("Refuse")]]:
+		var b := Button.new()
+		b.text = str(choice[1])
+		var ch := str(choice[0])
+		b.pressed.connect(func() -> void:
+			await app.backend.api.call_api("/mcp/confirmations/%s/%s" % [cid, ch], true, HTTPClient.METHOD_POST, "{}")
+			await _fill_servers(box)
+			poll())
+		line.add_child(b)
+	return line
 
 
 func _changed() -> void:

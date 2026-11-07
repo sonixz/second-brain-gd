@@ -26,6 +26,23 @@ class ClientIn(BaseModel):
 class ServerIn(BaseModel):
     name: str = Field(default="", max_length=40)
     url: str = Field(min_length=8, max_length=500)
+    key: str = Field(default="", max_length=2000)            # stored in the OS credential store, never echoed
+    key_header: str = Field(default="Authorization", max_length=40)
+    publisher: str = Field(default="", max_length=60)
+    source: str = Field(default="", max_length=300)
+
+
+class KeyIn(BaseModel):
+    key: str = Field(default="", max_length=2000)
+    header: str = Field(default="", max_length=40)
+
+
+class OffIn(BaseModel):
+    off: list[str] = Field(default_factory=list, max_length=200)
+
+
+class CapIn(BaseModel):
+    tokens: int = Field(default=0, ge=0, le=100_000_000)
 
 
 class AgentsIn(BaseModel):
@@ -106,7 +123,8 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
             from engine.mcp import client as mcp
             out_servers = [{k: s.get(k) for k in ("id", "name", "status", "error")} | {"tools": len(s.get("tools") or [])}
                            for s in mcp.servers(conn)]
-        return {**server.ACTIVITY.status(), "clients": clients, "pending": pending,
+            waiting_out = conn.execute("SELECT COUNT(*) FROM mcp_confirms WHERE status = 'pending'").fetchone()[0]
+        return {**server.ACTIVITY.status(), "clients": clients, "pending": pending + waiting_out,
                 "out": {**mcp.OUT.status(), "servers": out_servers}}
 
     @r.get("/mcp/clients", dependencies=[Depends(auth)])
@@ -141,15 +159,69 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         from engine.mcp import client as mcp
         with database.session(layout.database) as conn:
             items = mcp.servers(conn)
+            use = mcp.usage(conn)
+            risks = mcp.risks(conn)
+            waiting = mcp.confirmations(conn)
         have = {s.get("url") for s in items}
-        return {"servers": items, "suggested": [s for s in mcp.SUGGESTED if s["url"] not in have]}
+        for s in items:
+            s["usage"] = use.get(s["id"], {"calls": 0, "tokens": 0, "agents": {}})
+        return {"servers": items, "suggested": [s for s in mcp.SUGGESTED if s["url"] not in have], "risks": risks,
+                "confirmations": waiting}
+
+    @r.get("/mcp/catalog", dependencies=[Depends(auth)])
+    def get_catalog(q: str = "") -> dict[str, Any]:
+        """Search the official MCP registry (nothing is connected here)."""
+        from engine.mcp import catalog
+        if not q.strip():
+            return {"results": []}
+        try:
+            return {"results": catalog.search(q, 20)}
+        except RuntimeError as exc:
+            raise HTTPException(status_code=502, detail=str(exc)) from exc
+
+    @r.post("/mcp/servers/{sid}/key", dependencies=[Depends(auth)])
+    def post_server_key(sid: str, body: KeyIn) -> dict[str, Any]:
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            try:
+                mcp.set_key(conn, sid, body.key, body.header)
+                return mcp.refresh(conn, sid)
+            except mcp.McpClientError as exc:
+                raise HTTPException(status_code=404, detail=str(exc)) from exc
+
+    @r.post("/mcp/servers/{sid}/off", dependencies=[Depends(auth)])
+    def post_server_off(sid: str, body: OffIn) -> dict[str, Any]:
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            return mcp.set_off(conn, sid, body.off)
+
+    @r.post("/mcp/servers/{sid}/cap", dependencies=[Depends(auth)])
+    def post_server_cap(sid: str, body: CapIn) -> dict[str, Any]:
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            return mcp.set_cap(conn, sid, body.tokens)
+
+    @r.post("/mcp/confirmations/{cid}/{choice}", dependencies=[Depends(auth)])
+    def post_confirmation(cid: str, choice: str) -> dict[str, Any]:
+        """The user confirms (or refuses) one call of a tool that writes outside."""
+        from engine.mcp import client as mcp
+        if choice not in ("approve", "refuse"):
+            raise HTTPException(status_code=422, detail="approve or refuse")
+        with database.session(layout.database) as conn:
+            return mcp.decide(conn, cid, choice == "approve")
+
+    @r.post("/mcp/out/stop", dependencies=[Depends(auth)])
+    def post_out_stop() -> dict[str, Any]:
+        """Stop: the MCP calls under way end at their next event."""
+        from engine.mcp import client as mcp
+        return {"stopping": mcp.OUT.cancel()}
 
     @r.post("/mcp/servers", dependencies=[Depends(auth)])
     def post_server(body: ServerIn) -> dict[str, Any]:
         from engine.mcp import client as mcp
         with database.session(layout.database) as conn:
             try:
-                return mcp.add_server(conn, body.name, body.url)
+                return mcp.add_server(conn, body.name, body.url, body.key, body.key_header, body.publisher, body.source)
             except mcp.McpClientError as exc:
                 raise HTTPException(status_code=422, detail=str(exc)) from exc
 

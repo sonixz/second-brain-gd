@@ -166,6 +166,24 @@ class Activity:
                 self.log.append({**a, "ms": int((time.time() - a["started"]) * 1000), "ok": ok, "size": size,
                                  "at": utc_now()})
 
+    def progress(self, key: str, text: str) -> None:
+        with self.lock:
+            if key in self.active:
+                self.active[key]["progress"] = text[:120]
+
+    def cancel(self, key: str = "") -> int:
+        """Asks the calls under way (one, or all) to stop; the call checks between two events."""
+        with self.lock:
+            keys = [key] if key else list(self.active)
+            for k in keys:
+                if k in self.active:
+                    self.active[k]["cancel"] = True
+            return len(keys)
+
+    def cancelled(self, key: str) -> bool:
+        with self.lock:
+            return bool(self.active.get(key, {}).get("cancel"))
+
     def touch(self, client: str) -> None:
         with self.lock:
             self.seen[client] = time.time()
@@ -174,7 +192,8 @@ class Activity:
         now = time.time()
         with self.lock:
             last = self.log[-1] if self.log else None
-            return {"active": [{"client": a["client"], "tool": a["tool"]} for a in self.active.values()],
+            return {"active": [{"key": k, "client": a["client"], "tool": a["tool"], "progress": a.get("progress", "")}
+                               for k, a in self.active.items()],
                     "connected": sorted(c for c, t in self.seen.items() if now - t < 300),
                     "last": dict(last) if last else None, "recent": list(self.log)[-10:][::-1]}
 
