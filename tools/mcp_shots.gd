@@ -42,14 +42,16 @@ func _run() -> void:
 		r2.request("http://127.0.0.1:%d/mcp" % app.backend.api.port, PackedStringArray(["Content-Type: application/json",
 			"Authorization: Bearer " + str((c["data"] as Dictionary)["token"])]), HTTPClient.METHOD_POST,
 			JSON.stringify({"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "propose_item", "arguments": args}}))
-		var got: Array = await r2.request_completed
-		print("propose: ", (got[3] as PackedByteArray).get_string_from_utf8().left(160))
+		await r2.request_completed
 	await lights.call("poll")
 	var dlg2: AcceptDialog = lights.call("open_dialog")
 	await pause(3.0)
-	print("approve all: ", dlg2.find_child("ApproveAll", true, false))
-	var pb: Node = dlg2.find_child("Proposals", true, false)
-	print("proposals box children: ", pb.get_child_count() if pb else -1)
 	calm()
 	await shot("m3-proposals")
+	dlg2.hide()
+	await app.backend.api.call_api("/mcp/proposals/all/approve", true, HTTPClient.METHOD_POST, "{}")
+	var tl: AcceptDialog = lights.call("open_timeline")
+	await pause(2.0)
+	calm()
+	await shot("m4-timeline")
 	quit(0)

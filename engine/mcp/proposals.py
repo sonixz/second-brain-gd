@@ -158,6 +158,8 @@ def apply(conn: sqlite3.Connection, pid: str, llm: Any = None) -> dict[str, Any]
     done: list = []
     note_id = None
     try:
+        from engine.brain import timeline
+        timeline.ensure_session_point(conn, author)  # a client's first write of a session: a restore point first
         if r["kind"] == "item":
             body = p["content"]
             if p.get("source"):

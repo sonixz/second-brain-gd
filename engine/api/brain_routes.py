@@ -116,6 +116,16 @@ class GroceryIn(BaseModel):
     save: bool = False
 
 
+class PointIn(BaseModel):
+    name: str = Field(default="", max_length=80)
+
+
+class RewindIn(BaseModel):
+    action_id: int | None = None
+    point_id: str | None = Field(default=None, max_length=20)
+    author: str = Field(default="", max_length=80)
+
+
 class ExportIn(BaseModel):
     ids: list[str] = Field(min_length=1, max_length=60)
     format: Literal["pdf", "html"] = "pdf"
@@ -265,6 +275,30 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
             fn = table.save_grocery if body.save else table.grocery
             return fn(conn, body.picks, ui_language(conn))
         return run(go)
+
+    @r.get("/timeline")
+    def get_timeline(author: str = Query("", max_length=80), limit: int = Query(200, ge=1, le=1000)) -> dict[str, Any]:
+        """The timeline of changes (Loop MCP-B2): actions and restore points, newest first, and who made them."""
+        from engine.brain import timeline
+
+        def go(conn):
+            return {"entries": timeline.entries(conn, author, limit), "authors": timeline.authors(conn)}
+        return run(go)
+
+    @r.post("/timeline/points")
+    def post_point(body: PointIn) -> dict[str, Any]:
+        from engine.brain import timeline
+        return run(timeline.create_point, body.name or "Point de retour")
+
+    @r.post("/timeline/rewind")
+    def post_rewind(body: RewindIn) -> dict[str, Any]:
+        """Go back to a moment: every action after it undone (for everyone or one author); conflicts are listed."""
+        from engine.brain import timeline
+        if body.point_id:
+            return run(timeline.rewind_to_point, body.point_id, body.author)
+        if body.action_id is None:
+            raise HTTPException(status_code=422, detail="a point_id or an action_id")
+        return run(timeline.rewind, body.action_id, body.author)
 
     @r.post("/export")
     def post_export(body: ExportIn) -> dict[str, Any]:

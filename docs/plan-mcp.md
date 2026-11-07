@@ -119,6 +119,16 @@ App: level and « without waiting » per client, the proposals list (approve / r
 ⇠ light. Tests: 5 more Python tests (proposals), a Godot check (pending → approve → in the graph). Screenshot
 docs/screenshots/mcp-*/m3-proposals.png. Undo of set_fields comes with the timeline (B2).
 
+**B2 done 2026-11-07.** Migration 0018 (restore_points). engine/brain/timeline.py: the journal read as a timeline
+(who: « You and the archivist » for the assistant's actions, the client for MCP ones), restore points (by hand, and
+one automatically before a client's first write of a session, with a full backup started once that write is
+committed), « go back »: every action after a point (or from an action on) undone newest first, for everyone or one
+author; an item changed since is listed as a conflict and left alone; an item created since goes to the trash
+(never erased); set_fields undo restores the previous fields. GET /brain/timeline, POST /brain/timeline/points and
+/rewind. scenes/brain/timeline_dialog.gd (author filter, « Make a restore point », « Go back here », « Undo from
+here » with a confirmation), opened from the MCP window. Tests: tests/python/test_timeline.py (5), a Godot check
+(Claude Code's change after its automatic point, undone). Screenshot docs/screenshots/mcp-*/m4-timeline.png.
+
 ## MCP-C — MCP out
 
 - **Connections card** (engine room): « + Add a server » (name, address). Remote Streamable HTTP servers only at

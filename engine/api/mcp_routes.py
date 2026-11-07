@@ -31,6 +31,21 @@ class LevelIn(BaseModel):
 def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     r = APIRouter()
 
+    def backups_after_commit() -> None:
+        """A client's new writing session: a full backup, once its first changes are committed (in the background)."""
+        from engine.brain import timeline
+        if timeline.take_pending_backups():
+            import threading
+
+            from engine import backups
+
+            def go() -> None:
+                try:
+                    backups.backup(layout, "auto")
+                except Exception:
+                    pass
+            threading.Thread(target=go, daemon=True).start()
+
     def llm_or_none():
         key, _ = secrets.get(layout, "openai")
         try:
@@ -57,6 +72,7 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
             llm = llm_or_none()
             msgs = body if isinstance(body, list) else [body]
             out = [x for x in (server.handle(conn, client, m, llm) for m in msgs) if x is not None]
+        backups_after_commit()
         headers = {}
         if any(isinstance(m, dict) and m.get("method") == "initialize" for m in msgs):
             headers["Mcp-Session-Id"] = uuid.uuid4().hex
@@ -126,6 +142,7 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
                 out = [proposals.apply(conn, i, llm) if choice == "approve" else proposals.reject(conn, i) for i in ids]
             except proposals.Refused as exc:
                 raise HTTPException(status_code=404, detail=str(exc)) from exc
+        backups_after_commit()
         return {"results": out}
 
     @r.delete("/mcp/clients/{cid}", dependencies=[Depends(auth)])

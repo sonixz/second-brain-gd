@@ -875,6 +875,17 @@ func _e2e() -> void:
 	var mp_done := await wait_until(func() -> bool: return graph.find_node("Idée venue de Claude Code") != "", 10.0)
 	check(mp_pending == 1 and mp_list.size() == 1 and str((mp_list[0] as Dictionary).get("summary", "")).contains("Idée venue") and mp_done,
 		"a proposal from Claude Code waits for approval, then approving adds it through the archivist (%s)" % mp_text.left(80))
+	# Loop MCP-B2: the timeline lists Claude Code's change; « go back » undoes it.
+	var tl_dlg: AcceptDialog = lights.call("open_timeline")
+	await wait_until(func() -> bool: return not (tl_dlg.get("entries") as Array).is_empty(), 8.0)
+	var tl_entries: Array = tl_dlg.get("entries")
+	var tl_mine: Array = tl_entries.filter(func(e: Variant) -> bool: return str((e as Dictionary).get("author", "")) == "mcp:Claude Code" and str((e as Dictionary).get("type", "")) == "action")
+	var tl_point: Array = tl_entries.filter(func(e: Variant) -> bool: return str((e as Dictionary).get("type", "")) == "point")
+	var tl_res: Dictionary = await tl_dlg.call("rewind", {"point_id": str((tl_point[0] as Dictionary)["id"]) if not tl_point.is_empty() else "", "author": "mcp:Claude Code"})
+	await brain.refresh_graph()
+	check(not tl_mine.is_empty() and not tl_point.is_empty() and int(tl_res.get("undone", 0)) >= 1 and graph.find_node("Idée venue de Claude Code") == "",
+		"the timeline shows Claude Code's changes after its automatic restore point; going back undoes them (%d undone)" % int(tl_res.get("undone", 0)))
+	tl_dlg.hide()
 	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
 	var l14_welcome := graph.find_node("Welcome to your Second Brain")
 	var l14_pathed := await wait_until(func() -> bool: return graph.path_ids.size() >= 2, 10.0)

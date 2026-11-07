@@ -122,6 +122,12 @@ func open_dialog() -> AcceptDialog:
 	connect_b.text = I18n.t("Connect an AI tool (read)")
 	connect_b.theme_type_variation = "PrimaryButton"
 	row.add_child(connect_b)
+	var tl := Button.new()
+	tl.name = "TimelineButton"
+	tl.text = I18n.t("Timeline of changes…")
+	tl.tooltip_text = I18n.t("Who changed what, restore points, go back to a moment")
+	tl.pressed.connect(open_timeline)
+	row.add_child(tl)
 	var commands := VBoxContainer.new()
 	commands.name = "Commands"
 	commands.add_theme_constant_override("separation", 6)
@@ -256,6 +262,19 @@ func _changed() -> void:
 	if brain != null:
 		brain.call("refresh_graph")
 	poll()
+
+
+var timeline: AcceptDialog   # tests
+
+
+func open_timeline() -> AcceptDialog:
+	if timeline != null and is_instance_valid(timeline):
+		timeline.queue_free()
+	timeline = preload("res://scenes/brain/timeline_dialog.gd").new().setup(app)
+	timeline.connect("changed", func() -> void: _changed())
+	app.get_tree().root.add_child(timeline)
+	timeline.call("open")
+	return timeline
 
 
 static func _level(level: String) -> String:
