@@ -2,6 +2,10 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## UX-A/B/C: simpler settings — the AI tools window in two tabs, agent presets, one ⚙ entry (2026-11-07)
+
+The MCP window becomes « AI tools and your Brain » with two tabs: « Who may read your Brain » (connected tools as cards with what each may do in plain words, proposals first, recent calls folded) and « Tools for your agents » (each server a folded card with its state in plain words; « Settings » opens its tools, key, monthly limit, writing with your model and « Remove this tool »; « Add a tool » below, a local program under « Advanced »). Labels no longer cut off; jargon reworded (« 0 = no limit », « read only », « apply its suggestions without asking me »). An agent's settings get three presets in one click (Read only, Assistant, Everything) and keep the tool names hidden until asked. The engine room puts « Start fresh » and « Uninstall » apart in a « Sensitive actions » box. A ⚙ button in the top bar leads to every setting: agents, AI tools, voice and key, theme and sounds, your data, the timeline. Nothing was removed.
+
 ## MCP-F: local MCP servers with approval, pinned versions, clean environment (2026-11-07)
 
 A local server is a program the Brain starts on this computer and talks to over stdio. It is prepared from the catalogue or a pasted command, shown exactly, and runs only after « Approve and start »; a changed command needs a new approval. Versions are pinned (never latest), the runtime it needs is detected and never installed, the process gets a clean environment (no secret of the Brain; only the variables it declares, from the OS credential store), runs without a window, restarts after a crash, stops with the app, and keeps a short log.

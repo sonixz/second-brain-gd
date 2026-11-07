@@ -83,6 +83,7 @@ var today_view: TodayView
 var projects_view: ProjectsView
 var table_view: PanelContainer     # Loop 37C (preloaded script)
 var last_opened_file := ""
+var settings_button: Button         # ⚙ Settings: one entry to every setting (Loop UX-C)
 var mcp_lights: Button              # the MCP in / out lights in the top bar         # the last file an assistant action opened (tests)
 var agents_view: AgentsView
 var view_buttons: Dictionary = {}
@@ -493,8 +494,59 @@ func _build_top_bar() -> void:
 	pill.custom_minimum_size = Vector2(196, 40)
 	mcp_lights = preload("res://scenes/brain/mcp_lights.gd").new().setup(app)  # MCP in / out (Loop MCP-A)
 	bar.add_child(mcp_lights)
+	settings_button = _settings_menu()
+	bar.add_child(settings_button)
 	# FR / EN: the app's language. English is the product's; the switch rebuilds the screen in the other one.
 	bar.add_child(I18n.switch(app))
+
+
+## ⚙ One entry to every setting (Loop UX-C): each line opens the place where that setting already lives.
+const SETTINGS_ITEMS := ["agents", "tools", "voice", "ambiance", "data", "timeline"]
+
+
+func _settings_menu() -> Button:
+	var b := Button.new()
+	b.name = "SettingsButton"
+	b.text = "⚙"
+	b.theme_type_variation = "GhostButton"
+	b.add_theme_font_size_override("font_size", 20)
+	b.custom_minimum_size = Vector2(44, 40)
+	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	b.tooltip_text = I18n.t("Settings")
+	var menu := PopupMenu.new()
+	menu.name = "SettingsMenu"
+	b.add_child(menu)
+	var labels := {"agents": I18n.t("Agents and what they may do…"), "tools": I18n.t("AI tools: Claude Code, your agents' tools…"),
+		"voice": I18n.t("Voice and OpenAI key…"), "ambiance": I18n.t("Theme, music and sounds…"),
+		"data": I18n.t("Your data: backups, export, sensitive actions…"), "timeline": I18n.t("Timeline of changes…")}
+	for i in SETTINGS_ITEMS.size():
+		if SETTINGS_ITEMS[i] == "data":
+			menu.add_separator()
+		menu.add_item(str(labels[SETTINGS_ITEMS[i]]), i)
+	menu.id_pressed.connect(func(id: int) -> void: open_setting(str(SETTINGS_ITEMS[id])))
+	b.pressed.connect(func() -> void:
+		menu.reset_size()
+		var at := b.get_screen_position() + Vector2(b.size.x - menu.size.x, b.size.y + 6)
+		menu.popup(Rect2i(Vector2i(at), Vector2i.ZERO)))
+	return b
+
+
+func open_setting(which: String) -> void:
+	match which:
+		"agents":
+			show_agent_info("archivist")
+		"tools":
+			mcp_lights.call("open_dialog")
+		"voice":
+			_open_voice_settings()
+		"ambiance":
+			var w: Variant = app.get("_widget")
+			if w != null:
+				w.call("_open")
+		"data":
+			app.show_console()
+		"timeline":
+			mcp_lights.call("open_timeline")
 
 
 func _build_views() -> void:

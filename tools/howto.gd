@@ -969,7 +969,7 @@ func guide_claude_code() -> void:
 func guide_mslearn() -> void:
 	await overview()
 	var lights: Button = b.get("mcp_lights")
-	var dlg: AcceptDialog = lights.call("open_dialog")
+	var dlg: AcceptDialog = lights.call("open_dialog", "out")
 	await pause(2.5)
 	for bt in dlg.find_children("AddSuggested", "Button", true, false):
 		if (bt as Button).text.contains("Microsoft Learn"):
@@ -987,7 +987,7 @@ func guide_mslearn() -> void:
 	await panel_send_and_wait(ap, "Using Microsoft Learn, how do I write a timer trigger for Azure Functions in Python? Answer in three sentences and give the source.")
 	await lights.call("poll")
 	await step("ask: the agent searches Microsoft Learn and cites it", true)
-	var dlg3: AcceptDialog = lights.call("open_dialog")
+	var dlg3: AcceptDialog = lights.call("open_dialog", "out")
 	await pause(3.0)
 	await step("the calls and this month's tokens, per server")
 	dlg3.hide()

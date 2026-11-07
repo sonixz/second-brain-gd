@@ -105,15 +105,43 @@ func _ready() -> void:
 			[I18n.t("Export everything…"), I18n.t("One file with your whole Brain, to move it to another computer"), _export],
 			[I18n.t("Import a backup file…"), I18n.t("A file exported on another computer: it is checked, then you choose to restore it"), _pick_import],
 			[I18n.t("Packs…"), I18n.t("Share a project as a .brain file, or bring in someone's pack as a layer"), _open_packs],
-			[I18n.t("Repair the installation…"), I18n.t("Reinstalls the engine's Python environment; your data is not touched"), _repair],
-			[I18n.t("Start fresh…"), I18n.t("An empty Brain, after a verified backup of this one"), _start_fresh],
-			[I18n.t("Uninstall…"), I18n.t("Remove Second Brain GD's data, keys and preferences from this computer"), _uninstall]]:
+			[I18n.t("Repair the installation…"), I18n.t("Reinstalls the engine's Python environment; your data is not touched"), _repair]]:
 		var b := Button.new()
 		b.text = spec[0]
 		b.tooltip_text = spec[1]
 		b.theme_type_variation = "GhostButton"
 		b.pressed.connect(spec[2])
 		actions.add_child(b)
+	# Sensitive actions apart (Loop UX-C): each asks for a typed word, and starting fresh takes a verified backup first.
+	var danger := PanelContainer.new()
+	danger.name = "SensitiveActions"
+	danger.add_theme_stylebox_override("panel", SbTheme.box(Color(SbTheme.ERROR, 0.06), 10, Color(SbTheme.ERROR, 0.35), 1, 14))
+	col.add_child(danger)
+	var dbox := VBoxContainer.new()
+	dbox.add_theme_constant_override("separation", 6)
+	danger.add_child(dbox)
+	var dhead := Label.new()
+	dhead.theme_type_variation = "Overline"
+	dhead.add_theme_color_override("font_color", SbTheme.ERROR)
+	dhead.text = I18n.t("SENSITIVE ACTIONS")
+	dbox.add_child(dhead)
+	var dhint := Label.new()
+	dhint.theme_type_variation = "Muted"
+	dhint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	dhint.text = I18n.t("Each asks you to type a word to confirm. Starting fresh takes a verified backup first; uninstalling keeps your backups unless you untick it.")
+	dbox.add_child(dhint)
+	var drow := HBoxContainer.new()
+	drow.add_theme_constant_override("separation", 8)
+	dbox.add_child(drow)
+	for spec in [
+			[I18n.t("Start fresh…"), I18n.t("An empty Brain, after a verified backup of this one"), _start_fresh],
+			[I18n.t("Uninstall…"), I18n.t("Remove Second Brain GD's data, keys and preferences from this computer"), _uninstall]]:
+		var b := Button.new()
+		b.text = spec[0]
+		b.tooltip_text = spec[1]
+		b.add_theme_color_override("font_color", SbTheme.ERROR)
+		b.pressed.connect(spec[2])
+		drow.add_child(b)
 
 	result_label = Label.new()
 	result_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

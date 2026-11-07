@@ -606,6 +606,11 @@ func _e2e() -> void:
 	sett.instructions.text_changed.emit()
 	await sett._patch({"instructions": sett.instructions.text})
 	check(str(sett.prof.get("instructions", "")).ends_with("Termine toujours par une question."), "the instructions can be edited and saved")
+	await sett.apply_preset("read_only")
+	var preset_caps: Array = sett.prof.get("capabilities", [])
+	preset_caps.sort()
+	check(preset_caps == ["browser", "interface", "internet", "read_brain"] and (sett.preset_buttons["read_only"] as Button).theme_type_variation == "PrimaryButton"
+		and not (sett.tool_labels[0] as Label).visible, "« Read only » sets the capabilities in one click; the tool names stay hidden until asked")
 	await app.backend.api.call_api("/assistant/agents/sparring/reset", true, HTTPClient.METHOD_POST)
 	brain.call("close_agent_settings")
 	await app.backend.api.call_api("/assistant/agents/coach-test", true, HTTPClient.METHOD_DELETE)
@@ -854,7 +859,20 @@ func _e2e() -> void:
 	var mc_dlg: AcceptDialog = lights.call("open_dialog")
 	await create_timer(0.5).timeout
 	check(mc_dlg.visible and (mc_dlg.find_child("Clients", true, false) as VBoxContainer).get_child_count() >= 1, "the MCP window lists the connected tools")
+	var mc_in: Control = mc_dlg.find_child("PageIn", true, false)
+	var mc_out: Control = mc_dlg.find_child("PageOut", true, false)
+	var mc_tabs_ok := mc_in.visible and not mc_out.visible
+	lights.call("show_tab", "out")
+	check(mc_tabs_ok and mc_out.visible and not mc_in.visible and mc_dlg.find_child("CatalogSearch", true, false) != null,
+		"the MCP window has two tabs: who reads the Brain, and the agents' tools")
 	mc_dlg.hide()
+	# Loop UX-C: ⚙ Settings, one entry to every setting
+	var set_menu: PopupMenu = brain.get("settings_button").find_child("SettingsMenu", true, false)
+	brain.call("open_setting", "tools")
+	await create_timer(0.3).timeout
+	var set_dlg: AcceptDialog = lights.get("dialog")
+	check(set_menu != null and set_menu.item_count >= 6 and set_dlg != null and set_dlg.visible, "⚙ Settings lists every setting and opens the AI tools window")
+	set_dlg.hide()
 	# Loop MCP-B1: a client at « propose changes » level proposes an item; it waits; approving it files it.
 	var mc_cid := str((mc["data"] as Dictionary).get("id", ""))
 	await app.backend.api.call_api("/mcp/clients/%s/level" % mc_cid, true, HTTPClient.METHOD_POST, JSON.stringify({"level": "propose_changes", "direct": false}))

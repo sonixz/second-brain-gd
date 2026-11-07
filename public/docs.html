@@ -892,9 +892,9 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         <p class="kicker">Connect</p>
         <h2>Connect Claude Code to your Brain (MCP)</h2>
         <p>Your Brain is also an <b>MCP server</b>: Claude Code (or any tool that speaks the Model Context Protocol) can
-          read and search it, on this computer only. Click the <b>⇠● ⇢●</b> lights at the top, name the tool and press
-          <b>Connect an AI tool</b>: copy one of the two commands (its key is shown once), then restart Claude Code.</p>
-        <figure class="shot doc-shot"><img src="assets/showcase/mcp-connect.webp" alt="The MCP window: a tool connected, the commands to copy, recent calls" loading="lazy" width="1280" height="800"><figcaption>Two commands: Claude Code on Windows, or in WSL through a small relay.</figcaption></figure>
+          read and search it, on this computer only. Click the <b>⇠● ⇢●</b> lights at the top (or <b>⚙ → AI tools</b>); in the first tab,
+          <b>Who may read your Brain</b>, name the tool and press <b>Connect (read only)</b>: copy one of the two commands (its key is shown once), then restart Claude Code.</p>
+        <figure class="shot doc-shot"><img src="assets/showcase/mcp-connect.webp" alt="The AI tools window, first tab « Who may read your Brain »: a tool connected, what it may do, the commands to copy" loading="lazy" width="1280" height="800"><figcaption>First tab: who may read your Brain. Two commands: Claude Code on Windows, or in WSL through a small relay.</figcaption></figure>
         <ul>
           <li><b>Read</b>: overview, search, an item's text in parts, places, neighbours, paths, recent items, the Inbox,
             typed items as rows. Answers are short and paged; your content is always marked as data, never as
@@ -919,7 +919,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           registry or paste a server's address; each entry says its family (no account, key, sign-in, local program),
           publisher and source. A few servers checked by hand are offered to start (documentation, code libraries, web
           search: no account needed); they are examples, any MCP server works the same way.</p>
-        <figure class="shot doc-shot"><img src="assets/showcase/mcp-catalogue.webp" alt="The servers for the agents: one server connected (here a documentation server), its tools, key and budget; the catalogue" loading="lazy" width="1280" height="800"><figcaption>A server's tools, key and monthly budget; the catalogue below.</figcaption></figure>
+        <figure class="shot doc-shot"><img src="assets/showcase/mcp-catalogue.webp" alt="Second tab « Tools for your agents »: one tool connected (here a documentation server), its settings opened, then « Add a tool »" loading="lazy" width="1280" height="800"><figcaption>Second tab: each tool is a card; « Settings » opens what it may do, its key and monthly limit. « Add a tool » below.</figcaption></figure>
         <ul>
           <li><b>Who may use it</b>: all agents, or only one. Tools can be switched off; fewer tools make a sharper
             agent and cost fewer tokens.</li>
@@ -1270,7 +1270,7 @@ SBGD_SHOT_SIZE=1600x1000 ./tools/showcase.sh     # the website screenshots, from
             <tr><td>Voice or filing does nothing</td><td>Check the key in the engine room's Voice card; the error is shown there in plain words.</td></tr>
             <tr><td>A PDF export opens as a web page</td><td>Edge was not found or refused: press Ctrl+P and choose Save as PDF. The page is in <code>exports/</code>.</td></tr>
             <tr><td>“does not allow a transcription model”</td><td>Your OpenAI project limits its models: Settings → Project → Limits on platform.openai.com, allow <code>gpt-transcribe</code>.</td></tr>
-            <tr><td>An MCP server needs a key or a sign-in</td><td>Open its <b>Tools, key…</b> in the MCP window and save the key, or click <b>Sign in</b>.</td></tr>
+            <tr><td>An MCP server needs a key or a sign-in</td><td>In the AI tools window, tab <b>Tools for your agents</b>: open its <b>Settings</b> and save the key, or click <b>Sign in</b> on its card.</td></tr>
             <tr><td>Claude Code in WSL cannot reach the Brain</td><td>Use the “Claude Code in WSL” command from the MCP window (a relay with the app's Python); keep the app open; restart Claude Code.</td></tr>
           </tbody>
         </table>

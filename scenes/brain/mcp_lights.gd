@@ -111,70 +111,132 @@ func _draw() -> void:
 		draw_string(font, bp + Vector2(-3.5 if pending < 10 else -7.0, 4), str(mini(pending, 99)), HORIZONTAL_ALIGNMENT_LEFT, -1, 10, Color(0.1, 0.1, 0.1))
 
 
-## Clients, « Connect an AI tool », the commands to paste, recent calls.
-func open_dialog() -> AcceptDialog:
+## Two tabs (Loop UX-A): « ⇠ who may read your Brain » (AI tools connected, proposals, commands, recent calls) and
+## « ⇢ tools for your agents » (servers as folded cards, then « add a tool »). `tab` is "in", "out" or "" (the tab
+## with something waiting for you, else « in »).
+func open_dialog(tab: String = "") -> AcceptDialog:
 	if dialog != null and is_instance_valid(dialog):
 		dialog.queue_free()
 	var dlg := AcceptDialog.new()
 	dialog = dlg
 	dlg.name = "McpDialog"
-	dlg.title = I18n.t("MCP — AI tools and the Brain")
+	dlg.title = I18n.t("AI tools and your Brain")
 	dlg.theme = app.theme
 	dlg.add_theme_stylebox_override("panel", SbTheme.box(SbTheme.PANEL, 0, SbTheme.BORDER, 1, 18))
 	dlg.ok_button_text = I18n.t("Close")
-	var scroll := ScrollContainer.new()  # the window grows with servers, proposals and the catalogue: it scrolls
-	scroll.custom_minimum_size = Vector2(690, 620)
+	var outer := VBoxContainer.new()
+	outer.add_theme_constant_override("separation", 12)
+	dlg.add_child(outer)
+	var tabs := HBoxContainer.new()
+	tabs.name = "Tabs"
+	tabs.add_theme_constant_override("separation", 6)
+	outer.add_child(tabs)
+	var group := ButtonGroup.new()
+	var tab_in := Button.new()
+	tab_in.name = "TabIn"
+	var tab_out := Button.new()
+	tab_out.name = "TabOut"
+	for tb in [tab_in, tab_out]:
+		(tb as Button).toggle_mode = true
+		(tb as Button).button_group = group
+		tabs.add_child(tb)
+	tab_in.tooltip_text = I18n.t("Claude Code or another AI tool reads your Brain from outside")
+	tab_out.tooltip_text = I18n.t("Outside services your agents may use when you ask them something")
+	var gap := Control.new()
+	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	tabs.add_child(gap)
+	var tl := Button.new()
+	tl.name = "TimelineButton"
+	tl.theme_type_variation = "GhostButton"
+	tl.text = I18n.t("Timeline of changes…")
+	tl.tooltip_text = I18n.t("Who changed what, restore points, go back to a moment")
+	tl.pressed.connect(open_timeline)
+	tabs.add_child(tl)
+	var scroll := ScrollContainer.new()  # each tab scrolls on its own; the tabs stay in view
+	scroll.custom_minimum_size = Vector2(720, 560)
 	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
-	dlg.add_child(scroll)
-	var box := VBoxContainer.new()
-	box.custom_minimum_size = Vector2(660, 0)
-	box.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	box.add_theme_constant_override("separation", 10)
-	scroll.add_child(box)
+	outer.add_child(scroll)
+	var pages := VBoxContainer.new()
+	pages.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	scroll.add_child(pages)
+	var page_in := VBoxContainer.new()
+	page_in.name = "PageIn"
+	var page_out := VBoxContainer.new()
+	page_out.name = "PageOut"
+	for pg in [page_in, page_out]:
+		(pg as VBoxContainer).custom_minimum_size = Vector2(690, 0)
+		(pg as VBoxContainer).size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		(pg as VBoxContainer).add_theme_constant_override("separation", 12)
+		pages.add_child(pg)
+	var show_tab := func(which: String) -> void:
+		page_in.visible = which == "in"
+		page_out.visible = which == "out"
+		tab_in.set_pressed_no_signal(which == "in")
+		tab_out.set_pressed_no_signal(which == "out")
+		for tb in [tab_in, tab_out]:
+			(tb as Button).theme_type_variation = "PrimaryButton" if (tb as Button).button_pressed else "Button"
+		scroll.scroll_vertical = 0
+	tab_in.pressed.connect(func() -> void: show_tab.call("in"))
+	tab_out.pressed.connect(func() -> void: show_tab.call("out"))
+	dlg.set_meta("show_tab", show_tab)
+	# ⇠ in
 	var intro := Label.new()
 	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	intro.theme_type_variation = "Muted"
-	intro.text = I18n.t("Connect Claude Code (or another MCP tool) to your Brain: it can read and search everything here. It never writes directly: what it proposes goes through the archivist. Local only: this computer, nothing on the network.")
-	box.add_child(intro)
+	intro.text = I18n.t("An AI tool you connect here (Claude Code, for example) can read and search your Brain, on this computer only. It never writes directly: what it suggests goes through the archivist, and you decide.")
+	page_in.add_child(intro)
+	var props_box := VBoxContainer.new()
+	props_box.name = "Proposals"
+	props_box.add_theme_constant_override("separation", 6)
+	page_in.add_child(props_box)
 	var list := VBoxContainer.new()
 	list.name = "Clients"
-	box.add_child(list)
+	list.add_theme_constant_override("separation", 8)
+	page_in.add_child(list)
+	var add_head := Label.new()
+	add_head.theme_type_variation = "Overline"
+	add_head.text = I18n.t("CONNECT A NEW TOOL")
+	page_in.add_child(add_head)
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
-	box.add_child(row)
+	page_in.add_child(row)
 	var name_edit := LineEdit.new()
 	name_edit.name = "ClientName"
 	name_edit.text = "Claude Code"
+	name_edit.tooltip_text = I18n.t("A name to recognise it in the timeline")
 	name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(name_edit)
 	var connect_b := Button.new()
 	connect_b.name = "ConnectButton"
-	connect_b.text = I18n.t("Connect an AI tool (read)")
+	connect_b.text = I18n.t("Connect (read only)")
 	connect_b.theme_type_variation = "PrimaryButton"
 	row.add_child(connect_b)
-	var tl := Button.new()
-	tl.name = "TimelineButton"
-	tl.text = I18n.t("Timeline of changes…")
-	tl.tooltip_text = I18n.t("Who changed what, restore points, go back to a moment")
-	tl.pressed.connect(open_timeline)
-	row.add_child(tl)
 	var commands := VBoxContainer.new()
 	commands.name = "Commands"
 	commands.add_theme_constant_override("separation", 6)
-	box.add_child(commands)
-	var props_box := VBoxContainer.new()
-	props_box.name = "Proposals"
-	box.add_child(props_box)
-	var out_box := VBoxContainer.new()
-	out_box.name = "Servers"
-	out_box.add_theme_constant_override("separation", 6)
-	box.add_child(out_box)
+	page_in.add_child(commands)
+	var recent_b := Button.new()
+	recent_b.name = "RecentToggle"
+	recent_b.theme_type_variation = "GhostButton"
+	recent_b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	recent_b.visible = false
+	page_in.add_child(recent_b)
 	var recent := RichTextLabel.new()
 	recent.name = "Recent"
 	recent.bbcode_enabled = true
 	recent.fit_content = true
-	recent.custom_minimum_size = Vector2(640, 0)
-	box.add_child(recent)
+	recent.visible = false
+	recent.custom_minimum_size = Vector2(660, 0)
+	page_in.add_child(recent)
+	recent_b.pressed.connect(func() -> void:
+		recent.visible = not recent.visible
+		recent_b.text = recent_b.text.replace("▸", "▾") if recent.visible else recent_b.text.replace("▾", "▸"))
+	# ⇢ out
+	var out_box := VBoxContainer.new()
+	out_box.name = "Servers"
+	out_box.add_theme_constant_override("separation", 10)
+	page_out.add_child(out_box)
+	show_tab.call("out" if tab == "out" else "in")
 	var fill := func() -> void:
 		for c in list.get_children():
 			c.queue_free()
@@ -183,52 +245,29 @@ func open_dialog() -> AcceptDialog:
 			return
 		var st: Dictionary = res["data"]
 		for cl in st.get("clients", []):
-			var d: Dictionary = cl
-			var line := HBoxContainer.new()
-			var l := Label.new()
-			l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-			l.clip_text = true
-			l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-			l.custom_minimum_size.x = 160
-			l.tooltip_text = str(d["name"])
-			l.text = "%s · %s" % [str(d["name"]),
-				(I18n.t("%d calls") % int(d.get("calls", 0))) if d.get("last_seen") != null else I18n.t("never used")]
-			line.add_child(l)
-			var lv := OptionButton.new()
-			for k in ["read", "propose_items", "propose_changes"]:
-				lv.add_item(_level(k))
-				lv.set_item_metadata(lv.item_count - 1, k)
-				if k == str(d["level"]):
-					lv.select(lv.item_count - 1)
-			var dc := CheckBox.new()
-			dc.text = I18n.t("without waiting")
-			dc.tooltip_text = I18n.t("Its proposals are applied at once (still through the archivist, still undoable). Off: they wait for your approval.")
-			dc.button_pressed = int(d.get("direct", 0)) == 1
-			var cid0 := str(d["id"])
-			var save_level := func() -> void:
-				await app.backend.api.call_api("/mcp/clients/%s/level" % cid0, true, HTTPClient.METHOD_POST,
-					JSON.stringify({"level": str(lv.get_item_metadata(lv.selected)), "direct": dc.button_pressed}))
-			lv.item_selected.connect(func(_i: int) -> void: save_level.call())
-			dc.toggled.connect(func(_on: bool) -> void: save_level.call())
-			line.add_child(lv)
-			line.add_child(dc)
-			var rv := Button.new()
-			rv.text = I18n.t("Disconnect")
-			rv.tooltip_text = I18n.t("Revokes its token: it can no longer reach the Brain")
-			var cid := str(d["id"])
-			rv.pressed.connect(func() -> void:
-				await app.backend.api.call_api("/mcp/clients/" + cid, true, HTTPClient.METHOD_DELETE)
-				line.queue_free())
-			line.add_child(rv)
-			list.add_child(line)
+			list.add_child(_client_card(cl))
+		if (st.get("clients", []) as Array).is_empty():
+			var none := Label.new()
+			none.theme_type_variation = "Muted"
+			none.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+			none.text = I18n.t("No AI tool connected yet.")
+			list.add_child(none)
 		var b := PackedStringArray()
 		for r in st.get("recent", []):
 			var x: Dictionary = r
 			b.append("[color=#%s]%s[/color]  %s · %s · %d ms" % [SbTheme.MUTED.to_html(false), str(x.get("at", "")).substr(11, 8),
 				str(x.get("client", "")), str(x.get("tool", "")), int(x.get("ms", 0))])
-		recent.text = ("[b]" + I18n.t("Recent calls") + "[/b]\n" + "\n".join(b)) if not b.is_empty() else ""
-		await _fill_proposals(props_box)
-		await _fill_servers(out_box)
+		recent.text = "\n".join(b)
+		recent_b.visible = not b.is_empty()
+		recent_b.text = ("▾ " if recent.visible else "▸ ") + I18n.t("Recent calls (%d)") % b.size()
+		var n_props := await _fill_proposals(props_box)
+		var n_wait := await _fill_servers(out_box)
+		if not is_instance_valid(tab_in):
+			return
+		tab_in.text = I18n.t("⇠ Who may read your Brain") + (" (%d)" % n_props if n_props > 0 else "")
+		tab_out.text = I18n.t("⇢ Tools for your agents") + (" (%d)" % n_wait if n_wait > 0 else "")
+		if tab == "" and n_props == 0 and n_wait > 0:
+			show_tab.call("out")
 	connect_b.pressed.connect(func() -> void:
 		var res := await app.backend.api.call_api("/mcp/clients", true, HTTPClient.METHOD_POST,
 			JSON.stringify({"name": name_edit.text.strip_edges(), "level": "read"}))
@@ -236,22 +275,88 @@ func open_dialog() -> AcceptDialog:
 			return
 		_show_commands(commands, res["data"])
 		fill.call())
+	tab_in.text = I18n.t("⇠ Who may read your Brain")
+	tab_out.text = I18n.t("⇢ Tools for your agents")
 	app.get_tree().root.add_child(dlg)
-	dlg.popup_centered_clamped(Vector2i(730, 700))
+	dlg.popup_centered_clamped(Vector2i(770, 700))
 	fill.call()
 	return dlg
 
 
+## Switches the open window to a tab ("in" or "out"): for the captures and the guides.
+func show_tab(which: String) -> void:
+	if dialog != null and is_instance_valid(dialog) and dialog.has_meta("show_tab"):
+		(dialog.get_meta("show_tab") as Callable).call(which)
+
+
+## One connected AI tool: its name and use, what it may do (plain words), apply without asking, disconnect.
+func _client_card(cl: Variant) -> Control:
+	var d: Dictionary = cl
+	var card := PanelContainer.new()
+	card.theme_type_variation = "Inset"
+	var v := VBoxContainer.new()
+	v.add_theme_constant_override("separation", 6)
+	card.add_child(v)
+	var head := HBoxContainer.new()
+	head.add_theme_constant_override("separation", 8)
+	v.add_child(head)
+	var l := Label.new()
+	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.text = str(d["name"])
+	head.add_child(l)
+	var use := Label.new()
+	use.theme_type_variation = "Muted"
+	use.text = (I18n.t("%d calls") % int(d.get("calls", 0))) if d.get("last_seen") != null else I18n.t("never used")
+	head.add_child(use)
+	var rv := Button.new()
+	rv.text = I18n.t("Disconnect")
+	rv.theme_type_variation = "GhostButton"
+	rv.tooltip_text = I18n.t("Revokes its token: it can no longer reach the Brain")
+	var cid := str(d["id"])
+	rv.pressed.connect(func() -> void:
+		await app.backend.api.call_api("/mcp/clients/" + cid, true, HTTPClient.METHOD_DELETE)
+		card.queue_free())
+	head.add_child(rv)
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 10)
+	v.add_child(line)
+	var may := Label.new()
+	may.theme_type_variation = "Muted"
+	may.text = I18n.t("It may:")
+	line.add_child(may)
+	var lv := OptionButton.new()
+	for k in ["read", "propose_items", "propose_changes"]:
+		lv.add_item(_level(k))
+		lv.set_item_metadata(lv.item_count - 1, k)
+		if k == str(d["level"]):
+			lv.select(lv.item_count - 1)
+	line.add_child(lv)
+	var dc := CheckBox.new()
+	dc.text = I18n.t("apply its suggestions without asking me")
+	dc.tooltip_text = I18n.t("Its proposals are applied at once (still through the archivist, still undoable). Off: they wait for your approval.")
+	dc.button_pressed = int(d.get("direct", 0)) == 1
+	dc.visible = str(d["level"]) != "read"
+	line.add_child(dc)
+	var save_level := func() -> void:
+		dc.visible = str(lv.get_item_metadata(lv.selected)) != "read"
+		await app.backend.api.call_api("/mcp/clients/%s/level" % cid, true, HTTPClient.METHOD_POST,
+			JSON.stringify({"level": str(lv.get_item_metadata(lv.selected)), "direct": dc.button_pressed}))
+	lv.item_selected.connect(func(_i: int) -> void: save_level.call())
+	dc.toggled.connect(func(_on: bool) -> void: save_level.call())
+	return card
+
+
 ## Proposals waiting for approval: what, who, why; approve or reject one by one, or all at once.
-func _fill_proposals(box: VBoxContainer) -> void:
+func _fill_proposals(box: VBoxContainer) -> int:
 	for c in box.get_children():
 		c.queue_free()
 	var res := await app.backend.api.call_api("/mcp/proposals?status=pending")
 	if not res["ok"] or not is_instance_valid(box):
-		return
+		return 0
 	var items: Array = (res["data"] as Dictionary).get("proposals", [])
 	if items.is_empty():
-		return
+		return 0
 	var head := HBoxContainer.new()
 	var t := Label.new()
 	t.theme_type_variation = "Heading"
@@ -288,23 +393,26 @@ func _fill_proposals(box: VBoxContainer) -> void:
 				_changed())
 			line.add_child(b)
 		box.add_child(line)
+	return items.size()
 
 
-## ⇢ out: the MCP servers the agents may use — state, monthly use, key, tools, who may use each; calls waiting for
-## the user's confirmation; agents that read the Brain and may write outside; the catalogue (curated + registry).
-func _fill_servers(box: VBoxContainer) -> void:
+## ⇢ out: what waits for you first (a server's question, a call to confirm, a warning), then the servers as folded
+## cards, then « add a tool »: the catalogue checked by hand, the official registry search, a local program (advanced).
+## Returns how many things wait for the user (for the tab's count).
+func _fill_servers(box: VBoxContainer) -> int:
 	for c in box.get_children():
 		c.queue_free()
 	var res := await app.backend.api.call_api("/mcp/servers")
 	var ag := await app.backend.api.call_api("/assistant/agents")
 	if not res["ok"] or not is_instance_valid(box):
-		return
+		return 0
 	var data: Dictionary = res["data"]
 	var agents_list: Array = (ag["data"] as Dictionary).get("agents", []) if ag["ok"] else []
-	var head := Label.new()
-	head.theme_type_variation = "Heading"
-	head.text = I18n.t("MCP servers for your agents (⇢ out)")
-	box.add_child(head)
+	var intro := Label.new()
+	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	intro.theme_type_variation = "Muted"
+	intro.text = I18n.t("Outside services your agents may use when you ask them something (documentation, search, your accounts). Anything that writes outside asks you first.")
+	box.add_child(intro)
 	for qu in data.get("questions", []):
 		box.add_child(_question_row(qu, box))
 	for cf in data.get("confirmations", []):
@@ -316,19 +424,35 @@ func _fill_servers(box: VBoxContainer) -> void:
 		w.text = I18n.t("⚠ %s reads your Brain and may write outside with %s: each such call waits for your confirmation.") % [
 			str((rk as Dictionary).get("name", "")), ", ".join(PackedStringArray((rk as Dictionary).get("servers", [])))]
 		box.add_child(w)
+	var mine := Label.new()
+	mine.theme_type_variation = "Overline"
+	mine.text = I18n.t("YOUR TOOLS")
+	box.add_child(mine)
 	for sv in data.get("servers", []):
 		box.add_child(_server_row(sv, agents_list, box))
+	if (data.get("servers", []) as Array).is_empty():
+		var none := Label.new()
+		none.theme_type_variation = "Muted"
+		none.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		none.text = I18n.t("None yet. Add one below: your agents can use it right away.")
+		box.add_child(none)
 	if not (status.get("out", {}) as Dictionary).get("active", []).is_empty():
 		var stop := Button.new()
 		stop.text = I18n.t("Stop the calls under way")
 		stop.pressed.connect(func() -> void: await app.backend.api.call_api("/mcp/out/stop", true, HTTPClient.METHOD_POST, "{}"))
 		box.add_child(stop)
+	var add_head := Label.new()
+	add_head.theme_type_variation = "Overline"
+	add_head.text = I18n.t("ADD A TOOL")
+	box.add_child(add_head)
 	var cat := Label.new()
 	cat.theme_type_variation = "Muted"
-	cat.text = I18n.t("Catalogue — checked by hand, or search the official MCP registry:")
+	cat.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	cat.text = I18n.t("Checked by hand, no account needed:")
 	box.add_child(cat)
 	var sugg := HFlowContainer.new()
 	sugg.add_theme_constant_override("h_separation", 6)
+	sugg.add_theme_constant_override("v_separation", 6)
 	box.add_child(sugg)
 	for sg in data.get("suggested", []):
 		var g: Dictionary = sg
@@ -348,17 +472,46 @@ func _fill_servers(box: VBoxContainer) -> void:
 	row.add_theme_constant_override("separation", 6)
 	var q := LineEdit.new()
 	q.name = "CatalogSearch"
-	q.placeholder_text = I18n.t("Search the registry (notion, github, weather…) or paste https://…/mcp")
+	q.placeholder_text = I18n.t("Or find another (notion, github, weather…) or paste its address https://…")
 	q.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(q)
 	var go := Button.new()
 	go.text = I18n.t("Search")
 	row.add_child(go)
 	box.add_child(row)
+	var results := VBoxContainer.new()
+	results.name = "CatalogResults"
+	results.visible = false  # an empty box would still take a gap
+	box.add_child(results)
+	var err := Label.new()
+	err.theme_type_variation = "Muted"
+	err.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	err.visible = false
+	box.add_child(err)
+	var say := func(text: String) -> void:
+		err.text = text
+		err.visible = text != ""
+	var adv := Button.new()
+	adv.name = "LocalToggle"
+	adv.theme_type_variation = "GhostButton"
+	adv.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	adv.text = "▸ " + I18n.t("Advanced: a program on this computer")
+	box.add_child(adv)
+	var lbox := VBoxContainer.new()
+	lbox.visible = false
+	box.add_child(lbox)
+	adv.pressed.connect(func() -> void:
+		lbox.visible = not lbox.visible
+		adv.text = ("▾ " if lbox.visible else "▸ ") + I18n.t("Advanced: a program on this computer"))
+	var lhelp := Label.new()
+	lhelp.theme_type_variation = "Muted"
+	lhelp.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	lhelp.text = I18n.t("For developers: the exact command, with a pinned version. Nothing runs before you approve it, and the Brain never installs anything.")
+	lbox.add_child(lhelp)
 	var lrow := HBoxContainer.new()
 	lrow.add_theme_constant_override("separation", 6)
 	var lcmd := LineEdit.new()
-	lcmd.placeholder_text = I18n.t("Or a local program, version pinned: npx -y @scope/server@1.2.3")
+	lcmd.placeholder_text = "npx -y @scope/server@1.2.3"
 	lcmd.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lrow.add_child(lcmd)
 	var ladd := Button.new()
@@ -371,37 +524,33 @@ func _fill_servers(box: VBoxContainer) -> void:
 			return
 		await _fill_servers(box))
 	lrow.add_child(ladd)
-	box.add_child(lrow)
-	var results := VBoxContainer.new()
-	results.name = "CatalogResults"
-	box.add_child(results)
-	var err := Label.new()
-	err.theme_type_variation = "Muted"
-	err.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	box.add_child(err)
+	lbox.add_child(lrow)
 	var do_search := func() -> void:
 		var text := q.text.strip_edges()
-		err.text = ""
+		say.call("")
+		results.visible = false
 		for c in results.get_children():
 			c.queue_free()
 		if text.begins_with("https://") or text.begins_with("http://127.0.0.1"):
 			var r := await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "", "url": text}))
 			if not r["ok"]:
-				err.text = str((r["data"] as Dictionary).get("detail", r["error"]))
+				say.call(str((r["data"] as Dictionary).get("detail", r["error"])))
 				return
 			await _fill_servers(box)
 			poll()
 			return
 		var r2 := await app.backend.api.call_api("/mcp/catalog?q=" + text.uri_encode())
 		if not r2["ok"]:
-			err.text = str((r2["data"] as Dictionary).get("detail", r2["error"]))
+			say.call(str((r2["data"] as Dictionary).get("detail", r2["error"])))
 			return
 		for e in ((r2["data"] as Dictionary).get("results", []) as Array).slice(0, 12):
 			results.add_child(_catalog_row(e, box))
+		results.visible = results.get_child_count() > 0
 		if results.get_child_count() == 0:
-			err.text = I18n.t("Nothing found in the registry.")
+			say.call(I18n.t("Nothing found in the registry."))
 	go.pressed.connect(func() -> void: do_search.call())
 	q.text_submitted.connect(func(_t: String) -> void: do_search.call())
+	return (data.get("questions", []) as Array).size() + (data.get("confirmations", []) as Array).size()
 
 
 static func family_label(f: String) -> String:
@@ -456,13 +605,41 @@ func _catalog_row(e: Variant, box: VBoxContainer) -> Control:
 	return line
 
 
+## A server's state in plain words (one line under its name).
+static func server_status(d: Dictionary) -> String:
+	var tools: Array = d.get("tools", [])
+	var off: Array = d.get("off", [])
+	var use: Dictionary = d.get("usage", {})
+	match str(d.get("status", "")):
+		"ready":
+			return I18n.t("Ready · %d of %d tools on · used %d times this month") % [tools.size() - off.size(), tools.size(), int(use.get("calls", 0))]
+		"approval":
+			return I18n.t("Waits for your approval before it starts")
+		"missing":
+			return I18n.t("Install %s first (the Brain never installs anything)") % str(d.get("error", "")).trim_prefix("needs ")
+		"signin":
+			return I18n.t("Needs you to sign in to your account")
+	return I18n.t("Unreachable for now: %s") % str(d.get("error", ""))
+
+
+## « read_web_page » → « Read web page ».
+static func tool_label(name: String) -> String:
+	var s := name.replace("_", " ").replace("-", " ").strip_edges()
+	return s.left(1).to_upper() + s.substr(1) if s != "" else name
+
+
+func _section(text: String) -> Label:
+	var l := Label.new()
+	l.theme_type_variation = "Overline"
+	l.text = text
+	return l
+
+
+## One server as a folded card: name, plain state, who may use it, the one action it needs; « Settings » opens what
+## it may do (its tools) and its access and limits (key, account, monthly limit, writing with your model, remove).
 func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control:
 	var d: Dictionary = sv
 	var sid := str(d["id"])
-	var wrap := VBoxContainer.new()
-	var line := HBoxContainer.new()
-	line.add_theme_constant_override("separation", 6)
-	wrap.add_child(line)
 	var ready := str(d.get("status", "")) == "ready"
 	var needs_signin := str(d.get("status", "")) == "signin"
 	var is_local := str(d.get("transport", "")) == "stdio"
@@ -471,21 +648,38 @@ func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control
 	var tools: Array = d.get("tools", [])
 	var off: Array = d.get("off", [])
 	var use: Dictionary = d.get("usage", {})
+	var card := PanelContainer.new()
+	card.name = "ServerCard"
+	card.theme_type_variation = "Inset"
+	var wrap := VBoxContainer.new()
+	wrap.add_theme_constant_override("separation", 6)
+	card.add_child(wrap)
+	var line := HBoxContainer.new()
+	line.add_theme_constant_override("separation", 8)
+	wrap.add_child(line)
+	var dot := Label.new()
+	dot.text = "●" if ready else "○"
+	dot.add_theme_color_override("font_color", Color(0.55, 0.88, 0.65) if ready else SbTheme.WARM)
+	line.add_child(dot)
+	var names := VBoxContainer.new()
+	names.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	names.add_theme_constant_override("separation", 0)
+	line.add_child(names)
 	var l := Label.new()
-	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	l.custom_minimum_size.x = 170
-	l.clip_text = true
-	l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-	l.text = ("● %s · %s · %s" % [str(d.get("name", "")), I18n.t("%d of %d tools") % [tools.size() - off.size(), tools.size()],
-		I18n.t("%d calls, ≈ %s tokens this month") % [int(use.get("calls", 0)), _k(int(use.get("tokens", 0)))]]) if ready \
-		else ("○ %s · %s" % [str(d.get("name", "")), I18n.t("waits for your approval")] if waits
-		else ("○ %s · %s" % [str(d.get("name", "")), I18n.t("install %s first (the Brain never installs anything)") % str(d.get("error", "")).trim_prefix("needs ")] if missing
-		else ("○ %s · %s" % [str(d.get("name", "")), I18n.t("needs an account sign-in")] if needs_signin
-		else "○ %s · %s" % [str(d.get("name", "")), I18n.t("unreachable: %s") % str(d.get("error", ""))])))
-	l.add_theme_color_override("font_color", Color(0.55, 0.88, 0.65) if ready else SbTheme.WARM)
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.text = str(d.get("name", ""))
 	l.tooltip_text = "%s\n%s%s" % [str(d.get("url", "")), str(d.get("publisher", "")), ("\n" + I18n.t("key saved")) if bool(d.get("has_key", false)) else ""]
-	line.add_child(l)
+	names.add_child(l)
+	var st := Label.new()
+	st.name = "ServerStatus"
+	st.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	st.theme_type_variation = "Muted"
+	st.text = server_status(d)
+	if not ready:
+		st.add_theme_color_override("font_color", SbTheme.WARM)
+	names.add_child(st)
 	var who := OptionButton.new()
+	who.tooltip_text = I18n.t("Which agents may use it")
 	who.add_item(I18n.t("All agents"))
 	who.set_item_metadata(0, "*")
 	var current: Array = d.get("agents", ["*"])
@@ -499,77 +693,78 @@ func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control
 		await app.backend.api.call_api("/mcp/servers/%s/agents" % sid, true, HTTPClient.METHOD_POST,
 			JSON.stringify({"agents": [str(who.get_item_metadata(i))]})))
 	line.add_child(who)
+	var more := Button.new()
+	more.name = "ServerSettings"
+	more.text = "▸ " + I18n.t("Settings")
+	line.add_child(more)
 	if is_local:
 		var cmd := Label.new()
-		cmd.text = "  $ " + " ".join(PackedStringArray(d.get("command", [])))
+		cmd.text = "$ " + " ".join(PackedStringArray(d.get("command", [])))
 		cmd.add_theme_font_size_override("font_size", 12)
 		cmd.theme_type_variation = "Muted"
-		cmd.clip_text = true
-		cmd.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
-		cmd.tooltip_text = " ".join(PackedStringArray(d.get("command", [])))
+		cmd.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 		wrap.add_child(cmd)
-	if waits or missing:
-		var ap := Button.new()
-		ap.name = "Approve"
-		ap.text = I18n.t("Approve and start")
-		ap.theme_type_variation = "PrimaryButton"
-		ap.tooltip_text = I18n.t("Runs exactly this command on this computer, with a clean environment, until the app closes")
-		ap.pressed.connect(func() -> void:
-			ap.disabled = true
-			await app.backend.api.call_api("/mcp/servers/%s/approve" % sid, true, HTTPClient.METHOD_POST, "{}")
-			await _fill_servers(box)
-			poll())
-		line.add_child(ap)
-	if needs_signin:
-		var si := Button.new()
-		si.name = "SignIn"
-		si.text = I18n.t("Sign in")
-		si.theme_type_variation = "PrimaryButton"
-		si.tooltip_text = I18n.t("Opens the sign-in page in your browser; the Brain keeps the access in Windows' credential store")
-		si.pressed.connect(func() -> void:
-			si.disabled = true
-			var r := await app.backend.api.call_api("/mcp/servers/%s/signin" % sid, true, HTTPClient.METHOD_POST, "{}")
-			if not r["ok"]:
-				si.text = str((r["data"] as Dictionary).get("detail", r["error"])).left(48)
-				return
-			if OS.get_environment("SBGD_NO_OPEN") == "":
-				OS.shell_open(str((r["data"] as Dictionary).get("url", "")))
-			si.text = I18n.t("Waiting for the sign-in…")
-			for _i in 600:
-				await app.get_tree().create_timer(0.5).timeout
-				var st := await app.backend.api.call_api("/mcp/servers/%s/signin" % sid)
-				var ss := str((st["data"] as Dictionary).get("status", "")) if st["ok"] else ""
-				if ss == "done" or ss == "failed":
-					if ss == "failed":
-						si.text = str((st["data"] as Dictionary).get("error", "")).left(48)
-						si.disabled = false
-						return
-					break
-			if is_instance_valid(box):
+	if waits or missing or needs_signin:
+		var arow := HBoxContainer.new()
+		wrap.add_child(arow)
+		if waits or missing:
+			var ap := Button.new()
+			ap.name = "Approve"
+			ap.text = I18n.t("Approve and start")
+			ap.theme_type_variation = "PrimaryButton"
+			ap.tooltip_text = I18n.t("Runs exactly this command on this computer, with a clean environment, until the app closes")
+			ap.pressed.connect(func() -> void:
+				ap.disabled = true
+				await app.backend.api.call_api("/mcp/servers/%s/approve" % sid, true, HTTPClient.METHOD_POST, "{}")
 				await _fill_servers(box)
-			poll())
-		line.add_child(si)
-	var more := Button.new()
-	more.text = I18n.t("Tools, key…")
-	line.add_child(more)
-	var rm := Button.new()
-	rm.text = I18n.t("Remove")
-	rm.pressed.connect(func() -> void:
-		await app.backend.api.call_api("/mcp/servers/" + sid, true, HTTPClient.METHOD_DELETE)
-		await _fill_servers(box))
-	line.add_child(rm)
+				poll())
+			arow.add_child(ap)
+		if needs_signin:
+			var si := Button.new()
+			si.name = "SignIn"
+			si.text = I18n.t("Sign in")
+			si.theme_type_variation = "PrimaryButton"
+			si.tooltip_text = I18n.t("Opens the sign-in page in your browser; the Brain keeps the access in Windows' credential store")
+			si.pressed.connect(func() -> void:
+				si.disabled = true
+				var r := await app.backend.api.call_api("/mcp/servers/%s/signin" % sid, true, HTTPClient.METHOD_POST, "{}")
+				if not r["ok"]:
+					si.text = str((r["data"] as Dictionary).get("detail", r["error"])).left(48)
+					return
+				if OS.get_environment("SBGD_NO_OPEN") == "":
+					OS.shell_open(str((r["data"] as Dictionary).get("url", "")))
+				si.text = I18n.t("Waiting for the sign-in…")
+				for _i in 600:
+					await app.get_tree().create_timer(0.5).timeout
+					var ss_res := await app.backend.api.call_api("/mcp/servers/%s/signin" % sid)
+					var ss := str((ss_res["data"] as Dictionary).get("status", "")) if ss_res["ok"] else ""
+					if ss == "done" or ss == "failed":
+						if ss == "failed":
+							si.text = str((ss_res["data"] as Dictionary).get("error", "")).left(48)
+							si.disabled = false
+							return
+						break
+				if is_instance_valid(box):
+					await _fill_servers(box)
+				poll())
+			arow.add_child(si)
 	var details := VBoxContainer.new()
+	details.name = "ServerDetails"
 	details.visible = false
-	details.add_theme_constant_override("separation", 2)
+	details.add_theme_constant_override("separation", 4)
 	wrap.add_child(details)
-	more.pressed.connect(func() -> void: details.visible = not details.visible)
+	more.pressed.connect(func() -> void:
+		details.visible = not details.visible
+		more.text = ("▾ " if details.visible else "▸ ") + I18n.t("Settings"))
+	if not tools.is_empty():
+		details.add_child(_section(I18n.t("WHAT IT MAY DO")))
 	for t in tools:
 		var td: Dictionary = t
 		var cb := CheckBox.new()
-		cb.text = str(td.get("name", "")) + ("   ✎ " + I18n.t("writes outside: confirmed at each call") if bool(td.get("write", false)) else "")
-		cb.tooltip_text = str(td.get("description", "")).left(300)
-		cb.button_pressed = not off.has(td.get("name", ""))
 		var tname := str(td.get("name", ""))
+		cb.text = tool_label(tname) + ("   ✎ " + I18n.t("writes outside: asks you each time") if bool(td.get("write", false)) else "")
+		cb.tooltip_text = tname + "\n" + str(td.get("description", "")).left(300)
+		cb.button_pressed = not off.has(td.get("name", ""))
 		cb.toggled.connect(func(on: bool) -> void:
 			var now: Array = off.duplicate()
 			if on:
@@ -579,10 +774,11 @@ func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control
 			off = now
 			await app.backend.api.call_api("/mcp/servers/%s/off" % sid, true, HTTPClient.METHOD_POST, JSON.stringify({"off": now})))
 		details.add_child(cb)
+	details.add_child(_section(I18n.t("ACCESS AND LIMITS")))
 	var krow := HBoxContainer.new()
 	var key := LineEdit.new()
 	key.secret = true
-	key.placeholder_text = I18n.t("key saved (type to replace)") if bool(d.get("has_key", false)) else I18n.t("API key (kept in Windows' credential store)")
+	key.placeholder_text = I18n.t("key saved (type to replace)") if bool(d.get("has_key", false)) else I18n.t("API key, if it asks for one (kept in Windows' credential store)")
 	key.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	krow.add_child(key)
 	var ksave := Button.new()
@@ -620,12 +816,40 @@ func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control
 			evv.placeholder_text = I18n.t("saved"))
 		erow.add_child(es)
 		details.add_child(erow)
+	var crow := HBoxContainer.new()
+	crow.add_theme_constant_override("separation", 8)
+	var cl := Label.new()
+	cl.text = I18n.t("Monthly limit (thousands of tokens, 0 = no limit):")
+	cl.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	cl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	crow.add_child(cl)
+	var cap := SpinBox.new()
+	cap.min_value = 0
+	cap.max_value = 100000
+	cap.value = int(d.get("cap_tokens", 0)) / 1000
+	cap.value_changed.connect(func(v: float) -> void:
+		await app.backend.api.call_api("/mcp/servers/%s/cap" % sid, true, HTTPClient.METHOD_POST, JSON.stringify({"tokens": int(v) * 1000})))
+	crow.add_child(cap)
+	details.add_child(crow)
+	var used := Label.new()
+	used.theme_type_variation = "Muted"
+	used.text = I18n.t("This month: %d calls, ≈ %s tokens") % [int(use.get("calls", 0)), _k(int(use.get("tokens", 0)))]
+	details.add_child(used)
+	var samp := CheckBox.new()
+	samp.text = I18n.t("Let it ask your AI model to write (at most 20 times a month)")
+	samp.tooltip_text = I18n.t("Off by default: it would use your OpenAI key")
+	samp.button_pressed = bool(d.get("sampling", false))
+	samp.toggled.connect(func(on: bool) -> void:
+		await app.backend.api.call_api("/mcp/servers/%s/sampling" % sid, true, HTTPClient.METHOD_POST, JSON.stringify({"allow": on, "cap": 20})))
+	details.add_child(samp)
+	var brow := HBoxContainer.new()
+	brow.add_theme_constant_override("separation", 6)
+	details.add_child(brow)
 	if is_local:
-		var lrow := HBoxContainer.new()
 		var stopb := Button.new()
 		stopb.text = I18n.t("Stop the program")
 		stopb.pressed.connect(func() -> void: await app.backend.api.call_api("/mcp/servers/%s/stop" % sid, true, HTTPClient.METHOD_POST, "{}"))
-		lrow.add_child(stopb)
+		brow.add_child(stopb)
 		var logb := Button.new()
 		logb.text = I18n.t("Show its log")
 		var logl := Label.new()
@@ -636,29 +860,21 @@ func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control
 			logl.text = "\n".join(PackedStringArray((lg["data"] as Dictionary).get("log", []))) if lg["ok"] else ""
 			if logl.text == "":
 				logl.text = I18n.t("(nothing yet: it starts at its first call)"))
-		lrow.add_child(logb)
-		details.add_child(lrow)
+		brow.add_child(logb)
 		details.add_child(logl)
-	var samp := CheckBox.new()
-	samp.text = I18n.t("Let this server ask your AI model to write (up to 20 times a month)")
-	samp.tooltip_text = I18n.t("Off by default: it would use your OpenAI key")
-	samp.button_pressed = bool(d.get("sampling", false))
-	samp.toggled.connect(func(on: bool) -> void:
-		await app.backend.api.call_api("/mcp/servers/%s/sampling" % sid, true, HTTPClient.METHOD_POST, JSON.stringify({"allow": on, "cap": 20})))
-	details.add_child(samp)
-	var crow := HBoxContainer.new()
-	var cl := Label.new()
-	cl.text = I18n.t("Monthly budget (thousands of tokens, 0 = none):")
-	crow.add_child(cl)
-	var cap := SpinBox.new()
-	cap.min_value = 0
-	cap.max_value = 100000
-	cap.value = int(d.get("cap_tokens", 0)) / 1000
-	cap.value_changed.connect(func(v: float) -> void:
-		await app.backend.api.call_api("/mcp/servers/%s/cap" % sid, true, HTTPClient.METHOD_POST, JSON.stringify({"tokens": int(v) * 1000})))
-	crow.add_child(cap)
-	details.add_child(crow)
-	return wrap
+	var bgap := Control.new()
+	bgap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	brow.add_child(bgap)
+	var rm := Button.new()
+	rm.name = "RemoveServer"
+	rm.text = I18n.t("Remove this tool")
+	rm.add_theme_color_override("font_color", SbTheme.ERROR)
+	rm.tooltip_text = I18n.t("Your agents can no longer use it; its key is forgotten")
+	rm.pressed.connect(func() -> void:
+		await app.backend.api.call_api("/mcp/servers/" + sid, true, HTTPClient.METHOD_DELETE)
+		await _fill_servers(box))
+	brow.add_child(rm)
+	return card
 
 
 static func _k(n: int) -> String:
@@ -777,7 +993,7 @@ func open_timeline() -> AcceptDialog:
 
 
 static func _level(level: String) -> String:
-	return {"read": I18n.t("read"), "propose_items": I18n.t("proposes items"), "propose_changes": I18n.t("proposes changes")}.get(level, level)
+	return {"read": I18n.t("read only"), "propose_items": I18n.t("read, suggest new notes"), "propose_changes": I18n.t("read, suggest changes")}.get(level, level)
 
 
 ## The commands with this client's token, shown once (only its hash is kept).

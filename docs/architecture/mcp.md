@@ -7,7 +7,7 @@ both directions, with the standard library only (JSON-RPC 2.0).
 
 - **Endpoint.** `POST /mcp` on the engine (Streamable HTTP, plain JSON answers), **127.0.0.1 only**. `GET` answers
   405 (no standing stream). `initialize` returns the server's instructions: the archivist protocol below.
-- **Clients and tokens.** « Connect an AI tool » creates a client with a level; its token is shown once and only its
+- **Clients and tokens.** « Connect (read only) » (tab « Who may read your Brain ») creates a client with a level; its token is shown once and only its
   SHA-256 is kept (`mcp_clients`). Unknown or revoked tokens get 401.
 - **WSL relay.** Claude Code in WSL starts `engine/mcp/relay.py` with the app's Windows Python: stdio on one side,
   `http://127.0.0.1:<port>/mcp` on the other (port from `runtime/server.json`, token from `<data>/mcp/<id>.token`).

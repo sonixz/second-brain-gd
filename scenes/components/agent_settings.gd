@@ -1,7 +1,7 @@
 class_name SbAgentSettings
 extends ScrollContainer
-## An agent's settings (ⓘ in its title bar), shown in a floating tile: name, model, capabilities (each an on/off
-## switch, its tools listed),
+## An agent's settings (ⓘ in its title bar), shown in a floating tile: name, model, capabilities (three presets in
+## one click, or each an on/off switch; the tools behind them on demand, Loop UX-B),
 ## first words, instructions. Every change is saved at once (capabilities, model) or with Save (text) and applies
 ## from the next message, in a live conversation too (from the next thing said). Built-in agents can go back to the original;
 ## custom agents can be deleted. « Ask the Builder » hands the change over to the Agent Builder, by voice.
@@ -27,6 +27,14 @@ var m_cost: SpinBox
 var m_minutes: SpinBox
 var m_model: OptionButton
 var _patching := false
+var preset_buttons: Dictionary = {}   # preset -> Button
+var tool_labels: Array = []           # the tools under each capability, hidden until asked
+# The same presets as the Agent Builder offers (engine/assistant/agents.py PRESETS), plus « everything ».
+const PRESETS := {
+	"read_only": ["read_brain", "internet", "browser", "interface"],
+	"assistant": ["read_brain", "internet", "browser", "interface", "capture", "synthesis"],
+	"all": [],  # every capability
+}
 
 
 func setup(a: SbApp, id: String, profile: Dictionary, capabilities: Dictionary, model_list: Array) -> SbAgentSettings:
@@ -83,6 +91,26 @@ func setup(a: SbApp, id: String, profile: Dictionary, capabilities: Dictionary, 
 
 	# Capabilities
 	box.add_child(_overline(I18n.t("CAPABILITIES · WHAT IT MAY DO")))
+	var presets := HBoxContainer.new()
+	presets.name = "Presets"
+	presets.add_theme_constant_override("separation", 6)
+	box.add_child(presets)
+	for pk in PRESETS:
+		var pb := Button.new()
+		pb.name = "Preset_" + str(pk)
+		pb.text = {"read_only": I18n.t("Read only"), "assistant": I18n.t("Assistant"), "all": I18n.t("Everything")}[pk]
+		pb.tooltip_text = {"read_only": I18n.t("Reads your Brain and the web; changes nothing"),
+			"assistant": I18n.t("Also adds notes and saves syntheses you approve; never reorganises or deletes"),
+			"all": I18n.t("Every capability, organising the graph included (always with Undo)")}[pk]
+		var key_p := str(pk)
+		pb.pressed.connect(func() -> void: apply_preset(key_p))
+		presets.add_child(pb)
+		preset_buttons[key_p] = pb
+	var custom := Label.new()
+	custom.name = "PresetHint"
+	custom.theme_type_variation = "Muted"
+	custom.text = I18n.t("or one by one:")
+	presets.add_child(custom)
 	var have: Array = prof.get("capabilities", [])
 	for key in caps_info:
 		var c: Dictionary = caps_info[key]
@@ -109,7 +137,21 @@ func setup(a: SbApp, id: String, profile: Dictionary, capabilities: Dictionary, 
 		tools.add_theme_font_size_override("font_size", 12)
 		tools.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		tools.text = "      " + ", ".join((c.get("tools", []) as Array).map(func(t: Variant) -> String: return str(t)))
+		tools.visible = false
 		row.add_child(tools)
+		tool_labels.append(tools)
+	var show_tools := Button.new()
+	show_tools.name = "ShowTools"
+	show_tools.theme_type_variation = "GhostButton"
+	show_tools.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	show_tools.text = "▸ " + I18n.t("Show the tools behind each capability")
+	show_tools.pressed.connect(func() -> void:
+		var on := not (tool_labels[0] as Label).visible if not tool_labels.is_empty() else false
+		for tl in tool_labels:
+			(tl as Label).visible = on
+		show_tools.text = ("▾ " if on else "▸ ") + I18n.t("Show the tools behind each capability"))
+	box.add_child(show_tools)
+	_mark_preset()
 
 	# Missions: the agent's own ceiling and model (shown when it may run missions)
 	_missions_block(box)
@@ -265,7 +307,34 @@ func _save_capabilities() -> void:
 			caps.append(k)
 	if missions_box != null:
 		missions_box.visible = "missions" in caps
+	_mark_preset()
 	await _patch({"capabilities": caps})
+
+
+## Sets the switches to a preset in one click and saves once. The Agent Builder keeps « Manage agents ».
+func apply_preset(preset: String) -> void:
+	var want: Array = PRESETS.get(preset, [])
+	for k in checks:
+		var cb: CheckButton = checks[k]
+		if cb.disabled:
+			continue
+		cb.set_pressed_no_signal(preset == "all" or want.has(k))
+	await _save_capabilities()
+
+
+## The preset matching the switches looks selected; none when they are set one by one.
+func _mark_preset() -> void:
+	var on: Array = selected_capabilities()
+	for pk in preset_buttons:
+		var want: Array = checks.keys() if pk == "all" else (PRESETS[pk] as Array)
+		var same := true
+		for k in checks:
+			if (checks[k] as CheckButton).disabled:
+				continue
+			if want.has(k) != on.has(k):
+				same = false
+				break
+		(preset_buttons[pk] as Button).theme_type_variation = "PrimaryButton" if same else "Button"
 
 
 ## Saves fields at once; the next message (or live session) uses them. One save at a time: two at once
@@ -295,6 +364,7 @@ func _reload(p: Dictionary) -> void:
 	var have: Array = p.get("capabilities", [])
 	for k in checks:
 		(checks[k] as CheckButton).set_pressed_no_signal(k in have)
+	_mark_preset()
 
 
 func selected_capabilities() -> Array:

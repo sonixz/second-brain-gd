@@ -12,7 +12,7 @@ func _run() -> void:
 	var lights: Button = b.get("mcp_lights")
 	# ⇢ out: Microsoft Learn connected for real (public, free); its tools listed in the window
 	await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Microsoft Learn", "url": "https://learn.microsoft.com/api/mcp"}))
-	var dlg: AcceptDialog = lights.call("open_dialog")
+	var dlg: AcceptDialog = lights.call("open_dialog", "in")
 	await pause(0.8)
 	(dlg.find_child("ConnectButton", true, false) as Button).pressed.emit()
 	await pause(1.5)
@@ -58,12 +58,11 @@ func _run() -> void:
 	await shot("m4-timeline")
 	tl.hide()
 	# MCP-D: a server's tools, key and budget; a search in the official registry
-	var dlg3: AcceptDialog = lights.call("open_dialog")
+	var dlg3: AcceptDialog = lights.call("open_dialog", "out")
 	await pause(2.5)
-	for bt in dlg3.find_children("*", "Button", true, false):
-		if (bt as Button).text.begins_with("Tools") or (bt as Button).text.begins_with("Outils"):
-			(bt as Button).pressed.emit()
-			break
+	var settings_b: Button = dlg3.find_child("ServerSettings", true, false)
+	if settings_b != null:
+		settings_b.pressed.emit()
 	var search: LineEdit = dlg3.find_child("CatalogSearch", true, false)
 	if search != null:
 		search.text = "notion"
@@ -74,22 +73,16 @@ func _run() -> void:
 	dlg3.hide()
 	# MCP-E: a server that needs an account sign-in (Notion: 401 with its metadata; nothing registered until clicked)
 	await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Notion", "url": "https://mcp.notion.com/mcp", "publisher": "notion.com"}))
-	var dlg4: AcceptDialog = lights.call("open_dialog")
+	var dlg4: AcceptDialog = lights.call("open_dialog", "out")
 	await pause(3.0)
-	var sc: ScrollContainer = dlg4.find_children("*", "ScrollContainer", true, false)[0]
-	sc.scroll_vertical = 260
-	await pause(0.5)
 	calm()
 	await shot("m6-signin")
 	dlg4.hide()
 	# MCP-F: a local program, version pinned, waiting for approval (or saying which runtime to install first)
 	await app.backend.api.call_api("/mcp/servers/local", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Everything (test)",
 		"command": "npx -y @modelcontextprotocol/server-everything@2025.11.25", "publisher": "modelcontextprotocol"}))
-	var dlg5: AcceptDialog = lights.call("open_dialog")
+	var dlg5: AcceptDialog = lights.call("open_dialog", "out")
 	await pause(3.0)
-	var sc5: ScrollContainer = dlg5.find_children("*", "ScrollContainer", true, false)[0]
-	sc5.scroll_vertical = 260
-	await pause(0.5)
 	calm()
 	await shot("m7-local")
 	quit(0)

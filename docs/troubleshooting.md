@@ -77,7 +77,7 @@ WhatsApp voice message shared by e-mail is an .opus file).
 
 ## An MCP server says « needs a key » or « needs an account sign-in »
 
-« Needs a key »: open the server's « Tools, key… » in the MCP window and save its API key. « Needs an account
+« Needs a key »: open the server's « Settings » (AI tools window, tab « Tools for your agents ») and save its API key. « Needs an account
 sign-in »: click « Sign in »; your browser opens the service's sign-in page and comes back to the Brain. « Disconnect
 the account » revokes the access.
 
