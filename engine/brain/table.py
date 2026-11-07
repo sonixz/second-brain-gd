@@ -103,7 +103,8 @@ _WORDS = {
     "frozen": "surgele surgeles congele congeles frozen",
     "spices": ("sel poivre paprika cumin safran cannelle muscade origan thym romarin laurier curcuma piment cari curry "
                "herbes moutarde ketchup mayonnaise sauce_soya soya tamari vinaigre vanille clou_de_girofle gingembre_moulu "
-               "salt pepper cinnamon nutmeg oregano thyme rosemary bay turmeric chili mustard vinegar spice spices "
+               "salt pepper cinnamon nutmeg oregano thyme rosemary bay turmeric chili mustard vinegar spice spices saffron paprika "
+               "cumin coriander_seed cloves cayenne ketchup mayonnaise soy_sauce "
                "assaisonnement epices"),
     "meat": ("poulet boeuf bœuf porc veau agneau dinde bacon jambon saucisse saucisses crevette crevettes saumon morue "
              "moule moules petoncle petoncles poisson fruits_de_mer tilapia aiglefin chorizo prosciutto canard "

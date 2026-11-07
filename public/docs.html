@@ -36,36 +36,52 @@
       <button class="btn docs-toc-toggle" type="button" aria-expanded="false">Contents</button>
       <input class="docs-search" type="search" placeholder="Filter the docs…" aria-label="Filter the docs">
       <nav>
-        <h4>Start</h4>
+        <h4>Get started</h4>
         <ul>
           <li><a href="#install">Install</a></li>
           <li><a href="#openai-key">Your OpenAI key</a></li>
           <li><a href="#data">Where your data lives</a></li>
-          <li><a href="#backups">Backups, restore, start fresh</a></li>
           <li><a href="#language">English or French</a></li>
         </ul>
-        <h4>Use</h4>
+        <h4>Capture</h4>
         <ul>
           <li><a href="#capture">Capture anything</a></li>
-          <li><a href="#archivist">How the archivist files</a></li>
-          <li><a href="#graph">The graph</a></li>
-          <li><a href="#voice">Voice commands</a></li>
-        </ul>
-        <h4>Integrate</h4>
-        <ul>
-          <li><a href="#agents-profiles">Archivist and Sparring</a></li>
-          <li><a href="#internet">Internet</a></li>
-          <li><a href="#folder-import">Import a folder (Obsidian…)</a></li>
-          <li><a href="#mentions">Ask about precise items (@)</a></li>
-          <li><a href="#missions">Missions</a></li>
+          <li><a href="#files">Files and originals</a></li>
+          <li><a href="#folder-import">Import a folder or a zip</a></li>
+          <li><a href="#voice-memos">Voice memos</a></li>
           <li><a href="#extension">Browser extension</a></li>
           <li><a href="#pictures">Pictures from pages</a></li>
           <li><a href="#browser">Bookmark (no extension)</a></li>
+        </ul>
+        <h4>Organise</h4>
+        <ul>
+          <li><a href="#archivist">How the archivist files</a></li>
+          <li><a href="#graph">The graph</a></li>
+          <li><a href="#typed-items">Recipes and typed items</a></li>
+          <li><a href="#table">The table and grocery lists</a></li>
+          <li><a href="#printing">Print on Letter paper</a></li>
+          <li><a href="#voice">Voice commands</a></li>
+        </ul>
+        <h4>Agents</h4>
+        <ul>
+          <li><a href="#agents-profiles">Archivist and Sparring</a></li>
+          <li><a href="#internet">Internet</a></li>
+          <li><a href="#mentions">Ask about precise items (@)</a></li>
+          <li><a href="#missions">Missions</a></li>
+          <li><a href="#agents">Codex agent room (parked)</a></li>
+        </ul>
+        <h4>Connect</h4>
+        <ul>
+          <li><a href="#mcp-in">Connect Claude Code (MCP)</a></li>
+          <li><a href="#mcp-out">MCP servers for your agents</a></li>
           <li><a href="#api">Local HTTP API</a></li>
           <li><a href="#packs">Brain packs</a></li>
-          <li><a href="#files">Files and originals</a></li>
+        </ul>
+        <h4>Your data</h4>
+        <ul>
+          <li><a href="#backups">Backups, restore, start fresh</a></li>
           <li><a href="#costs">Real AI costs</a></li>
-          <li><a href="#agents">Codex agent room (parked)</a></li>
+          <li><a href="#uninstall">Uninstall</a></li>
         </ul>
         <h4>Develop</h4>
         <ul>
@@ -87,7 +103,7 @@
           the current development build; the repository is private for now.</p>
         <div class="doc-cards">
           <a href="#install"><b>Install in 5 minutes</b><span>Godot, Python, one Setup button.</span></a>
-          <a href="#api"><b>Script your brain</b><span>Add, file and search from any language.</span></a>
+          <a href="#mcp-in"><b>Connect your AI tools</b><span>Claude Code reads it; your agents use MCP servers.</span></a>
           <a href="#packs"><b>Share a pack</b><span>Export part of your brain as one file.</span></a>
           <a href="howto.html"><b>How-to guides</b><span>Step by step, from the real app.</span></a>
         </div>
@@ -95,7 +111,7 @@
 
       <!-- START -->
       <section class="doc" id="install">
-        <p class="kicker">Start</p>
+        <p class="kicker">Get started</p>
         <h2>Install</h2>
         <h3>The package (no Python to install)</h3>
         <p>The package holds the app, the engine and <b>its own Python</b> with every dependency already in place:
@@ -153,7 +169,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
       </section>
 
       <section class="doc" id="openai-key">
-        <p class="kicker">Start</p>
+        <p class="kicker">Get started</p>
         <h2>Your OpenAI key</h2>
         <p>The archivist, meaning search, voice and image descriptions use your own OpenAI API key. Without one,
           the Brain still captures, stores, links and searches by words; nothing is lost.</p>
@@ -180,7 +196,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
       </section>
 
       <section class="doc" id="backups">
-        <p class="kicker">Start</p>
+        <p class="kicker">Your data</p>
         <h2>Backups, restore, start fresh</h2>
         <p>Your whole Brain is backed up by itself, every day by default, while the app is open. Everything is in:
           items, documents and page pictures, conversations, your agents, the undo history, settings. Never your API
@@ -221,7 +237,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
       </section>
 
       <section class="doc" id="language">
-        <p class="kicker">Start</p>
+        <p class="kicker">Get started</p>
         <h2>English or French</h2>
         <p>The app is in English. The <b>FR / EN</b> switch at the top right turns the whole interface into French (and
           back) at once, and is remembered. It also sets:</p>
@@ -242,7 +258,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
       </section>
 
       <section class="doc" id="data">
-        <p class="kicker">Start</p>
+        <p class="kicker">Get started</p>
         <h2>Where your data lives</h2>
         <p>Nothing is ever written inside the repository. Set <code>SBGD_HOME</code> to use another folder.</p>
         <table>
@@ -269,7 +285,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
 
       <!-- USE -->
       <section class="doc" id="capture">
-        <p class="kicker">Use</p>
+        <p class="kicker">Capture</p>
         <h2>Capture anything</h2>
         <p>Everything enters through one funnel, lands in the Inbox, and the archivist files it within seconds.</p>
         <figure class="shot doc-shot"><img src="assets/showcase/intake-receipt.webp" alt="A typed note filed into Projects › Kitchen renovation, with the receipt and an Undo button" loading="lazy" width="1280" height="800"><figcaption>A typed note, filed in seconds. The receipt says where and why.</figcaption></figure>
@@ -279,6 +295,9 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             <tr><td>A thought or a long text</td><td>Type or paste in the bar at the bottom, then <kbd>Enter</kbd> (<kbd>Ctrl</kbd>+<kbd>Space</kbd> focuses it). <code>[[Title]]</code> links, <code>#tag</code> groups.</td></tr>
             <tr><td>A web page</td><td>Paste its URL in the same bar: it is fetched, kept, summarised and indexed.</td></tr>
             <tr><td>A file</td><td>Drop it on the window: PDF, Word, Markdown, text, HTML, CSV, JSON, PNG, JPG, WebP, GIF.</td></tr>
+            <tr><td>A folder or a .zip of notes</td><td>Drop it on the window: a preview, then a layer (see <a href="#folder-import">Import a folder or a zip</a>).</td></tr>
+            <tr><td>A voice memo</td><td>Drop the recording (m4a, mp3, wav): transcribed and cut into ideas and tasks (see <a href="#voice-memos">Voice memos</a>).</td></tr>
+            <tr><td>A recipe page</td><td>Send it from the extension or paste its link: it becomes a recipe with its fields (see <a href="#typed-items">Recipes</a>).</td></tr>
             <tr><td>Your voice</td><td>Hold <kbd>F8</kbd>, speak, release. The receipt is spoken back.</td></tr>
             <tr><td>The clipboard</td><td><kbd>Ctrl</kbd>+<kbd>Shift</kbd>+<kbd>V</kbd>, or say “add this to the Brain”.</td></tr>
             <tr><td>Your browser</td><td>The “Send to Brain” bookmark (see <a href="#browser">From your browser</a>).</td></tr>
@@ -290,7 +309,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
       </section>
 
       <section class="doc" id="archivist">
-        <p class="kicker">Use</p>
+        <p class="kicker">Organise</p>
         <h2>How the archivist files</h2>
         <p>The archivist is data-oriented: it receives, understands, files and links. It gives no opinions and
           asks only when it cannot file an item without an answer.</p>
@@ -325,7 +344,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
       </section>
 
       <section class="doc" id="graph">
-        <p class="kicker">Use</p>
+        <p class="kicker">Organise</p>
         <h2>The graph</h2>
         <p>Wheel to zoom, drag to pan, drag an item to move it, <kbd>/</kbd> to search, <kbd>Esc</kbd> to close.</p>
         <figure class="shot doc-shot"><img src="assets/showcase/zoom-cards.webp" alt="Zoomed into the Kitchen renovation place: items shown as cards" loading="lazy" width="1280" height="800"><figcaption>The <i>near</i> level: items become cards.</figcaption></figure>
@@ -366,8 +385,59 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         </table>
       </section>
 
+      <section class="doc" id="typed-items">
+        <p class="kicker">Organise</p>
+        <h2>Recipes and typed items</h2>
+        <p>Some items have fields: a recipe has servings, times, ingredients and steps. The Brain keeps those fields as
+          data it can sort, add up and print, beside the item's text.</p>
+        <ul>
+          <li><b>A recipe page becomes a recipe, without AI.</b> Send it from the browser extension or paste its link:
+            when the page carries recipe data (schema.org, as most recipe sites do), the item gets its servings, prep and
+            cooking times, rating, picture, steps with their sections, and each ingredient as quantity, unit and name
+            (« 1 can of 796 ml diced tomatoes » stays a can of 796 ml). English and French.</li>
+          <li><b>Ask about it</b>: « the paella for 6 » rescales the quantities; « mark it tried », « rate it 5 » change
+            its fields.</li>
+          <li><b>Your own types</b>: an agent's instructions can describe one (« Book: author, year, read or not »); the
+            agent creates the type once and saves items with their fields. Missions can save typed items too.</li>
+          <li>What you write under <b>My notes</b> in a typed item stays when its fields change.</li>
+        </ul>
+      </section>
+
+      <section class="doc" id="table">
+        <p class="kicker">Organise</p>
+        <h2>The table and grocery lists</h2>
+        <p>The <b>Table</b> tab shows the same items as the graph in rows and columns. Pick a type (a recipe's fields
+          become columns) or every item, search titles, fields and ingredients, click a column title to sort, edit a
+          cell in place, save the view under a name, or export the rows as CSV for Excel. By voice: « show my chicken
+          recipes as a table ».</p>
+        <figure class="shot doc-shot"><img src="assets/showcase/table.webp" alt="The table of recipes: servings, total time, rating, category; two recipes ticked" loading="lazy" width="1280" height="800"><figcaption>Recipes as rows; two of them ticked for the grocery list.</figcaption></figure>
+        <ul>
+          <li><b>Grocery list</b>: tick recipes, choose the servings of each, and the ingredients are <b>added up</b>
+            (cups, spoons, ml and g converted and summed; cans kept as cans), grouped by aisle in shop order. A word the
+            Brain does not know goes to « Other »: nothing is guessed.</li>
+          <li><b>Save the list</b>: a note linked to its recipes, and its lines added to your « Épicerie » checklist.</li>
+        </ul>
+        <figure class="shot doc-shot"><img src="assets/showcase/grocery.webp" alt="The grocery list dialog: servings per recipe, ingredients grouped by aisle" loading="lazy" width="1280" height="800"><figcaption>Two recipes added up by aisle.</figcaption></figure>
+      </section>
+
+      <section class="doc" id="printing">
+        <p class="kicker">Organise</p>
+        <h2>Print on Letter paper</h2>
+        <p>Recipes, grocery lists and notes print as clean Letter (8½ × 11) pages: a recipe with its facts, picture,
+          ingredients beside the numbered steps (rescaled when printed for other servings); a grocery list as boxes to
+          tick, by aisle; any other item as its text.</p>
+        <figure class="shot doc-shot"><img src="assets/showcase/print-recipe.webp" alt="A printed recipe page: title, times, ingredients beside the steps" loading="lazy" width="800" height="1035"><figcaption>One recipe, one page.</figcaption></figure>
+        <ul>
+          <li><b>PDF</b> in the table (the ticked recipes, or the rows shown), <b>PDF for the fridge</b> in the grocery
+            list, or by voice: « export the paella recipe as a PDF ».</li>
+          <li>Microsoft Edge (already on Windows) prints the PDF in the background, with a throwaway profile and no
+            window; the PDF opens. Without Edge, the page opens: Ctrl+P → Save as PDF. Files stay in your data folder
+            (<code>exports/</code>).</li>
+        </ul>
+      </section>
+
       <section class="doc" id="agents-profiles">
-        <p class="kicker">Use</p>
+        <p class="kicker">Agents</p>
         <h2>Two agents: the Archivist and Sparring</h2>
         <p>Both work on the same Brain, each with its own role, tools, model and conversation. Each has its own floating
           panel; <kbd>F8</kbd> and <kbd>F9</kbd> talk to the one you last used (its title shows a ●).</p>
@@ -448,7 +518,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
       </section>
 
       <section class="doc" id="voice">
-        <p class="kicker">Use</p>
+        <p class="kicker">Organise</p>
         <h2>Voice commands</h2>
         <p>Hold <kbd>F8</kbd> to speak one thought or command; press <kbd>F9</kbd> for a live conversation you can
           interrupt (F9 again, or “thanks, that's all”, to end). The phrases below are examples, not a fixed
@@ -475,6 +545,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             <tr><td>Find</td><td>“find the article about…” · “how is X connected to Y?”</td></tr>
             <tr><td>Documents</td><td>“open the document X” · “next page” · “open the original” · “close the document”</td></tr>
             <tr><td>Packs</td><td>“export the X project” · “export everything” · “import a pack” · “switch off / merge / remove the pack X”</td></tr>
+            <tr><td>Recipes and the table</td><td>“the paella for 6” · “mark it tried” · “show my chicken recipes as a table” · “export the paella recipe as a PDF”</td></tr>
             <tr><td>Voice</td><td>“read that again” · “speak faster” · “undo that”</td></tr>
           </tbody>
         </table>
@@ -494,7 +565,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
 
       <!-- INTEGRATE -->
       <section class="doc" id="internet">
-        <p class="kicker">Use</p>
+        <p class="kicker">Agents</p>
         <h2>Internet</h2>
         <p>The Archivist (and any agent with the Internet capability) can search the web and read pages, then add what you choose to the Brain. Ask with
           <kbd>F8</kbd>: “search the web for DevSecOps jobs in Montreal”, “read me the second one”,
@@ -514,7 +585,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
       </section>
 
       <section class="doc" id="folder-import">
-        <p class="kicker">Use</p>
+        <p class="kicker">Capture</p>
         <h2>Import a folder of notes (Obsidian, Markdown)</h2>
         <p>Already keep notes as Markdown files, in Obsidian or elsewhere? Drop the folder on the window, or click
           <b>+ Folder</b> in the Places panel, or say “importe mon vault Obsidian”. The app reads the folder and tells
@@ -542,10 +613,36 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
             (Foam and others) are read the same way.</li>
         </ul>
         <p>Step by step: <a href="howto.html#vault">Bring your Obsidian vault</a>.</p>
+              <p><b>A .zip works too</b>: drop a downloaded vault (a GitHub « Download ZIP », a Notion export with zips inside)
+          or choose it with <b>+ File</b>. It is unpacked safely into the app's own folder (nothing outside it, size
+          limits, no program run), your download stays as it is, and the same preview opens. File names with underscores
+          (<code>Detect_Magic.md</code>) read as titles with spaces, so their links resolve. <b>Stop</b> ends a long read or
+          import and keeps nothing; imports wait up to ten minutes.</p>
+      </section>
+
+      <section class="doc" id="voice-memos">
+        <p class="kicker">Capture</p>
+        <h2>Voice memos</h2>
+        <p>Record your ideas anywhere, even offline, with your phone's recorder. At home, drop the file (or several, or a
+          folder of them) on the window, or choose it with <b>+ File</b>. A preview opens before anything is sent: each
+          memo's length, when it was recorded (from the file itself, or a date in its name), and the estimated cost. It
+          also checks, for free, that your OpenAI key may use a transcription model.</p>
+        <figure class="shot doc-shot"><img src="assets/showcase/memo-preview.webp" alt="The voice memo preview: one memo, its length, recording date and estimated cost" loading="lazy" width="1280" height="800"><figcaption>Nothing is sent before you press Transcribe.</figcaption></figure>
+        <ul>
+          <li><b>Transcribe</b>: each memo goes to OpenAI with your key (<code>gpt-transcribe</code>, about half a cent a
+            minute), then one call cuts it into <b>ideas, tasks and notes</b>, each linked to the memo with about when it
+            was said (« at about 1:32 ») and filed in one of your places when it clearly belongs there.</li>
+          <li>The memo keeps the <b>original audio</b> and the <b>full transcript</b> (searchable). Every item is dated
+            when the memo was recorded, so the timeline shows when the idea came.</li>
+          <li>Formats: m4a, mp3, wav, mp4, webm, up to 25 MB (about 45 minutes). <code>.ogg</code>, <code>.opus</code> and
+            <code>.aac</code> are refused with a way out: export the memo as m4a or mp3.</li>
+          <li><b>Stop</b> ends the run after the memo under way; the same recording dropped twice is added once.</li>
+        </ul>
+        <figure class="shot doc-shot"><img src="assets/showcase/memo-report.webp" alt="The report: one memo, its four items with their moment in the recording" loading="lazy" width="1280" height="800"><figcaption>A 47-second memo: two tasks and two ideas, each with its moment.</figcaption></figure>
       </section>
 
       <section class="doc" id="mentions">
-        <p class="kicker">Use</p>
+        <p class="kicker">Agents</p>
         <h2>Ask about precise items (@)</h2>
         <p>Normally the agent searches your Brain to find what fits your question. When you already know which items
           you mean, type <b>@</b> in an agent's panel: items appear by title as you type (no AI call, instant). Pick one
@@ -567,7 +664,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
       </section>
 
       <section class="doc" id="missions">
-        <p class="kicker">Use</p>
+        <p class="kicker">Agents</p>
         <h2>Missions: give an agent a real job</h2>
         <p>A conversation is for questions. A <b>mission</b> is for a job that takes several searches, many pages and a
           decision from you: “this week's menu from the IGA, Maxi and Provigo specials”, “compare three heat pumps for
@@ -604,7 +701,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
       </section>
 
       <section class="doc" id="extension">
-        <p class="kicker">Integrate · tutorial</p>
+        <p class="kicker">Capture</p>
         <h2>Browser extension (Edge, Chrome)</h2>
         <p>The extension connects <b>your</b> browser to your Brain. Send the page you are reading, or just a passage,
           in one click; and let the Archivist open pages for you, add them once you have checked them, and close them,
@@ -739,7 +836,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
       </section>
 
       <section class="doc" id="pictures">
-        <p class="kicker">Integrate · reference</p>
+        <p class="kicker">Capture</p>
         <h2>Pictures from pages</h2>
         <p>A web page brings its pictures that carry something: its <b>main image</b> (shown on its card in the graph)
           and its <b>figures</b>: a diagram, a chart, a table published as a picture, a photo with a caption. At most
@@ -768,7 +865,7 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
       </section>
 
       <section class="doc" id="browser">
-        <p class="kicker">Integrate · tutorial</p>
+        <p class="kicker">Capture</p>
         <h2>Without the extension: a bookmark</h2>
         <p>Prefer the <a href="#extension">browser extension</a>. If you cannot install it, a bookmarklet sends the address
           of the current page, or your selection, to your Brain, in any browser. The engine then downloads the page
@@ -791,8 +888,59 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         </ul>
       </section>
 
+      <section class="doc" id="mcp-in">
+        <p class="kicker">Connect</p>
+        <h2>Connect Claude Code to your Brain (MCP)</h2>
+        <p>Your Brain is also an <b>MCP server</b>: Claude Code (or any tool that speaks the Model Context Protocol) can
+          read and search it, on this computer only. Click the <b>⇠● ⇢●</b> lights at the top, name the tool and press
+          <b>Connect an AI tool</b>: copy one of the two commands (its key is shown once), then restart Claude Code.</p>
+        <figure class="shot doc-shot"><img src="assets/showcase/mcp-connect.webp" alt="The MCP window: a tool connected, the commands to copy, recent calls" loading="lazy" width="1280" height="800"><figcaption>Two commands: Claude Code on Windows, or in WSL through a small relay.</figcaption></figure>
+        <ul>
+          <li><b>Read</b>: overview, search, an item's text in parts, places, neighbours, paths, recent items, the Inbox,
+            typed items as rows. Answers are short and paged; your content is always marked as data, never as
+            instructions.</li>
+          <li><b>The archivist is the only door.</b> A tool never writes. At the level you give it, it <b>proposes</b>
+            an item to add or a change (move, link, fields, trash); the archivist files or checks it with your rules, and
+            it waits for your approval (or goes through at once for a tool you trust). It gets a receipt.</li>
+          <li><b>Timeline of changes</b>: who changed what (you and the archivist, or a tool), restore points (one before
+            each tool's first write of a session, plus a backup), and « Go back here », for everyone or one author.
+            An item you changed since stays as it is.</li>
+          <li>The <b>⇠</b> light turns green when a tool is connected and red during a call. <b>Disconnect</b> revokes its
+            key. Local only: 127.0.0.1, nothing on the network.</li>
+        </ul>
+        <figure class="shot doc-shot"><img src="assets/showcase/mcp-proposals.webp" alt="Proposals from Claude Code waiting for approval" loading="lazy" width="1280" height="800"><figcaption>Two proposals waiting: approve, refuse, or approve all.</figcaption></figure>
+        <figure class="shot doc-shot"><img src="assets/showcase/mcp-timeline.webp" alt="The timeline of changes with a restore point" loading="lazy" width="1280" height="800"><figcaption>Claude Code's changes after its automatic restore point.</figcaption></figure>
+      </section>
+
+      <section class="doc" id="mcp-out">
+        <p class="kicker">Connect</p>
+        <h2>MCP servers for your agents</h2>
+        <p>Your agents can use the tools of <b>MCP servers</b> you connect, in the same window. Start with the
+          hand-checked list (Microsoft Learn, Context7, DeepWiki, Exa: no account needed) or search the official MCP
+          registry; each entry says its family, publisher and source.</p>
+        <figure class="shot doc-shot"><img src="assets/showcase/mcp-catalogue.webp" alt="The servers for the agents: Microsoft Learn connected, its tools, key and budget; the catalogue" loading="lazy" width="1280" height="800"><figcaption>A server's tools, key and monthly budget; the catalogue below.</figcaption></figure>
+        <ul>
+          <li><b>Who may use it</b>: all agents, or only one. Tools can be switched off; fewer tools make a sharper
+            agent and cost fewer tokens.</li>
+          <li><b>Keys</b> are kept in Windows' credential store. A server that needs an <b>account sign-in</b> shows
+            « Sign in »: your browser opens the service's page and comes back to the Brain; « Disconnect the account »
+            revokes it.</li>
+          <li><b>Writes outside are confirmed</b>: a tool that could change something outside the Brain waits for your
+            « Allow once » at each call, and the window warns when an agent reads your Brain and could write outside.</li>
+          <li><b>Local programs</b> (npx, uvx, Docker): the exact command is shown with its pinned version and runs only
+            after « Approve and start », in a clean environment without your secrets. The Brain never installs Node, uv
+            or Docker; it says which one is missing.</li>
+          <li><b>Costs</b>: calls and the tokens their answers add are counted per server; a monthly budget can stop a
+            server. What a server returns is information, never instructions. A server may ask you a question during a
+            call (shown in the window); it may not use your AI model unless you allow it.</li>
+          <li>The <b>⇢</b> light turns green when a server is ready and red during a call; <b>Stop the calls under way</b>
+            ends them.</li>
+        </ul>
+        <figure class="shot doc-shot"><img src="assets/showcase/mcp-local.webp" alt="A local server waiting for approval, its exact command shown" loading="lazy" width="1280" height="800"><figcaption>A local program: its pinned command, waiting for « Approve and start ».</figcaption></figure>
+      </section>
+
       <section class="doc" id="api">
-        <p class="kicker">Integrate · tutorial</p>
+        <p class="kicker">Connect</p>
         <h2>Script your brain with the local HTTP API</h2>
         <p>The engine is a FastAPI service on <code>127.0.0.1</code>. Anything the app does, a script can do:
           add notes, links and files, ask the archivist to file them, search, draw paths, export packs.</p>
@@ -864,7 +1012,7 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
       </section>
 
       <section class="doc" id="packs">
-        <p class="kicker">Integrate · tutorial</p>
+        <p class="kicker">Connect</p>
         <h2>Brain packs: share part of your brain</h2>
         <p>A pack is a <code>.brain</code> file you can share, archive or use to restart a project elsewhere.
           Imported, it becomes a <b>layer</b>: switch it off, merge it, or remove it without touching your own items.</p>
@@ -909,7 +1057,7 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
       </section>
 
       <section class="doc" id="files">
-        <p class="kicker">Integrate</p>
+        <p class="kicker">Capture</p>
         <h2>Files and originals</h2>
         <p>Every file and web page is copied once to <code>data/originals/&lt;2 hex&gt;/&lt;sha256&gt;.&lt;ext&gt;</code>.
           Moving or deleting the file on disk never loses it, and web pages are kept as they were on the day you added them.</p>
@@ -949,7 +1097,7 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
       </section>
 
       <section class="doc" id="costs">
-        <p class="kicker">Integrate</p>
+        <p class="kicker">Your data</p>
         <h2>Real AI costs on the dashboard</h2>
         <p>The engine room can show your real OpenAI bill and token usage, read live from OpenAI's Costs and Usage
           APIs; nothing is stored locally and nothing is estimated.</p>
@@ -963,7 +1111,7 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
       </section>
 
       <section class="doc" id="agents">
-        <p class="kicker">Integrate · parked</p>
+        <p class="kicker">Agents</p>
         <h2>Codex agent room (parked)</h2>
         <div class="callout parked"><p>Built and tested, set aside while the graph comes first. It stays in the
           code and will come back as a module.</p></div>
@@ -987,18 +1135,19 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
         <table>
           <thead><tr><th>Folder</th><th>What lives there</th></tr></thead>
           <tbody>
-            <tr><td><code>scenes/</code></td><td>Godot screens: <code>brain/</code> (graph, captures, viewer, filters, packs), <code>startup/</code>, <code>dashboard/</code>, components</td></tr>
+            <tr><td><code>scenes/</code></td><td>Godot screens: <code>brain/</code> (graph, table, captures, viewer, filters, packs, imports, voice memos, MCP window, timeline), <code>startup/</code>, <code>dashboard/</code>, components</td></tr>
             <tr><td><code>scripts/</code></td><td>GDScript: <code>core/</code> (app, theme, audio, settings), <code>setup/</code>, <code>voice/</code>, <code>monitoring/</code></td></tr>
-            <tr><td><code>engine/brain/</code></td><td>Items, places, links, archivist, meaning, packs, paths, seeds</td></tr>
-            <tr><td><code>engine/sources/</code></td><td>Extraction, originals, PDF rendering, local OCR</td></tr>
+            <tr><td><code>engine/brain/</code></td><td>Items, places, links, archivist, meaning, packs, paths, typed items, the table and grocery lists, Letter export, the timeline</td></tr>
+            <tr><td><code>engine/sources/</code></td><td>Extraction, originals, PDF rendering, local OCR, folder and zip imports, voice memos, recipes read from their page</td></tr>
             <tr><td><code>engine/browser/</code> · <code>browser-extension/</code></td><td>Pairing, live link and pages from the browser · the Edge/Chrome extension (Manifest V3)</td></tr>
+            <tr><td><code>engine/mcp/</code></td><td>The MCP server (read tools, proposals, the WSL relay) and client (Streamable HTTP, SSE, stdio; keys, OAuth sign-in, catalogue, local programs)</td></tr>
             <tr><td><code>engine/assistant/</code> · <code>voice/</code></td><td>The archivist's chat and tools · push-to-talk and live relay</td></tr>
             <tr><td><code>engine/database/migrations/</code></td><td>Numbered, checksummed, immutable SQL migrations</td></tr>
             <tr><td><code>tests/</code> · <code>tools/</code></td><td>Python and Godot tests · capture, benchmarks, test runners</td></tr>
           </tbody>
         </table>
         <p>Deeper notes live in the repository's <code>docs/architecture/</code>: intake, packs, originals, live
-          conversation, billing, agent room, events protocol and process lifecycle.</p>
+          conversation, billing, agent room, events protocol and process lifecycle; and <code>mcp.md</code> and <code>typed-items.md</code> for MCP and the recipes, table and export.</p>
       </section>
 
       <section class="doc" id="dependencies">
@@ -1024,7 +1173,9 @@ print(call("POST", f"/assistant/classify/{note['id']}")["receipt"])</code></pre>
             <tr><td>Python 3.12 or 3.13</td><td>Yes</td><td>The engine</td></tr>
             <tr><td>Windows OCR + PowerShell</td><td>Built into Windows</td><td>Reading scanned PDFs and text in images, locally</td></tr>
             <tr><td>Tesseract (<code>tesseract-ocr</code>, <code>-fra</code>)</td><td>Optional, Linux</td><td>The same on Linux</td></tr>
-            <tr><td>An OpenAI key</td><td>Optional</td><td>Filing, summaries, meaning search, voice, image descriptions, Re-read with AI</td></tr>
+            <tr><td>Microsoft Edge</td><td>Built into Windows</td><td>Printing PDFs in the background (otherwise the page opens for Ctrl+P)</td></tr>
+            <tr><td>Node.js, uv, Docker</td><td>Only for local MCP servers you choose</td><td>Never installed by the Brain; the MCP window says which one a server needs</td></tr>
+            <tr><td>An OpenAI key</td><td>Optional</td><td>Filing, summaries, meaning search, voice, voice memos, image descriptions, Re-read with AI</td></tr>
           </tbody>
         </table>
         <p>To add a package: edit <code>engine/requirements.in</code>, then regenerate the lock with
@@ -1097,7 +1248,11 @@ SBGD_SHOT_SIZE=1600x1000 ./tools/showcase.sh     # the website screenshots, from
           <li>Imported packs, fetched pages and pages sent by the browser are data, never instructions; archives are unpacked defensively.</li>
           <li>The browser extension gets its own token by one-time pairing (hash stored, revocable); it can only send pages
             and answer commands, and only reaches <code>127.0.0.1</code>.</li>
-          <li>The engine stops with the app, and on its own if the app crashes (parent-process watchdog).</li>
+          <li>The engine stops with the app, and on its own if the app crashes (parent-process watchdog).
+          <b>MCP</b>: the <code>/mcp</code> endpoint answers 127.0.0.1 only; each connected tool has its own token (only its
+          hash is kept), never writes (it proposes; the archivist decides), and every applied change is journaled with
+          its author. Keys and sign-ins for MCP servers stay in the OS credential store; a tool that writes outside is
+          confirmed at each call; local programs run only after you approve their exact command, without your secrets.</li>
         </ul>
       </section>
 
@@ -1112,6 +1267,10 @@ SBGD_SHOT_SIZE=1600x1000 ./tools/showcase.sh     # the website screenshots, from
             <tr><td>Setup fails with the Store Python</td><td>Run Setup from Godot (it creates the data folder first).</td></tr>
             <tr><td>The bookmarklet stopped working</td><td>The engine changed port or the key was renewed: copy the link again.</td></tr>
             <tr><td>Voice or filing does nothing</td><td>Check the key in the engine room's Voice card; the error is shown there in plain words.</td></tr>
+            <tr><td>A PDF export opens as a web page</td><td>Edge was not found or refused: press Ctrl+P and choose Save as PDF. The page is in <code>exports/</code>.</td></tr>
+            <tr><td>“does not allow a transcription model”</td><td>Your OpenAI project limits its models: Settings → Project → Limits on platform.openai.com, allow <code>gpt-transcribe</code>.</td></tr>
+            <tr><td>An MCP server needs a key or a sign-in</td><td>Open its <b>Tools, key…</b> in the MCP window and save the key, or click <b>Sign in</b>.</td></tr>
+            <tr><td>Claude Code in WSL cannot reach the Brain</td><td>Use the “Claude Code in WSL” command from the MCP window (a relay with the app's Python); keep the app open; restart Claude Code.</td></tr>
           </tbody>
         </table>
         <p>Logs: <code>logs/bootstrap.log</code> (every setup event, including pip output) and <code>logs/server.log</code>.

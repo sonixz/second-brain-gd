@@ -50,6 +50,16 @@ audit-before-public: MCP tokens, keys, local programs, sampling, screenshots. Ev
 - Navigation grouped by what people do: Get started · Capture · Organise · Agents · Connect · Your data · Developers.
 - Every sentence checked against the code; pictures re-captured (the new top bar with Table and the MCP lights).
 
+**DOC-B done 2026-11-07.** docs.html: new sections Voice memos, Recipes and typed items, The table and grocery
+lists, Print on Letter paper, Connect Claude Code (MCP in: tools, proposals through the archivist, the timeline,
+lights), MCP servers for your agents (catalogue, keys, sign-in, the guard, local programs, costs); the zip import in
+« Import a folder or a zip »; rows added to Capture, Voice commands and Troubleshooting; security, architecture
+and dependencies brought up to date (engine/mcp, Edge, Node / uv / Docker only for local servers); navigation
+grouped Get started · Capture · Organise · Agents · Connect · Your data · Develop, each section's kicker matching;
+an intro card « Connect your AI tools ». Ten new pictures (assets/showcase/memo-*, table, grocery, print-recipe,
+mcp-*), the export picture made from an English sample. Every anchor checked; the HTML parses cleanly. Found on
+the way: « saffron », « paprika », « soy sauce » were not English spice words for the grocery aisles (fixed).
+
 ## DOC-C — How-to (public/howto.html)
 
 - Four new guides captured from the real app (tools/howto): « A voice memo becomes ideas », « From a recipe page to
