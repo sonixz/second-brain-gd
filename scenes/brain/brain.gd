@@ -613,14 +613,14 @@ func _build_left_panel() -> void:
 	var addf := Button.new()
 	addf.text = I18n.t("+ File")
 	addf.theme_type_variation = "GhostButton"
-	addf.tooltip_text = I18n.t("Add a PDF, Word, Markdown or text file. You can also drop files on the window, or paste a link in the capture bar.")
+	addf.tooltip_text = I18n.t("Add a PDF, Word, Markdown or text file, or a .zip of notes. You can also drop files on the window, or paste a link in the capture bar.")
 	addf.pressed.connect(_pick_file)
 	srow.add_child(addf)
 	var addd := Button.new()
 	addd.name = "ImportFolderButton"
 	addd.text = I18n.t("+ Folder")
 	addd.theme_type_variation = "GhostButton"
-	addd.tooltip_text = I18n.t("Import a folder of notes (an Obsidian vault, Markdown notes). You can also drop a folder on the window.")
+	addd.tooltip_text = I18n.t("Import a folder of notes (an Obsidian vault, Markdown notes). You can also drop a folder or a .zip on the window.")
 	addd.pressed.connect(_pick_folder)
 	srow.add_child(addd)
 	sources_box = VBoxContainer.new()
@@ -689,7 +689,7 @@ func _undo_toast() -> void:
 # ---------------------------------------------------------------- sources
 func _on_files_dropped(files: PackedStringArray) -> void:
 	for f in files:
-		if DirAccess.dir_exists_absolute(f):  # a folder: the import preview (Loop 39)
+		if DirAccess.dir_exists_absolute(f) or f.get_extension().to_lower() == "zip":  # a folder or a zip of notes: the import preview (Loops 39, 37)
 			await import_folder(f)
 		elif f.get_extension().to_lower() == "brain":
 			await import_pack(f)
@@ -714,7 +714,7 @@ func _pick_file() -> void:
 		_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILES
 		_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 		_file_dialog.use_native_dialog = true
-		_file_dialog.filters = PackedStringArray(["*.pdf, *.docx, *.md, *.txt, *.html, *.htm, *.csv, *.json ; " + I18n.t("Documents")])
+		_file_dialog.filters = PackedStringArray(["*.pdf, *.docx, *.md, *.txt, *.html, *.htm, *.csv, *.json, *.zip ; " + I18n.t("Documents")])
 		_file_dialog.files_selected.connect(func(paths: PackedStringArray) -> void: _on_files_dropped(paths))
 		add_child(_file_dialog)
 	_file_dialog.popup_centered_ratio(0.6)

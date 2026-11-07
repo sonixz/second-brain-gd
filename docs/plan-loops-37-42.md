@@ -37,6 +37,25 @@ Details from docs/plan-loops-35-37.md (Loop 37), plus what was left from Loop 36
 - **Voice hand-over guide** (left from Loop 36): a short How-to « Start a mission by voice ».
 - **Can start before the owner's tests:** notification, past choices, guide. The fixes wait for their use.
 
+**Owner's first real mission and talk (2026-11-06 evening), refocusing Loop 37:**
+- Mission read on a copy of their DB: 9 items saved (6 real RICARDO recipes, menu, grocery list), 18 rounds,
+  224 s, 1.01 $ (cap 1.00 $: the last round finishes). The instruction block was pasted as the mission goal (the
+  agent's instructions were empty); the three Edge reads failed (extension 1.1.0 likely not reloaded), so only
+  11 specials from one article; the owner answered the 12-choice question in free text.
+- Owner direction: recipes first, grocery lists built from chosen recipes (not specials first); the agent as a
+  kitchen assistant (« la paella, donne-moi les ingrédients » from their own recipe).
+- To do: one input at a time during a mission (the Mission row closes, the chat field becomes « add a detail
+  to the mission »); warn when an instruction block is pasted into the Mission field; structured recipe card at
+  capture (schema.org Recipe read without AI: picture, servings, times, ingredients with quantities, steps,
+  rating; ingredients as nodes); grocery list from chosen recipes (quantities added, by aisle).
+- Ricardo spike (12 pages, 0 $): every recipe page carries a complete schema.org Recipe; listing pages carry
+  rating and votes. Its terms forbid robots that access or index the site, but allow personal download with the
+  source URL: capture stays user-driven (one recipe the owner opens), bulk import only for sources that allow it.
+- **Done:** graph glides and rests (ff55318: no reheat on an unchanged refresh, fixed 1/60 s steps); **.zip
+  import** (engine/sources/zip_import.py: safe unpack into <data>/imports/zips, nested Notion zips, size limits,
+  links/absolute/../ refused; dropped or chosen zip opens the folder preview); file names with underscores read
+  as titles with spaces (D&D SRD 5.1 zip: 1,021 notes, 778 of 779 links, imported in 1.2 s, < 0.01 $).
+
 ## Loop 38 — @ mentions
 
 **Done 2026-11-06.** engine/brain/mentions.py (suggest by title, no model; context block with each item's text,

@@ -124,9 +124,15 @@ def _fold(s: str) -> str:
     return s.strip().replace("\\", "/").casefold()
 
 
+def _name_key(s: str) -> str:
+    """A note name as a link would write it: « Detect_Magic » and « Detect Magic » are the same note."""
+    return re.sub(r"[\s_]+", " ", _fold(s)).strip()
+
+
 def _clean_place(name: str) -> str:
     """« 1. Projects », « 01 - Projets » -> « Projects », « Projets »."""
-    return re.sub(r"^[\s\d._\-–—)]+", "", name).strip() or name.strip()
+    name = re.sub(r"_+", " ", name)
+    return re.sub(r"^[\s\d.\-–—)]+", "", name).strip() or name.strip()
 
 
 def _hash(text: str) -> str:
@@ -218,6 +224,8 @@ class Note:
         self.rel = path.relative_to(root).as_posix()
         stem = path.stem.strip()
         self.title = (NOTION_ID.sub("", stem) if kind == "notion" else _logseq_title(stem) if kind == "logseq" else stem) or "Untitled"
+        if "_" in self.title and " " not in self.title.strip("_"):  # « Detect_Magic.md »: a title is read with spaces
+            self.title = re.sub(r"_+", " ", self.title).strip() or self.title
         raw = path.read_text(encoding="utf-8", errors="replace").lstrip("\ufeff").replace("\r\n", "\n")
         self.raw_hash = _hash(raw)
         self.props, body, self.malformed = front_matter(raw)
@@ -274,10 +282,12 @@ class Resolver:
         self.by_stem: dict[str, list[Note]] = {}
         self.by_path: dict[str, Note] = {}
         for n in notes:
-            self.by_stem.setdefault(_fold(n.title), []).append(n)
+            self.by_stem.setdefault(_name_key(n.title), []).append(n)
+            if _name_key(n.path.stem) != _name_key(n.title):
+                self.by_stem.setdefault(_name_key(n.path.stem), []).append(n)
             self.by_path[_fold(n.rel[:-3] if n.rel.lower().endswith(".md") else n.rel.rsplit(".", 1)[0])] = n
             for a in n.aliases:
-                self.by_stem.setdefault(_fold(a), []).append(n)
+                self.by_stem.setdefault(_name_key(a), []).append(n)
 
     def by_file(self, rel: str) -> Note | None:
         """A note by its path from the vault root (a Markdown link), « .md » optional."""
@@ -296,7 +306,7 @@ class Resolver:
             if ends:
                 return ends[0], len(ends) > 1
             t = t.rsplit("/", 1)[1]
-        hits = list(dict.fromkeys(self.by_stem.get(t, [])))
+        hits = list(dict.fromkeys(self.by_stem.get(_name_key(t), [])))
         if not hits:
             return None, False
         if len(hits) == 1:
@@ -403,8 +413,8 @@ def spoken_path(path: str, obsidian: bool = False) -> str:
     the one Obsidian opened last. "" when unknown (the folder picker opens)."""
     p = (path or "").strip().strip("«»\"' ")
     if p:
-        for cand in (Path(p).expanduser(), Path.home() / p):
-            if cand.is_dir():
+        for cand in (Path(p).expanduser(), Path.home() / p, Path.home() / "Downloads" / p):
+            if cand.is_dir() or (cand.is_file() and cand.suffix.lower() == ".zip"):
                 return str(cand)
         return ""
     if obsidian:
@@ -461,6 +471,11 @@ LABELS = {"obsidian": "Obsidian vault", "logseq": "Logseq graph", "notion": "Not
           "markdown": "Markdown folder", "documents": "Folder of documents", "empty": "Nothing to import"}
 
 
+def _vault_name(root: Path) -> str:
+    """The folder's name as shown: a GitHub download « notes-main » is « notes »."""
+    return re.sub(r"-(main|master)$", "", root.name).strip() or root.name or "Vault"
+
+
 def vault_root(path: str) -> Path:
     """The folder to import: the one given, or the Obsidian vault inside it when a repository or a download holds
     the vault in one subfolder (« Vault/.obsidian »)."""
@@ -472,12 +487,26 @@ def vault_root(path: str) -> Path:
     return root
 
 
+def _source(conn: sqlite3.Connection, path: str) -> tuple[Path, dict[str, Any] | None]:
+    """(the folder to read, the zip it came from or None): a .zip is unpacked first (Loop 37)."""
+    p = Path(path).expanduser()
+    if p.is_file() and p.suffix.lower() == ".zip":
+        from engine.sources import originals, zip_import
+
+        try:
+            folder, refused = zip_import.unpack(p, originals.data_root(conn))
+        except zip_import.ZipRefused as exc:
+            raise ImportError_(str(exc)) from exc
+        return vault_root(str(folder)), {"name": p.name, "path": str(p), "refused": refused}
+    return vault_root(path), None
+
+
 def scan(conn: sqlite3.Connection, path: str, keep_folders: bool = True) -> dict[str, Any]:
     """The preview: what was detected, what would come in, and what it would cost."""
-    root = vault_root(path)
+    root, from_zip = _source(conn, path)
     r = _read(root)
     notes: list[Note] = r["notes"]
-    vault = root.name or "Vault"
+    vault = _vault_name(root)
     places = sorted({place_for(n, vault) for n in notes}) if keep_folders else [("Inbox", "inbox")]
     layer = _layer_for(conn, root)
     again = None
@@ -496,8 +525,8 @@ def scan(conn: sqlite3.Connection, path: str, keep_folders: bool = True) -> dict
             "document_paths": [str(p) for p in r["docs"][:500]],
             "folders": len(places), "places": [{"name": n, "kind": k} for n, k in places[:40]],
             "tags": len({t for n in notes for t in n.tags}), "skipped": r["skipped"], "malformed": r["malformed"][:20],
-            "templates": r["templates"], "inner": str(root) != str(Path(path).expanduser()),
-            "tokens": r["tokens"], "cost_usd": cost, "again": again, "keep_folders": keep_folders}
+            "templates": r["templates"], "inner": from_zip is None and str(root) != str(Path(path).expanduser()),
+            "tokens": r["tokens"], "cost_usd": cost, "again": again, "keep_folders": keep_folders, "zip": from_zip}
 
 
 # ------------------------------------------------------------------- import
@@ -560,12 +589,12 @@ def run(conn: sqlite3.Connection, path: str, keep_folders: bool = True) -> dict[
     """Imports (or imports again) a folder of notes as a layer. Returns an honest report."""
     from engine.brain import archivist
 
-    root = vault_root(path)
+    root, from_zip = _source(conn, path)
     r = _read(root)
     notes: list[Note] = r["notes"]
     if not notes:
         raise ImportError_("no Markdown notes in this folder")
-    vault = root.name or "Vault"
+    vault = _vault_name(root)
     now = utc_now()
     layer = _layer_for(conn, root)
     if layer:
@@ -576,6 +605,8 @@ def run(conn: sqlite3.Connection, path: str, keep_folders: bool = True) -> dict[
     else:
         layer_id = uuid.uuid4().hex[:16]
         manifest = {"kind": "folder", "source": r["kind"], "path": str(root), "title": vault}
+        if from_zip:
+            manifest["zip"] = from_zip["path"]
         conn.execute("INSERT INTO pack_layers (id, title, author, licence, description, manifest, imported_at)"
                      " VALUES (?, ?, NULL, NULL, ?, ?, ?)",
                      (layer_id, vault[:120], LABELS[r["kind"]], json.dumps(manifest, ensure_ascii=False), now))
@@ -658,7 +689,7 @@ def run(conn: sqlite3.Connection, path: str, keep_folders: bool = True) -> dict[
         meaning.poke()  # the meaning index embeds the new notes in the background
     except Exception:
         pass
-    return {"layer_id": layer_id, "name": vault, "kind": r["kind"], "label": LABELS[r["kind"]],
+    return {"layer_id": layer_id, "name": vault, "kind": r["kind"], "label": LABELS[r["kind"]], "zip": from_zip,
             "notes": len(notes), "created": created, "updated": updated, "unchanged": same, "missing_in_folder": missing,
             "links": r["links"], "resolved": r["resolved"], "ambiguous": r["ambiguous"], "unresolved": len(unresolved),
             "unresolved_list": [{"target": k, "count": v} for k, v in unresolved[:50]],

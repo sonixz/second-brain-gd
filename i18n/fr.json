@@ -56,7 +56,6 @@
  "A title is needed": "Il faut un titre",
  "A word or a theme (e.g. ai, #recipes)": "Un mot ou un thème (ex. ia, #recettes)",
  "Active": "Actif",
- "Add a PDF, Word, Markdown or text file. You can also drop files on the window, or paste a link in the capture bar.": "Ajoute un fichier PDF, Word, Markdown ou texte. Tu peux aussi déposer des fichiers sur la fenêtre, ou coller un lien dans la barre de capture.",
  "Add items (comma separated)…": "Ajouter des éléments (séparés par des virgules)…",
  "Added “%s” · %d passages indexed": "“%s” ajouté · %d passages indexés",
  "Address": "Adresse",
@@ -850,7 +849,6 @@
  "Markdown folder: « %s »": "Dossier Markdown : « %s »",
  "Folder of documents: « %s »": "Dossier de documents : « %s »",
  "Nothing to import in « %s »": "Rien à importer dans « %s »",
- "This folder cannot be read: %s": "Ce dossier ne peut pas être lu : %s",
  "%d notes · %d links · %d attachments · %d places · %d themes": "%d notes · %d liens · %d pièces jointes · %d lieux · %d thèmes",
  "%d links point to notes that do not exist yet (%s…): they stay as written.": "%d liens pointent vers des notes qui n’existent pas encore (%s…) : ils restent tels quels.",
  "%d template notes are left out.": "%d notes gabarits sont laissées de côté.",
@@ -866,8 +864,12 @@
  "Pointing nowhere: %s": "Vers nulle part : %s",
  "It is a layer: switch it off, merge it or remove it in Brain packs.": "C’est une couche : désactive-la, fusionne-la ou retire-la dans les packs du Brain.",
  "+ Folder": "+ Dossier",
- "Import a folder of notes (an Obsidian vault, Markdown notes). You can also drop a folder on the window.": "Importe un dossier de notes (un vault Obsidian, des notes Markdown). Tu peux aussi déposer un dossier sur la fenêtre.",
  "%d pictures inside notes come along, attached to their note.": "%d images intégrées aux notes suivent, attachées à leur note.",
  "Other files inside notes stay out for now (%d).": "Les autres fichiers intégrés aux notes restent de côté pour l’instant (%d).",
- "Notion export detected: « %s »": "Export Notion détecté : « %s »"
+ "Notion export detected: « %s »": "Export Notion détecté : « %s »",
+ "Import a folder of notes (an Obsidian vault, Markdown notes). You can also drop a folder or a .zip on the window.": "Importe un dossier de notes (un vault Obsidian, des notes Markdown). Tu peux aussi déposer un dossier ou un .zip sur la fenêtre.",
+ "Add a PDF, Word, Markdown or text file, or a .zip of notes. You can also drop files on the window, or paste a link in the capture bar.": "Ajoute un fichier PDF, Word, Markdown ou texte, ou un .zip de notes. Tu peux aussi déposer des fichiers sur la fenêtre, ou coller un lien dans la barre de capture.",
+ "This cannot be read: %s": "Impossible de lire ceci : %s",
+ "Unpacked from « %s » into the app's own folder: your download stays as it is.": "Décompressé depuis « %s » dans le dossier de l’app : ton téléchargement reste tel quel.",
+ "%d files in the zip were refused: their path pointed outside it.": "%d fichiers du zip ont été refusés : leur chemin pointait hors du zip."
 }

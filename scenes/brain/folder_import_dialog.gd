@@ -119,7 +119,7 @@ func refresh() -> void:
 	if not is_inside_tree():
 		return
 	if not res["ok"]:
-		detect_label.text = I18n.t("This folder cannot be read: %s") % str(res.get("error", ""))
+		detect_label.text = I18n.t("This cannot be read: %s") % str(res.get("error", ""))
 		import_button.disabled = true
 		return
 	scan = res["data"]
@@ -141,6 +141,11 @@ func refresh() -> void:
 		lines.append(I18n.t("%d pictures inside notes come along, attached to their note.") % pics)
 	if int(scan.get("embeds", 0)) > pics:
 		lines.append(I18n.t("Other files inside notes stay out for now (%d).") % (int(scan["embeds"]) - pics))
+	var z: Dictionary = scan["zip"] if scan.get("zip") is Dictionary else {}
+	if not z.is_empty():
+		lines.append(I18n.t("Unpacked from « %s » into the app's own folder: your download stays as it is.") % str(z.get("name", "")))
+		if int(z.get("refused", 0)) > 0:
+			lines.append(I18n.t("%d files in the zip were refused: their path pointed outside it.") % int(z["refused"]))
 	if bool(scan.get("inner", false)):
 		lines.append(I18n.t("The vault is in a subfolder: that one is imported."))
 	var again: Dictionary = scan["again"] if scan.get("again") is Dictionary else {}

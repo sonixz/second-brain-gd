@@ -733,6 +733,23 @@ func _e2e() -> void:
 	fv_dlg.hide()
 	await brain.call("refresh_graph")
 	check(graph.find_node("Garden plan") == "", "the imported layer is removed in one go")
+	# Loop 37: the same vault as a .zip (a GitHub download: one folder at the top), dropped on the window.
+	var zv_path := OS.get_environment("SBGD_HOME").path_join("test-vault-main.zip")
+	var zv_zip := ZIPPacker.new()
+	zv_zip.open(zv_path)
+	for zv_rel in [".obsidian/app.json", "Projects/Garden/Garden plan.md", "Areas/Soil.md", "Start here.md"]:
+		zv_zip.start_file("test-vault-main/" + str(zv_rel))
+		zv_zip.write_file(FileAccess.get_file_as_bytes(fv_root.path_join(str(zv_rel))))
+		zv_zip.close_file()
+	zv_zip.close()
+	await brain.call("_on_files_dropped", PackedStringArray([zv_path]))
+	var zv_dlg: AcceptDialog = brain.get("folder_import")
+	var zv_scanned := await wait_until(func() -> bool: return not (zv_dlg.get("scan") as Dictionary).is_empty(), 15.0)
+	var zv_scan: Dictionary = zv_dlg.get("scan")
+	check(zv_scanned and str(zv_scan.get("kind", "")) == "obsidian" and int(zv_scan.get("notes", 0)) == 3
+		and str(zv_scan.get("name", "")) == "test-vault" and (zv_dlg.get("notes_label") as Label).text.contains("test-vault-main.zip"),
+		"a dropped .zip opens the same preview, unpacked in the app's folder (%s)" % (zv_dlg.get("detect_label") as Label).text)
+	zv_dlg.hide()
 	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
 	var l14_welcome := graph.find_node("Welcome to your Second Brain")
 	var l14_pathed := await wait_until(func() -> bool: return graph.path_ids.size() >= 2, 10.0)

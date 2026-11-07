@@ -159,7 +159,7 @@ Règles:
   « zoome sur X / montre-moi X de près / lis X dans le graphe » = ui_zoom (read sur un élément, closer sur une place);
   « vue d'ensemble / montre les thèmes / recule » = ui_zoom (overview ou out).
   « exporte <projet/place/thème> / exporte tout » = export_pack; « importe un pack » = ui_import_pack;
-  « importe mon vault Obsidian / importe le dossier X / mes notes Markdown » = ui_import_folder (aperçu, rien n'entre sans « Importer »);
+  « importe mon vault Obsidian / importe le dossier X / mes notes Markdown / le zip X » = ui_import_folder (aperçu, rien n'entre sans « Importer »);
   « désactive / réactive / fusionne / retire le pack X » = manage_pack.
   « ouvre le PDF / le document X » = ui_open_document; « page suivante / précédente / page 3 » = ui_page;
   « ouvre l'original » = ui_open_original; « ferme le document » = ui_close_document.
@@ -453,7 +453,7 @@ UI_TOOLS = [
      "parameters": {"type": "object", "properties": {"title": {"type": "string"}, "action": {"type": "string", "enum": ["list", "off", "on", "merge", "remove"]}}, "required": ["action"]}}},
     {"type": "function", "function": {"name": "ui_import_pack", "description": "Open the file picker to import a .brain pack.",
      "parameters": {"type": "object", "properties": {}}}},
-    {"type": "function", "function": {"name": "ui_import_folder", "description": "Open the preview to import a folder of notes (an Obsidian vault, Markdown notes). Path: the folder the user named, if any (absolute, or relative to their home folder, e.g. Documents/Notes); « my Obsidian vault » without a path finds the vault Obsidian knows. Nothing is imported until the user clicks Import.",
+    {"type": "function", "function": {"name": "ui_import_folder", "description": "Open the preview to import a folder of notes (an Obsidian vault, Markdown notes) or a .zip of one. Path: the folder or zip the user named, if any (absolute, relative to their home folder, e.g. Documents/Notes, or a zip in Downloads, e.g. vault.zip); « my Obsidian vault » without a path finds the vault Obsidian knows. Nothing is imported until the user clicks Import.",
      "parameters": {"type": "object", "properties": {"path": {"type": "string"}, "obsidian": {"type": "boolean", "description": "the user said « vault » or « Obsidian »"}}}}},
     {"type": "function", "function": {"name": "ui_open_document", "description": "Show an item's kept document (PDF pages or image) full screen. Target: its title (else the open or selected item).",
      "parameters": {"type": "object", "properties": {"target": {"type": "string"}}}}},
