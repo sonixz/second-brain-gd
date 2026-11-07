@@ -141,10 +141,12 @@ Full detail in the roadmap (« Next: routines, scheduled missions »).
 
 ---
 
+**MCP (agreed 2026-11-07):** docs/plan-mcp.md — MCP-A (in, read), MCP-B (in, write), MCP-C (out, Microsoft Learn
+first), paced by the owner.
+
 ## After Loop 42 (roadmap, not scheduled)
 
 - **Markdown mirror**, then edits coming back from the folder, then possibly files as the source of truth.
-- **MCP server** so Claude Code and Claude Desktop can search and feed the Brain.
 - **Data analysis and reports** (time entries, calendar).
 - **Local model option** for sensitive or simple tasks.
 - More import detections by demand (Evernote, Bear, Joplin, Day One, Google Keep, Roam).
