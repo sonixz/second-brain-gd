@@ -476,6 +476,97 @@ guide(
     [("Missions", "docs.html#missions")],
     "Agents", cost_cap=1.0, token_cap=900_000)
 
+guide(
+    "voice-memo", "A voice memo becomes ideas", "scripted", 3,
+    "Record ideas anywhere with your phone, drop the memo on the window at home, and get its ideas, tasks and notes "
+    "in your Brain, each linked to the memo and dated when you said it.",
+    ["Your OpenAI key, with a transcription model allowed in your OpenAI project (<a href=\"docs.html#voice-memos\">Voice memos</a>)",
+     "A recording: m4a (iPhone, Android), mp3 or wav"],
+    [("Drop the memo on the window (several at once, or a folder of them, works too; or <b>+ File</b>).",
+      "Nothing is sent yet. The preview shows the memo's length, when it was recorded (here from its name, "
+      "<i>Recording_20261107_091500</i>) and the estimated cost: less than a cent."),
+     ("Press <b>Transcribe</b>.",
+      "The memo is transcribed, then cut into items: two tasks (☐) and two ideas, each with its moment in the "
+      "recording. The memo itself keeps the audio and the full transcript."),
+     ("Close the window and zoom into <i>Call the garage about winter tires</i>.",
+      "A task, dated when you recorded it, linked to its memo: “From Voice memo, Nov 7… · at about 0:06”. Filed in a "
+      "place when it clearly belongs to one, otherwise in the Inbox."),
+     ],
+    [("“does not allow a transcription model”.", "Your OpenAI project limits its models: allow <code>gpt-transcribe</code> "
+      "in Settings → Project → Limits on platform.openai.com. The preview checks this before anything is sent."),
+     ("The memo is refused.", "<code>.ogg</code>, <code>.opus</code> and <code>.aac</code> are not accepted: export it as "
+      "m4a or mp3. Over 25 MB (about 45 minutes): split it.")],
+    [("Voice memos", "docs.html#voice-memos")],
+    "The Brain")
+guide(
+    "recipe-grocery", "From recipes to a grocery list on paper", "scripted", 4,
+    "Pick the week's recipes, get one grocery list added up by aisle, and print it (or a recipe) on Letter paper.",
+    ["A few recipes in your Brain: send recipe pages from the browser extension or paste their links "
+     "(<a href=\"docs.html#typed-items\">Recipes</a>)"],
+    [("Click <b>Table</b> at the top and choose <b>Recipe</b>.",
+      "Your recipes as rows: servings, total time, rating, category. Click a column title to sort; click a cell to "
+      "change it (servings, rating, tried)."),
+     ("Tick the recipes for the week in the first column.",
+      "<b>Grocery list (2)</b> lights up at the bottom."),
+     ("Click <b>Grocery list</b>.",
+      "Everything added up, by aisle: 3 cans of diced tomatoes, 4 onions, 750 ml of rice… Change a recipe's servings "
+      "and the list follows. A word the Brain does not know goes to <i>Other</i>: nothing is guessed."),
+     ("Click <b>Save the list</b>.",
+      "A note linked to both recipes, and the lines added to your <i>Épicerie</i> checklist."),
+     ("Click <b>PDF for the fridge</b> (or <b>PDF</b> in the table for the recipes).",
+      "Edge prints a clean Letter page in the background and the PDF opens: here, the paella, ingredients beside the "
+      "steps."),
+     ],
+    [("The PDF opens as a web page.", "Edge was not found: press <kbd>Ctrl</kbd>+<kbd>P</kbd> and choose "
+      "<i>Save as PDF</i>."),
+     ("A recipe has no ingredients.", "Its page carried no recipe data; add the ingredients in its card.")],
+    [("The table and grocery lists", "docs.html#table"), ("Print on Letter paper", "docs.html#printing")],
+    "The Brain")
+guide(
+    "claude-code", "Connect Claude Code to your Brain", "scripted", 4,
+    "Let Claude Code read and search your Brain over MCP, on this computer only; it proposes, the archivist decides, "
+    "and the timeline can undo it.",
+    ["Claude Code installed (Windows or WSL)", "The app open"],
+    [("Click the <b>⇠● ⇢●</b> lights at the top, keep the name <i>Claude Code</i> and press <b>Connect an AI tool</b>.",
+      "Two commands: one for Claude Code on Windows, one for Claude Code in WSL (a small relay with the app's own "
+      "Python, no network setting). Copy one: its key is shown only this once. Then restart Claude Code."),
+     ("In Claude Code, ask something about your Brain, e.g. <span class=\"say\">What is in my Brain about the "
+      "renovation?</span>",
+      "Claude Code starts with an overview, searches, reads an item. The <b>⇠</b> light turns green when it is "
+      "connected and red during a call; hover it for the last call."),
+     ("Let Claude Code propose something to add (or a change).",
+      "It never writes: the proposal waits in the MCP window with its reason. Approve, refuse, or approve all; once "
+      "approved, the archivist files it with your rules."),
+     ("Click <b>Timeline of changes…</b>.",
+      "Who changed what: you and the archivist, or Claude Code, after its automatic restore point. <b>Go back here</b> "
+      "undoes everything after a point, for everyone or for Claude Code only."),
+     ],
+    [("Claude Code does not see the Brain.", "Restart Claude Code after adding the server; keep the app open. In WSL, "
+      "use the « Claude Code in WSL » command."),
+     ("It cannot add anything.", "Its level is <i>read</i>: choose <i>proposes items</i> or <i>proposes changes</i> "
+      "beside its name in the MCP window.")],
+    [("Connect Claude Code (MCP)", "docs.html#mcp-in")],
+    "Connect your AI tools")
+guide(
+    "mslearn", "Give an agent Microsoft Learn", "real", 3,
+    "Connect a public MCP server and let your agents search it: here Microsoft Learn, for Microsoft and Azure "
+    "documentation, with sources.",
+    ["Your OpenAI key", "An internet connection (Microsoft Learn needs no account)"],
+    [("Open the MCP window (the <b>⇠● ⇢●</b> lights) and click <b>+ Connect Microsoft Learn</b>.",
+      "Its three tools are listed (search the docs, code samples, fetch a page), for all agents. The <b>⇢</b> light "
+      "turns green."),
+     ("Ask the Archivist: <span class=\"say\">Using Microsoft Learn, how do I write a timer trigger for Azure "
+      "Functions in Python? Answer in three sentences and give the source.</span>",
+      "It calls Microsoft Learn (the ⇢ light turns red during the call) and answers with the decorator to use and "
+      "the page it comes from. What a server returns is information, never instructions."),
+     ("Open the MCP window again.",
+      "This month's calls and tokens for Microsoft Learn. <b>Tools, key…</b> switches tools off, sets a monthly "
+      "budget, or chooses which agents may use it."),
+     ],
+    [("The server shows <i>unreachable</i>.", "Check the internet connection, then <b>Remove</b> and connect it again."),
+     ("The answer is long and costly.", "Results are cut at 8,000 characters; switch off the tools you do not need.")],
+    [("MCP servers for your agents", "docs.html#mcp-out")],
+    "Connect your AI tools", cost_cap=0.20)
 # GUIDES-END
 
 

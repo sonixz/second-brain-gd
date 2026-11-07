@@ -49,6 +49,8 @@
           <li><a href="#packs">Share a project as a pack</a></li>
           <li><a href="#vault">Bring your Obsidian vault</a></li>
           <li><a href="#backups">Back up and restore</a></li>
+          <li><a href="#voice-memo">A voice memo becomes ideas</a></li>
+          <li><a href="#recipe-grocery">From recipes to a grocery list on paper</a></li>
         </ul>
         <h4>Find and connect</h4>
         <ul>
@@ -63,6 +65,11 @@
           <li><a href="#sparring">Think an idea through with Sparring</a></li>
           <li><a href="#own-agent">Create your own agent</a></li>
           <li><a href="#mission">Plan the week&#x27;s meals with a mission</a></li>
+        </ul>
+        <h4>Connect your AI tools</h4>
+        <ul>
+          <li><a href="#claude-code">Connect Claude Code to your Brain</a></li>
+          <li><a href="#mslearn">Give an agent Microsoft Learn</a></li>
         </ul>
       </nav>
     </aside>
@@ -121,6 +128,18 @@
           <a class="guide-card" href="#mission"><img src="assets/howto/mission/07.webp" alt="" loading="lazy" width="1280" height="800">
             <span class="guide-card-body"><b>Plan the week&#x27;s meals with a mission</b><span>Give an agent a real job: it reads this week's flyer, asks which specials you want, finds real recipes and proposes the week; nothing enters your Brain before you approve.</span>
             <span class="guide-card-meta">5 min · 7 steps · Real answers</span></span></a>
+          <a class="guide-card" href="#voice-memo"><img src="assets/howto/voice-memo/03.webp" alt="" loading="lazy" width="1280" height="800">
+            <span class="guide-card-body"><b>A voice memo becomes ideas</b><span>Record ideas anywhere with your phone, drop the memo on the window at home, and get its ideas, tasks and notes in your Brain, each linked to the memo and dated when you said it.</span>
+            <span class="guide-card-meta">3 min · 3 steps · App only</span></span></a>
+          <a class="guide-card" href="#recipe-grocery"><img src="assets/howto/recipe-grocery/05.webp" alt="" loading="lazy" width="1280" height="800">
+            <span class="guide-card-body"><b>From recipes to a grocery list on paper</b><span>Pick the week's recipes, get one grocery list added up by aisle, and print it (or a recipe) on Letter paper.</span>
+            <span class="guide-card-meta">4 min · 5 steps · App only</span></span></a>
+          <a class="guide-card" href="#claude-code"><img src="assets/howto/claude-code/04.webp" alt="" loading="lazy" width="1280" height="800">
+            <span class="guide-card-body"><b>Connect Claude Code to your Brain</b><span>Let Claude Code read and search your Brain over MCP, on this computer only; it proposes, the archivist decides, and the timeline can undo it.</span>
+            <span class="guide-card-meta">4 min · 4 steps · App only</span></span></a>
+          <a class="guide-card" href="#mslearn"><img src="assets/howto/mslearn/03.webp" alt="" loading="lazy" width="1280" height="800">
+            <span class="guide-card-body"><b>Give an agent Microsoft Learn</b><span>Connect a public MCP server and let your agents search it: here Microsoft Learn, for Microsoft and Azure documentation, with sources.</span>
+            <span class="guide-card-meta">3 min · 3 steps · Real answers</span></span></a>
         </div>
       </header>
 
@@ -619,6 +638,110 @@
         </ol>
         <h3>If it does not work</h3><ul class="guide-trouble"><li><b>It stopped at the ceiling.</b> It keeps what it found; raise the ceiling in ⓘ → Missions and press <b>Run again</b> in the engine room.</li><li><b>A store's site refuses to be read.</b> The mission tries another source, or reads the page through your browser when the <a href="docs.html#extension">extension</a> is paired.</li><li><b>No <b>Mission…</b> button.</b> Switch the agent's <b>Missions</b> capability on (ⓘ). You can also ask the agent, typed or by voice in Live: <span class="say">make this week's menu</span>.</li></ul>
         <p class="guide-next">More: <a href="docs.html#missions">Missions</a></p>
+      </section>
+
+      <section class="doc guide" id="voice-memo">
+        <p class="kicker">The Brain · 3 min · 3 steps</p>
+        <h2>A voice memo becomes ideas <span class="badge badge-scripted" title="No model answer matters in this guide">App only</span></h2>
+        <p class="guide-goal">Record ideas anywhere with your phone, drop the memo on the window at home, and get its ideas, tasks and notes in your Brain, each linked to the memo and dated when you said it.</p>
+        <div class="callout"><p><b>You need</b></p><ul><li>Your OpenAI key, with a transcription model allowed in your OpenAI project (<a href="docs.html#voice-memos">Voice memos</a>)</li><li>A recording: m4a (iPhone, Android), mp3 or wav</li></ul></div>
+        <ol class="guide-steps">
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Drop the memo on the window (several at once, or a folder of them, works too; or <b>+ File</b>).</p><p class="guide-see">Nothing is sent yet. The preview shows the memo's length, when it was recorded (here from its name, <i>Recording_20261107_091500</i>) and the estimated cost: less than a cent.</p></div>
+            <figure class="shot"><img src="assets/howto/voice-memo/01.webp" alt="A voice memo becomes ideas, step 1 of 3: Drop the memo on the window (several at once, or a folder of them, works too; or + File)." loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Press <b>Transcribe</b>.</p><p class="guide-see">The memo is transcribed, then cut into items: two tasks (☐) and two ideas, each with its moment in the recording. The memo itself keeps the audio and the full transcript.</p></div>
+            <figure class="shot"><img src="assets/howto/voice-memo/02.webp" alt="A voice memo becomes ideas, step 2 of 3: Press Transcribe." loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Close the window and zoom into <i>Call the garage about winter tires</i>.</p><p class="guide-see">A task, dated when you recorded it, linked to its memo: “From Voice memo, Nov 7… · at about 0:06”. Filed in a place when it clearly belongs to one, otherwise in the Inbox.</p></div>
+            <figure class="shot"><img src="assets/howto/voice-memo/03.webp" alt="A voice memo becomes ideas, step 3 of 3: Close the window and zoom into Call the garage about winter tires." loading="lazy" width="1280" height="800"></figure>
+          </li>
+        </ol>
+        <h3>If it does not work</h3><ul class="guide-trouble"><li><b>“does not allow a transcription model”.</b> Your OpenAI project limits its models: allow <code>gpt-transcribe</code> in Settings → Project → Limits on platform.openai.com. The preview checks this before anything is sent.</li><li><b>The memo is refused.</b> <code>.ogg</code>, <code>.opus</code> and <code>.aac</code> are not accepted: export it as m4a or mp3. Over 25 MB (about 45 minutes): split it.</li></ul>
+        <p class="guide-next">More: <a href="docs.html#voice-memos">Voice memos</a></p>
+      </section>
+
+      <section class="doc guide" id="recipe-grocery">
+        <p class="kicker">The Brain · 4 min · 5 steps</p>
+        <h2>From recipes to a grocery list on paper <span class="badge badge-scripted" title="No model answer matters in this guide">App only</span></h2>
+        <p class="guide-goal">Pick the week's recipes, get one grocery list added up by aisle, and print it (or a recipe) on Letter paper.</p>
+        <div class="callout"><p><b>You need</b></p><ul><li>A few recipes in your Brain: send recipe pages from the browser extension or paste their links (<a href="docs.html#typed-items">Recipes</a>)</li></ul></div>
+        <ol class="guide-steps">
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Click <b>Table</b> at the top and choose <b>Recipe</b>.</p><p class="guide-see">Your recipes as rows: servings, total time, rating, category. Click a column title to sort; click a cell to change it (servings, rating, tried).</p></div>
+            <figure class="shot"><img src="assets/howto/recipe-grocery/01.webp" alt="From recipes to a grocery list on paper, step 1 of 5: Click Table at the top and choose Recipe." loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Tick the recipes for the week in the first column.</p><p class="guide-see"><b>Grocery list (2)</b> lights up at the bottom.</p></div>
+            <figure class="shot"><img src="assets/howto/recipe-grocery/02.webp" alt="From recipes to a grocery list on paper, step 2 of 5: Tick the recipes for the week in the first column." loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Click <b>Grocery list</b>.</p><p class="guide-see">Everything added up, by aisle: 3 cans of diced tomatoes, 4 onions, 750 ml of rice… Change a recipe's servings and the list follows. A word the Brain does not know goes to <i>Other</i>: nothing is guessed.</p></div>
+            <figure class="shot"><img src="assets/howto/recipe-grocery/03.webp" alt="From recipes to a grocery list on paper, step 3 of 5: Click Grocery list." loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Click <b>Save the list</b>.</p><p class="guide-see">A note linked to both recipes, and the lines added to your <i>Épicerie</i> checklist.</p></div>
+            <figure class="shot"><img src="assets/howto/recipe-grocery/04.webp" alt="From recipes to a grocery list on paper, step 4 of 5: Click Save the list." loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Click <b>PDF for the fridge</b> (or <b>PDF</b> in the table for the recipes).</p><p class="guide-see">Edge prints a clean Letter page in the background and the PDF opens: here, the paella, ingredients beside the steps.</p></div>
+            <figure class="shot"><img src="assets/howto/recipe-grocery/05.webp" alt="From recipes to a grocery list on paper, step 5 of 5: Click PDF for the fridge (or PDF in the table for the recipes)." loading="lazy" width="1280" height="800"></figure>
+          </li>
+        </ol>
+        <h3>If it does not work</h3><ul class="guide-trouble"><li><b>The PDF opens as a web page.</b> Edge was not found: press <kbd>Ctrl</kbd>+<kbd>P</kbd> and choose <i>Save as PDF</i>.</li><li><b>A recipe has no ingredients.</b> Its page carried no recipe data; add the ingredients in its card.</li></ul>
+        <p class="guide-next">More: <a href="docs.html#table">The table and grocery lists</a> · <a href="docs.html#printing">Print on Letter paper</a></p>
+      </section>
+
+      <section class="doc guide" id="claude-code">
+        <p class="kicker">Connect your AI tools · 4 min · 4 steps</p>
+        <h2>Connect Claude Code to your Brain <span class="badge badge-scripted" title="No model answer matters in this guide">App only</span></h2>
+        <p class="guide-goal">Let Claude Code read and search your Brain over MCP, on this computer only; it proposes, the archivist decides, and the timeline can undo it.</p>
+        <div class="callout"><p><b>You need</b></p><ul><li>Claude Code installed (Windows or WSL)</li><li>The app open</li></ul></div>
+        <ol class="guide-steps">
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Click the <b>⇠● ⇢●</b> lights at the top, keep the name <i>Claude Code</i> and press <b>Connect an AI tool</b>.</p><p class="guide-see">Two commands: one for Claude Code on Windows, one for Claude Code in WSL (a small relay with the app's own Python, no network setting). Copy one: its key is shown only this once. Then restart Claude Code.</p></div>
+            <figure class="shot"><img src="assets/howto/claude-code/01.webp" alt="Connect Claude Code to your Brain, step 1 of 4: Click the ⇠● ⇢● lights at the top, keep the name Claude Code and press Connect an AI tool." loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">In Claude Code, ask something about your Brain, e.g. <span class="say">What is in my Brain about the renovation?</span></p><p class="guide-see">Claude Code starts with an overview, searches, reads an item. The <b>⇠</b> light turns green when it is connected and red during a call; hover it for the last call.</p></div>
+            <figure class="shot"><img src="assets/howto/claude-code/02.webp" alt="Connect Claude Code to your Brain, step 2 of 4: In Claude Code, ask something about your Brain, e.g. What is in my Brain about the renovation?" loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Let Claude Code propose something to add (or a change).</p><p class="guide-see">It never writes: the proposal waits in the MCP window with its reason. Approve, refuse, or approve all; once approved, the archivist files it with your rules.</p></div>
+            <figure class="shot"><img src="assets/howto/claude-code/03.webp" alt="Connect Claude Code to your Brain, step 3 of 4: Let Claude Code propose something to add (or a change)." loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Click <b>Timeline of changes…</b>.</p><p class="guide-see">Who changed what: you and the archivist, or Claude Code, after its automatic restore point. <b>Go back here</b> undoes everything after a point, for everyone or for Claude Code only.</p></div>
+            <figure class="shot"><img src="assets/howto/claude-code/04.webp" alt="Connect Claude Code to your Brain, step 4 of 4: Click Timeline of changes…." loading="lazy" width="1280" height="800"></figure>
+          </li>
+        </ol>
+        <h3>If it does not work</h3><ul class="guide-trouble"><li><b>Claude Code does not see the Brain.</b> Restart Claude Code after adding the server; keep the app open. In WSL, use the « Claude Code in WSL » command.</li><li><b>It cannot add anything.</b> Its level is <i>read</i>: choose <i>proposes items</i> or <i>proposes changes</i> beside its name in the MCP window.</li></ul>
+        <p class="guide-next">More: <a href="docs.html#mcp-in">Connect Claude Code (MCP)</a></p>
+      </section>
+
+      <section class="doc guide" id="mslearn">
+        <p class="kicker">Connect your AI tools · 3 min · 3 steps</p>
+        <h2>Give an agent Microsoft Learn <span class="badge badge-real" title="Recorded from the real model, then replayed for the screenshots">Real answers</span></h2>
+        <p class="guide-goal">Connect a public MCP server and let your agents search it: here Microsoft Learn, for Microsoft and Azure documentation, with sources.</p>
+        <div class="callout"><p><b>You need</b></p><ul><li>Your OpenAI key</li><li>An internet connection (Microsoft Learn needs no account)</li></ul></div>
+        <ol class="guide-steps">
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Open the MCP window (the <b>⇠● ⇢●</b> lights) and click <b>+ Connect Microsoft Learn</b>.</p><p class="guide-see">Its three tools are listed (search the docs, code samples, fetch a page), for all agents. The <b>⇢</b> light turns green.</p></div>
+            <figure class="shot"><img src="assets/howto/mslearn/01.webp" alt="Give an agent Microsoft Learn, step 1 of 3: Open the MCP window (the ⇠● ⇢● lights) and click + Connect Microsoft Learn." loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Ask the Archivist: <span class="say">Using Microsoft Learn, how do I write a timer trigger for Azure Functions in Python? Answer in three sentences and give the source.</span></p><p class="guide-see">It calls Microsoft Learn (the ⇢ light turns red during the call) and answers with the decorator to use and the page it comes from. What a server returns is information, never instructions.</p></div>
+            <figure class="shot"><img src="assets/howto/mslearn/02.webp" alt="Give an agent Microsoft Learn, step 2 of 3: Ask the Archivist: Using Microsoft Learn, how do I write a timer trigger for Azure Functions in Python? Answer in three sentences and give the source." loading="lazy" width="1280" height="800"></figure>
+          </li>
+          <li class="guide-step">
+            <div class="guide-step-text"><p class="guide-do">Open the MCP window again.</p><p class="guide-see">This month's calls and tokens for Microsoft Learn. <b>Tools, key…</b> switches tools off, sets a monthly budget, or chooses which agents may use it.</p></div>
+            <figure class="shot"><img src="assets/howto/mslearn/03.webp" alt="Give an agent Microsoft Learn, step 3 of 3: Open the MCP window again." loading="lazy" width="1280" height="800"></figure>
+          </li>
+        </ol>
+        <h3>If it does not work</h3><ul class="guide-trouble"><li><b>The server shows <i>unreachable</i>.</b> Check the internet connection, then <b>Remove</b> and connect it again.</li><li><b>The answer is long and costly.</b> Results are cut at 8,000 characters; switch off the tools you do not need.</li></ul>
+        <p class="guide-next">More: <a href="docs.html#mcp-out">MCP servers for your agents</a></p>
       </section>
     </main>
   </div>

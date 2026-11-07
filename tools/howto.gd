@@ -833,3 +833,168 @@ func guide_backups() -> void:
 			break
 	await pause(0.5)
 	await step("Export everything: one file to move your Brain to another computer")
+
+
+# ---------------------------------------------------------------- A voice memo becomes ideas (scripted answers)
+func _silent_wav(path: String, seconds: int) -> void:
+	var rate := 8000
+	var n := rate * seconds
+	var f := FileAccess.open(path, FileAccess.WRITE)
+	f.store_buffer("RIFF".to_ascii_buffer())
+	f.store_32(36 + n * 2)
+	f.store_buffer("WAVEfmt ".to_ascii_buffer())
+	f.store_32(16)
+	f.store_16(1)
+	f.store_16(1)
+	f.store_32(rate)
+	f.store_32(rate * 2)
+	f.store_16(2)
+	f.store_16(16)
+	f.store_buffer("data".to_ascii_buffer())
+	f.store_32(n * 2)
+	var pcm := PackedByteArray()
+	pcm.resize(n * 2)
+	f.store_buffer(pcm)
+	f.close()
+
+
+func guide_voice_memo() -> void:
+	await overview()
+	var memo := OS.get_environment("SBGD_HOME").path_join("Recording_20261107_091500.wav")
+	_silent_wav(memo, 47)
+	var dlg: AcceptDialog = b.call("import_audio", [memo])
+	await wait_until(func() -> bool: return not (dlg.get("preview") as Dictionary).is_empty(), 15.0)
+	await pause(1.0)
+	await step("drop the memo: the preview, before anything is sent")
+	(dlg.get("go_button") as Button).pressed.emit()
+	await wait_until(func() -> bool: return not (dlg.get("results") as Array).is_empty() and not bool(dlg.get("_busy")), 30.0)
+	await pause(1.0)
+	await step("Transcribe: the memo and the items it gave")
+	dlg.hide()
+	await b.call("refresh_graph")
+	await settle(20.0)
+	var task := node_like(["winter", "tires"])
+	if task != "":
+		g.zoom_level("read", task)
+		g.select(task)
+	await pause(3.0)
+	await step("each item links to its memo, with its moment")
+
+
+# ---------------------------------------------------------------- From recipes to a grocery list on paper (scripted)
+func guide_recipe_grocery() -> void:
+	await overview()
+	for r in [["Saturday paella", 4, 65, 4.6, ["1 1/2 cups (375 ml) paella rice", "2 tbsp (30 ml) olive oil", "1 onion, chopped",
+			"1 (28 oz) can diced tomatoes", "1 lb (454 g) shrimp", "1 pinch saffron", "Salt and pepper"]],
+			["Weeknight chili", 6, 50, 4.2, ["2 medium onions", "1 (28 oz) can diced tomatoes", "2 lb ground beef",
+			"1 (19 oz) can red kidney beans", "1 tbsp (15 ml) cumin", "Salt"]],
+			["Shepherd's pie", 4, 80, 5.0, ["1 1/2 lb potatoes", "1/4 cup butter", "1/2 cup milk", "1 lb ground beef", "1 onion, chopped",
+			"1 (19 oz) can creamed corn"]],
+			["Vegetable soup", 6, 45, 4.0, ["2 carrots", "1 onion", "2 celery stalks", "6 cups chicken broth", "1 (28 oz) can diced tomatoes"]]]:
+		var n: Dictionary = await app.backend.api.call_api("/brain/notes", true, HTTPClient.METHOD_POST, JSON.stringify({"title": r[0], "body": ""}))
+		await app.backend.api.call_api("/brain/items/%s/props" % str((n["data"] as Dictionary)["id"]), true, HTTPClient.METHOD_POST,
+			JSON.stringify({"type": "recipe", "props": {"servings": r[1], "total_min": r[2], "rating": r[3], "category": "Main dishes", "ingredients": r[4]}}))
+	await b.call("set_view", "table")
+	var tv: PanelContainer = b.get("table_view")
+	tv.set("type_id", "recipe")
+	tv.set("sort_key", "total_min")
+	await tv.call("refresh")
+	await pause(1.0)
+	await step("the Table tab, recipes as rows")
+	var picked: Dictionary = tv.get("picked")
+	var tree: Tree = tv.get("tree")
+	for it in tree.get_root().get_children():
+		var title := str((it as TreeItem).get_text(1))
+		if title.begins_with("Saturday") or title.begins_with("Weeknight"):
+			picked[str((it as TreeItem).get_metadata(0))] = true
+	await tv.call("refresh")
+	await pause(0.8)
+	await step("tick the recipes for the week")
+	var dlg: AcceptDialog = tv.call("open_grocery")
+	await pause(2.5)
+	await step("Grocery list: added up by aisle")
+	(dlg.find_child("SaveGrocery", true, false) as Button).pressed.emit()
+	await pause(2.0)
+	await step("Save the list: a note and your checklist", true)
+	dlg.hide()
+	# The page Edge prints (made on Windows from the same recipes): copied as the last step's picture.
+	var src := ProjectSettings.globalize_path("res://docs/screenshots/export-en/e1-recipe.png")
+	step_n += 1
+	DirAccess.copy_absolute(src, OS.get_environment("SBGD_CAPTURE_DIR").path_join("%02d.png" % step_n))
+	print("step %02d: the printed recipe (PDF made by Edge)" % step_n)
+	await b.call("set_view", "graph")
+
+
+# ---------------------------------------------------------------- Connect Claude Code to your Brain (scripted)
+func guide_claude_code() -> void:
+	await overview()
+	var lights: Button = b.get("mcp_lights")
+	var dlg: AcceptDialog = lights.call("open_dialog")
+	await pause(1.0)
+	(dlg.find_child("ConnectButton", true, false) as Button).pressed.emit()
+	await pause(2.0)
+	await step("Connect an AI tool: two commands, the key shown once")
+	dlg.hide()
+	var c: Dictionary = await app.backend.api.call_api("/mcp/clients", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Claude Code (WSL)", "level": "propose_changes"}))
+	var token := str((c["data"] as Dictionary)["token"])
+	for msg in [{"name": "overview", "arguments": {}},
+			{"name": "propose_item", "arguments": {"title": "Reminder: renew the passport", "content": "It expires in March.", "reason": "Noted during a work session", "suggested_place": "Finances"}}]:
+		var req := HTTPRequest.new()
+		root.add_child(req)
+		req.request("http://127.0.0.1:%d/mcp" % app.backend.api.port, PackedStringArray(["Content-Type: application/json", "Authorization: Bearer " + token]),
+			HTTPClient.METHOD_POST, JSON.stringify({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": msg}))
+		await req.request_completed
+		req.queue_free()
+	await lights.call("poll")
+	await pause(0.5)
+	g.zoom_to(0.5, Vector2(-60, 0), 0.2)
+	await pause(1.0)
+	calm()
+	await step("Claude Code reads your Brain: the ⇠ light", true)
+	var dlg2: AcceptDialog = lights.call("open_dialog")
+	await pause(3.0)
+	await step("a proposal waits for you")
+	await app.backend.api.call_api("/mcp/proposals/all/approve", true, HTTPClient.METHOD_POST, "{}")
+	dlg2.hide()
+	await b.call("refresh_graph")
+	await pause(1.5)
+	var tl: AcceptDialog = lights.call("open_timeline")
+	await pause(2.0)
+	await step("the timeline: who changed what, and going back")
+	tl.hide()
+
+
+# ---------------------------------------------------------------- Give an agent Microsoft Learn (real answers)
+func guide_mslearn() -> void:
+	await overview()
+	var lights: Button = b.get("mcp_lights")
+	var dlg: AcceptDialog = lights.call("open_dialog")
+	await pause(2.5)
+	for bt in dlg.find_children("AddSuggested", "Button", true, false):
+		if (bt as Button).text.contains("Microsoft Learn"):
+			(bt as Button).pressed.emit()
+			break
+	await wait_until(func() -> bool:
+		var st: Dictionary = lights.get("status")
+		var out: Dictionary = st.get("out", {}) if st.get("out") is Dictionary else {}
+		return (out.get("servers", []) as Array).size() > 0, 30.0)
+	await lights.call("poll")
+	await pause(2.0)
+	await step("+ Connect Microsoft Learn: its tools, for every agent")
+	dlg.hide()
+	var ap: AssistantPanel = b.get("assistant_panel")
+	await panel_send_and_wait(ap, "Using Microsoft Learn, how do I write a timer trigger for Azure Functions in Python? Answer in three sentences and give the source.")
+	await lights.call("poll")
+	await step("ask: the agent searches Microsoft Learn and cites it", true)
+	var dlg3: AcceptDialog = lights.call("open_dialog")
+	await pause(3.0)
+	await step("the calls and this month's tokens, per server")
+	dlg3.hide()
+
+
+func panel_send_and_wait(panel: AssistantPanel, text: String) -> void:
+	await panel.send(text)
+	var end := Time.get_ticks_msec() + 120000
+	while panel.busy and Time.get_ticks_msec() < end:
+		await pause(0.3)
+	await pause(1.5)

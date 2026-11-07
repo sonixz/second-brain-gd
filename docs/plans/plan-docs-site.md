@@ -69,6 +69,15 @@ the way: « saffron », « paprika », « soy sauce » were not English spice wo
 - Real answers where they matter (recorded once, then replayed): a memo transcription and an agent answer with
   Microsoft Learn — a few cents with the owner's key, asked before.
 
+**DOC-C done 2026-11-07.** Four new guides captured from the real app (tools/howto.gd + guides.py): « A voice memo
+becomes ideas » (3 steps), « From recipes to a grocery list on paper » (5; the last picture is the page Edge printed on
+Windows), « Connect Claude Code to your Brain » (4), « Give an agent Microsoft Learn » (3, real answers recorded once:
+4 model calls, gpt-6-sol, about $0.081, then replayed). New group « Connect your AI tools ». The 13 other guides that
+need no desktop Edge were replayed on today's app: all passed (they double as end-to-end tests), pictures refreshed
+with the new top bar. « Connect your browser » and « Keep the pictures that matter » drive a real Edge on the
+desktop (tools/howto.sh --edge): kept as they are until the owner says when the screen can be taken. 19 guides on
+the page.
+
 ## SITE-D — home page (public/index.html)
 
 - Same concept, sections and design. Pictures re-captured from today's app (showcase Brain).
