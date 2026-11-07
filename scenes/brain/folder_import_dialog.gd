@@ -19,6 +19,7 @@ var cost_label: Label
 var result_label: RichTextLabel
 var import_button: Button
 var docs_button: Button
+var stop_button: Button
 var _busy := false
 
 
@@ -74,6 +75,13 @@ func setup(a: SbApp, folder: String) -> AcceptDialog:
 		add_documents.emit(scan.get("document_paths", []))
 		hide())
 	row.add_child(docs_button)
+	stop_button = Button.new()
+	stop_button.name = "StopButton"
+	stop_button.text = I18n.t("Stop")
+	stop_button.tooltip_text = I18n.t("Stops reading or importing: nothing of it enters the Brain")
+	stop_button.visible = false
+	stop_button.pressed.connect(stop)
+	row.add_child(stop_button)
 	import_button = Button.new()
 	import_button.name = "ImportButton"
 	import_button.text = I18n.t("Import")
@@ -89,7 +97,35 @@ func setup(a: SbApp, folder: String) -> AcceptDialog:
 	result_label.selection_enabled = true
 	result_label.visible = false
 	box.add_child(result_label)
+	visibility_changed.connect(func() -> void:
+		if not visible and _busy:
+			stop())  # closed while it works: it stops too
 	return self
+
+
+## « Stop »: the engine ends the scan or import at its next file and keeps nothing of it.
+func stop() -> void:
+	if not _busy:
+		return
+	stop_button.disabled = true
+	stop_button.text = I18n.t("Stopping…")
+	await app.backend.api.call_api("/brain/import/stop", true, HTTPClient.METHOD_POST, "{}")
+
+
+func _set_busy(on: bool) -> void:
+	_busy = on
+	stop_button.visible = on
+	stop_button.disabled = false
+	stop_button.text = I18n.t("Stop")
+
+
+## The engine's own words when it refuses (« this zip is damaged »), « Stopped » when asked to.
+static func error_text(res: Dictionary) -> String:
+	var data: Dictionary = res["data"] if res.get("data") is Dictionary else {}
+	var detail := str(data.get("detail", "")) if data.get("detail") is String else ""
+	if detail.begins_with("stopped"):
+		return I18n.t("Stopped: nothing was imported.")
+	return detail if detail != "" else str(res.get("error", ""))
 
 
 func open() -> void:
@@ -112,14 +148,15 @@ func _kind_line(kind: String, folder: String) -> String:
 func refresh() -> void:
 	if _busy:
 		return
-	_busy = true
+	_set_busy(true)
 	var res := await app.backend.api.call_api("/brain/import/scan", true, HTTPClient.METHOD_POST,
 		JSON.stringify({"path": path, "keep_folders": keep_check.button_pressed}))
-	_busy = false
+	_set_busy(false)
 	if not is_inside_tree():
 		return
 	if not res["ok"]:
-		detect_label.text = I18n.t("This cannot be read: %s") % str(res.get("error", ""))
+		var why := error_text(res)
+		detect_label.text = why if why == I18n.t("Stopped: nothing was imported.") else I18n.t("This cannot be read: %s") % why
 		import_button.disabled = true
 		return
 	scan = res["data"]
@@ -171,17 +208,18 @@ static func _money(v: float) -> String:
 func run_import() -> void:
 	if _busy or scan.is_empty():
 		return
-	_busy = true
+	_set_busy(true)
 	import_button.disabled = true
 	import_button.text = I18n.t("Importing…")
 	var res := await app.backend.api.call_api("/brain/import/run", true, HTTPClient.METHOD_POST,
 		JSON.stringify({"path": path, "keep_folders": keep_check.button_pressed}))
-	_busy = false
+	_set_busy(false)
 	if not is_inside_tree():
 		return
 	result_label.visible = true
 	if not res["ok"]:
-		result_label.text = I18n.t("The import failed: %s") % str(res.get("error", ""))
+		var why := error_text(res)
+		result_label.text = why if why == I18n.t("Stopped: nothing was imported.") else I18n.t("The import failed: %s") % why
 		import_button.disabled = false
 		import_button.text = I18n.t("Import")
 		return

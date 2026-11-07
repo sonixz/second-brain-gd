@@ -33,6 +33,7 @@ class ZipImportTests(unittest.TestCase):
         self.downloads.mkdir()
 
     def tearDown(self):
+        zi.STOP.clear()
         self.conn.close()
         self.tmp.cleanup()
 
@@ -53,6 +54,50 @@ class ZipImportTests(unittest.TestCase):
         again = fi.scan(self.conn, str(z))
         self.assertEqual(again["again"]["same"], 7, "the same zip again finds its layer")
         self.assertEqual(fi.run(self.conn, str(z))["created"], 0)
+
+    def test_the_same_zip_is_unpacked_once_and_a_new_download_again(self):
+        z = make_zip(self.downloads / "v.zip", {"A.md": "a", "B.md": "[[A]]", "../x.md": "no"})
+        root, refused = zi.unpack(z, self.base)
+        self.assertEqual(refused, 1)
+        marker = root / "marker.txt"
+        marker.write_text("left by the first unpack")
+        root2, refused2 = zi.unpack(z, self.base)
+        self.assertEqual((root2, refused2), (root, 1), "the preview, then Import: one unpack")
+        self.assertTrue(marker.exists())
+        time.sleep(0.01)
+        make_zip(z, {"A.md": "a", "C.md": "c"})  # downloaded again, changed
+        root3, refused3 = zi.unpack(z, self.base)
+        self.assertEqual(refused3, 0)
+        self.assertFalse(marker.exists(), "a changed zip is unpacked fresh")
+        self.assertEqual(sorted(p.name for p in root3.iterdir()), ["A.md", "C.md"])
+
+    def test_stop_leaves_nothing_behind(self):
+        from unittest import mock
+        z = make_zip(self.downloads / "big-main.zip", VAULT, prefix="big-main/")
+        self.conn.commit()
+        before = self.conn.execute("SELECT COUNT(*) FROM notes").fetchone()[0]
+        real_body = fi._body
+        calls = []
+
+        def body_then_stop(n, res):
+            calls.append(n.rel)
+            if len(calls) == 2:
+                fi.stop()  # « Stop » pressed while the third note is on its way
+            return real_body(n, res)
+        with mock.patch.object(fi, "_body", body_then_stop):
+            with self.assertRaisesRegex(fi.ImportError_, "stopped"):
+                fi.run(self.conn, str(z))
+        self.conn.rollback()  # what closing the request's connection does
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) FROM notes").fetchone()[0], before)
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) FROM pack_layers").fetchone()[0], 0)
+        self.assertEqual(fi.run(self.conn, str(z))["created"], 7, "the next import starts clean")
+        # stopped while unpacking: the half-unpacked folder goes too
+        z2 = make_zip(self.downloads / "other.zip", {"A.md": "a", "B.md": "b"})
+        fi.stop()
+        with mock.patch.object(fi, "_begin", lambda: None):
+            with self.assertRaisesRegex(fi.ImportError_, "stopped"):
+                fi.scan(self.conn, str(z2))
+        self.assertFalse(any("other" in p.name for p in (self.base / "imports" / "zips").rglob("*")))
 
     def test_unsafe_members_are_refused_and_nothing_leaves_the_folder(self):
         z = self.downloads / "evil.zip"

@@ -13,6 +13,7 @@ from __future__ import annotations
 import hashlib
 import shutil
 import stat
+import threading
 import time
 import zipfile
 from pathlib import Path, PurePosixPath
@@ -21,11 +22,25 @@ MAX_TOTAL = 1_000_000_000      # bytes unpacked, all files together
 MAX_FILE = 200_000_000         # one file
 MAX_MEMBERS = 60_000
 KEEP_S = 86_400                # unpacked folders older than this are removed
+STAMP = ".zip-stamp"           # size, date and refused count of the zip last unpacked there
 CHUNK = 1 << 20
+
+
+# « Stop » in the import preview: set from another request, checked between files (unpack, read, import).
+STOP = threading.Event()
 
 
 class ZipRefused(ValueError):
     """The zip cannot be imported; the message says why, in plain words."""
+
+
+class Stopped(ZipRefused):
+    pass
+
+
+def check_stop() -> None:
+    if STOP.is_set():
+        raise Stopped("stopped: nothing was imported")
 
 
 def _wanted(name: str) -> bool:
@@ -59,6 +74,7 @@ def _unpack(zf: zipfile.ZipFile, target: Path, budget: _Budget, depth: int) -> i
     """Unpacks the wanted members of zf into target. Returns how many members were refused as unsafe."""
     refused = 0
     for info in zf.infolist():
+        check_stop()
         if info.is_dir():
             continue
         budget.members += 1
@@ -127,6 +143,18 @@ def unpack(zip_path: Path, data_root: Path) -> tuple[Path, int]:
     _sweep(base)
     key = hashlib.sha256(str(zip_path.resolve()).casefold().encode("utf-8")).hexdigest()[:16]
     target = base / key / (zip_path.stem.strip() or "zip")
+    st = zip_path.stat()
+    stamp = target.parent / STAMP
+    seen = f"{st.st_size}:{st.st_mtime_ns}:{target.name}"
+    try:
+        kept, refused_s = stamp.read_text(encoding="utf-8").rsplit("|", 1)
+        if kept == seen and target.is_dir():
+            # the same zip again (the preview, « Keep your folders » toggled, then Import): its unpacked copy
+            # serves; unpacking 1,000 notes again costs seconds on Windows
+            target.parent.touch()
+            return _top(target), int(refused_s)
+    except (OSError, ValueError):
+        pass
     if target.parent.exists():
         shutil.rmtree(target.parent, ignore_errors=True)
     target.mkdir(parents=True)
@@ -139,8 +167,12 @@ def unpack(zip_path: Path, data_root: Path) -> tuple[Path, int]:
     except ZipRefused:
         shutil.rmtree(target.parent, ignore_errors=True)
         raise
-    root = target
-    kids = [k for k in root.iterdir() if not k.name.startswith(".")]
-    if len(kids) == 1 and kids[0].is_dir() and not (root / ".obsidian").is_dir():
-        root = kids[0]  # one folder at the top (« repo-main/ »): that one; its own subfolders stay places
-    return root, refused
+    stamp.write_text(f"{seen}|{refused}", encoding="utf-8")  # written last: a half unpack is never reused
+    return _top(target), refused
+
+
+def _top(target: Path) -> Path:
+    kids = [k for k in target.iterdir() if not k.name.startswith(".")]
+    if len(kids) == 1 and kids[0].is_dir() and not (target / ".obsidian").is_dir():
+        return kids[0]  # one folder at the top (« repo-main/ »): that one; its own subfolders stay places
+    return target

@@ -871,5 +871,8 @@
  "Add a PDF, Word, Markdown or text file, or a .zip of notes. You can also drop files on the window, or paste a link in the capture bar.": "Ajoute un fichier PDF, Word, Markdown ou texte, ou un .zip de notes. Tu peux aussi déposer des fichiers sur la fenêtre, ou coller un lien dans la barre de capture.",
  "This cannot be read: %s": "Impossible de lire ceci : %s",
  "Unpacked from « %s » into the app's own folder: your download stays as it is.": "Décompressé depuis « %s » dans le dossier de l’app : ton téléchargement reste tel quel.",
- "%d files in the zip were refused: their path pointed outside it.": "%d fichiers du zip ont été refusés : leur chemin pointait hors du zip."
+ "%d files in the zip were refused: their path pointed outside it.": "%d fichiers du zip ont été refusés : leur chemin pointait hors du zip.",
+ "Stopping…": "Arrêt…",
+ "Stops reading or importing: nothing of it enters the Brain": "Arrête la lecture ou l’import : rien n’en entre dans le Brain",
+ "Stopped: nothing was imported.": "Arrêté : rien n’a été importé."
 }

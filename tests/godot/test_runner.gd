@@ -749,6 +749,12 @@ func _e2e() -> void:
 	check(zv_scanned and str(zv_scan.get("kind", "")) == "obsidian" and int(zv_scan.get("notes", 0)) == 3
 		and str(zv_scan.get("name", "")) == "test-vault" and (zv_dlg.get("notes_label") as Label).text.contains("test-vault-main.zip"),
 		"a dropped .zip opens the same preview, unpacked in the app's folder (%s)" % (zv_dlg.get("detect_label") as Label).text)
+	var zv_stop: Button = zv_dlg.get("stop_button")
+	var zv_stopped_res := {"ok": false, "error": "HTTP 422", "data": {"detail": "stopped: nothing was imported"}}
+	var zv_stop_api: Dictionary = await app.backend.api.call_api("/brain/import/stop", true, HTTPClient.METHOD_POST, "{}")
+	check(not zv_stop.visible and zv_dlg.call("error_text", zv_stopped_res) == I18n.t("Stopped: nothing was imported.")
+		and zv_dlg.call("error_text", {"ok": false, "error": "HTTP 422", "data": {"detail": "this zip is damaged"}}) == "this zip is damaged"
+		and zv_stop_api["ok"], "« Stop » shows only while it works; the engine's own words are shown, not « HTTP 422 »")
 	zv_dlg.hide()
 	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
 	var l14_welcome := graph.find_node("Welcome to your Second Brain")

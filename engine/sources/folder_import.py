@@ -56,6 +56,23 @@ class ImportError_(ValueError):
     pass
 
 
+def stop() -> None:
+    """« Stop » in the preview: the scan or import under way ends at its next file, leaving nothing behind."""
+    from engine.sources import zip_import
+    zip_import.STOP.set()
+
+
+def _check_stop() -> None:
+    from engine.sources import zip_import
+    if zip_import.STOP.is_set():
+        raise ImportError_("stopped: nothing was imported")
+
+
+def _begin() -> None:
+    from engine.sources import zip_import
+    zip_import.STOP.clear()
+
+
 # ------------------------------------------------------------------ reading
 def front_matter(text: str) -> tuple[dict[str, Any], str, bool]:
     """(properties, body, malformed). A small YAML subset: key: value, lists (inline or « - item »), quotes."""
@@ -325,6 +342,7 @@ def _read(root: Path) -> dict[str, Any]:
     kind0 = flavour(root, md)
     notes: list[Note] = []
     for p in md:
+        _check_stop()
         try:
             notes.append(Note(root, p, kind0))
         except OSError:
@@ -503,6 +521,7 @@ def _source(conn: sqlite3.Connection, path: str) -> tuple[Path, dict[str, Any] |
 
 def scan(conn: sqlite3.Connection, path: str, keep_folders: bool = True) -> dict[str, Any]:
     """The preview: what was detected, what would come in, and what it would cost."""
+    _begin()
     root, from_zip = _source(conn, path)
     r = _read(root)
     notes: list[Note] = r["notes"]
@@ -589,6 +608,7 @@ def run(conn: sqlite3.Connection, path: str, keep_folders: bool = True) -> dict[
     """Imports (or imports again) a folder of notes as a layer. Returns an honest report."""
     from engine.brain import archivist
 
+    _begin()
     root, from_zip = _source(conn, path)
     r = _read(root)
     notes: list[Note] = r["notes"]
@@ -633,6 +653,7 @@ def run(conn: sqlite3.Connection, path: str, keep_folders: bool = True) -> dict[
     ids: dict[str, str] = {}
     created = updated = same = 0
     for n in notes:
+        _check_stop()  # stopped here: the connection closes without a commit, nothing of it stays
         body = _body(n, res)
         if n.rel in known:
             nid, h = known[n.rel]

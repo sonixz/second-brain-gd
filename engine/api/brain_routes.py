@@ -166,6 +166,13 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         from engine.sources import folder_import
         return run(folder_import.run, body.path, body.keep_folders)
 
+    @r.post("/import/stop")
+    def post_import_stop() -> dict[str, Any]:
+        """« Stop » in the preview: the scan or import under way ends at its next file; nothing of it stays."""
+        from engine.sources import folder_import
+        folder_import.stop()
+        return {"stopping": True}
+
     @r.get("/mention")
     def get_mention(q: str = Query("", max_length=200), limit: int = Query(8, ge=1, le=20)) -> dict[str, Any]:
         """The « @ » picker: items by title as you type (no model call)."""
