@@ -94,3 +94,7 @@ timeline to go back »; Next now routines, fill by identifier, the meaning graph
 installer). Built in loops: 12 new cards (31 → 40, 37, 37b, MCP) with their dots and thumbnails, « Show all 48
 loops ». One sentence in « Transparent »: other AI tools can come in, on your terms. Committed on loop-32 only.
 
+**Owner's note (2026-11-07):** Microsoft Learn is only an example. The MCP story stays generic everywhere (any server,
+from the registry or an address, with a key, a sign-in or a local program); Microsoft Learn appears only as the worked
+example in one guide and as one of the starters in the app. The guide is now « Give your agents an MCP server ».
+

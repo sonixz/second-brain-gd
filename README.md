@@ -88,7 +88,7 @@ chosen yet.
 - **Table:** the Table tab shows items in rows and columns; tick recipes and « Grocery list » adds their ingredients
   up by aisle; « PDF » prints them on Letter paper.
 - **MCP:** the ⇠● ⇢● lights at the top: connect Claude Code to read your Brain (it proposes, the archivist
-  decides, the timeline can undo), and give your agents MCP servers (Microsoft Learn, a catalogue, keys,
+  decides, the timeline can undo), and give your agents MCP servers (any server from a catalogue or the official registry, keys,
   sign-ins, local programs with your approval). Guide: [docs/guide-mcp.md](docs/guide-mcp.md).
 - **Engine room:** click "All systems operational" at the top right.
 

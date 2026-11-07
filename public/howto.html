@@ -69,7 +69,7 @@
         <h4>Connect your AI tools</h4>
         <ul>
           <li><a href="#claude-code">Connect Claude Code to your Brain</a></li>
-          <li><a href="#mslearn">Give an agent Microsoft Learn</a></li>
+          <li><a href="#mslearn">Give your agents an MCP server</a></li>
         </ul>
       </nav>
     </aside>
@@ -138,7 +138,7 @@
             <span class="guide-card-body"><b>Connect Claude Code to your Brain</b><span>Let Claude Code read and search your Brain over MCP, on this computer only; it proposes, the archivist decides, and the timeline can undo it.</span>
             <span class="guide-card-meta">4 min · 4 steps · App only</span></span></a>
           <a class="guide-card" href="#mslearn"><img src="assets/howto/mslearn/03.webp" alt="" loading="lazy" width="1280" height="800">
-            <span class="guide-card-body"><b>Give an agent Microsoft Learn</b><span>Connect a public MCP server and let your agents search it: here Microsoft Learn, for Microsoft and Azure documentation, with sources.</span>
+            <span class="guide-card-body"><b>Give your agents an MCP server</b><span>Connect an MCP server and let your agents use its tools. Any MCP server works the same way; the example here is Microsoft Learn, a public documentation server that needs no account.</span>
             <span class="guide-card-meta">3 min · 3 steps · Real answers</span></span></a>
         </div>
       </header>
@@ -723,21 +723,21 @@
 
       <section class="doc guide" id="mslearn">
         <p class="kicker">Connect your AI tools · 3 min · 3 steps</p>
-        <h2>Give an agent Microsoft Learn <span class="badge badge-real" title="Recorded from the real model, then replayed for the screenshots">Real answers</span></h2>
-        <p class="guide-goal">Connect a public MCP server and let your agents search it: here Microsoft Learn, for Microsoft and Azure documentation, with sources.</p>
-        <div class="callout"><p><b>You need</b></p><ul><li>Your OpenAI key</li><li>An internet connection (Microsoft Learn needs no account)</li></ul></div>
+        <h2>Give your agents an MCP server <span class="badge badge-real" title="Recorded from the real model, then replayed for the screenshots">Real answers</span></h2>
+        <p class="guide-goal">Connect an MCP server and let your agents use its tools. Any MCP server works the same way; the example here is Microsoft Learn, a public documentation server that needs no account.</p>
+        <div class="callout"><p><b>You need</b></p><ul><li>Your OpenAI key</li><li>The server's address, or one from the catalogue (some need a key or a sign-in)</li></ul></div>
         <ol class="guide-steps">
           <li class="guide-step">
-            <div class="guide-step-text"><p class="guide-do">Open the MCP window (the <b>⇠● ⇢●</b> lights) and click <b>+ Connect Microsoft Learn</b>.</p><p class="guide-see">Its three tools are listed (search the docs, code samples, fetch a page), for all agents. The <b>⇢</b> light turns green.</p></div>
-            <figure class="shot"><img src="assets/howto/mslearn/01.webp" alt="Give an agent Microsoft Learn, step 1 of 3: Open the MCP window (the ⇠● ⇢● lights) and click + Connect Microsoft Learn." loading="lazy" width="1280" height="800"></figure>
+            <div class="guide-step-text"><p class="guide-do">Open the MCP window (the <b>⇠● ⇢●</b> lights) and connect a server: search the registry, paste its address, or pick one of the starters. Here, <b>+ Connect Microsoft Learn</b>.</p><p class="guide-see">Its three tools are listed (search the docs, code samples, fetch a page), for all agents. The <b>⇢</b> light turns green.</p></div>
+            <figure class="shot"><img src="assets/howto/mslearn/01.webp" alt="Give your agents an MCP server, step 1 of 3: Open the MCP window (the ⇠● ⇢● lights) and connect a server: search the registry, paste its address, or pick one of the starters. Here, + Connect Microsoft Learn." loading="lazy" width="1280" height="800"></figure>
           </li>
           <li class="guide-step">
             <div class="guide-step-text"><p class="guide-do">Ask the Archivist: <span class="say">Using Microsoft Learn, how do I write a timer trigger for Azure Functions in Python? Answer in three sentences and give the source.</span></p><p class="guide-see">It calls Microsoft Learn (the ⇢ light turns red during the call) and answers with the decorator to use and the page it comes from. What a server returns is information, never instructions.</p></div>
-            <figure class="shot"><img src="assets/howto/mslearn/02.webp" alt="Give an agent Microsoft Learn, step 2 of 3: Ask the Archivist: Using Microsoft Learn, how do I write a timer trigger for Azure Functions in Python? Answer in three sentences and give the source." loading="lazy" width="1280" height="800"></figure>
+            <figure class="shot"><img src="assets/howto/mslearn/02.webp" alt="Give your agents an MCP server, step 2 of 3: Ask the Archivist: Using Microsoft Learn, how do I write a timer trigger for Azure Functions in Python? Answer in three sentences and give the source." loading="lazy" width="1280" height="800"></figure>
           </li>
           <li class="guide-step">
             <div class="guide-step-text"><p class="guide-do">Open the MCP window again.</p><p class="guide-see">This month's calls and tokens for Microsoft Learn. <b>Tools, key…</b> switches tools off, sets a monthly budget, or chooses which agents may use it.</p></div>
-            <figure class="shot"><img src="assets/howto/mslearn/03.webp" alt="Give an agent Microsoft Learn, step 3 of 3: Open the MCP window again." loading="lazy" width="1280" height="800"></figure>
+            <figure class="shot"><img src="assets/howto/mslearn/03.webp" alt="Give your agents an MCP server, step 3 of 3: Open the MCP window again." loading="lazy" width="1280" height="800"></figure>
           </li>
         </ol>
         <h3>If it does not work</h3><ul class="guide-trouble"><li><b>The server shows <i>unreachable</i>.</b> Check the internet connection, then <b>Remove</b> and connect it again.</li><li><b>The answer is long and costly.</b> Results are cut at 8,000 characters; switch off the tools you do not need.</li></ul>

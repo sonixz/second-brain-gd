@@ -548,11 +548,12 @@ guide(
     [("Connect Claude Code (MCP)", "docs.html#mcp-in")],
     "Connect your AI tools")
 guide(
-    "mslearn", "Give an agent Microsoft Learn", "real", 3,
-    "Connect a public MCP server and let your agents search it: here Microsoft Learn, for Microsoft and Azure "
-    "documentation, with sources.",
-    ["Your OpenAI key", "An internet connection (Microsoft Learn needs no account)"],
-    [("Open the MCP window (the <b>⇠● ⇢●</b> lights) and click <b>+ Connect Microsoft Learn</b>.",
+    "mslearn", "Give your agents an MCP server", "real", 3,
+    "Connect an MCP server and let your agents use its tools. Any MCP server works the same way; the example here is "
+    "Microsoft Learn, a public documentation server that needs no account.",
+    ["Your OpenAI key", "The server's address, or one from the catalogue (some need a key or a sign-in)"],
+    [("Open the MCP window (the <b>⇠● ⇢●</b> lights) and connect a server: search the registry, paste its address, "
+      "or pick one of the starters. Here, <b>+ Connect Microsoft Learn</b>.",
       "Its three tools are listed (search the docs, code samples, fetch a page), for all agents. The <b>⇢</b> light "
       "turns green."),
      ("Ask the Archivist: <span class=\"say\">Using Microsoft Learn, how do I write a timer trigger for Azure "
@@ -567,6 +568,7 @@ guide(
      ("The answer is long and costly.", "Results are cut at 8,000 characters; switch off the tools you do not need.")],
     [("MCP servers for your agents", "docs.html#mcp-out")],
     "Connect your AI tools", cost_cap=0.20)
+# The other families (a key, an account sign-in, a local program) work the same way: docs.html#mcp-out.
 # GUIDES-END
 
 

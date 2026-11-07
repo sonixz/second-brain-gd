@@ -18,7 +18,7 @@ A snapshot of what works today. The history of each loop is in [DEVLOG](DEVLOG.m
 | **Agents** | The Archivist, Sparring, your own agents (Agent Builder); missions in the background with a plan, a question, a draft to approve; @ mentions |
 | **Voice** | Push-to-talk with the interface driven by voice; the live conversation |
 | **MCP in** | Claude Code (or any MCP tool) reads the Brain over MCP, on this computer only; it proposes, the archivist decides; a timeline with restore points undoes by author |
-| **MCP out** | Agents use MCP servers: Microsoft Learn and a hand-checked list, the official registry, keys, account sign-in (OAuth), local programs with approval; writes outside confirmed each time; budget; ⇠● ⇢● lights |
+| **MCP out** | Agents use any MCP server you connect: a hand-checked starter list, the official registry, keys, account sign-in (OAuth), local programs with approval; writes outside confirmed each time; budget; ⇠● ⇢● lights |
 | **Your data** | Backups, restore, export, packs, repair, start fresh, uninstall; English or French (FR / EN) |
 
 ## Tests (2026-11-07)
