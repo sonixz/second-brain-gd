@@ -836,6 +836,25 @@ func _e2e() -> void:
 		and FileAccess.get_file_as_string(str(tb_exp["html"])).contains("size: letter"),
 		"the ticked recipes print on Letter paper (%s)" % ("PDF" if tb_exp.get("pdf") != null else str(tb_exp.get("why", ""))))
 	await brain.set_view("graph")
+	# Loop MCP-A: an AI tool connected over MCP: its own token, a read tool called, the « in » light on.
+	var mc: Dictionary = await app.backend.api.call_api("/mcp/clients", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Claude Code", "level": "read"}))
+	var mc_token := str((mc["data"] as Dictionary).get("token", ""))
+	var mc_req := HTTPRequest.new()
+	root.add_child(mc_req)
+	mc_req.request("http://127.0.0.1:%d/mcp" % app.backend.api.port, PackedStringArray(["Content-Type: application/json", "Authorization: Bearer " + mc_token]),
+		HTTPClient.METHOD_POST, JSON.stringify({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": {"name": "search", "arguments": {"query": "Paella"}}}))
+	var mc_res: Array = await mc_req.request_completed
+	mc_req.queue_free()
+	var mc_body: Variant = JSON.parse_string((mc_res[3] as PackedByteArray).get_string_from_utf8())
+	var mc_text := str((((mc_body as Dictionary).get("result", {}) as Dictionary).get("content", [{}]) as Array)[0].get("text", "")) if mc_body is Dictionary else ""
+	var lights: Button = brain.get("mcp_lights")
+	await lights.call("poll")
+	check(mc_res[1] == 200 and mc_text.contains("Paella du samedi") and lights.tooltip_text.contains("search") and str(lights.get("in_state")) != "off",
+		"an MCP client with its own token searches the Brain; the « in » light shows the call (%s)" % lights.tooltip_text.left(60).replace("\n", " / "))
+	var mc_dlg: AcceptDialog = lights.call("open_dialog")
+	await create_timer(0.5).timeout
+	check(mc_dlg.visible and (mc_dlg.find_child("Clients", true, false) as VBoxContainer).get_child_count() >= 1, "the MCP window lists the connected tools")
+	mc_dlg.hide()
 	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
 	var l14_welcome := graph.find_node("Welcome to your Second Brain")
 	var l14_pathed := await wait_until(func() -> bool: return graph.path_ids.size() >= 2, 10.0)

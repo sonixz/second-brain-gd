@@ -76,6 +76,20 @@ Click: the details (clients, servers, recent calls, costs) in a small panel; the
 - Tests: protocol handshake, tool list per permission, each read tool, token refused / revoked, localhost only,
   the light during a call.
 
+**Done 2026-11-07.** engine/mcp/server.py (JSON-RPC 2.0 over Streamable HTTP, standard library; initialize with the
+archivist protocol as instructions, tools/list, tools/call; 11 read tools, short and paged, content marked as data;
+clients with a level and a token kept as its SHA-256 only; an in-memory activity log for the lights);
+engine/api/mcp_routes.py (POST /mcp for clients, 127.0.0.1 only, 401 for an unknown or revoked token; GET /mcp/status
+and /mcp/clients for the app); engine/mcp/relay.py (stdio ⇄ http for Claude Code in WSL, run with the app's Windows
+Python, token from <SecondBrainGD>/mcp/<id>.token). scenes/brain/mcp_lights.gd: « ⇠● ⇢● » in the top bar (grey,
+green, a soft red during a call; the last call on hover), the MCP window (connect a tool, the commands to copy with
+the key masked, disconnect, recent calls). Real tries: a Claude Code session (claude -p with a temporary MCP config,
+the owner's own config untouched) called overview, search and get_item over HTTP and answered in French; the same
+through the relay from WSL to an engine run by the Windows Python. It started with overview, as the server instructions ask (a hint they are read, not a proof).
+Tests: tests/python/test_mcp_server.py (4: protocol, read tools, tokens and activity, the relay), 2 Godot checks.
+Guide docs/guide-mcp.md; screenshots docs/screenshots/mcp-en and mcp-fr. The token is kept as a hash in the
+database rather than in the Credential Manager (nothing to steal; the relay's token file lives in the user's folder).
+
 ## MCP-B — MCP in, write
 
 - **Levels** per client: Read · Propose items (`propose_item`) · Propose changes (`propose_change`). No direct write

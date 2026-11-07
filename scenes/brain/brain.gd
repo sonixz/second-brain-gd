@@ -82,7 +82,8 @@ static func nav_views() -> Array:
 var today_view: TodayView
 var projects_view: ProjectsView
 var table_view: PanelContainer     # Loop 37C (preloaded script)
-var last_opened_file := ""         # the last file an assistant action opened (tests)
+var last_opened_file := ""
+var mcp_lights: Button              # the MCP in / out lights in the top bar         # the last file an assistant action opened (tests)
 var agents_view: AgentsView
 var view_buttons: Dictionary = {}
 # Sources
@@ -160,6 +161,7 @@ func _ready() -> void:
 	_every(GRAPH_REFRESH_S, func() -> void: refresh_graph())
 	_every(HEALTH_EVERY_S, _check_health)
 	_every(2.0, _watch_browser)
+	_every(1.5, func() -> void: mcp_lights.call("poll"))
 	_update_greeting()
 	await _check_health()
 	await refresh_spaces()
@@ -463,7 +465,7 @@ func _build_top_bar() -> void:
 	search_edit = LineEdit.new()
 	search_edit.theme_type_variation = "SearchEdit"
 	search_edit.placeholder_text = I18n.t("Search your brain   ( / )")
-	search_edit.custom_minimum_size = Vector2(260, 40)
+	search_edit.custom_minimum_size = Vector2(220, 40)
 	search_edit.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	search_edit.clear_button_enabled = true
 	search_edit.text_changed.connect(_on_search_changed)
@@ -489,6 +491,8 @@ func _build_top_bar() -> void:
 	status_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	prow.add_child(status_label)
 	pill.custom_minimum_size = Vector2(196, 40)
+	mcp_lights = preload("res://scenes/brain/mcp_lights.gd").new().setup(app)  # MCP in / out (Loop MCP-A)
+	bar.add_child(mcp_lights)
 	# FR / EN: the app's language. English is the product's; the switch rebuilds the screen in the other one.
 	bar.add_child(I18n.switch(app))
 

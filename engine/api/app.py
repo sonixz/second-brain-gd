@@ -184,4 +184,7 @@ def create_app(layout: Layout, token: str, instance_id: str, port: int,
     from engine.api.mission_routes import make_router as make_mission_router
 
     app.include_router(make_mission_router(layout, require_token))
+    from engine.api.mcp_routes import make_router as make_mcp_router
+
+    app.include_router(make_mcp_router(layout, require_token))
     return app
