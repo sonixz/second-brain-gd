@@ -943,5 +943,11 @@
  "Copy one command now: the key it holds is shown only this once. Then restart Claude Code (a session sees new MCP servers when it starts).": "Copie une commande maintenant : la clé qu’elle contient n’est montrée qu’une fois. Puis relance Claude Code (une session voit les nouveaux serveurs MCP à son démarrage).",
  "MCP — AI tools and the Brain": "MCP — les outils d’IA et le Brain",
  "Disconnect": "Débrancher",
- "%d calls, last %s": "%d appels, dernier le %s"
+ "%d calls, last %s": "%d appels, dernier le %s",
+ "%d proposals wait for your approval": "%d propositions attendent ton approbation",
+ "without waiting": "sans attendre",
+ "Its proposals are applied at once (still through the archivist, still undoable). Off: they wait for your approval.": "Ses propositions sont appliquées tout de suite (toujours par l’archiviste, toujours annulables). Désactivé : elles attendent ton approbation.",
+ "Reject": "Refuser",
+ "Approve all": "Tout approuver",
+ "%d calls": "%d appels"
 }

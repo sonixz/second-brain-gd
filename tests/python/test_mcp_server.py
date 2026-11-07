@@ -153,3 +153,98 @@ class RelayTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ProposalTests(unittest.TestCase):
+    """Loop MCP-B1: a client proposes; the archivist is the only door; drafts wait; receipts come back."""
+
+    def setUp(self):
+        from engine.mcp import proposals
+        proposals._recent.clear()
+        self.tmp = tempfile.TemporaryDirectory()
+        self.db = Path(self.tmp.name) / "data" / "second_brain.sqlite3"
+        database.migrate(self.db)
+        self.conn = database.connect(self.db)
+        seed_all(self.conn)
+        self.cuisine = brain.create_space(self.conn, "Cuisine", "area")
+        self.paella = brain.create_note(self.conn, "Paella du samedi", "Riz et safran.")
+        self.reader = server.create_client(self.conn, "Lecteur", "read")
+        self.cc = server.create_client(self.conn, "Claude Code", "propose_changes")
+
+    def tearDown(self):
+        self.conn.close()
+        self.tmp.cleanup()
+
+    def call(self, client, name, **args):
+        res = server.handle(self.conn, client, {"jsonrpc": "2.0", "id": 1, "method": "tools/call",
+                                                "params": {"name": name, "arguments": args}})
+        if "error" in res:
+            return res, None
+        return res["result"], json.loads(res["result"]["content"][0]["text"])
+
+    def test_levels_decide_which_tools_exist(self):
+        names = lambda c: {t["name"] for t in server.tool_list(c["level"])}  # noqa: E731
+        self.assertNotIn("propose_item", names(self.reader))
+        self.assertTrue({"propose_item", "propose_change", "my_proposals"} <= names(self.cc))
+        self.assertFalse({"create_note", "move_items", "delete"} & names(self.cc), "no direct write tool at all")
+        res, _ = self.call(self.reader, "propose_item", title="x", content="y", reason="z")
+        self.assertIn("not allowed at this client's level", res["error"]["message"])
+
+    def test_a_proposed_item_waits_then_goes_through_the_archivist(self):
+        from engine.assistant.llm import FakeChat
+        from engine.mcp import proposals
+        res, out = self.call(self.cc, "propose_item", title="Recette de chili", content="Boeuf, haricots, cumin.",
+                             reason="L'utilisateur cuisine le chili chaque semaine", source="https://example.com/chili",
+                             suggested_place="Cuisine")
+        self.assertEqual(out["status"], "pending")
+        self.assertIn("waiting for the user's approval", out["receipt"])
+        self.assertIsNone(next((r for r in self.conn.execute("SELECT title FROM notes") if r[0] == "Recette de chili"), None),
+                          "nothing is written before approval")
+        done = proposals.apply(self.conn, out["proposal"], FakeChat())
+        self.assertEqual(done["status"], "applied")
+        note = brain.get_note(self.conn, done["item"])
+        self.assertIn("Source: https://example.com/chili", note["body"])
+        self.assertIn("Proposé par Claude Code", note["body"])
+        self.assertEqual(note["source"], "agent")
+        author = self.conn.execute("SELECT author FROM assistant_actions WHERE note_id = ? ORDER BY id LIMIT 1", (note["id"],)).fetchone()[0]
+        self.assertEqual(author, "mcp:Claude Code", "the journal knows who did it")
+        _r, mine = self.call(self.cc, "my_proposals")
+        self.assertEqual(mine["proposals"][0]["status"], "applied")
+        self.assertTrue(mine["proposals"][0]["receipt"])
+
+    def test_refusals_explain_the_protocol(self):
+        _r, out = self.call(self.cc, "propose_item", title="Sans raison", content="x")
+        self.assertIn("needs reason", out["refused"])
+        _r, out = self.call(self.cc, "propose_item", title="paella du samedi", content="x", reason="y")
+        self.assertIn("already in the Brain", out["refused"])
+        _r, out = self.call(self.cc, "propose_change", action="move", item=self.paella["id"], target="Nouveau lieu", reason="r")
+        self.assertIn("existing place", out["refused"])
+        _r, out = self.call(self.cc, "propose_change", action="erase", item=self.paella["id"], reason="r")
+        self.assertIn("action must be one of", out["refused"])
+        _r, out = self.call(self.cc, "propose_change", action="trash", item=self.paella["id"], reason="r", version="2000-01-01T00:00:00Z")
+        self.assertIn("changed since you read it", out["refused"])
+
+    def test_a_trusted_client_applies_at_once_and_changes_are_undoable(self):
+        from engine.assistant import core as assistant
+        self.conn.execute("UPDATE mcp_clients SET direct = 1 WHERE id = ?", (self.cc["id"],))
+        _r, item = self.call(self.cc, "get_item", id=self.paella["id"])
+        _r, out = self.call(self.cc, "propose_change", action="move", item=self.paella["id"], target="Cuisine",
+                            reason="c'est une recette", version=item["updated"])
+        self.assertEqual(out["status"], "applied")
+        self.assertIn("moved « Paella du samedi » to", out["receipt"])
+        self.assertIn("Cuisine", out["receipt"])
+        self.assertEqual(brain.get_note(self.conn, self.paella["id"])["space_id"], self.cuisine["id"])
+        aid = self.conn.execute("SELECT id FROM assistant_actions WHERE author = 'mcp:Claude Code' ORDER BY id DESC").fetchone()[0]
+        assistant.undo(self.conn, aid)
+        self.assertNotEqual(brain.get_note(self.conn, self.paella["id"])["space_id"], self.cuisine["id"], "Undo works for it too")
+        _r, out = self.call(self.cc, "propose_change", action="trash", item=self.paella["id"], reason="doublon")
+        self.assertEqual(brain.get_note(self.conn, self.paella["id"])["status"], "archived", "trash, never erased")
+        self.assertIsNotNone(self.conn.execute("SELECT 1 FROM notes WHERE id = ?", (self.paella["id"],)).fetchone())
+
+    def test_rate_limit(self):
+        from engine.mcp import proposals
+        with mock.patch.object(proposals, "PER_MINUTE", 2):
+            self.call(self.cc, "propose_item", title="A1", content="x", reason="y")
+            self.call(self.cc, "propose_item", title="A2", content="x", reason="y")
+            _r, out = self.call(self.cc, "propose_item", title="A3", content="x", reason="y")
+        self.assertIn("too many proposals", out["refused"])

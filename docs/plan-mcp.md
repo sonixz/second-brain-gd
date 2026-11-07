@@ -107,6 +107,18 @@ database rather than in the Credential Manager (nothing to steal; the relay's to
 - **No double work.** The same journal as the archivist; an item already filed is not filed twice.
 - Tests: each write tool at each level, refusals, drafts approved / rejected, session undo, rate limit.
 
+**B1 done 2026-11-07.** Migration 0017 (mcp_proposals; mcp_clients.direct; assistant_actions.author).
+engine/mcp/proposals.py: `propose_item` (title, content, reason required; source, suggested place, type + fields
+optional; duplicates and oversize refused) and `propose_change` (move to an existing place, link, unlink, set_fields,
+trash; version check « changed since you read it »; no new places, nothing erased); 60 a minute, 500 a day; a
+pending proposal waits for approval unless the client is trusted (« without waiting »); applying creates the item
+as a capture and calls the archivist's file_item with the owner's model (no key: it stays in the Inbox), or applies
+the change through the assistant's journaled actions with the author « mcp:<client> » (Undo works); receipts go
+back to the client (`my_proposals`). The tools a client sees depend on its level; no direct write tool exists.
+App: level and « without waiting » per client, the proposals list (approve / reject / approve all), a count by the
+⇠ light. Tests: 5 more Python tests (proposals), a Godot check (pending → approve → in the graph). Screenshot
+docs/screenshots/mcp-*/m3-proposals.png. Undo of set_fields comes with the timeline (B2).
+
 ## MCP-C — MCP out
 
 - **Connections card** (engine room): « + Add a server » (name, address). Remote Streamable HTTP servers only at

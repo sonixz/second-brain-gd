@@ -25,6 +25,7 @@ class ClientIn(BaseModel):
 
 class LevelIn(BaseModel):
     level: str = Field(max_length=20)
+    direct: bool | None = None
 
 
 def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
@@ -76,7 +77,8 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     def get_status() -> dict[str, Any]:
         with database.session(layout.database) as conn:
             clients = server.list_clients(conn)
-        return {**server.ACTIVITY.status(), "clients": clients}
+            pending = conn.execute("SELECT COUNT(*) FROM mcp_proposals WHERE status = 'pending'").fetchone()[0]
+        return {**server.ACTIVITY.status(), "clients": clients, "pending": pending}
 
     @r.get("/mcp/clients", dependencies=[Depends(auth)])
     def get_clients() -> dict[str, Any]:
@@ -95,11 +97,36 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
 
     @r.post("/mcp/clients/{cid}/level", dependencies=[Depends(auth)])
     def post_level(cid: str, body: LevelIn) -> dict[str, Any]:
+        """The client's level (read, propose items, propose changes) and whether its proposals wait for approval."""
         with database.session(layout.database) as conn:
             try:
+                if body.direct is not None:
+                    conn.execute("UPDATE mcp_clients SET direct = ? WHERE id = ?", (1 if body.direct else 0, cid))
                 return server.set_level(conn, cid, body.level)
             except server.McpError as exc:
                 raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @r.get("/mcp/proposals", dependencies=[Depends(auth)])
+    def get_proposals(status: str = "pending") -> dict[str, Any]:
+        from engine.mcp import proposals
+        with database.session(layout.database) as conn:
+            rows = proposals.listing(conn, status if status != "all" else "")
+        return {"proposals": [{**p, "summary": proposals.summary(p)} for p in rows]}
+
+    @r.post("/mcp/proposals/{pid}/{choice}", dependencies=[Depends(auth)])
+    def post_proposal(pid: str, choice: str) -> dict[str, Any]:
+        """approve / reject one proposal; pid « all » approves (or rejects) every pending one."""
+        from engine.mcp import proposals
+        if choice not in ("approve", "reject"):
+            raise HTTPException(status_code=422, detail="approve or reject")
+        llm = llm_or_none()
+        with database.session(layout.database) as conn:
+            ids = [p["id"] for p in proposals.listing(conn, "pending", None, 500)] if pid == "all" else [pid]
+            try:
+                out = [proposals.apply(conn, i, llm) if choice == "approve" else proposals.reject(conn, i) for i in ids]
+            except proposals.Refused as exc:
+                raise HTTPException(status_code=404, detail=str(exc)) from exc
+        return {"results": out}
 
     @r.delete("/mcp/clients/{cid}", dependencies=[Depends(auth)])
     def delete_client(cid: str) -> dict[str, Any]:

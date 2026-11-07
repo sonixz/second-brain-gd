@@ -29,4 +29,27 @@ func _run() -> void:
 	await lights.call("poll")
 	await pause(0.2)
 	await shot("m2-lights")
+	# MCP-B1: proposals waiting for approval
+	var cid := str((c["data"] as Dictionary)["id"])
+	await app.backend.api.call_api("/mcp/clients/%s/level" % cid, true, HTTPClient.METHOD_POST, JSON.stringify({"level": "propose_changes", "direct": false}))
+	var fr := OS.get_environment("SBGD_UI_LANG") == "fr"
+	for args in [{"title": "Rappel : renouveler le passeport" if fr else "Reminder: renew the passport", "content": "Il expire en mars." if fr else "It expires in March.",
+			"reason": "Noté pendant une session de travail" if fr else "Noted during a work session", "suggested_place": "Finances"},
+			{"title": "Idée : vidéo du graphe pour le site" if fr else "Idea: a video of the graph for the site", "content": "Montrer le graphe en mouvement." if fr else "Show the graph moving.",
+			"reason": "Sorti d'une discussion sur le site" if fr else "Came up while working on the site"}]:
+		var r2 := HTTPRequest.new()
+		root.add_child(r2)
+		r2.request("http://127.0.0.1:%d/mcp" % app.backend.api.port, PackedStringArray(["Content-Type: application/json",
+			"Authorization: Bearer " + str((c["data"] as Dictionary)["token"])]), HTTPClient.METHOD_POST,
+			JSON.stringify({"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "propose_item", "arguments": args}}))
+		var got: Array = await r2.request_completed
+		print("propose: ", (got[3] as PackedByteArray).get_string_from_utf8().left(160))
+	await lights.call("poll")
+	var dlg2: AcceptDialog = lights.call("open_dialog")
+	await pause(3.0)
+	print("approve all: ", dlg2.find_child("ApproveAll", true, false))
+	var pb: Node = dlg2.find_child("Proposals", true, false)
+	print("proposals box children: ", pb.get_child_count() if pb else -1)
+	calm()
+	await shot("m3-proposals")
 	quit(0)

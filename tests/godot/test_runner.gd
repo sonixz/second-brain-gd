@@ -855,6 +855,26 @@ func _e2e() -> void:
 	await create_timer(0.5).timeout
 	check(mc_dlg.visible and (mc_dlg.find_child("Clients", true, false) as VBoxContainer).get_child_count() >= 1, "the MCP window lists the connected tools")
 	mc_dlg.hide()
+	# Loop MCP-B1: a client at « propose changes » level proposes an item; it waits; approving it files it.
+	var mc_cid := str((mc["data"] as Dictionary).get("id", ""))
+	await app.backend.api.call_api("/mcp/clients/%s/level" % mc_cid, true, HTTPClient.METHOD_POST, JSON.stringify({"level": "propose_changes", "direct": false}))
+	var mp_req := HTTPRequest.new()
+	root.add_child(mp_req)
+	mp_req.request("http://127.0.0.1:%d/mcp" % app.backend.api.port, PackedStringArray(["Content-Type: application/json", "Authorization: Bearer " + mc_token]),
+		HTTPClient.METHOD_POST, JSON.stringify({"jsonrpc": "2.0", "id": 2, "method": "tools/call", "params": {"name": "propose_item",
+			"arguments": {"title": "Idée venue de Claude Code", "content": "Un mémo à classer.", "reason": "test"}}}))
+	var mp_res: Array = await mp_req.request_completed
+	mp_req.queue_free()
+	var mp_text := (mp_res[3] as PackedByteArray).get_string_from_utf8().left(200)
+	await lights.call("poll")
+	var mp_pending := int((lights.get("status") as Dictionary).get("pending", 0))
+	var mp_api: Dictionary = await app.backend.api.call_api("/mcp/proposals?status=pending")
+	var mp_list: Array = (mp_api["data"] as Dictionary).get("proposals", [])
+	await app.backend.api.call_api("/mcp/proposals/all/approve", true, HTTPClient.METHOD_POST, "{}")
+	await brain.refresh_graph()
+	var mp_done := await wait_until(func() -> bool: return graph.find_node("Idée venue de Claude Code") != "", 10.0)
+	check(mp_pending == 1 and mp_list.size() == 1 and str((mp_list[0] as Dictionary).get("summary", "")).contains("Idée venue") and mp_done,
+		"a proposal from Claude Code waits for approval, then approving adds it through the archivist (%s)" % mp_text.left(80))
 	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
 	var l14_welcome := graph.find_node("Welcome to your Second Brain")
 	var l14_pathed := await wait_until(func() -> bool: return graph.path_ids.size() >= 2, 10.0)

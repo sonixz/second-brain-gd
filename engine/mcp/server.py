@@ -69,6 +69,25 @@ READ_TOOLS: list[tuple[str, str, str, dict[str, Any]]] = [
 ]
 
 
+PROPOSE_ITEM = ("propose_item", "Propose an item", "Propose an item to add to the Brain. You never write directly: the "
+    "archivist files it with the user's own rules (your suggested place is a hint) and you get a receipt. Needs title, "
+    "content and reason; source (web address or file) and suggested_place are optional; type + fields for a typed item "
+    "(see item_types). Duplicates are refused.", {"type": "object", "properties": {
+        "title": {"type": "string"}, "content": {"type": "string"}, "reason": {"type": "string", "description": "why it belongs in the Brain"},
+        "source": {"type": "string"}, "suggested_place": {"type": "string"}, "type": {"type": "string"},
+        "fields": {"type": "object"}}, "required": ["title", "content", "reason"]})
+PROPOSE_CHANGE = ("propose_change", "Propose a change", "Propose one change: move (to an existing place), link or unlink "
+    "(with another item), set_fields (a typed item's fields), trash (nothing is ever erased; the user can undo). Pass "
+    "the item's id and the `version` (its `updated` from get_item): a change to an item edited since is refused. "
+    "The archivist checks it against the user's rules; you get a receipt.", {"type": "object", "properties": {
+        "action": {"type": "string", "enum": ["move", "link", "unlink", "set_fields", "trash"]}, "item": {"type": "string"},
+        "target": {"type": "string", "description": "move: a place; link/unlink: another item"}, "fields": {"type": "object"},
+        "type": {"type": "string"}, "version": {"type": "string"}, "reason": {"type": "string"}},
+    "required": ["action", "item", "reason"]})
+MY_PROPOSALS = ("my_proposals", "My proposals", "Your recent proposals and their receipts (pending, applied, rejected, "
+    "failed).", {"type": "object", "properties": {"status": {"type": "string", "enum": ["pending", "applied", "rejected", "failed", ""]}}})
+
+
 class McpError(Exception):
     def __init__(self, code: int, message: str):
         super().__init__(message)
@@ -100,7 +119,7 @@ def get_client(conn: sqlite3.Connection, cid: str) -> dict[str, Any]:
 
 
 def list_clients(conn: sqlite3.Connection) -> list[dict[str, Any]]:
-    return [dict(r) for r in conn.execute("SELECT id, name, level, created_at, last_seen, calls, revoked_at FROM mcp_clients"
+    return [dict(r) for r in conn.execute("SELECT id, name, level, direct, created_at, last_seen, calls, revoked_at FROM mcp_clients"
                                           " WHERE revoked_at IS NULL ORDER BY created_at")]
 
 
@@ -164,11 +183,21 @@ ACTIVITY = Activity()
 
 
 # ------------------------------------------------------------------ protocol
+def allowed(level: str) -> list[tuple[str, str, str, dict[str, Any]]]:
+    tools = list(READ_TOOLS) + [MY_PROPOSALS]
+    if level in ("propose_items", "propose_changes"):
+        tools.append(PROPOSE_ITEM)
+    if level == "propose_changes":
+        tools.append(PROPOSE_CHANGE)
+    return tools
+
+
 def tool_list(level: str) -> list[dict[str, Any]]:
     out = []
-    for name, title, desc, schema in READ_TOOLS:
+    for name, title, desc, schema in allowed(level):
+        write = name.startswith("propose_")
         out.append({"name": name, "title": title, "description": desc, "inputSchema": schema,
-                    "annotations": {"readOnlyHint": True, "openWorldHint": False}})
+                    "annotations": {"readOnlyHint": not write, "destructiveHint": False, "openWorldHint": False}})
     return out
 
 
@@ -207,12 +236,28 @@ def _error(mid: Any, code: int, message: str) -> dict[str, Any]:
 
 
 def call_tool(conn: sqlite3.Connection, client: dict[str, Any], name: str, args: dict[str, Any], llm: Any = None) -> dict[str, Any]:
-    known = {t[0] for t in READ_TOOLS}
+    known = {t[0] for t in allowed(client["level"])}
     if name not in known:
-        raise McpError(-32602, f"unknown tool: {name}")
+        every = {t[0] for t in allowed("propose_changes")}
+        raise McpError(-32602, f"not allowed at this client's level: {name}" if name in every else f"unknown tool: {name}")
     key = ACTIVITY.start(client["name"], name)
     ok, text = True, ""
     try:
+        if name in ("propose_item", "propose_change", "my_proposals"):
+            from engine.mcp import proposals
+            try:
+                if name == "my_proposals":
+                    data = {"proposals": [{"id": p["id"], "kind": p["kind"], "status": p["status"], "receipt": p["receipt"],
+                                           "what": proposals.summary(p)} for p in proposals.listing(
+                                               conn, str(args.get("status") or ""), client["id"], 30)]}
+                else:
+                    data = proposals.propose(conn, client, "item" if name == "propose_item" else "change", args, llm)
+            except proposals.Refused as exc:
+                ok = False
+                text = json.dumps({"refused": str(exc)}, ensure_ascii=False)
+                return {"content": [{"type": "text", "text": text}], "isError": True}
+            text = json.dumps(data, ensure_ascii=False)
+            return {"content": [{"type": "text", "text": text}], "isError": False}
         data = TOOLS[name](conn, args, llm)
         text = json.dumps({"note": DATA_NOTE, **data}, ensure_ascii=False)
         return {"content": [{"type": "text", "text": text}], "isError": False}
