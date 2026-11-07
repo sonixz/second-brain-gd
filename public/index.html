@@ -336,7 +336,8 @@
           <article class="card">
             <h3>Transparent</h3>
             <p>The engine room shows what really runs, measured, never guessed. Every change the archivist makes
-              is journaled and can be undone. Your real AI costs are read live from OpenAI, not estimated.</p>
+              is journaled and can be undone. Your real AI costs are read live from OpenAI, not estimated.
+              Your other AI tools can come in too, on your terms: they propose, the archivist decides.</p>
           </article>
           <article class="card">
             <h3>Alive</h3>
@@ -391,6 +392,8 @@
               <li>An archivist that files in PARA and builds your structure</li>
               <li>Every original kept; PDFs readable page by page; scanned PDFs read by local OCR</li>
               <li>Internet: search the web with sources; an Edge/Chrome extension sends the page you see</li>
+              <li>Folders and zips of notes (Obsidian, Logseq, Notion); voice memos turned into ideas</li>
+              <li>Recipes read from their page, added up into one grocery list, printed on paper</li>
             </ul>
             <h4>Agents</h4>
             <ul>
@@ -398,10 +401,16 @@
               <li>The Agent Builder interviews you and writes the agent</li>
               <li>A switch per capability, a model per agent, editable instructions</li>
               <li>Floating panels: move, dock, stack, shrink to the rail</li>
+              <li>Missions in the background: a plan, a question, a draft you approve</li>
+            </ul>
+            <h4>Connect</h4>
+            <ul>
+              <li>Claude Code reads your Brain over MCP; it proposes, the archivist decides</li>
+              <li>Your agents use the MCP servers you connect; writes outside need your yes</li>
             </ul>
             <h4>Learn</h4>
             <ul>
-              <li>Thirteen how-to guides captured from the real app, real answers and the real Edge included</li>
+              <li>Nineteen how-to guides captured from the real app, real answers and the real Edge included</li>
               <li>English or French: one FR / EN switch for the interface, the agents and the voice</li>
             </ul>
             <h4>Graph</h4>
@@ -415,15 +424,15 @@
             <ul>
               <li>Brain packs as switchable layers</li>
               <li>Push-to-talk and live conversation, same tools</li>
-              <li>Undo for everything, real costs, one-click setup</li>
+              <li>Undo for everything, a timeline to go back, real costs, one-click setup</li>
             </ul>
           </div>
           <div class="road-col">
             <h3><span class="badge badge-wip">Next</span></h3>
             <ul>
+              <li>Routines: missions on a schedule, with the answers you gave last time</li>
+              <li>Fill an item from its identifier: DOI, ISBN, Zotero</li>
               <li>A graph that shows meaning: people and concepts as nodes, the reason for each link</li>
-              <li>Graph beyond 5,000 items: instanced drawing, threaded layout</li>
-              <li>More tools for agents, given through capabilities</li>
             </ul>
             <h3 style="margin-top:1.4em"><span class="badge badge-parked">Parked</span></h3>
             <ul>
@@ -435,10 +444,9 @@
           <div class="road-col">
             <h3><span class="badge badge-idea">Idea</span></h3>
             <ul>
-              <li>Your brain shared with your other AI tools (MCP)</li>
               <li>Local models and an offline mode</li>
-              <li>Connectors (Microsoft 365, GitHub)</li>
-              <li>A packaged installer</li>
+              <li>Graph beyond 5,000 items: instanced drawing</li>
+              <li>A public gallery of MCP servers checked for the Brain</li>
               <li>Optional sync you control</li>
               <li>A public gallery of brain packs</li>
             </ul>
@@ -491,6 +499,18 @@
           <button type="button" class="phase-foundation" data-target="loop-28" title="Loop 28: Python inside the app"><span class="dot"></span>28</button>
           <button type="button" class="phase-brain" data-target="loop-29" title="Loop 29: Backups you can trust"><span class="dot"></span>29</button>
           <button type="button" class="phase-brain" data-target="loop-30" title="Loop 30: Your data, in one place"><span class="dot"></span>30</button>
+          <button type="button" class="phase-foundation" data-target="loop-31" title="Loop 31: Ready to be read by others"><span class="dot"></span>31</button>
+          <button type="button" class="phase-agents" data-target="loop-32" title="Loop 32: Agents that work in the background"><span class="dot"></span>32</button>
+          <button type="button" class="phase-agents" data-target="loop-33" title="Loop 33: Missions in the app"><span class="dot"></span>33</button>
+          <button type="button" class="phase-agents" data-target="loop-34" title="Loop 34: First real missions"><span class="dot"></span>34</button>
+          <button type="button" class="phase-agents" data-target="loop-35" title="Loop 35: Missions you keep in hand"><span class="dot"></span>35</button>
+          <button type="button" class="phase-agents" data-target="loop-36" title="Loop 36: A mission, recorded from start to finish"><span class="dot"></span>36</button>
+          <button type="button" class="phase-agents" data-target="loop-38" title="Loop 38: Ask about precise items"><span class="dot"></span>38</button>
+          <button type="button" class="phase-brain" data-target="loop-39" title="Loop 39: Import a folder of notes"><span class="dot"></span>39</button>
+          <button type="button" class="phase-brain" data-target="loop-40" title="Loop 40: Pictures, Logseq and Notion"><span class="dot"></span>40</button>
+          <button type="button" class="phase-brain" data-target="loop-37" title="Loop 37: Voice memos, zips, and a calmer graph"><span class="dot"></span>37</button>
+          <button type="button" class="phase-brain" data-target="loop-37b" title="Loop 37b: Recipes, from the page to the fridge"><span class="dot"></span>37b</button>
+          <button type="button" class="phase-agents" data-target="loop-mcp" title="MCP: Your Brain opens to your AI tools"><span class="dot"></span>MCP</button>
         </div>
         <div class="phases" role="group" aria-label="Filter loops by phase">
           <button type="button" data-phase="all" aria-pressed="true">All</button>
@@ -502,6 +522,126 @@
           <button type="button" class="phase-foundation" data-phase="foundation" aria-pressed="false">Foundations</button>
         </div>
         <div class="loops collapsed">
+          <article class="loop-card phase-agents" id="loop-mcp" data-phase="agents" data-loop="MCP" data-date="Nov 7, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-mcp.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">MCP</span> · Agents · <time datetime="2026-11-07">Nov 7, 2026</time></p>
+              <h3><button type="button" class="loop-open">Your Brain opens to your AI tools</button></h3>
+              <p class="excerpt">The Brain now speaks the Model Context Protocol both ways. Claude Code can read and search it, on this computer only, but never writes: it proposes, the archivist decides with your rules, and a timeline with restore points undoes any tool&#x27;s changes. Your agents, in turn, can use the MCP servers you connect: Microsoft Learn and a hand-checked list, the official registry, keys, account sign-ins and local programs you approve. A tool that could write outside waits for your yes, each time. Two small lights at the top show when anything is talking to your Brain.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>The Brain now speaks the Model Context Protocol both ways. Claude Code can read and search it, on this computer only, but never writes: it proposes, the archivist decides with your rules, and a timeline with restore points undoes any tool&#x27;s changes. Your agents, in turn, can use the MCP servers you connect: Microsoft Learn and a hand-checked list, the official registry, keys, account sign-ins and local programs you approve. A tool that could write outside waits for your yes, each time. Two small lights at the top show when anything is talking to your Brain. <a href="howto.html#claude-code">Connect Claude Code →</a> · <a href="docs.html#mcp-out">MCP servers for your agents →</a></p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-brain" id="loop-37b" data-phase="brain" data-loop="37b" data-date="Nov 7, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-37b.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 37b</span> · Intake &amp; packs · <time datetime="2026-11-07">Nov 7, 2026</time></p>
+              <h3><button type="button" class="loop-open">Recipes, from the page to the fridge</button></h3>
+              <p class="excerpt">A recipe page you send from the browser becomes a recipe with its fields, read without AI: servings, times, steps, and every ingredient with its quantity. The new Table tab lists your recipes in rows; tick a few and the grocery list adds them up by aisle, cans kept as cans, nothing guessed. One click prints a clean Letter page: a recipe beside its steps, or the list with boxes to tick.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>A recipe page you send from the browser becomes a recipe with its fields, read without AI: servings, times, steps, and every ingredient with its quantity. The new Table tab lists your recipes in rows; tick a few and the grocery list adds them up by aisle, cans kept as cans, nothing guessed. One click prints a clean Letter page: a recipe beside its steps, or the list with boxes to tick. <a href="howto.html#recipe-grocery">From recipes to a grocery list on paper →</a></p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-brain" id="loop-37" data-phase="brain" data-loop="37" data-date="Nov 7, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-37.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 37</span> · Intake &amp; packs · <time datetime="2026-11-07">Nov 7, 2026</time></p>
+              <h3><button type="button" class="loop-open">Voice memos, zips, and a calmer graph</button></h3>
+              <p class="excerpt">Record ideas anywhere, drop the memo on the window at home: it is transcribed and cut into ideas, tasks and notes, each linked to the memo and dated when you said it. A downloaded .zip of notes imports like a folder, safely. And the graph glides and rests: an unchanged refresh no longer shakes it, and a thousand imported notes stay fluid.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Record ideas anywhere, drop the memo on the window at home: it is transcribed and cut into ideas, tasks and notes, each linked to the memo and dated when you said it. A downloaded .zip of notes imports like a folder, safely. And the graph glides and rests: an unchanged refresh no longer shakes it, and a thousand imported notes stay fluid. <a href="howto.html#voice-memo">A voice memo becomes ideas →</a></p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-brain" id="loop-40" data-phase="brain" data-loop="40" data-date="Nov 6, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-40.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 40</span> · Intake &amp; packs · <time datetime="2026-11-06">Nov 6, 2026</time></p>
+              <h3><button type="button" class="loop-open">Pictures, Logseq and Notion</button></h3>
+              <p class="excerpt">Imported notes bring their pictures along, attached to their item. Logseq graphs and Notion exports are read with their own conventions (properties, journals, page ids), Markdown links resolve like wiki links, and a new guide brings an Obsidian vault in from start to finish.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Imported notes bring their pictures along, attached to their item. Logseq graphs and Notion exports are read with their own conventions (properties, journals, page ids), Markdown links resolve like wiki links, and a new guide brings an Obsidian vault in from start to finish. <a href="howto.html#vault">Bring your Obsidian vault →</a></p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-brain" id="loop-39" data-phase="brain" data-loop="39" data-date="Nov 6, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-39.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 39</span> · Intake &amp; packs · <time datetime="2026-11-06">Nov 6, 2026</time></p>
+              <h3><button type="button" class="loop-open">Import a folder of notes</button></h3>
+              <p class="excerpt">Drop an Obsidian vault or any folder of Markdown notes: the Brain says what it found before anything comes in, then imports it as a layer, its folders as places, its links as yours, without an AI call for the structure. An honest report lists the links that point nowhere.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Drop an Obsidian vault or any folder of Markdown notes: the Brain says what it found before anything comes in, then imports it as a layer, its folders as places, its links as yours, without an AI call for the structure. An honest report lists the links that point nowhere. <a href="docs.html#folder-import">Import a folder →</a></p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-agents" id="loop-38" data-phase="agents" data-loop="38" data-date="Nov 6, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-38.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 38</span> · Agents · <time datetime="2026-11-06">Nov 6, 2026</time></p>
+              <h3><button type="button" class="loop-open">Ask about precise items</button></h3>
+              <p class="excerpt">Type @ in an agent&#x27;s panel and pick items by title: the answer comes from them and cites them. By voice, name the item first. From the graph, « Ask about this » pins the item to your next question.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Type @ in an agent&#x27;s panel and pick items by title: the answer comes from them and cites them. By voice, name the item first. From the graph, « Ask about this » pins the item to your next question. <a href="docs.html#mentions">Ask about precise items →</a></p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-agents" id="loop-36" data-phase="agents" data-loop="36" data-date="Nov 6, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-36.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 36</span> · Agents · <time datetime="2026-11-06">Nov 6, 2026</time></p>
+              <h3><button type="button" class="loop-open">A mission, recorded from start to finish</button></h3>
+              <p class="excerpt">A new guide plans the week&#x27;s meals with a mission, recorded once on the real model: the plan, the question, the draft you approve, and what lands in your Brain.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>A new guide plans the week&#x27;s meals with a mission, recorded once on the real model: the plan, the question, the draft you approve, and what lands in your Brain. <a href="howto.html#mission">Plan the week's meals with a mission →</a></p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-agents" id="loop-35" data-phase="agents" data-loop="35" data-date="Nov 6, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-35.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 35</span> · Agents · <time datetime="2026-11-06">Nov 6, 2026</time></p>
+              <h3><button type="button" class="loop-open">Missions you keep in hand</button></h3>
+              <p class="excerpt">A ceiling per agent for a mission&#x27;s cost and time, a Missions card in the engine room with this month&#x27;s cost, and Run again for the missions you repeat.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>A ceiling per agent for a mission&#x27;s cost and time, a Missions card in the engine room with this month&#x27;s cost, and Run again for the missions you repeat.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-agents" id="loop-34" data-phase="agents" data-loop="34" data-date="Nov 6, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-34.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 34</span> · Agents · <time datetime="2026-11-06">Nov 6, 2026</time></p>
+              <h3><button type="button" class="loop-open">First real missions</button></h3>
+              <p class="excerpt">The first missions on real grocery flyers, with Cuisin&#x27;Plan&#x27;s method written from what worked: sources for every price, real recipes, and a draft that waits for you.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>The first missions on real grocery flyers, with Cuisin&#x27;Plan&#x27;s method written from what worked: sources for every price, real recipes, and a draft that waits for you.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-agents" id="loop-33" data-phase="agents" data-loop="33" data-date="Nov 6, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-33.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 33</span> · Agents · <time datetime="2026-11-06">Nov 6, 2026</time></p>
+              <h3><button type="button" class="loop-open">Missions in the app</button></h3>
+              <p class="excerpt">A mission card in the agent&#x27;s panel follows the work as it happens: the plan, what was found with its sources, a question when your choice is needed, and the draft to approve.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>A mission card in the agent&#x27;s panel follows the work as it happens: the plan, what was found with its sources, a question when your choice is needed, and the draft to approve.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-agents" id="loop-32" data-phase="agents" data-loop="32" data-date="Nov 6, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-32.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 32</span> · Agents · <time datetime="2026-11-06">Nov 6, 2026</time></p>
+              <h3><button type="button" class="loop-open">Agents that work in the background</button></h3>
+              <p class="excerpt">Give an agent a job, not a question: it plans, searches and reads, asks when it needs your choice, and brings back a draft. Nothing is saved before you approve it, and it stops at the ceiling you set.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>Give an agent a job, not a question: it plans, searches and reads, asks when it needs your choice, and brings back a draft. Nothing is saved before you approve it, and it stops at the ceiling you set.</p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-foundation" id="loop-31" data-phase="foundation" data-loop="31" data-date="Nov 5, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-31.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Loop 31</span> · Foundations · <time datetime="2026-11-05">Nov 5, 2026</time></p>
+              <h3><button type="button" class="loop-open">Ready to be read by others</button></h3>
+              <p class="excerpt">An audit before opening the repository: secrets in the history, what it redistributes, documents for newcomers, and the decisions only the owner can take. Nothing is made public until then.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>An audit before opening the repository: secrets in the history, what it redistributes, documents for newcomers, and the decisions only the owner can take. Nothing is made public until then.</p></div>
+            </div>
+          </article>
           <article class="loop-card phase-brain" id="loop-30" data-phase="brain" data-loop="30" data-date="Nov 5, 2026">
             <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-30.webp" alt="" loading="lazy" width="720" height="450"></div>
             <div class="loop-body">
@@ -863,7 +1003,7 @@
             </div>
           </article>
         </div>
-        <p class="center"><button type="button" class="btn loops-more">Show all 36 loops</button></p>
+        <p class="center"><button type="button" class="btn loops-more">Show all 48 loops</button></p>
         <dialog class="reader" id="reader" aria-labelledby="reader-title">
           <button class="reader-close" type="button" aria-label="Close">✕</button>
           <div class="reader-img"></div>

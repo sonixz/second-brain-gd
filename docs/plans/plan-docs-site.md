@@ -86,3 +86,11 @@ the page.
 - « Built in loops »: the loops after 30 added to the line, each with its short card, like the existing ones.
 - At most one sentence where it fits the story: the Brain also opens to your other AI tools, on your terms.
 - Before merging: the changed sections shown to the owner (screenshots of the page) for a yes.
+
+**SITE-D built 2026-11-07, waiting for the owner's yes before main.** Same concept, sections and design. Pictures of
+today's app (showcase and engine room re-captured at 1600×1000, 23 images). Roadmap: two lines in Intake (imports and
+voice memos; recipes to paper), missions in Agents, a small « Connect » group (two lines), nineteen guides, « a
+timeline to go back »; Next now routines, fill by identifier, the meaning graph; Ideas without what is done (MCP, the
+installer). Built in loops: 12 new cards (31 → 40, 37, 37b, MCP) with their dots and thumbnails, « Show all 48
+loops ». One sentence in « Transparent »: other AI tools can come in, on your terms. Committed on loop-32 only.
+
