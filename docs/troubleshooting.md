@@ -58,3 +58,40 @@ To rebuild only the environment, delete the `.venv` folder in it; the database i
 
 It stops by itself within about a second after Godot exits. Otherwise:
 `python engine\bootstrap.py stop --data-dir %LOCALAPPDATA%\SecondBrainGD`.
+
+## A PDF export opens as a web page instead
+
+The PDF is printed by Microsoft Edge in the background. When Edge is not installed (or refuses), the Letter page
+opens in your browser: press Ctrl+P and choose « Save as PDF ». The page itself is in `<data>/exports/`.
+
+## « your OpenAI project does not allow a transcription model yet »
+
+Your OpenAI project limits which models it may use. On platform.openai.com: Settings → Project → Limits, allow
+`gpt-transcribe` (or `gpt-4o-transcribe`), then drop the memo again. The voice-memo preview checks this for free
+before anything is sent.
+
+## A voice memo is refused (.ogg, .opus, .aac…)
+
+OpenAI's transcription takes m4a, mp3, wav, mp4, mpeg, mpga and webm. Share or export the memo as m4a or mp3 (a
+WhatsApp voice message shared by e-mail is an .opus file).
+
+## An MCP server says « needs a key » or « needs an account sign-in »
+
+« Needs a key »: open the server's « Tools, key… » in the MCP window and save its API key. « Needs an account
+sign-in »: click « Sign in »; your browser opens the service's sign-in page and comes back to the Brain. « Disconnect
+the account » revokes the access.
+
+## Claude Code in WSL cannot reach the Brain
+
+Use the « Claude Code in WSL » command from the MCP window: it starts a small relay with the app's own Windows Python,
+so no network setting is needed. The app must be open. Restart Claude Code after adding the server.
+
+## A local MCP server says « install Node.js first »
+
+Local servers started with `npx` need Node.js, `uvx` needs uv, images need Docker. The Brain never installs them:
+install the one named, then click « Approve and start » again.
+
+## Importing a large folder or zip stopped after a few seconds
+
+Fixed on 2026-11-07: imports now wait up to ten minutes, and the preview has « Stop ». Restart the app if it is older.
+

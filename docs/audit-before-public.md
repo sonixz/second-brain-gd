@@ -55,10 +55,26 @@ Everything the project depends on is under permissive licences, so any common ch
 
 The package build already copies `LICENSE` into the package when the file exists.
 
+## 5. Since the audit (2026-11-07): MCP, sign-ins, local programs
+
+Checked again after the MCP loops; nothing secret is in the repository.
+
+- **MCP client tokens** are kept as SHA-256 hashes in the database; a token is shown once. The WSL relay reads its
+  token from `<data>/mcp/<id>.token`, in the user's own data folder, never in the repository; « Disconnect » deletes it.
+- **Server keys and OAuth tokens** for MCP servers live in the OS credential store (or the private `secrets/` file
+  where there is none), never in the settings, logs or screenshots (the window masks them).
+- **Local MCP programs** run only after the owner approves their exact command, with a clean environment (no Brain
+  secret inherited); nothing is downloaded or installed by the Brain.
+- **Sampling** (a server asking the Brain's model) is off by default; when allowed, capped per month.
+- **Screenshots** for the website come from the showcase Brain only (no owner data, no third-party pages); the
+  recipe in the export screenshots is our own sample.
+- **Third-party content stays out**: RICARDO pages, Obsidian Hub and obsidian-help were used locally only.
+
 ## Checklist before making the repository public
 1. Rotate the OpenAI, OpenAI admin and ElevenLabs keys.
 2. Decide about `.env` (keep it encrypted in git, or stop versioning it: back it up first).
 3. Check the ElevenLabs plan for the audio files, or replace them.
 4. Re-record the web guide on an openly licensed page, or keep the recordings private.
 5. Choose and add the `LICENSE`.
-6. Then, and only then, change the visibility (the owner).
+6. Check that no `<data>/mcp/*.token` or `secrets/` file was ever copied into the repository (git log).
+7. Then, and only then, change the visibility (the owner).

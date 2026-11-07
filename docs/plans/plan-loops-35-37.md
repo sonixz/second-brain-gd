@@ -1,6 +1,6 @@
 # Plan: Loops 35 to 37 — missions, finished
 
-Agreed with the owner on 2026-11-06. Follows docs/plan-loops-32-34.md: the mission engine and card work and were
+Agreed with the owner on 2026-11-06. Follows docs/plans/plan-loops-32-34.md: the mission engine and card work and were
 checked on real flyers. What is left is the part around them: setting the ceiling without the API, seeing what the
 missions cost, a How-to guide recorded on the real model, and fixing what the owner finds when using it on their own
 Brain.

@@ -79,3 +79,15 @@ Later items are filed with X in mind. Saying it with no name clears it. API: `GE
 - **A new install** seeds only the Inbox and a French **Getting started** guide (CODE and PARA,
   capture, finding things, voice commands). There are no preset areas.
 - **Tests and screenshots** use the older demo seed through `SBGD_SEED=demo`.
+
+## Folders, zips and voice memos (Loops 39–40, 37)
+
+- **A folder or a .zip of notes** (Obsidian, Logseq, Notion export, Markdown) opens a preview and comes in as a layer
+  (engine/sources/folder_import.py). A zip is unpacked safely into `<data>/imports/zips/` (no path outside it, size
+  limits, nested Notion zips), reused while unchanged, swept after a day (zip_import.py). « Stop » ends a scan or
+  an import at its next file and keeps nothing.
+- **A voice memo** (m4a, mp3, wav, mp4, webm) opens its own preview: length and recording date read from the file
+  (MP4 mvhd, MP3 Xing/frames, WAV; a date in the name wins), the estimated cost, and a free check that the key may
+  use a transcription model. It is transcribed by OpenAI (gpt-transcribe, falling back to gpt-4o-transcribe), then
+  one chat call cuts it into ideas, tasks and notes, each linked to the memo with « at about 1:32 », all dated when
+  recorded; the memo keeps the audio and the full transcript (engine/sources/audio.py).

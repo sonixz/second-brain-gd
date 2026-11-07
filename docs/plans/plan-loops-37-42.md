@@ -25,7 +25,7 @@ Order and why:
 
 ## Loop 37 — Missions in real use
 
-Details from docs/plan-loops-35-37.md (Loop 37), plus what was left from Loop 36.
+Details from docs/plans/plan-loops-35-37.md (Loop 37), plus what was left from Loop 36.
 
 - **What the owner reports.** Read their missions on a copy of their database (db, -wal, -shm copied to the
   scratchpad; never the live file): rounds, costs, the question, the draft, what was approved or changed.
@@ -71,7 +71,7 @@ Details from docs/plan-loops-35-37.md (Loop 37), plus what was left from Loop 36
   no transcription model at first; once allowed (2026-11-07), a real 29-second French memo gave 4 items (2 tasks,
   the paella filed in Cuisine) for 0.65 ¢. Memo words follow the app language. Screenshots docs/screenshots/audio-memos-en/-fr.
 
-- **Next (agreed 2026-11-07):** typed items, the table view and the Letter export, in docs/plan-typed-table-export.md
+- **Next (agreed 2026-11-07):** typed items, the table view and the Letter export, in docs/plans/plan-typed-table-export.md
   (Loop 37 B–D); fill by identifier (DOI, ISBN, Zotero) later.
 
 ## Loop 38 — @ mentions
@@ -95,7 +95,7 @@ docs/screenshots/mentions-en and mentions-fr; docs.html#mentions.
 
 ## Loops 39–40 — Import a folder
 
-Full detail in docs/plan-loops-import.md.
+Full detail in docs/plans/plan-loops-import.md.
 
 - **39 (Import A) — done 2026-11-06.** engine/sources/folder_import.py, POST /brain/import/scan and /run,
   scenes/brain/folder_import_dialog.gd, « + Folder », a dropped folder, and the voice tool ui_import_folder
@@ -141,7 +141,7 @@ Full detail in the roadmap (« Next: routines, scheduled missions »).
 
 ---
 
-**MCP (agreed 2026-11-07):** docs/plan-mcp.md — MCP-A (in, read), MCP-B (in, write), MCP-C (out, Microsoft Learn
+**MCP (agreed 2026-11-07):** docs/plans/plan-mcp.md — MCP-A (in, read), MCP-B (in, write), MCP-C (out, Microsoft Learn
 first), paced by the owner.
 
 ## After Loop 42 (roadmap, not scheduled)

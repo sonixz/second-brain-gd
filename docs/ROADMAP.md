@@ -117,7 +117,7 @@ Principles:
 ## Loops 37 to 42 (planned 2026-11-06)
 
 Missions in real use (37), @ mentions (38), folder import (39–40), routines (41–42); the owner paces each
-loop. See docs/plan-loops-37-42.md.
+loop. See docs/plans/plan-loops-37-42.md.
 
 ## Next: routines, scheduled missions (owner, 2026-11-06)
 
@@ -149,7 +149,7 @@ missions.
 
 « Import a folder… » (or a folder dropped on the window) detects the source without putting it forward
 (« Obsidian vault detected »): notes, front matter, `[[links]]`, tags and folders are read without a model,
-shown in a preview with counts and cost, and imported as a layer. Two loops; see docs/plan-loops-import.md.
+shown in a preview with counts and cost, and imported as a layer. Two loops; see docs/plans/plan-loops-import.md.
 
 ## @ mentions (owner, 2026-11-06) ✅ Loop 38
 
@@ -192,3 +192,15 @@ The owner wants this kept for later; the product focus stays on the Brain and mi
 | Text to speech | gpt-4o-mini-tts, voice marin, Québec accent | — |
 | Embeddings | **text-embedding-3-small** (enabled 2026-11-03; FR question to EN source: 0.41–0.47, unrelated at most 0.16, floor 0.25) | Local model later |
 | Images (later, e.g. project covers) | — | gpt-image-2.5-sunburst |
+
+## Since 2026-11-06 (done 2026-11-06 → 07)
+
+- **Loop 37 refocused** on recipes and grocery lists: the graph glides and rests, zip import, voice memos, then
+  37B typed items (recipes read from their page), 37C the table and grocery totals, 37D Letter export.
+  Plans: [docs/plans/plan-typed-table-export.md](plans/plan-typed-table-export.md).
+- **MCP-A → MCP-F:** the Brain as an MCP server (read, proposals through the archivist, timeline and restore points)
+  and as a client (Microsoft Learn, keys, catalogue and the official registry, account sign-in, local programs with
+  approval). Plan: [docs/plans/plan-mcp.md](plans/plan-mcp.md); design: [architecture/mcp.md](architecture/mcp.md).
+- **Next:** routines (41–42), fill by identifier (DOI, ISBN, Zotero), and the documents / website refresh
+  ([docs/plans/plan-docs-site.md](plans/plan-docs-site.md)). All plans: [docs/plans/](plans/README.md).
+

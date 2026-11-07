@@ -2,30 +2,37 @@
 
 Ordered by priority. ✅ = done.
 
-## Next
+## Next (2026-11-07)
 
-- Graph scale beyond ~5,000 items: draw items with a MultiMesh (GPU instancing) and move the layout to a thread.
+Agreed and waiting for the owner's go, in docs/plans/:
+- **Routines (Loops 41–42):** a mission on a schedule, output template, catch-up, Routines card, remembered answers.
+- **Fill by identifier:** DOI (Crossref), ISBN (Open Library), BibTeX / Zotero import, a bibliography in the export.
+- **Docs and website refresh (DOC-A → SITE-D):** under way.
+
+Follow-ups noted while building (not planned yet):
+- MCP: tools switched off per agent (today per server); `listChanged` through a standing stream; MCP resources and
+  prompts in both directions; a one-click « undo this client's session » beside the timeline.
+- Voice memos: a converter for .ogg / .opus / .aac (would need an approved tool); longer memos split over 25 MB.
+- Recipes: ingredients as graph nodes (only if wanted after real use); the card's own field layout and editing.
+- Graph beyond ~5,000 items: MultiMesh drawing (the layout already runs on a worker thread since 2026-11-07).
 - Archivist: detect the language from the original text, not the French summary note.
-- Browser capture: optional small extension (one click, no popup window) after the bookmarklet.
 
-The agreed plan for Loops 4–7 (structure, sources & semantic memory, project agents, real conversation)
-and the model cadence live in [docs/ROADMAP.md](docs/ROADMAP.md).
+Done since the last update of this file (2026-11-03): see [DEVLOG](DEVLOG.md) — Loops 8–40, the graph's glide and
+big-graph work, zip import, voice memos, typed items and recipes, the table and grocery lists, Letter export, and
+MCP-A → MCP-F (the Brain as an MCP server and client).
 
+### Older notes (2026-11-03)
 
-Cadence from 2026-11-03 (details in the roadmap): 5b ✅ meaning memory → 6b Responses API and gpt-6-astra →
-6c agent room on by default (Codex native binary first, Claude Code later) → 7a hands-free (UI tools,
-push-to-talk) → 7b real-time conversation (owner's go on cost). The wake word is set aside for now.
+Cadence from 2026-11-03: 5b ✅ meaning memory → 6b ✅ Responses API and gpt-6-astra → 6c ✅ agent room → 7a ✅
+hands-free → 7b ✅ real-time conversation.
 
 Agent room follow-ups (6c):
-- First run with the real `codex-app-server` (owner's permission): confirm the approval flow, the
-  `gpt-6-sol` model and MXC on Windows.
-- Expose the brain to agents as an MCP server (read notes, add notes to a project).
-- Claude Code connector (Agent SDK, Anthropic key) behind the same room.
 - Persist sessions across restarts (`thread/resume`).
+- ✅ Expose the brain to agents as an MCP server — done as MCP-A/B (2026-11-07).
 
 Small follow-ups from 5b:
-- Search box: show which hits came by meaning (≈) versus words.
-- Related ideas: let the user dismiss a suggestion, or turn it into a real [[link]].
+- ✅ Search box: hits by meaning shown apart.
+- ✅ Related ideas: dismiss a suggestion, or turn it into a real link.
 - Embed in a local model later (offline); the worker already isolates the network call.
 
 ## Loop 2 candidates (older list)

@@ -7,6 +7,8 @@ scanned letter, a picture, a web page from your browser, your voice): an archivi
 and PARA, links it by meaning to what you already know, and you explore it all in a living graph you can zoom into
 until the text is there. Agents think with you (Sparring) or are made to measure by an Agent Builder that interviews
 you. Godot is the interface, a local Python engine does the work, and your Brain stays in a folder on your computer.
+It also opens to your other AI tools, on your terms: Claude Code can read it and propose (the archivist decides), and
+your agents can use the MCP servers you connect.
 
 ![The graph: one zone per place, the Inbox in the middle, the Archivist on the left](docs/screenshots/showcase/01-graph-overview.png)
 
@@ -37,18 +39,21 @@ searches by words. You pay OpenAI directly for what you use; the engine room sho
 | Backups | chosen in the engine room, **Your data** (until then `...\backups`) |
 | Your API keys | Windows Credential Manager (Linux: a private file in the data folder) |
 
-Nothing leaves your computer except what you send to OpenAI (and the web pages the agents fetch when Internet is
-on). Backups, restore, start fresh and uninstall: the engine room, **Your data**
+Nothing leaves your computer except what you send to OpenAI, the web pages the agents fetch when Internet is on,
+and what goes to the MCP servers you choose to connect. Backups, restore, start fresh and uninstall: the engine room, **Your data**
 ([docs](public/docs.html#backups)).
 
 ## Documentation
-- **[Docs](public/docs.html)**: install, the archivist, the graph, voice commands, agents, browser extension,
-  packs, backups, local API, troubleshooting.
-- **[How-to](public/howto.html)**: thirteen step-by-step guides captured from the real app.
+- **[Docs](public/docs.html)**: install, the archivist, the graph, voice commands, agents, missions, imports,
+  voice memos, recipes and the table, printing, MCP, packs, backups, local API, troubleshooting.
+- **[How-to](public/howto.html)**: step-by-step guides captured from the real app.
+- [Guide: connect Claude Code (MCP)](docs/guide-mcp.md) · [plans](docs/plans/README.md) ·
+  [architecture](docs/architecture/overview.md)
 - [CONTRIBUTING.md](CONTRIBUTING.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) ·
   [audit before going public](docs/audit-before-public.md)
 
-**Status:** in active development (Loop 31). The repository is private for now; its licence is not chosen yet.
+**Status:** in active development (see [STATUS](STATUS.md)). The repository is private for now; its licence is not
+chosen yet.
 
 ## Using it
 
@@ -78,6 +83,13 @@ on). Backups, restore, start fresh and uninstall: the engine room, **Your data**
 - **Assistant:** the left panel. She briefs you at the first opening of the day, answers from your notes
   (click a cited note to open it), and saves or moves notes when you ask. Everything she changes has an
   Undo. Toggle *Voice* to hear her, or use her mic to talk to her.
+- **Imports:** drop a folder or a `.zip` of notes (Obsidian, Logseq, Notion export, Markdown): a preview, then a
+  layer you can switch off. Drop a **voice memo** (m4a, mp3, wav): it is transcribed and cut into ideas and tasks.
+- **Table:** the Table tab shows items in rows and columns; tick recipes and « Grocery list » adds their ingredients
+  up by aisle; « PDF » prints them on Letter paper.
+- **MCP:** the ⇠● ⇢● lights at the top: connect Claude Code to read your Brain (it proposes, the archivist
+  decides, the timeline can undo), and give your agents MCP servers (Microsoft Learn, a catalogue, keys,
+  sign-ins, local programs with your approval). Guide: [docs/guide-mcp.md](docs/guide-mcp.md).
 - **Engine room:** click "All systems operational" at the top right.
 
 ## Audio assets
@@ -131,11 +143,13 @@ The Godot test presses the real Setup button headless and checks the System Cons
 ```
 scenes/        Godot screens (startup/, brain/, dashboard/) and UI components
 scripts/       GDScript: core/ (app, theme, paths), setup/ (Python locator, bootstrap runner), monitoring/ (API client)
-engine/        Python: bootstrap.py, installer/, database/ (+ migrations), api/, monitoring/
+engine/        Python: bootstrap.py, installer/, database/ (+ migrations), api/, brain/ (knowledge, archivist, types,
+               table, export, timeline), sources/ (intake, imports, voice memos, recipes), assistant/, voice/,
+               mcp/ (server, client, catalogue, OAuth, local servers, WSL relay), browser/, agents/
 browser-extension/  the Edge/Chrome extension (Manifest V3): pairing, send page/selection, voice open/add/close
 tests/         python/ (unittest), godot/ (headless end-to-end)
 public/        landing page and docs (open public/index.html or public/docs.html, no build)
-docs/          architecture/, troubleshooting, screenshots
+docs/          architecture/, plans/, guide-mcp.md, troubleshooting, screenshots
 tools/         test.sh, test.ps1, showcase.sh / howto.sh (screenshots on a private virtual display),
                package/ (the packages with their own Python), i18n.py (the French translations),
                web_images.gd (PNG → WebP for the site)
@@ -149,5 +163,6 @@ i18n/          fr.json: every interface text, English → French
 - [Process lifecycle](docs/architecture/process-lifecycle.md)
 - [Knowledge model, Whisper and agents plan](docs/architecture/knowledge-model.md)
 - [Backups](docs/architecture/backups.md) · [Brain packs](docs/architecture/packs.md)
+- [MCP: server and client](docs/architecture/mcp.md) · [Typed items, table, export](docs/architecture/typed-items.md)
 - [Troubleshooting](docs/troubleshooting.md)
 - [STATUS](STATUS.md) · [BACKLOG](BACKLOG.md) · [DEVLOG](DEVLOG.md)

@@ -35,6 +35,13 @@ sign-in, local servers, the guard), the timeline and restore points. The showcas
 - **audit-before-public**: new items (MCP tokens and the relay's token file, OAuth tokens, local servers, sampling).
 - **docs/plans/**: the plan-*.md files moved there with an index; links updated.
 
+**DOC-A done 2026-11-07.** README (the MCP opening in one sentence, imports, Table, MCP in « Using it », today's
+layout), STATUS rewritten as a snapshot (what works, tests, what waits on the owner), DEVLOG caught up from the
+commit messages (66 entries, newest first), BACKLOG and ROADMAP refreshed, plans moved to docs/plans/ with an index,
+architecture: today's overview, mcp.md, typed-items.md, intake (folders, zips, voice memos); troubleshooting (Edge
+PDF, transcription model, refused audio formats, MCP key / sign-in, WSL relay, local runtimes, the import limit);
+audit-before-public: MCP tokens, keys, local programs, sampling, screenshots. Every relative link checked.
+
 ## DOC-B — Docs page (public/docs.html)
 
 - New sections: voice memos; typed items and recipes; the table and grocery lists; printing (Letter, PDF); zip

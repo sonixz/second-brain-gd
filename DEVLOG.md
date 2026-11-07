@@ -1,5 +1,279 @@
 # Devlog
 
+Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
+
+## MCP-F: local MCP servers with approval, pinned versions, clean environment (2026-11-07)
+
+A local server is a program the Brain starts on this computer and talks to over stdio. It is prepared from the catalogue or a pasted command, shown exactly, and runs only after « Approve and start »; a changed command needs a new approval. Versions are pinned (never latest), the runtime it needs is detected and never installed, the process gets a clean environment (no secret of the Brain; only the variables it declares, from the OS credential store), runs without a window, restarts after a crash, stops with the app, and keeps a short log.
+
+## MCP-E: account sign-in (OAuth), server questions, sampling off by default (2026-11-07)
+
+A server that answers 401 with a Bearer challenge shows « Sign in »: the Brain discovers the sign-in server, registers itself as a public client, opens the user's browser with PKCE and gets the answer back on a one-time 127.0.0.1 listener; tokens live in the OS credential store, are refreshed, and « Disconnect the account » revokes them. During a call a server can ask the user a question (elicitation), shown in the MCP window with its fields; asking the Brain's model to write (sampling) is refused unless the user allows it for that server, 20 times a month at most. Checked for real: Notion's discovery up to its sign-in page.
+
+## MCP-D: keys, catalogue, tools on/off, budget, outside-write guard (2026-11-07)
+
+Servers can carry a key (kept in the OS credential store, never in settings). The catalogue offers a hand-checked list (Microsoft Learn, Context7, DeepWiki, Exa) and a search in the official MCP registry, each entry with its family and publisher. Per server: tools on or off, a monthly budget, this month's calls and tokens. A tool that may write outside waits for the user's « Allow once » at each call, and the window warns when an agent reads the Brain and could write outside. The client follows paged tool lists, reads event streams as they come (progress on hover, Stop cancels), and speaks the older HTTP+SSE transport.
+
+## MCP out: agents use remote MCP servers, Microsoft Learn first (MCP-C) (2026-11-07)
+
+The Brain is also an MCP client (standard library, JSON or event-stream answers, sessions started again when a server forgets them). Servers the user connects in the MCP window — Microsoft Learn suggested — give their tools to all agents or to one, as mcp__<server>__<tool>, in chats and missions. Results are cut at 8,000 characters and marked as external data; destructive tools are not offered. The « ⇢ out » light turns green when a server is ready and red during a call. Tried for real: the archivist answered an Azure Functions question with two Microsoft Learn tools and cited them.
+
+## Timeline of changes and restore points (MCP-B2) (2026-11-07)
+
+Who changed what and when — you and the archivist, or an MCP client — with restore points made by hand or automatically before a client's first write of a session (plus a full backup once that write is committed). « Go back here » undoes every change after a point, newest first, for everyone or one author; an item changed by hand since is left as it is and listed; items created since go to the trash, never erased. Opened from the MCP window.
+
+## MCP in, proposals: Claude Code proposes, the archivist decides (MCP-B1) (2026-11-07)
+
+A client never writes. At its level it gets propose_item (an item the archivist files with the owner's rules) and propose_change (move to an existing place, link, unlink, set fields, trash; refused when the item changed since it was read). Proposals wait for the owner's approval in the MCP window (approve, reject, approve all; a count by the ⇠ light) unless the client is trusted; every applied action is journaled with its author, so Undo works for it too; receipts go back to the client (my_proposals). Rate limits: 60 a minute, 500 a day.
+
+## MCP in, read: Claude Code can search and read the Brain (MCP-A) (2026-11-07)
+
+The Brain is an MCP server (JSON-RPC over Streamable HTTP, standard library): POST /mcp on 127.0.0.1 only, a token per client kept as its hash, 11 read tools with short paged answers (overview, search, get_item, places, items of a place, neighbours, path, recent, inbox, item types, table), content marked as the user's data, the archivist protocol sent as the server's instructions. A stdio relay run with the app's Windows Python lets Claude Code in WSL reach it without any network setting. The « ⇠● ⇢● » lights in the top bar turn green when a tool is connected and red during a call; their window connects a tool (commands to copy, key shown once), disconnects it and lists recent calls. Tried for real: a Claude Code session searched and read a Brain over HTTP and through the relay.
+
+## Letter export: recipes, grocery lists and notes as PDF (37D) (2026-11-07)
+
+Any items print as a clean Letter (8½ × 11) page: a recipe has its facts, its kept picture embedded, ingredients beside numbered steps, rescaled for the servings asked; a grocery list prints as boxes to tick by aisle; other items as their text. Edge prints the PDF headless with a throwaway profile, no window (1.2 s on the owner's PC); without Edge the page opens for Ctrl+P. « PDF » in the table, « PDF for the fridge » in the grocery list, and by voice (« exporte la recette de paella en PDF »). Rewritten ingredient lines read as French (« 82 g de beurre », « 2 boîtes de 796 ml »).
+
+## Table view and grocery totals (37C) (2026-11-07)
+
+A « Table » tab shows the same items in rows and columns: pick a type (a recipe's fields become columns) or every item, search titles, fields and ingredients, sort by a column title, edit a cell in place, save the view, export CSV. Tick recipes and « Grocery list » adds their ingredients up at the servings chosen: converted to ml or g and summed, cans kept as cans with their size, grouped by aisle in shop order, nothing guessed. Saving makes a note linked to the recipes and fills the « Épicerie » checklist. By voice: « montre-moi en tableau mes recettes au poulet ».
+
+## Typed items: recipes read from their page, types agents define (37B) (2026-11-07)
+
+A type names the fields an item carries; values live in item_props as data the engine can sort, add up and export. The recipe is built in: a page captured by the extension or a pasted link that carries a schema.org Recipe becomes a recipe item without AI (servings, times, rating, picture, ingredients parsed into quantity, unit and name in French and English, cans with their size, steps with their sections), its text written from the fields. Agents can define their own types and save typed items; the assistant reads and rescales a recipe (« la paella pour 6 ») and edits fields; mission drafts carry type and fields.
+
+## Voice memos: words in the app's language, screenshots, real run measured (2026-11-07)
+
+The memo's title, « Transcript », « at about 1:32 » follow the FR / EN switch. ShowcaseChat scripts a memo for the screenshots (docs/screenshots/audio-memos-en, -fr). Measured with the owner's key once gpt-transcribe was allowed: a 29-second French memo, 4 items (2 tasks, the paella filed in Cuisine), 0.65 cents.
+
+## Voice memos: drop a recording, get its ideas in the graph (2026-11-07)
+
+A memo recorded anywhere (m4a, mp3, wav, mp4, webm) dropped on the window, chosen with + File, or a folder of them opens a preview: length and recording date read from the file itself (MP4 mvhd, MP3 Xing/frames, WAV, a date in the name), the estimated cost, and a free check that the key may use a transcription model. Each memo is transcribed by OpenAI (gpt-transcribe, then gpt-4o-transcribe or the mini when a project refuses one; the working model is remembered), then one chat call cuts it into ideas, tasks and notes, placed among the user's places, each linked to the memo with about when it was said, all dated when recorded. The memo keeps the original audio and the full, searchable transcript.
+
+## Big graphs stay fluid: push on a worker, no work on unchanged refresh (2026-11-07)
+
+After importing the D&D SRD (1,065 items, 3,904 related edges) the owner's graph lagged: each layout step took 14 ms on the frame and every 20-second refresh rebuilt everything (42 ms). Now, from 600 items, the push between neighbours is a pure function run on a WorkerThreadPool task (one step late; a step waits rather than reusing an old push), 2 ms on the frame. An unchanged refresh is skipped (2 ms); the edge signature is a sum computed while edges are read. A big graph at rest redraws at about 20 fps; imported items draw one plain ring, labels no shadow. A new item moves freely while the rest barely stirs.
+
+## Zip import: no 4-second limit, unpack once, a Stop button (2026-11-07)
+
+On Windows, unpacking the D&D SRD zip (1,021 notes) took 5.2 s and the app gave up after 4 s: « Impossible de lire ceci ». Folder and zip imports now wait up to 10 minutes; the preview has « Stop » while it works (also when closed), and the engine ends at its next file, keeping nothing (no commit, half unpack removed). The same zip is unpacked once for the preview, the toggle and the import. Refusals show the engine's words instead of « HTTP 422 ».
+
+## Import a .zip of notes; underscore file names read as titles (2026-11-06)
+
+- engine/sources/zip_import.py: a dropped or chosen .zip (a vault, a GitHub download, a Notion export) is unpacked into <data>/imports/zips/<key>/, never next to the download, then read by the folder import. Only notes, pictures, documents and .obsidian/logseq markers come out; links, absolute paths, drives and ../ are refused; sizes are counted while unpacking (1 GB in all, 200 MB per file, 60,000 files); zips inside the zip are unpacked once; unpacked folders are swept after a day; the same zip finds its layer. - A GitHub download's single top folder is used, shown without -main. - File names with underscores (Detect_Magic.md) are titles with spaces, and links match either way; place names lose underscores. On the D&D SRD 5.1 zip: 1,021 notes, 778 of 779 links resolved (265 before), 1.2 s. - Preview line: unpacked from « x.zip », your download stays as it is. - Voice: ui_import_folder accepts a zip (also found in Downloads). - Tests: 8 Python (GitHub zip, unsafe members, zip bomb, nested Notion zip, bad zip, sweep, voice path, underscores), 1 Godot (dropped zip preview). - Plan: the owner's first real mission and the Loop 37 refocus.
+
+## Graph glides and rests: no reheat on unchanged refresh, fixed layout steps (2026-11-06)
+
+The 20 s graph refresh reset the layout to full heat even when nothing had changed, so tiles moved again every 20 s (up to 116 px on the owner's graph). Slow frames ran one big step (delta x 60, up to 3), which overshot and made crowded tiles shake (27% direction reversals at 24 fps).
+
+- set_graph reheats only when items or links changed, and gently (reheat(): heat climbs over about half a second); filters, folds and the layout switch use it too. - The layout advances in fixed 1/60 s steps (up to 3 per frame, 1 in big graphs), whatever the frame rate. - Lower top speed; an item at rest stops instead of trembling; the crowded-cell shortcut only applies from 600 items. - Godot check: settled graph has no shakes at 24 fps with hitches, an unchanged refresh moves nothing, a new item wakes it gently.
+
+## Loop 40: pictures in notes, Logseq, Notion export, vault guide (2026-11-06)
+
+Pictures embedded in imported notes are kept and attached to their item (its card shows the first). Markdown links between notes resolve like wiki links. Logseq graphs (properties, aliases, #[[tags]], namespaces, journals) and Notion exports (ids out of titles and folders) are detected and read. Cards hide picture embeds and show link aliases. New How-to guide « Bring your Obsidian vault » on our own sample vault. Measured on logseq/docs: 319 pages, 977 links. Python 279 OK, Godot 239/239.
+
+## Loop 39: import a folder of notes (Obsidian vault, Markdown) (2026-11-06)
+
+« + Folder », a dropped folder or « importe mon vault Obsidian » opens a preview that says what was detected (Obsidian vault, linked notes, Markdown) without putting it forward, with counts and cost. The import reads the structure without any model call: notes, front matter (kept readable, its links resolved), [[links]] the Obsidian way (folder, heading, alias, escaped pipes in tables), tags, folders as PARA places, template folders left out. It is a layer like a pack, and importing again adds only what changed. Measured on public vaults: 102/103, 55/96 (the rest by design) and 1,682/1,686 links resolved. Docs, EN and FR screenshots, 8 Python tests, 5 Godot checks.
+
+## Loop 38: @ mentions of Brain items (2026-11-06)
+
+Type @ in an agent's panel to pin Brain items to one question: a title picker (no model call), chips with x, and the answer comes from those items and cites them. Ask about this on a graph item, a spoken « dans la recette du poulet, … » when one item clearly matches, and missions that start from mentioned items (Run again keeps them). Docs, EN and FR screenshots, 7 Python tests and 5 Godot checks.
+
+## Roadmap: routines, scheduled missions (2026-11-06)
+
+## Roadmap: @ mentions of Brain items (2026-11-06)
+
+## Roadmap: park the data analysis and reports idea (2026-11-06)
+
+## Loop 36: How-to guide 'Plan the week's meals with a mission', recorded on the real model (2026-11-06)
+
+- Recording: mission calls replay in their own order; per-guide cost cap; SBGD_ENV_KEYS for worktrees - Guide mission (7 steps, real answers): Maxi flyer Nov 5-11, three RICARDO recipes, about 0.52 $ - A mission's cost now includes its web searches (tokens and per-call fee); recorded/replayed costs shown - Graph item cards draw Markdown as plain text (SbFormat.plain)
+
+## Loop 35: mission ceiling in the agent's settings, Missions card in the engine room, Run again (2026-11-06)
+
+- Agent profile gets missions {max_cost, max_minutes, model}; GET /missions/limits; the next mission uses it - Engine room Missions card: month summary, per-mission status/rounds/minutes/cost, detail with source links - POST /missions/{id}/again; GET /missions returns a summary - Mission rules: source link next to every price in the draft - Agent settings saves one at a time (two quick changes erased each other)
+
+## Loop 34: first real missions on the IGA, Maxi and Provigo flyers; Cuisin'Plan's method (2026-11-06)
+
+Three real runs (gpt-6-sol): the three flyers read through flyer sites, 23 specials checked by hand against their pages, seven real recipes, four suppers with the grocery list, 0.41 USD. Mission rules: one choice per item in a question (they were grouped by store), prices and conditions copied as the page gives them.
+
+## Loop 33: missions in the app (mission card, Mission… button, docs) (2026-11-06)
+
+Every agent's panel has a Mission… button and a mission card: the plan ticked as it goes, what the agent is doing, the cost, Stop; the question with boxes to tick (a sound when it waits); the draft with Approve and save, Discard and Change; what was saved. An agent starting a mission from chat or voice opens its card. A long draft scrolls inside the card with its buttons in view. The fake model plays a scripted mission for the tests and the screenshots (English and French). Docs: Missions section.
+
+## Loop 32b: missions for agents (engine, API, background browser read) (2026-11-06)
+
+An agent can carry a longer job through in the background: a plan, structured findings, a question with choices (the mission waits), a draft to approve, then every item saved in one step (one undo), linked by [[titles]] and #themes. 40 rounds, a cost and time ceiling, resumes after a restart. New Missions capability: chat and live agents can start, follow, answer, approve, revise and stop missions. The Edge extension (1.1.0) reads a page in a background tab for missions (pages built by script, sites that block robots).
+
+First real run (gpt-6-sol): 13 rounds, 56 s, 0.27 USD: this week's Maxi specials with links, the question asked, two real recipes read, a draft of 4 linked items.
+
+## Loop 32a: Live saves what the user says again; costs known for gpt-6 and dated model names (2026-11-06)
+
+The realtime session's transcription model (gpt-4o-mini-transcribe) became unavailable to the account: every spoken sentence failed with model_not_found, silently (0 user rows in the owner's live conversations). The session now tries transcription models in order, switches when one is refused, remembers the one that works, and shows a lost sentence in the chat. Verified on the real API.
+
+## Live conversation follows the agent's settings changed while it is open (2026-11-05)
+
+The owner switched Internet and Browser on for the Agent Builder during a live conversation: the session kept the tools and instructions it was opened with, so the agent kept saying it could not search the web. A live session now remembers a fingerprint of its agent's profile (instructions, capabilities) and the app's language; each time the user starts speaking it compares, and sends the new instructions and tools before the reply when they changed. The settings card and the docs now say changes apply from the next message, live conversations included. Tests: test_live (a capability switched on mid-conversation reaches the next reply; no extra update otherwise), Python 241, Godot 217/217.
+
+## Engine room: open folders with a click (backups, database, storage, Python) (2026-11-05)
+
+- Your data: the backups path is a read-only field you can select and copy, and "Open folder" opens it in the file manager (created first if no backup went there yet). - Every engine-room card: a value that is a folder or file on this computer (database file, data folder, virtual environment, base interpreter…) is shown as a link; a click opens the folder, or shows the file in its folder. - English and French; Godot checks for both (217/217), Python 239.
+
+## Engine room: load the Your data panel by path (a blank engine room when Godot's class list was stale) (2026-11-05)
+
+Running from the source without the editor, Godot's class list (.godot/global_script_class_cache.cfg) did not know the new DataPanel class, so system_console.gd failed to parse and the engine room stayed blank (seen by the owner on Windows). The panel is now preloaded by path; CONTRIBUTING says to run `godot --headless --import` after pulling.
+
+## Loop 31: audit before opening the repository (2026-11-05)
+
+- docs/audit-before-public.md: the whole history scanned (75 commits, all branches) for keys, tokens and sensitive files: only the tests' fake keys; the .env committed by design holds only dotenvx-encrypted values and its private key was never committed. Recommendations and a checklist for the owner: rotate the three keys, decide about versioning .env, check the ElevenLabs plan for the generated audio, two third-party pages kept in the How-to recordings, choose the licence, then (only the owner) the visibility. - Godot's licence and its components' notices were missing from the package: tools/package/licenses.gd writes LICENSES/godot.txt at build time; THIRD_PARTY_NOTICES.md (Godot, CPython, the 15 packages with their real licences read from their metadata, Codex on demand, content) is copied into every package. - README rewritten for newcomers (get it, keys and costs, what stays where, docs); CONTRIBUTING.md; docs: uninstall by hand; How-to page credits the web pages shown (Wikipedia CC BY-SA 4.0, Government of Canada). - Tests: Python 239, Godot 214/214. Nothing about the repository's visibility was changed.
+
+## Loop 30: Your data in the engine room (backups, export, packs, repair, start fresh, uninstall) (2026-11-05)
+
+- scenes/dashboard/data_panel.gd: one card in the engine room: last backup and its age, where backups go (with a plain warning while they share the Brain's disk) and Choose…, how often (6 h to a week, or off), the list with Restore…, Export everything / Import a backup file, Packs… (moved here from Captures), Repair the installation, Start fresh, Uninstall. Restoring, starting fresh and uninstalling need a typed word; uninstall keeps the backups folder by default and removes the data, the API keys and the app preferences, then quits. - Engine: export_file (one zip: database, manifest, files) and import_file (only its own entries, sizes capped, every file hashed against its name, verified before it is listed); installer --repair rebuilds the venv; voice tools backup_now / backup_status for the Archivist (restoring or erasing is never a voice action); rotation keeps the last 5 manual backups too (two in a day collapsed into one, seen in the screenshots). - English and French (766 texts); EN and FR screens reviewed: the typed-word dialog stretched to the full height (fixed), Godot's own "Cancel" translated, the restore message reworded, the export file named in local time. - How-to: new guide "Back up and restore"; the packs guide goes through the engine room. Docs: Backups section. Journal: Loops 29 and 30. - Tests: Python 239 (export/import round trip, tampered and foreign files refused, voice tools, repair), Godot 214/214 (back up now, list, typed word, restore, folder removal keeping backups).
+
+## Loop 29: backups, restore and start fresh (the engine) (2026-11-05)
+
+- engine/backups.py: consistent copy of the live database (SQLite online backup) with a manifest; originals copied once into a fingerprint-named store; every backup reopened and checked (checksum, quick_check, counts, files) before it counts, deleted otherwise; rotation 7 days / 4 weeks / 6 months + 30 days of safety copies, unused files removed; automatic backups every N hours (worker, first check a minute after start). - Restore: deep-verified backup, safety copy first (no copy, no change), files back, older backups migrated in a temporary copy, then the live database replaced in place; files of the replaced Brain removed. - Start fresh: safety copy first, a new Brain with its starter notes, originals cleared. - engine/appstate.py: browser pairing, bookmark capture key, the Brain's id and the last backup live outside the database (<data>/app_state.json, user-only), moved there on first read: restore and fresh keep them. - API /data/backups, /data/fresh (restore and fresh need a typed confirmation word). - Packs: page pictures (Loop 25) now travel in packs, their small files always included. - Tests: test_backups.py (restore into an empty folder identical, incremental files, fresh keeps a verified copy and the pairing, no backup no erase, damage and missing files caught, older schema migrated, rotation, GC, worker, path escape refused, appstate move, pack pictures). Python 235, Godot 207/207. Checked on a read-only copy of the owner's Brain.
+
+## Loop 28: Python inside the app (Windows and Linux), agent room on demand (2026-11-05)
+
+- tools/package/build.py: the app's own Python, a python-build-standalone CPython 3.12.15 pinned in tools/package/runtime.json (file + SHA-256, cross-checked with the release's SHA256SUMS), stripped (tests, Tk, IDLE, pip, duplicated links), with the locked wheels installed into its site-packages for the target platform (a Windows runtime builds on Linux). `app` adds the Godot export, the engine and the extension, zips it and writes SHA256SUMS. Windows runtime 50 MB, Linux 94 MB unpacked; Windows app zip 79 MB. - The installer recognises it (python/sbgd-runtime.json next to the interpreter): no virtual environment, nothing installed, the engine runs on that Python; a runtime built from another lock is refused. - Godot: the app folder is the executable's when exported; the app's own Python is the first candidate. - The agent room (Codex, ~160 MB) is no longer downloaded at setup, only when opened and the user says yes; an existing install is still checked (SBGD_AGENTS=install keeps the old behaviour for tests). - tools/package/check_runtime.py runs the real setup with a runtime: SQLite FTS5 + WAL, every migration, engine, /health. Linux 9.8 s; Windows 3.7 s on Windows. The exported Windows app (headless, autosetup, throwaway folder) found its own Python, set up, started the engine, which stopped with the app. - .github/workflows/package.yml: manual only; Godot and its templates pinned (SHA-512 checked); builds both packages, checks them (Linux on Ubuntu, Windows on a Windows runner), keeps them as artifacts, never publishes. - export_presets.cfg versioned (no secrets: since Godot 4.1 they live in .godot/export_credentials.cfg). - Docs: install from the package vs from the source. Tests: Python 221, Godot 207/207.
+
+## Loop 27: fewer dependencies (27 -> 15 Python packages) (2026-11-05)
+
+- keyring and the nine packages it pulled (cryptography, cffi, pycparser, jaraco x3, more-itertools, secretstorage, jeepney, pywin32-ctypes) replaced by engine/voice/secrets.py calling the Windows Credential Manager directly (ctypes). It writes and reads exactly as keyring did on Windows (names "<provider>@<service>" and keyring's older "<service>" naming, UTF-16 values, enterprise persistence), so existing keys are found as they are. Checked on Windows against keyring itself on test service names (read both ways, delete leaves nothing). The persistence matters: with another one Windows kept a second credential behind the first. Elsewhere (Linux, WSL) the private file, as before. - pypdf removed: PDF text comes from PDFium (pypdfium2, already used for pages). Same or better text on the sample PDFs (pypdf split some words of the kitchen quote into letters). - Lock regenerated with uv (universal, hashes); the 15 remaining packages keep their versions. A fresh venv from the lock runs every test: Python 214 OK (3 skipped instead of 9: the PDF tests now run), Godot 207/207.
+
+## Edge extension in English and French; a false "no change" correction fixed; site images refreshed (2026-11-05)
+
+- The extension follows the browser's language (_locales/en, _locales/fr): popup, right-click menu items, messages, its name and description. Checked in a real French Edge. - Real-model check of the FR / EN rule (gpt-6-sol): app in English + French message -> French; app in French + English message -> English; the briefing follows the app. It surfaced a real bug: a plain description such as « des notes reliées entre elles » was taken for a claimed change, and the engine's correction replaced a good answer with « aucun changement ». French claims now need an action form (« j'ai classé », « ont été détachés », « c'est classé », or a sentence opening « Classé dans… »), as the English already did. - Website: engine room, costs and the hero graph recaptured (tools/screens.gd also captures the costs card). "1 files" in the engine room now reads "1 file".
+
+## Loop 26 follow-up: review of the other screens in French, How-to guides replayed (2026-11-05)
+
+tools/screens.gd (SBGD_CAPTURE_SCRIPT=screens tools/showcase.sh): welcome, setup, Today, Projects, the agent room and the engine room, for reviewing a language. "Brain" capitalised in the last French texts. The ten replayable How-to guides replay unchanged after the translation work; their screenshots now show the FR / EN switch.
+
+## Loop 26: English or French, one FR / EN switch for the whole app (2026-11-05)
+
+English is the product's language; French is the other choice. Every interface text (about 690) is written in English inside I18n.t() (scripts/core/i18n.gd), its French in i18n/fr.json; tools/i18n.py --check fails when a text has no French or placeholders differ, and the tests run it. The FR / EN switch (top right of the welcome screen and of the Brain) rebuilds the screen in the chosen language, is remembered, and tells the engine.
+
+The engine follows it (setting ui_language, English by default): the agents' default language (they still answer in the language spoken), the briefing and weekly review, the Live transcription (was forced to French), what the buttons say on your behalf, capability and model labels, the pack preview, the browser and bookmark receipts, fallback replies. The voice reads French with a Québec accent and English with a neutral one (was always Québec). French left in the English interface removed (Today's example, the project prompt, the bookmark page).
+
+Checked by capturing every screen in French (SBGD_UI_LANG=fr tools/showcase.sh): placeholders shortened to fit. Tests: Godot FR / EN switch check, engine language tests, translation coverage test.
+
+## Loop 25: pictures that matter, from web pages and by right-click in Edge (2026-11-05)
+
+A web page brings its main image (shown on its card) and its figures, at most five; logos, icons, ads, menus and small pictures never. Chosen by the extension with real sizes, or from the HTML for a pasted link (engine/sources/images.py). Each is a kept original, deleted with its item; its caption, the text read in it locally and, for pictures that hold information (text, a diagram or chart caption, PNG), a vision description in the page's language are indexed with the page. The reading view shows them first, with captions. Right-click a picture in Edge -> "Send this image to the Brain": an item of its own that remembers its page.
+
+How-to guide "Keep the pictures that matter", captured in the real Edge (Edge's own context menu included). The real runs caught French descriptions of English pages, and the guides' recorded OCR answering for any picture; both fixed. Migration 0013 (source_images). Tests: test_images.py, a WebP card check in Godot.
+
+## How-to guide 6: connect your browser, shown in the real Microsoft Edge (2026-11-05)
+
+The guide's Edge screenshots are the real Edge window: tools/howto.sh --edge browser drives a separate Edge (tools/howto/edge.ps1: throwaway profile, no sign-in, no sync, extension loaded from browser-extension/, DevTools on 127.0.0.1 and UI Automation for Edge's permission prompt; closed and its profile deleted at the end). Edge pairs, sends a page, and opens, adds and closes a tab when the Archivist is asked to.
+
+Fixes found by the real runs: - pairing never finished with "read the pages" ticked: Edge's permission prompt closes the popup, which did the pairing; it now runs in the service worker (error shown when the popup reopens) - "open the first one" after a web search: the history now keeps the links listed under each reply - a PDF tab could not be added (Edge's viewer has no readable text): the engine downloads it - hidden popup buttons were shown anyway (CSS display overrode [hidden]) - a source title with line breaks was squeezed into a narrow column - the app's "Connected" line kept a stale permission warning; next steps shown once paired - the browser receipt said "Ressources"; the popup had a French phrase
+
+## How-to guides H2-H5: ten guides on howto.html, seven with the real model's answers; fixes found by the real runs (2026-11-05)
+
+- Guides: Read a scanned PDF, Find your way in the graph, Share a project as a pack, Find how two ideas connect, Search the web and keep a page, Organise by voice, Think an idea through with Sparring, Create your own agent (plus the first two). Every guide replays offline; a broken step fails the run. - Recordings keep web pages (gzip) and no pictures; a token check per recorded guide. - Fixed, each with a test: "Re-read with AI" timed out after 4 s (job id in the query); a path explanation came back in French to an English question; the item tile slid in over the Archivist; replies showed raw **bold** (now bold, and read without the stars); related ideas suggested items already linked; an agent's creation read "Updated" with an Undo that could not work; the minimap sat under right-docked panels; a document's title said "- English". - Website: Loop 24 in the journal, How-to linked everywhere, screenshots recaptured; docs explain how to regenerate the guides. Guide screenshots (PNG) are no longer committed, only the site's WebP.
+
+## How-to H1: guides captured from the real app, real answers recorded once and replayed; first two guides (2026-11-05)
+
+- tools/howto.sh + tools/howto.gd: each guide is a scenario on the real app (Xvfb, no window), a screenshot per step; tools/capture_base.gd shared with the website showcase. - engine/assistant/recording.py: SBGD_ASSISTANT_PROVIDER=record keeps the real model's answers, web searches and downloaded pages; replay serves them back offline, remapping item ids from run to run. - SBGD_OCR=recorded replays a real Windows OCR reading (sample scan made with render_page.ps1). - tools/howto/guides.py (text, checks, cost cap) and build_page.py generate public/howto.html. - Guides: "Your first five minutes" (real answers) and "Arrange your panels". - Found by the real run and fixed: the Archivist wrote French receipts and summaries for English items (now the item's language; English place labels in the interface); the Captures list slid under the docked panel; a file's origin read "Document · Document". - Buttons that speak for you (approve, create, the rail's +) follow a voice/language setting (fr default).
+
+## Website up to date and English only: agents, Internet, extension, panels; journal loops 16-23; How-to plan (2026-11-05)
+
+- Landing page: new Agents section (Archivist, Sparring, Agent Builder, settings tile), Internet and browser feature, panels; every screenshot recaptured from the real app; roadmap and stats updated; journal entries for loops 16-23 with an Agents phase; every French phrase translated. - Docs: all spoken examples in English; Codex agent room renamed so it is not confused with agents. - The engine understands the English phrases the site shows: approvals and refusals (synthesis, agent creation), false-success and clipboard guards; agents answer in the user's language. - App text: English quotes instead of « », the bookmark is named "Send to Brain", agent drafts show headings as capitals. - Showcase: scripted English conversations through the real engine (web search, Sparring synthesis, Agent Builder draft), new shots 17-21. - docs/howto-plan.md: the How-to guides and the loops to build them.
+
+## Agent settings in a movable tile: on/off switches per capability, model, name, first words, instructions (2026-11-04)
+
+Owner: ⓘ was a read-only box. Now it opens a floating tile (same style, movable, dockable, shrinkable, ✕ to close): name, model (gpt-6-sol, gpt-6-astra, gpt-4o, gpt-4o-mini), each capability an iPhone-style on/off switch with its tools listed (saved at once), first words (custom agents), editable instructions (Save), « Ask the Builder to change it… » (hands over by voice), Back to the original / Delete. GET /assistant/agents also returns each capability's tools and the models. - Title bars are lighter: speaker and info icons (new SVGs) instead of « Voice » text and a missing ⓘ glyph; a docked edge is never narrower than its panels' title bars, so the graph toolbar is no longer covered. - Tests: tile opens, switching Internet off saves at once, model change, instructions saved. Showcase shot 16 shows the settings tile.
+
+## Loop 3: the Agent Builder interviews you, writes rich instructions, and creates or changes an agent on your yes (2026-11-04)
+
+- A built-in Agent Builder (B) with a new capability « Manage agents » (list_agents, get_agent, draft_agent, save_agent): one short question at a time (purpose, tone, behaviour, what to avoid, places, capabilities, examples), then structured instructions (20-50 lines), a name, an intro and capabilities (read-only by default; organising only when asked). draft_agent refuses thin instructions; save_agent creates or applies only on approval (no « non / change »). - ui_open_agent lets any agent hand over (« crée-moi un agent » to the Archivist opens the Builder; « passe-moi Sparring »). - App: « + » at the bottom of the always-visible rail opens the Builder; the draft shows in full (NEW AGENT · NOT CREATED YET / CHANGES · NOT APPLIED YET) with Create it / Apply it and Change it…; on creation the new agent's panel appears. Non-archivist agents answer in plain text (no Markdown). - Real check (gpt-6-sol): a three-question interview produced a rich « Coach Entrevue » (DevSecOps/Azure, made for spoken practice in the car), created on « oui, crée-le ». - Tests: builder capability, interview → draft → refusal → create, changing an agent needs rich text and approval, archivist hand-over; Godot: « + » opens the Builder, draft shown before creation, agent panel on yes. Docs and README.
+
+## Loop 2: agents are profiles with capabilities; ⓘ shows instructions; panels follow the stored agents (2026-11-04)
+
+- engine/assistant/agents.py: seven capabilities group all 51 tools (+ synthesis); a test fails if a new tool joins none. Profiles (name, letter, colour, instructions, capabilities, model, intro) stored in the « agent_profiles » setting; Archivist and Sparring are built-in profiles that can be adjusted and reset; custom agents can be created and deleted. Synthesis rules are added when the capability is there; drafts are per agent; custom models fall back to gpt-4o. - Chat, live and history take any agent id; GET/POST /assistant/agents, PATCH /agents/{id}, POST /agents/{id}/reset, DELETE /agents/{id}; /assistant/draft?agent=. - App: every agent is a floating panel built from its profile (refresh_agents adds new ones on the rail, removes deleted ones); ⓘ in each title bar shows model, capabilities (✓/—) and instructions, with Back to the original or Delete; Ctrl+5… for custom agents; the synthesis draft opens in the panel of the agent that wrote it. - Tests: capabilities cover every tool, adjust/reset, custom agent tools/conversation/model, deletion fallback; Godot: new agent panel on the rail, ⓘ, deleted panel goes. Docs: what an agent is.
+
+## Loop 1: Sparring rephrases only when the idea is long, vague or unclear; varied openings (2026-11-04)
+
+Owner noticed it restated every message (« Tu hésites entre… »), tiring over a 20-minute spoken session. The persona now goes straight to a view, an angle or an objection, rephrases only when needed, and never opens two replies the same way. Checked on four real replies (gpt-6-sol).
+
+## Panels, modern handling: drop preview, gliding moves, splitter between stacked panels, icon rail, Ctrl+1-4, Tab for the graph alone (2026-11-04)
+
+- While a panel is dragged, the place it would land (left, right, bottom) lights up; moves and size changes glide (0.18 s), except at start-up, while dragging and in tests. - Panels on the same edge share it by weight; the line between two is a splitter (weights remembered). - A shrunk panel leaves the layout and waits as a letter on a rail at the left edge (A, S, P, I); a click opens it again. The graph toolbar moves aside for the rail. - Ctrl+1 Archivist, Ctrl+2 Sparring, Ctrl+3 Places, Ctrl+4 the item tile: open (and talk to that agent) or shrink; Tab on the graph shrinks every open panel and brings the same ones back. - Opening an item reveals its tile even if it was shrunk; reset keeps a closed tile closed. - Tests: rail, toolbar, drop preview on/off, dock, float, remember, splitter, Ctrl+2 both ways, Tab both ways, reset. Docs: « Arranging the panels ».
+
+## Sparring: a thinking partner agent that argues, never changes the Brain, and saves a synthesis only on approval (2026-11-04)
+
+- engine/assistant/agents.py: agent profiles (archivist, sparring): persona, allowed tools, model setting, own conversation per day. Sparring reads the Brain, documents and the web; its tools exclude every graph-changing one (enforced in chat and in live). draft_synthesis keeps a pending synthesis; save_synthesis is refused unless the user's message asks to save or approves (no « non / change »); the archivist then files it as an idea, undoable. - Chat and live (F9 ?agent=) take the agent; history per agent; GET /assistant/draft. Setting sparring_chat_model (gpt-6-sol, fallback gpt-4o). - App: a SPARRING floating panel (own conversation, intro, Voice/Live in its title bar); the synthesis shows in full (« SYNTHESIS · NOT SAVED YET ») with Save to the Brain / Change it…; F8 and F9 talk to the agent you last used (● in its title); the live pill names Sparring. - Real check (throwaway brain, gpt-6-sol): replies in 2-3 s, a real challenge, and « synthétise et enregistre » saved a structured synthesis filed in Recherche d'emploi. - Tests: role/model/tools/conversation, cannot change the graph, save only after approval, one-go save, live tool set; Godot: active agent, draft shown, saved on approval, separate history. Docs: « Archivist and Sparring ».
+
+## The archivist's briefing is about what the Brain holds, not tasks (2026-11-04)
+
+Owner: « Il est là pour accueillir de l'information », not a to-do list. The briefing no longer reads overdue items, due dates, next actions or checklists. knowledge_facts(): what came in since the last visit and where it went (by place, by origin, examples), what waits in the Inbox, the most active places this week, growing themes, one strong related-ideas pair not yet decided, one item to rediscover, the places. The prompt forbids tasks and deadlines, says what came in, at most one interesting thing, then 2-3 concrete leads (explore a place, brainstorm a project, clarify links) and an open question; an almost empty Brain is invited to take in information. Checked with the real model on a throwaway brain.
+
+## Floating panels: the Archivist, Places and the item tile move, dock, shrink, resize and remember their place (2026-11-04)
+
+- SbFloatingPanel: drag by the title bar; dropped with the cursor near the left, right or bottom edge it docks there, elsewhere it floats; – or double-click shrinks it to its title bar; bottom-right grip resizes; place saved per panel (settings « panels »). - SbPanelLayer: panels on the same edge share it (a shrunk one keeps only its bar), bottom dock between the side docks, free panels kept on screen; the graph toolbar, legend and centre move into the free area. - The left column is split: ARCHIVIST (the conversation; Voice and Live in its title bar) and PLACES · TODAY (briefing, places, sources, now scrollable; shrunk by default under the archivist). The item tile on the right is a floating panel too. « Reset the panel layout » in Places. - « Assistant » is now « Archivist » in the interface. - Tests: docking by default, toolbar follows, drag to the middle floats, drop near the right edge docks, remembered, shrink, reopen, reset.
+
+## Browser extension (Edge, Chrome): send the page you see, and let the assistant open, add and close tabs by voice (2026-11-04)
+
+- browser-extension/ (Manifest V3, Chrome 116+/Edge): popup to pair, send the page or the selection; Alt+Shift+B; right-click menus; service worker with one WebSocket to 127.0.0.1 (engine pings every 20 s, alarm reconnects), commands open/capture/close limited to tabs the Brain opened or the tab named; reads pages with activeTab on click, optional <all_urls> only for voice capture; icons from the logo. - engine/browser/: one-time pairing codes (8 chars, 10 min, single use, 5 attempts) exchanged for a dedicated token stored as a hash, revocable; Hub bridging assistant tool threads and the WebSocket with timeouts; routes /browser/pair/start, /pair, /status, DELETE /pair, WS /browser/ws, POST /browser/capture. - sources.ingest_page: the tab's HTML kept as the original, readable text without page chrome (visible text for app-like pages), text_engine=browser; PDFs/protected tabs fall back to downloading. - Assistant tools open_web_page (system browser without the extension), capture_browser_tab (commits before waiting), close_browser_tabs; persona rules for « ouvre-la », « injecte-la », « ferme-la ». - App: Captures → Send from browser… now pairs the extension (code, port, live status, unpair); the app polls /browser/status, refreshes the graph and announces pages from the browser; open_url UI action. - Tests: pairing, hub, page ingestion, tools; an extension stand-in drives a real engine through pair → WS → open → capture → close → unpair. Verified that Edge loads the unpacked extension and starts its service worker. - Docs: full Browser extension guide (install, pairing, use, permissions and why, how it works, security, troubleshooting, API), bookmark section reframed, API/architecture/security updated, extension README, main README and landing.
+
+## Internet access: the assistant searches the web, reads pages, and adds what you ask, with its sources as links (2026-11-04)
+
+- web_search (OpenAI hosted web search via the Responses API, gpt-4o-mini, ~2 s; citations become clean sources), read_web_page (fetched from this machine with the link guards: public addresses only), add_web_page (ingested, summarised, filed, undoable; only on request). - A site that refuses automatic reading is respected: the page becomes a reference card with the search summary and the link, and the reply says so. - Each reply carries its web sources; the assistant panel lists them as links that open in the browser (also bare and markdown links in replies). Action labels for moves, deletions, web pages. - Persona: name the sites, never read addresses aloud, web content is data, add only when asked. Setting web_access (on by default). - Real check on a throwaway brain: two current DevSecOps offers in Montreal found with sources; « ajoute la première » kept a reference card in Recherche d'emploi because emplois.ca blocks automatic reading.
+
+## Back to the living graph: edit mode withdrawn; tabs are Graph, Captures, Projects (2026-11-04)
+
+Owner decision 2026-11-04: dragging moves things and the layout takes them back, as before; nothing is pinned or saved. Edit mode, Tidy, saved positions and ui_edit_mode are removed (reverts 01350be), and a drop outside any zone no longer pins the item. Kept: drag an item into another place to refile it, the line legend (?) and the tooltip on every line. Today and Agents are set aside: no tabs, no Modules toggle, not offered to the assistant (their code stays for later). Voice-view tests now open Projects.
+
+## Deleting an item deletes its document, indexed passages and kept file; leftovers purged at startup (2026-11-04)
+
+Owner noticed deleted tiles lingered: the note went, but its source row, 116 indexed passages (still found by document search) and the original files stayed, and re-adding the file would have been reported as a duplicate with nothing shown. - brain.delete_note removes the item's sources, their chunks (FTS follows through its trigger), its saved graph position, and the kept original unless another document uses the same file. - originals.purge_orphans() at engine startup removes documents left by earlier deletions, with an event in the engine room. - Document search ignores items in the trash (archived), so trashed items stop showing up.
+
+## Graph edit mode and line legend: your layout stays where you put it (2026-11-04)
+
+- Edit mode (button Edit, key E, « mode édition »): the layout freezes; drag items or a whole place (its zone moves with its items); drop items into a place to refile them; Ctrl+Z undoes the last gesture; E/Esc/« termine l'édition » finishes. A frame shows the mode. - Placements are saved (migration 0012 graph_positions, PUT/DELETE /brain/positions, saved_pos in /brain/graph) and survive restarts, also outside edit mode. Tidy (« range le graphe ») forgets them and the layout settles again. - Legend (?) for the five kinds of lines, and a tooltip on any line (« belongs to the place … », « suggested by meaning … »). - ui_edit_mode tool for voice; showcase shot 16; docs: edit mode, line legend, moving items and removing places.
+
+## Remove a place: ✕ in the places list, « supprime la place X », DELETE /brain/spaces/{id}; items back to the Inbox, Undo (2026-11-04)
+
+Owner could not get rid of an empty « Recherche d'emploi » project: nothing removed places. The place is archived (not deleted), its items go back to the Inbox and its projects lose it as area; the action is journalled so the toast's Undo (or « annule ça ») restores all of it. The Inbox cannot be removed.
+
+## Reliable assistant: graph actions that find items by name, report exactly what changed, and cannot fake a success (2026-11-04)
+
+Owner test 2026-11-04: « mets mes quatre CV dans Recherche d'emploi » got « the place does not exist »; « what do you mean? » captured the clipboard and claimed the CVs were added; « détache-les de l'Inbox » updated two unrelated notes with no change and claimed success.
+
+- engine/assistant/actions.py: find_items (by words/meaning or by place, with place names and types), move_items, link_items, unlink_items (keeps the words of a [[link]], explains shared #tags), remove_tag, trash_items (archive, undoable). Accent/apostrophe-insensitive matching; ambiguous or missing items are reported, never guessed; an unknown place lists the real ones. - update_note reports changed 0 when nothing changes and journals nothing. - Engine-side guards: a reply that reports a change in a turn where nothing changed is sent back once (CHANGE_NUDGE); the clipboard is captured only when the user mentions it. - Persona: find then act, one place per item, report tool results exactly, user instructions are requests not notes. - Chat model gpt-6-sol (fallback gpt-4o): tools/assistant_bench.py replays the owner's requests on a throwaway brain with the real API: gpt-6-sol 12/12 (4.0 s), gpt-4o 11/12 (3.6 s). - Undo for link/unlink; docs: two microphones, how the assistant acts, Organise phrases, model table.
+
+## Live reading progress: « Reading CV.pdf · page 3 / 9 read (local OCR) » (2026-11-04)
+
+- engine/sources/progress.py: in-memory job state set by the reading request (contextvar), GET /sources/progress/{job}; stages render, ocr, ai, summary, indexing. - Windows OCR streams one JSON line per page as it is read (Popen + kill timer) instead of one result at the end; Tesseract and the fake engine tick per page; the vision model reports per page. - Godot passes a job id when adding a file or link (and on Re-read with AI) and polls every 0.5 s to update the toast / button.
+
+## Document reading gets a 10-minute HTTP timeout instead of 4 s (2026-11-04)
+
+A 9-page scanned PDF (local OCR + summary) finished in the engine but the UI gave up after 4 s, showed 'timeout' and never asked the archivist to file it. POST /sources/file|url and /reread now wait up to 600 s; /packs up to 90 s; plain requests still fail fast.
+
+## Local OCR: scanned PDFs and text in images read on this machine (Windows OCR, Tesseract), AI only on request (2026-11-04)
+
+- engine/sources/ocr.py + ocr_windows.ps1: Windows.Media.Ocr through PowerShell (built in, no install, no admin), Tesseract on Linux when present; pages rendered at 2400 px first. Measured on a 9-page image-only CV: 2.3 s, dates and product names right where Edge's OCR failed. - A PDF with no text layer: local OCR first; the vision model only with ocr_mode=ai, or as a fallback when no local OCR works and a key exists; otherwise a clear refusal saying how to get one. - Images: the text inside them is read locally, so they are searchable without a key. - Migration 0011 sources.text_engine; POST /sources/{id}/reread (Re-read with AI), GET /sources/ocr; viewer shows how the text was read and offers Re-read with AI. - Tests use SBGD_OCR=fake; test_ocr runs the real Windows OCR on Windows (passes) and Tesseract when installed. - Docs: scanned PDFs and local OCR, new Dependencies section; README.
+
+## Read HTML, .docx and text documents inside the app; Open original works for every kept file (2026-11-04)
+
+- /sources/{id}/document gains mode pages|text; text documents are viewable; new /sources/{id}/text returns the full text (from the kept original, else the indexed passages). - DocumentViewer reading view: full text on a centred sheet, scroll, +/- text size, selectable; page controls hidden. - Open original no longer says 'No kept original' for HTML: it opens the kept file in the browser. - Your own HTML files keep their <header>/<aside>/<nav> text (a CV's name and side boxes); web pages still drop them.
+
+## Owner test fixes: scanned PDFs, Inbox auto-filing, inspector overflow, drag an item into a place (2026-11-04)
+
+- A PDF with no text layer (scanned, or pages exported as images) is read page by page by the vision model (up to 15 pages); without a key the error says why. - With the Inbox selected, a new file or note is still filed by the archivist; a failed classification now shows a toast instead of failing silently. - Long titles in Connections and Related ideas are trimmed with a tooltip, and the inspector grows leftwards: it no longer runs off the right edge. - Drag an item into another place's zone to move it there; dropped anywhere else it stays put instead of drifting back.
+
+## Website rework: product vision, journal grid, docs page with integration tutorials (2026-11-04)
+
+- Landing: hero with the real graph, CODE/PARA method, five product features with voice examples, gallery, roadmap, open-source section. - Journal: phase filters, timeline rail, card grid (6 shown, expand to all 21), reader dialog and deep links. - docs.html: install, archivist, graph, voice, bookmarklet, local HTTP API (bash/PowerShell/Python), brain packs, costs, architecture, tests, contributing, security, troubleshooting. - New showcase screenshots as WebP (tools/web_images.gd), README refreshed.
+
+## Graph layout fixes and an English showcase brain for screenshots (2026-11-04)
+
+- Layout grid kept only one item per cell: repulsion now works per cell, crowded neighbour cells push as one body; items gravitate to their own place, cards keep a minimum gap, wider ring of places. - Graph nodes now carry item_type, origin and created_at, so type/origin/date filters and the timeline use real values. - SBGD_SEED=showcase: ten places, ~45 items over 21 days, a PDF and a sketch kept as originals, scripted stand-in model (no OpenAI calls). - tools/showcase.sh + showcase.gd: 15 website screenshots on a private Xvfb display, temp data folder, keys unset.
+
 ## Loop 15 — Large volume and timeline (2026-11-03)
 
 - **Measured first** with `tools/graph_bench.gd`: synthetic brains, headless, on the Linux dev machine.
