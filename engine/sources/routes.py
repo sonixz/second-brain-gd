@@ -21,6 +21,10 @@ class FileIn(BaseModel):
     job: str | None = Field(default=None, max_length=64)  # poll GET /sources/progress/{job} meanwhile
 
 
+class AudioProbeIn(BaseModel):
+    paths: list[str] = Field(min_length=1, max_length=200)
+
+
 class UrlIn(BaseModel):
     url: str = Field(min_length=8, max_length=2000)
     space_id: str | None = None
@@ -69,6 +73,20 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     @r.post("/file", status_code=201)
     def post_file(body: FileIn) -> dict[str, Any]:
         return add(core.ingest_file, body.path, body.space_id, job=body.job)
+
+    @r.post("/audio/probe")
+    def post_audio_probe(body: AudioProbeIn) -> dict[str, Any]:
+        """The voice-memo preview: each file's length, recording date and estimated cost; a folder lists its memos.
+        Nothing is sent anywhere."""
+        from engine.sources import audio
+        client = client_or_none()
+        return audio.preview(body.paths, client is not None, audio.usable_model(client) if client is not None else "?")
+
+    @r.post("/audio", status_code=201)
+    def post_audio(body: FileIn) -> dict[str, Any]:
+        """One voice memo: transcribed (OpenAI), cut into ideas, added and linked to the memo."""
+        from engine.sources import audio
+        return add(audio.ingest_audio, body.path, body.space_id, job=body.job)
 
     @r.post("/url", status_code=201)
     def post_url(body: UrlIn) -> dict[str, Any]:

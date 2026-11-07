@@ -613,7 +613,7 @@ func _build_left_panel() -> void:
 	var addf := Button.new()
 	addf.text = I18n.t("+ File")
 	addf.theme_type_variation = "GhostButton"
-	addf.tooltip_text = I18n.t("Add a PDF, Word, Markdown or text file, or a .zip of notes. You can also drop files on the window, or paste a link in the capture bar.")
+	addf.tooltip_text = I18n.t("Add a PDF, Word, Markdown or text file, a voice memo, or a .zip of notes. You can also drop files on the window, or paste a link in the capture bar.")
 	addf.pressed.connect(_pick_file)
 	srow.add_child(addf)
 	var addd := Button.new()
@@ -687,8 +687,20 @@ func _undo_toast() -> void:
 
 
 # ---------------------------------------------------------------- sources
+const AUDIO_EXT := ["m4a", "mp3", "wav", "mp4", "mpeg", "mpga", "webm", "ogg", "opus", "oga", "aac", "amr", "3gp", "flac", "wma", "caf", "aiff", "aif"]
+
+
 func _on_files_dropped(files: PackedStringArray) -> void:
+	# Voice memos dropped together (or a folder of them) open one preview (Loop 37).
+	var memos: Array = []
 	for f in files:
+		if f.get_extension().to_lower() in AUDIO_EXT or (DirAccess.dir_exists_absolute(f) and _is_memo_folder(f)):
+			memos.append(f)
+	if not memos.is_empty():
+		import_audio(memos)
+	for f in files:
+		if f in memos:
+			continue
 		if DirAccess.dir_exists_absolute(f) or f.get_extension().to_lower() == "zip":  # a folder or a zip of notes: the import preview (Loops 39, 37)
 			await import_folder(f)
 		elif f.get_extension().to_lower() == "brain":
@@ -714,7 +726,8 @@ func _pick_file() -> void:
 		_file_dialog.file_mode = FileDialog.FILE_MODE_OPEN_FILES
 		_file_dialog.access = FileDialog.ACCESS_FILESYSTEM
 		_file_dialog.use_native_dialog = true
-		_file_dialog.filters = PackedStringArray(["*.pdf, *.docx, *.md, *.txt, *.html, *.htm, *.csv, *.json, *.zip ; " + I18n.t("Documents")])
+		_file_dialog.filters = PackedStringArray(["*.pdf, *.docx, *.md, *.txt, *.html, *.htm, *.csv, *.json, *.zip, *.m4a, *.mp3, *.wav, *.mp4, *.webm ; "
+			+ I18n.t("Documents and voice memos"), "*.m4a, *.mp3, *.wav, *.mp4, *.webm, *.ogg, *.opus ; " + I18n.t("Voice memos")])
 		_file_dialog.files_selected.connect(func(paths: PackedStringArray) -> void: _on_files_dropped(paths))
 		add_child(_file_dialog)
 	_file_dialog.popup_centered_ratio(0.6)
@@ -722,6 +735,42 @@ func _pick_file() -> void:
 
 var _folder_dialog: FileDialog
 var folder_import: AcceptDialog      # the open « Import a folder » dialog (tests)
+var audio_import: AcceptDialog       # the open « Voice memos » dialog (tests)
+
+
+## A folder of recordings and no notes (a phone's memos copied over): voice memos rather than a vault.
+func _is_memo_folder(dir: String) -> bool:
+	var audio := 0
+	var stack: Array = [dir]
+	var seen := 0
+	while not stack.is_empty() and seen < 400:
+		var d := str(stack.pop_back())
+		for sub in DirAccess.get_directories_at(d):
+			if not sub.begins_with("."):
+				stack.append(d.path_join(sub))
+		for f in DirAccess.get_files_at(d):
+			seen += 1
+			var ext := f.get_extension().to_lower()
+			if ext in ["md", "markdown"]:
+				return false
+			if ext in AUDIO_EXT:
+				audio += 1
+	return audio > 0
+
+
+func import_audio(files: Array) -> AcceptDialog:
+	if audio_import != null and is_instance_valid(audio_import):
+		audio_import.queue_free()
+	audio_import = preload("res://scenes/brain/audio_import_dialog.gd").new().setup(app, files, "" if _auto_file() else current_space)
+	audio_import.connect("imported", func(_r: Dictionary) -> void:
+		var born := await refresh_graph()
+		if not born.is_empty():
+			graph.focus_on(born[0])
+		await refresh_spaces()
+		await refresh_sources())
+	add_child(audio_import)
+	audio_import.call("open")
+	return audio_import
 
 
 func _pick_folder() -> void:
@@ -826,6 +875,10 @@ static func progress_text(p: Dictionary) -> String:
 			return I18n.t("page %d / %d (AI)") % [mini(done + 1, total), total]
 		"summary":
 			return I18n.t("writing the summary")
+		"transcribe":
+			return I18n.t("transcribing the recording")
+		"structure":
+			return I18n.t("finding the ideas")
 		"indexing":
 			return I18n.t("indexing by meaning")
 	return ""

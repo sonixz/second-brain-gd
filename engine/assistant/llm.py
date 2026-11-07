@@ -162,6 +162,56 @@ class OpenAIChat:
         return _post("/audio/speech", self.key, {"model": model, "voice": voice, "input": text,
                                                   "instructions": instructions, "response_format": "mp3"}, 90.0)
 
+    def models(self) -> list[str]:
+        """The models this key may use (GET /v1/models, free): a project's allowlist shows here."""
+        req = urllib.request.Request(API + "/models", headers={"Authorization": f"Bearer {self.key}"})
+        try:
+            with urllib.request.urlopen(req, timeout=15.0) as resp:
+                return [str(m.get("id", "")) for m in json.loads(resp.read()).get("data", [])]
+        except (urllib.error.URLError, OSError, ValueError) as exc:
+            raise LLMError(f"Cannot list the models: {exc.__class__.__name__}") from exc
+
+    def transcribe(self, model: str, path: Any, languages: list[str] | None = None, prompt: str = "") -> dict[str, Any]:
+        """Speech to text (POST /audio/transcriptions, multipart): {"text", "seconds" when the API says}."""
+        from pathlib import Path
+        import uuid as _uuid
+
+        p = Path(path)
+        boundary = "sbgd" + _uuid.uuid4().hex
+        parts: list[bytes] = []
+
+        def field(name: str, value: str) -> None:
+            parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="{name}"\r\n\r\n{value}\r\n'.encode("utf-8"))
+        field("model", model)
+        field("response_format", "json")
+        if prompt:
+            field("prompt", prompt)
+        for lang in languages or []:
+            field("languages[]" if model == "gpt-transcribe" else "language", lang)
+            if model != "gpt-transcribe":
+                break
+        safe = re.sub(r'[^\w.-]', "_", p.name) or "memo" + p.suffix
+        parts.append(f'--{boundary}\r\nContent-Disposition: form-data; name="file"; filename="{safe}"\r\n'
+                     f"Content-Type: application/octet-stream\r\n\r\n".encode("utf-8") + p.read_bytes() + b"\r\n")
+        parts.append(f"--{boundary}--\r\n".encode("utf-8"))
+        req = urllib.request.Request(API + "/audio/transcriptions", data=b"".join(parts), method="POST",
+                                     headers={"Authorization": f"Bearer {self.key}",
+                                              "Content-Type": f"multipart/form-data; boundary={boundary}"})
+        try:
+            with urllib.request.urlopen(req, timeout=600.0) as resp:
+                data = json.loads(resp.read())
+        except urllib.error.HTTPError as exc:
+            try:
+                msg = json.loads(exc.read()).get("error", {}).get("message", "")
+            except Exception:
+                msg = ""
+            raise LLMError(f"OpenAI HTTP {exc.code}: {msg or exc.reason}") from exc
+        except OSError as exc:
+            raise LLMError(f"Cannot reach OpenAI: {exc.__class__.__name__}") from exc
+        usage = data.get("usage") or {}
+        seconds = usage.get("seconds") if usage.get("type") == "duration" else data.get("duration")
+        return {"text": str(data.get("text", "")), "seconds": seconds, "usage": usage}
+
     def web_search(self, model: str, query: str) -> dict[str, Any]:
         """OpenAI's hosted web search (Responses API): a short answer and the pages it cites."""
         data = json.loads(_post("/responses", self.key, {"model": model, "tools": [{"type": "web_search"}], "store": False,
@@ -202,6 +252,17 @@ class FakeChat:
 
     last_messages: list[dict[str, Any]] = []
 
+    MEMO = ("Bon, quelques idées en marchant. Premièrement, faudrait que j'appelle le garage pour les pneus d'hiver "
+            "avant vendredi. Deuxièmement, j'ai eu une idée pour le souper de dimanche : une paella aux fruits de mer, "
+            "avec les enfants qui préparent les légumes. Pis finalement, pour le site du studio, on pourrait montrer "
+            "le graphe du Brain en vidéo sur la page d'accueil.")
+
+    def transcribe(self, model: str, path: Any, languages: list[str] | None = None, prompt: str = "") -> dict[str, Any]:
+        from pathlib import Path
+        if "silence" in Path(path).stem.lower():
+            return {"text": "", "seconds": 3.0, "usage": {}}
+        return {"text": FakeChat.MEMO, "seconds": None, "usage": {}}
+
     def web_search(self, model: str, query: str) -> dict[str, Any]:
         return {"text": f"Deux résultats pour « {query} » : une offre chez Exemple Inc. et un article de fond.",
                 "sources": [{"title": "Offre DevSecOps — Exemple Inc.", "url": "https://example.com/emplois/devsecops"},
@@ -220,6 +281,20 @@ class FakeChat:
         if isinstance(last.get("content"), list):  # an image to describe (vision)
             return {"message": {"role": "assistant", "content": "Image de test: un schéma avec trois boîtes reliées."},
                     "usage": usage, "model": model}
+        if json_mode and "mémo vocal" in str(messages[0].get("content", "")):
+            heard = json.loads(last["content"]).get("transcription", "")
+            ideas = [{"title": "Appeler le garage pour les pneus d'hiver", "kind": "task", "tags": ["auto"], "place": "",
+                      "text": "Appeler le garage pour poser les pneus d'hiver avant vendredi.",
+                      "quote": "faudrait que j'appelle le garage pour les pneus d'hiver"},
+                     {"title": "Paella aux fruits de mer dimanche", "kind": "idea", "tags": ["cuisine"], "place": "",
+                      "text": "Souper de dimanche : une paella aux fruits de mer, les enfants préparent les légumes.",
+                      "quote": "une paella aux fruits de mer"},
+                     {"title": "Vidéo du graphe sur le site du studio", "kind": "idea", "tags": ["studio"], "place": "",
+                      "text": "Montrer le graphe du Brain en vidéo sur la page d'accueil du site du studio.",
+                      "quote": "pour le site du studio"}] if "paella" in heard else []
+            return {"message": {"role": "assistant", "content": json.dumps(
+                {"title": "Pneus, paella et site du studio", "summary": "Trois idées notées en marchant.", "ideas": ideas},
+                ensure_ascii=False)}, "usage": usage, "model": model}
         if json_mode and "fiche de référence" in str(messages[0].get("content", "")):
             src = json.loads(last["content"])
             out = {"title": src.get("title") or "Document", "summary": "Résumé de test.", "key_points": ["Point A"],

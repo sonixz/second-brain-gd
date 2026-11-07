@@ -60,6 +60,15 @@ Details from docs/plan-loops-35-37.md (Loop 37), plus what was left from Loop 36
   the push between items runs on a worker thread (14 ms → 2 ms on the frame), an unchanged 20-second refresh costs
   2 ms instead of 42, a big graph at rest redraws at ~20 fps, imported items get one plain ring and labels no
   shadow; a new item moves freely while the rest barely stirs (shaking 22 % → 2 % on the owner's graph).
+- **Voice memos** (owner's idea, 2026-11-07: record ideas offline, drop the file at home). engine/sources/audio.py:
+  length and recording date read from the file (MP4 mvhd, MP3 Xing/frames, WAV; a date in the name wins), preview
+  with cost before anything is sent (and a free check that the key may use a transcription model), transcription
+  with OpenAI (gpt-transcribe, falling back to gpt-4o-transcribe / mini, the working one remembered), then one chat
+  call cuts the memo into ideas, tasks and notes (place chosen among the user's places), each linked to the memo
+  with « vers 1:32 », all dated when recorded; the memo keeps the audio and the full transcript (searchable).
+  .ogg/.opus/.aac are refused with a way out (no converter is installed). scenes/brain/audio_import_dialog.gd
+  (several files or a folder of memos at once, Stop after the memo under way). The owner's OpenAI project allows
+  no transcription model yet: to allow in Settings → Project → Limits before the first real memo.
 
 ## Loop 38 — @ mentions
 

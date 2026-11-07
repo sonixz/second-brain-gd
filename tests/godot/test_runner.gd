@@ -756,6 +756,41 @@ func _e2e() -> void:
 		and zv_dlg.call("error_text", {"ok": false, "error": "HTTP 422", "data": {"detail": "this zip is damaged"}}) == "this zip is damaged"
 		and zv_stop_api["ok"], "« Stop » shows only while it works; the engine's own words are shown, not « HTTP 422 »")
 	zv_dlg.hide()
+	# Loop 37: a voice memo dropped on the window: the preview (length, date, cost), then ideas linked to the memo.
+	var am_path := OS.get_environment("SBGD_HOME").path_join("Recording_20261105_143200.wav")
+	var am_rate := 8000
+	var am_n := am_rate * 4
+	var am := FileAccess.open(am_path, FileAccess.WRITE)
+	am.store_buffer("RIFF".to_ascii_buffer())
+	am.store_32(36 + am_n * 2)
+	am.store_buffer("WAVEfmt ".to_ascii_buffer())
+	am.store_32(16)
+	am.store_16(1)
+	am.store_16(1)
+	am.store_32(am_rate)
+	am.store_32(am_rate * 2)
+	am.store_16(2)
+	am.store_16(16)
+	am.store_buffer("data".to_ascii_buffer())
+	am.store_32(am_n * 2)
+	var am_pcm := PackedByteArray()
+	am_pcm.resize(am_n * 2)
+	am.store_buffer(am_pcm)
+	am.close()
+	await brain.call("_on_files_dropped", PackedStringArray([am_path]))
+	var am_dlg: AcceptDialog = brain.get("audio_import")
+	var am_ready := await wait_until(func() -> bool: return not (am_dlg.get("preview") as Dictionary).is_empty(), 10.0)
+	var am_go: Button = am_dlg.get("go_button")
+	check(am_ready and int((am_dlg.get("preview") as Dictionary).get("ready", 0)) == 1 and not am_go.disabled
+		and (am_dlg.get("list_label") as RichTextLabel).text.contains("0:04") and (am_dlg.get("list_label") as RichTextLabel).text.contains("2026-11-05 14h32"),
+		"a dropped voice memo opens its preview: length, recording date, cost (%s)" % (am_dlg.get("summary_label") as Label).text)
+	am_go.pressed.emit()
+	var am_done := await wait_until(func() -> bool: return (am_dlg.get("results") as Array).size() == 1 and not bool(am_dlg.get("_busy")), 20.0)
+	await wait_until(func() -> bool: return graph.find_node("Paella aux fruits de mer dimanche") != "", 10.0)
+	var am_report := (am_dlg.get("result_label") as RichTextLabel).text
+	check(am_done and graph.find_node("Paella aux fruits de mer dimanche") != "" and am_report.contains("☐ Appeler le garage")
+		and am_report.contains("Mémo vocal du"), "the memo becomes ideas and a task in the graph, linked to it (%s)" % am_report.left(120).replace("\n", " / "))
+	am_dlg.hide()
 	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
 	var l14_welcome := graph.find_node("Welcome to your Second Brain")
 	var l14_pathed := await wait_until(func() -> bool: return graph.path_ids.size() >= 2, 10.0)
