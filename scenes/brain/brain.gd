@@ -78,9 +78,10 @@ var captures_view: CapturesView
 # Today and Agents are set aside (2026-11-04): the Brain is the graph, its data and their relations.
 # Their views stay in the code, unreachable from the interface, until they come back as modules.
 static func nav_views() -> Array:
-	return [["graph", I18n.t("Graph")], ["captures", I18n.t("Captures")], ["projects", I18n.t("Projects")]]
+	return [["graph", I18n.t("Graph")], ["table", I18n.t("Table")], ["captures", I18n.t("Captures")], ["projects", I18n.t("Projects")]]
 var today_view: TodayView
 var projects_view: ProjectsView
+var table_view: PanelContainer     # Loop 37C (preloaded script)
 var agents_view: AgentsView
 var view_buttons: Dictionary = {}
 # Sources
@@ -401,7 +402,7 @@ func _on_panel_edges(left: float, right: float) -> void:
 	graph.legend_x = panel_layer.margin_side + left
 	graph.right_inset = right
 	graph.queue_redraw()
-	for v in [captures_view, today_view, projects_view, agents_view]:  # the lists stay clear of docked panels
+	for v in [captures_view, today_view, projects_view, agents_view, table_view]:  # the lists stay clear of docked panels
 		if v != null:
 			(v as Control).offset_left = panel_layer.margin_side + left
 			(v as Control).offset_right = -(panel_layer.margin_side + right)
@@ -503,7 +504,13 @@ func _build_views() -> void:
 	projects_view = ProjectsView.new().setup(app)
 	agents_view = AgentsView.new().setup(app)
 	agents_view.failed.connect(func(msg: String) -> void: show_toast(msg))
-	for v in [captures_view, today_view, projects_view, agents_view]:
+	table_view = preload("res://scenes/brain/table_view.gd").new().setup(app)
+	table_view.connect("failed", func(msg: String) -> void: show_toast(msg))
+	table_view.connect("changed", func() -> void: refresh_graph())
+	table_view.connect("open_note", func(nid: String) -> void:
+		await set_view("graph")
+		open_note(nid, true))
+	for v in [captures_view, today_view, projects_view, agents_view, table_view]:
 		v.set_anchors_preset(Control.PRESET_FULL_RECT)
 		v.offset_left = 388
 		v.offset_right = -24
@@ -539,6 +546,7 @@ func set_view(name: String) -> void:
 	today_view.visible = name == "today"
 	projects_view.visible = name == "projects"
 	agents_view.visible = name == "agents"
+	table_view.visible = name == "table"
 	var dim := 0.28 if name != "graph" else 1.0
 	create_tween().tween_property(graph, "modulate", Color(1, 1, 1, dim), 0.25)
 	graph.mouse_filter = Control.MOUSE_FILTER_STOP if name == "graph" else Control.MOUSE_FILTER_IGNORE
@@ -552,6 +560,8 @@ func set_view(name: String) -> void:
 		await projects_view.refresh()
 	elif name == "agents":
 		await agents_view.refresh()
+	elif name == "table":
+		await table_view.call("refresh")
 	app.state["view"] = name
 
 
@@ -925,7 +935,12 @@ func run_ui_actions(actions: Array) -> void:
 		var a: Dictionary = item
 		match str(a.get("action", "")):
 			"open_view":
+				if str(a.get("view", "")) == "table":
+					table_view.set("type_id", str(a.get("type", "")))
+					(table_view.get("search") as LineEdit).text = str(a.get("query", ""))
 				await set_view(str(a.get("view", "graph")))
+				if str(a.get("view", "")) == "table" and str(a.get("saved", "")) != "":
+					await table_view.call("show_view", str(a["saved"]))
 			"open_project":
 				await set_view("projects")
 				projects_view.show_card(str(a.get("space_id", "")))

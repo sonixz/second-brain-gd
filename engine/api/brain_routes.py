@@ -103,6 +103,19 @@ class TypeIn(BaseModel):
     created_by: str | None = Field(default=None, max_length=60)
 
 
+class ViewIn(BaseModel):
+    name: str = Field(min_length=1, max_length=60)
+    type: str = Field(default="", max_length=40)
+    query: str = Field(default="", max_length=200)
+    sort: str = Field(default="", max_length=40)
+    desc: bool = False
+
+
+class GroceryIn(BaseModel):
+    picks: list[dict[str, Any]] = Field(min_length=1, max_length=40)  # [{id, servings?}]
+    save: bool = False
+
+
 class PropsIn(BaseModel):
     type: str = Field(min_length=1, max_length=40)
     props: dict[str, Any] = Field(default_factory=dict)
@@ -213,6 +226,38 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
     def get_feed(limit: int = Query(50, ge=1, le=500)) -> dict[str, Any]:
         from engine.brain import archivist
         return {"items": run(archivist.feed, limit)}
+
+    @r.get("/table")
+    def get_table(type: str = Query("", max_length=40), place: str = Query("", max_length=64),
+                  q: str = Query("", max_length=200)) -> dict[str, Any]:
+        """The table view (Loop 37C): rows of one type with its fields as columns, or every item."""
+        from engine.assistant.core import ui_language
+        from engine.brain import table
+
+        def go(conn):
+            return {**table.rows(conn, type, place, q, ui_language(conn)), "views": table.views(conn)}
+        return run(go)
+
+    @r.post("/table/views")
+    def post_view(body: ViewIn) -> dict[str, Any]:
+        from engine.brain import table
+        return {"views": run(table.save_view, body.name, body.type, body.query, body.sort, body.desc)}
+
+    @r.delete("/table/views/{name}")
+    def delete_view(name: str) -> dict[str, Any]:
+        from engine.brain import table
+        return {"views": run(table.delete_view, name)}
+
+    @r.post("/grocery")
+    def post_grocery(body: GroceryIn) -> dict[str, Any]:
+        """The grocery list from ticked recipes: added up, by aisle; save=true keeps it (note + « Épicerie »)."""
+        from engine.assistant.core import ui_language
+        from engine.brain import table
+
+        def go(conn):
+            fn = table.save_grocery if body.save else table.grocery
+            return fn(conn, body.picks, ui_language(conn))
+        return run(go)
 
     @r.get("/types")
     def get_types() -> dict[str, Any]:

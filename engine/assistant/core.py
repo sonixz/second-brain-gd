@@ -444,11 +444,14 @@ TOOLS = [
 ]
 
 # Interface tools: the engine validates them, Godot performs them (hands-free control, Loop 7a).
-UI_VIEWS = ["graph", "captures", "projects"]  # Today and Agents are set aside (2026-11-04)
+UI_VIEWS = ["graph", "table", "captures", "projects"]  # Today and Agents are set aside (2026-11-04)
 UI_THEMES = ["morning", "focus", "evening", "forest", "auto"]
 UI_TOOLS = [
-    {"type": "function", "function": {"name": "ui_open_view", "description": "Show a view of the app: graph (the knowledge map), captures (everything added, newest first), projects.",
-     "parameters": {"type": "object", "properties": {"view": {"type": "string", "enum": UI_VIEWS}}, "required": ["view"]}}},
+    {"type": "function", "function": {"name": "ui_open_view", "description": "Show a view of the app: graph (the knowledge map), table (items in rows and columns: « montre-moi en tableau mes recettes au poulet » → view table, type recipe, query poulet; saved: a saved table view by name), captures (everything added, newest first), projects.",
+     "parameters": {"type": "object", "properties": {"view": {"type": "string", "enum": UI_VIEWS},
+                                                     "type": {"type": "string", "description": "table: an item type, e.g. recipe"},
+                                                     "query": {"type": "string", "description": "table: words to search the rows"},
+                                                     "saved": {"type": "string", "description": "table: a saved view's name"}}, "required": ["view"]}}},
     {"type": "function", "function": {"name": "ui_open_project", "description": "Open a project's card on screen.",
      "parameters": {"type": "object", "properties": {"space_id": {"type": "string"}}, "required": ["space_id"]}}},
     {"type": "function", "function": {"name": "ui_open_note", "description": "Open a note in the inspector and focus it in the graph.",
@@ -518,6 +521,9 @@ def _ui_tool(conn: sqlite3.Connection, name: str, args: dict[str, Any]) -> dict[
         if view not in UI_VIEWS:
             return {"error": f"unknown view, use one of {UI_VIEWS}"}
         act = {"action": "open_view", "view": view}
+        if view == "table":
+            act.update({"type": str(args.get("type") or ""), "query": str(args.get("query") or ""),
+                        "saved": str(args.get("saved") or "")})
     elif name == "ui_open_project":
         sid = str(args.get("space_id", ""))
         row = conn.execute("SELECT id, name, kind FROM spaces WHERE id = ?", (sid,)).fetchone()

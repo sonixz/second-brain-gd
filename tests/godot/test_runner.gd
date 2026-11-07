@@ -634,7 +634,7 @@ func _e2e() -> void:
 			break
 	check(gv.edge_text({"from": some_note, "to": "space:inbox", "type": "space"}).contains("belongs to"), "a line explains itself on hover")
 	var nav: Dictionary = brain.get("view_buttons")
-	check(nav.keys() == ["graph", "captures", "projects"], "the tabs are Graph, Captures, Projects (%s)" % [nav.keys()])
+	check(nav.keys() == ["graph", "table", "captures", "projects"], "the tabs are Graph, Table, Captures, Projects (%s)" % [nav.keys()])
 	# Graph first, semantic zoom (Loop 10).
 	await brain.call("set_view", "graph")
 	var vb: Dictionary = brain.get("view_buttons")
@@ -791,6 +791,46 @@ func _e2e() -> void:
 	check(am_done and graph.find_node("Paella aux fruits de mer dimanche") != "" and am_report.contains("☐ Appeler le garage")
 		and am_report.contains("Voice memo, Nov 5, 2026"), "the memo becomes ideas and a task in the graph, linked to it (%s)" % am_report.left(120).replace("\n", " / "))
 	am_dlg.hide()
+	# Loop 37C: the table view: recipes as rows, a cell edited in place, ticked recipes added up into a grocery list.
+	var tb_ids: Array = []
+	for tb_r in [["Paella du samedi", 4, ["375 ml de riz", "1 oignon", "1 boîte de 796 ml de tomates en dés"], 65],
+			["Chili de semaine", 6, ["2 oignons", "1 boîte de 796 ml de tomates en dés", "1 kg de boeuf haché"], 50]]:
+		var tb_n: Dictionary = await app.backend.api.call_api("/brain/notes", true, HTTPClient.METHOD_POST, JSON.stringify({"title": tb_r[0], "body": ""}))
+		var tb_id := str((tb_n["data"] as Dictionary).get("id", ""))
+		tb_ids.append(tb_id)
+		await app.backend.api.call_api("/brain/items/%s/props" % tb_id, true, HTTPClient.METHOD_POST, JSON.stringify(
+			{"type": "recipe", "props": {"servings": tb_r[1], "ingredients": tb_r[2], "total_min": tb_r[3]}}))
+	await brain.set_view("table")
+	var tbv: PanelContainer = brain.get("table_view")
+	tbv.set("type_id", "recipe")
+	await tbv.call("refresh")
+	var tb_tree: Tree = tbv.get("tree")
+	var tb_rows := tb_tree.get_root().get_children() if tb_tree.get_root() != null else []
+	var tb_cols: Array = tbv.get("_cols")
+	var tb_total := -1
+	for c in tb_cols.size():
+		if str((tb_cols[c] as Dictionary)["key"]) == "total_min":
+			tb_total = c + 1
+	check(tbv.visible and tb_rows.size() == 2 and tb_total > 0 and tb_tree.get_column_title(0) == "☐",
+		"the table view lists the recipes with their fields as columns (%d rows)" % tb_rows.size())
+	tbv.call("sort_by", tb_total)
+	var tb_first := tb_tree.get_root().get_child(0)
+	check(tb_first.get_text(1).begins_with("Chili") and tb_first.get_text(tb_total) == "50 min", "a column title sorts the rows (shortest first)")
+	for it in tb_tree.get_root().get_children():
+		(it as TreeItem).set_checked(0, true)
+		var tb_picks: Dictionary = tbv.get("picked")
+		tb_picks[str((it as TreeItem).get_metadata(0))] = true
+	tbv.call("_update_grocery_button")
+	var tb_dlg: AcceptDialog = tbv.call("open_grocery")
+	var tb_list: RichTextLabel = tb_dlg.find_child("GroceryList", true, false)
+	var tb_ok := await wait_until(func() -> bool: return tb_list.text.contains("tomates en dés"), 10.0)
+	check(tb_ok and tb_list.text.contains("2 cans of 796 ml") and tb_list.text.contains("onion") == false and tb_list.text.contains("oignon — 3"),
+		"ticked recipes add up into a grocery list by aisle (%s)" % tb_list.text.left(160).replace("\n", " / "))
+	(tb_dlg.find_child("SaveGrocery", true, false) as Button).pressed.emit()
+	var tb_saved := await wait_until(func() -> bool: return (tb_dlg.find_child("SaveGrocery", true, false) as Button).text.begins_with("Saved"), 10.0)
+	check(tb_saved, "the grocery list is saved as a note (%s)" % (tb_dlg.find_child("SaveGrocery", true, false) as Button).text)
+	tb_dlg.hide()
+	await brain.set_view("graph")
 	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
 	var l14_welcome := graph.find_node("Welcome to your Second Brain")
 	var l14_pathed := await wait_until(func() -> bool: return graph.path_ids.size() >= 2, 10.0)

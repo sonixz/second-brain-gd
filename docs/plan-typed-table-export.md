@@ -55,6 +55,17 @@ layout and editing come with the table view (37C).
   « other »; nothing is invented.
 - CSV export of the rows.
 
+**Done 2026-11-07.** engine/brain/table.py (rows of a type with its short fields as columns, or every item;
+search reaches field values and ingredient names; saved views in the settings; the grocery list: ingredients
+scaled to the servings asked, converted to ml or g and summed, cans kept as cans with their printed size, sizes
+and plurals merged, the plainest wording kept, aisles in shop order from a FR/EN word list, unknown → « Autres »;
+saving makes a note linked to its recipes and fills the « Épicerie » checklist). GET /brain/table, POST/DELETE
+/brain/table/views, POST /brain/grocery. scenes/brain/table_view.gd: the « Tableau » tab (type picker with counts,
+search, saved views, sort by a column title, edit a cell in place, CSV with a BOM for Excel, tick recipes →
+grocery dialog with servings per recipe). By voice: ui_open_view table with type, query or a saved view.
+Tests: tests/python/test_table.py (4), Godot checks (rows, sort, grocery, save). Measured on 3 saved RICARDO
+recipes: 31 lines in 5 aisles. Screenshots docs/screenshots/table-en and table-fr.
+
 ## 37D — Export
 
 - Any item, a selection, a saved table view or a place: a clean HTML page in Letter format (8½ × 11, print CSS),
