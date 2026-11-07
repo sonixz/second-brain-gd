@@ -155,7 +155,63 @@ tools), the archivist answered « timer trigger Azure Functions en Python » wit
 microsoft_docs_search and cited them (8 cents with gpt-6-sol before the result cut went from 12,000 to 8,000
 characters). Tests: tests/python/test_mcp_client.py (5, a local fake server), a Godot check.
 
+## Next MCP loops (agreed 2026-11-07): the full client, so the Brain can use most servers listed in directories
+
+MCP directories (mcpmarket.com and the like) are catalogues, not services: what is plugged in is the servers they
+list. They come in four families: remote without an account (works since MCP-C), remote with an API key, remote
+with an account sign-in (OAuth), local programs (stdio). One complete client serves them all; around it, the
+Brain keeps what the protocol does not do: permissions, secrets, budget, trust, data guards, visibility.
+
+| Loop | Content | Size | Confidence |
+|---|---|---|---|
+| MCP-D | API keys per server, the catalogue (a curated list + search in the official MCP registry), tool-by-tool permissions, a budget, the « Brain read + outside write » guard, protocol gaps (paging, listChanged, progress, cancel, the older SSE transport) | 1 | 80 % |
+| MCP-E | Account sign-in (OAuth): discovery, browser sign-in back to 127.0.0.1, client registration, refresh, disconnect; server questions (elicitation) shown like mission questions; sampling refused by default | 1 | 65 % |
+| MCP-F | Local servers (stdio) with the owner's approval: the exact command shown, version pinned, nothing downloaded or installed silently, a clean environment (no secrets inherited), start / stop / logs | 1 | 60 % |
+
+### MCP-D — keys, catalogue, permissions, budget, guard
+
+- **API keys.** A server can carry a key (header name and value, e.g. `Authorization: Bearer …` or `x-api-key`),
+  kept in the Windows Credential Manager (engine/voice/secrets.py), never in the settings, a log or the repository;
+  shown masked, replaceable, removed with the server.
+- **Catalogue.** In the MCP window: a curated starter list (Microsoft Learn, Context7, DeepWiki…, each checked by
+  hand: no account / key / sign-in / local), and a search in the official MCP registry (its API and format checked
+  at the start of the loop; no scraping of directory sites). Each entry shows its family, publisher and source; an
+  unknown publisher gets a warning. One click for « no account », a key field for « key ».
+- **Tool by tool.** Per server and per agent, tools can be switched off (fewer tools: a sharper agent, fewer tokens
+  each turn). The window shows how many tool descriptions each agent carries.
+- **Budget.** Calls and the tokens their results add are counted per server, agent and mission; a monthly cap per
+  server (default off) and the missions' own cost cap include MCP results.
+- **Data guard.** A tool that writes outside (no readOnlyHint, or destructiveHint) asks the owner's confirmation at
+  each call (a card like the mission questions); the window warns when an agent has both « Read the Brain » and a
+  server that can write outside.
+- **Protocol gaps.** tools/list paging (cursor), notifications/tools/list_changed (refresh), progress shown on the
+  ⇢ light's hover, a Stop that cancels a long call (notifications/cancelled), the 2024-11-05 HTTP+SSE transport
+  for older servers.
+- Tests: a fake server with a key, paging and a write tool; the guard; the budget; one real call to a keyless
+  catalogue server.
+
+### MCP-E — account sign-in (OAuth), server questions
+
+- **OAuth per the MCP spec.** Discovery (`/.well-known/oauth-protected-resource`, then the authorization server's
+  metadata), dynamic client registration when offered, PKCE, the sign-in in the user's browser with a redirect to a
+  one-time listener on 127.0.0.1, tokens in the Credential Manager, refresh before expiry, « Disconnect » revokes.
+- First provider tried for real: one the owner uses (Notion or GitHub), chosen at the start of the loop.
+- **Elicitation:** a server's question to the user (« which project? ») shown in the agent's panel like a mission
+  question; the answer goes back. **Sampling:** a server asking the Brain's model to write is refused by default
+  (it would spend the owner's key), allowed per server with a cap.
+- Tests: a fake authorization server (discovery, registration, PKCE, refresh, expiry), an elicitation round trip.
+
+### MCP-F — local servers (stdio), with approval
+
+- Adding a local server shows the exact command (e.g. `npx -y @scope/server@1.2.3`), its publisher and source; the
+  owner approves it once; the version is pinned (no « latest »). Required runtimes (Node, Python, Docker) are
+  detected, never installed silently: the window says what is missing and how to get it.
+- The process runs with a clean environment (no inherited secrets; only the variables the server declares, filled
+  from the Credential Manager), stopped with the app, restarted on demand; its stderr kept as a short log.
+- Same permissions, guard, budget and lights as remote servers.
+- Tests: a tiny local stdio server written in the test (Python), start / list / call / stop, a crash, a refused
+  unapproved command.
+
 ## Later
 
-OAuth servers (GitHub, Google…), local stdio servers with approval, MCP resources (items as `brain://` resources)
-and prompts, Claude Desktop extension packaging.
+MCP resources and prompts (both directions; items as `brain://` resources), Claude Desktop extension packaging.
