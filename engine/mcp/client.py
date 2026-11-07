@@ -57,6 +57,15 @@ class Cancelled(McpClientError):
     pass
 
 
+class AuthNeeded(McpClientError):
+    """The server wants an account sign-in (401 with WWW-Authenticate): where its metadata is, the scope asked."""
+
+    def __init__(self, metadata: str = "", scope: str = ""):
+        super().__init__("this server needs an account sign-in: click « Sign in » in the MCP window")
+        self.metadata = metadata
+        self.scope = scope
+
+
 # ------------------------------------------------------------------ servers the user added
 def servers(conn: sqlite3.Connection) -> list[dict[str, Any]]:
     v = database.get_setting(conn, SETTING, [])
@@ -145,7 +154,11 @@ def set_key(conn: sqlite3.Connection, sid: str, key: str, header: str = "") -> d
     return _update(conn, sid, **fields)
 
 
-def _auth_headers(conn: sqlite3.Connection | None, s: dict[str, Any]) -> dict[str, str]:
+def _auth_headers(conn: sqlite3.Connection | None, s: dict[str, Any], force_refresh: bool = False) -> dict[str, str]:
+    if conn is not None and s.get("oauth"):
+        from engine.mcp import oauth
+        token = oauth.access_token(_layout(conn), s["id"], force_refresh)
+        return {"Authorization": "Bearer " + token} if token else {}
     if conn is None or not s.get("has_key"):
         return {}
     from engine.voice import secrets
@@ -181,6 +194,9 @@ def refresh(conn: sqlite3.Connection, sid: str) -> dict[str, Any]:
     try:
         tools = list_tools(s, conn)
         return _update(conn, sid, tools=tools, status="ready", error="", checked_at=utc_now(), transport=s.get("transport", "http"))
+    except AuthNeeded as exc:
+        return _update(conn, sid, status="signin", error=str(exc)[:300], auth_meta=exc.metadata, auth_scope=exc.scope,
+                       checked_at=utc_now())
     except McpClientError as exc:
         return _update(conn, sid, status="down", error=str(exc)[:300], checked_at=utc_now())
 
@@ -196,12 +212,16 @@ def _request(url: str, msg: dict[str, Any], session: str | None, extra: dict[str
 
 
 def _post(url: str, msg: dict[str, Any], session: str | None, extra: dict[str, str] | None = None, timeout: float = 60.0,
-          key: str = "") -> tuple[int, dict[str, Any] | None, str | None]:
+          key: str = "", on_request: Any = None) -> tuple[int, dict[str, Any] | None, str | None]:
     """POSTs one message. An event-stream answer is read as it comes: progress goes to the light, Stop is honoured."""
     try:
         resp = _request(url, msg, session, extra or {}, timeout)
     except urllib.error.HTTPError as exc:
         if exc.code == 401:
+            from engine.mcp import oauth
+            meta, scope = oauth.parse_www_authenticate(exc.headers.get("WWW-Authenticate", "") if exc.headers else "")
+            if meta or "bearer" in (exc.headers.get("WWW-Authenticate", "") if exc.headers else "").lower() and not extra:
+                raise AuthNeeded(meta, scope) from exc
             raise McpClientError("the server wants a key or a sign-in (401): add the key in the MCP window") from exc
         return exc.code, None, None
     except (urllib.error.URLError, OSError) as exc:
@@ -235,6 +255,13 @@ def _post(url: str, msg: dict[str, Any], session: str | None, extra: dict[str, s
                     continue
                 if one.get("id") == msg["id"] and ("result" in one or "error" in one):
                     return status, one, sid
+                if one.get("method") and "id" in one:  # the server asks something back (a question, a ping…)
+                    answer = _answer_server(one, on_request, key)
+                    try:
+                        _request(url, answer, sid or session, extra or {}, 30.0).close()
+                    except (urllib.error.URLError, OSError):
+                        pass
+                    continue
                 if one.get("method") == "notifications/progress" and key:
                     p = one.get("params") or {}
                     total = f"/{p['total']}" if p.get("total") else ""
@@ -243,6 +270,22 @@ def _post(url: str, msg: dict[str, Any], session: str | None, extra: dict[str, s
             reply = parse_reply("data: " + "\n".join(data) + "\n\n", "text/event-stream", msg["id"])
             return status, reply, sid
         return status, None, sid
+
+
+def _answer_server(req: dict[str, Any], on_request: Any, key: str) -> dict[str, Any]:
+    """A request from the server inside a call: ping, roots (none shared), a question to the user (elicitation),
+    or asking the Brain's model to write (sampling: refused unless the user allowed it for this server)."""
+    method = req.get("method")
+    if method == "ping":
+        return {"jsonrpc": "2.0", "id": req["id"], "result": {}}
+    if method == "roots/list":
+        return {"jsonrpc": "2.0", "id": req["id"], "result": {"roots": []}}
+    if on_request is not None and method in ("elicitation/create", "sampling/createMessage"):
+        try:
+            return {"jsonrpc": "2.0", "id": req["id"], "result": on_request(method, req.get("params") or {}, key)}
+        except McpClientError as exc:
+            return {"jsonrpc": "2.0", "id": req["id"], "error": {"code": -1, "message": str(exc)}}
+    return {"jsonrpc": "2.0", "id": req["id"], "error": {"code": -32601, "message": f"not supported by this client: {method}"}}
 
 
 def parse_reply(raw: str, ctype: str, mid: Any) -> dict[str, Any] | None:
@@ -358,7 +401,8 @@ def _close(sid: str) -> None:
 # ------------------------------------------------------------------ requests
 def _initialize(s: dict[str, Any], extra: dict[str, str]) -> Any:
     init = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
-        "protocolVersion": PROTOCOL, "capabilities": {}, "clientInfo": {"name": "second-brain", "version": "1.0"}}}
+        "protocolVersion": PROTOCOL, "capabilities": {"elicitation": {}, **({"sampling": {}} if s.get("sampling") else {})},
+        "clientInfo": {"name": "second-brain", "version": "1.0"}}}
     if s.get("transport") == "sse":
         legacy = LegacySession(s["url"], extra)
         reply = legacy.send(init, 30.0)
@@ -384,8 +428,19 @@ def _initialize(s: dict[str, Any], extra: dict[str, str]) -> Any:
 
 
 def _rpc(s: dict[str, Any], method: str, params: dict[str, Any], conn: sqlite3.Connection | None = None,
-         key: str = "", timeout: float = 90.0) -> dict[str, Any]:
-    extra = _auth_headers(conn, s)
+         key: str = "", timeout: float = 90.0, on_request: Any = None) -> dict[str, Any]:
+    try:
+        return _rpc_once(s, method, params, conn, key, timeout, on_request, False)
+    except AuthNeeded:
+        if not s.get("oauth") or conn is None:
+            raise
+        _close(s["id"])  # the token was refused: refresh it once and try again
+        return _rpc_once(s, method, params, conn, key, timeout, on_request, True)
+
+
+def _rpc_once(s: dict[str, Any], method: str, params: dict[str, Any], conn: sqlite3.Connection | None, key: str,
+              timeout: float, on_request: Any, force_refresh: bool) -> dict[str, Any]:
+    extra = _auth_headers(conn, s, force_refresh)
     with _lock:
         sess = _sessions.get(s["id"])
     if sess is None:
@@ -396,10 +451,10 @@ def _rpc(s: dict[str, Any], method: str, params: dict[str, Any], conn: sqlite3.C
         reply = sess.send(msg, timeout, key)
         status = 200
     else:
-        status, reply, _ = _post(s["url"], msg, sess, extra, timeout, key)
+        status, reply, _ = _post(s["url"], msg, sess, extra, timeout, key, on_request)
         if status in (400, 404) and sess:  # the server forgot the session: start again once
             sess = _initialize(s, extra)
-            status, reply, _ = _post(s["url"], msg, sess, extra, timeout, key)
+            status, reply, _ = _post(s["url"], msg, sess, extra, timeout, key, on_request)
     if status >= 400 or reply is None:
         raise McpClientError(f"no answer from the server (HTTP {status})")
     if "error" in reply:
@@ -427,12 +482,13 @@ def list_tools(s: dict[str, Any], conn: sqlite3.Connection | None = None) -> lis
     return out[:MAX_TOOLS]
 
 
-def call(s: dict[str, Any], tool: str, args: dict[str, Any], conn: sqlite3.Connection | None = None, key: str = "") -> str:
+def call(s: dict[str, Any], tool: str, args: dict[str, Any], conn: sqlite3.Connection | None = None, key: str = "",
+         on_request: Any = None) -> str:
     params: dict[str, Any] = {"name": tool, "arguments": args}
     if key:
         params["_meta"] = {"progressToken": key}
     try:
-        result = _rpc(s, "tools/call", params, conn, key)
+        result = _rpc(s, "tools/call", params, conn, key, on_request=on_request)
     except Cancelled:
         try:  # tell the server, so it can stop too
             with _lock:
@@ -573,6 +629,109 @@ def risks(conn: sqlite3.Connection) -> list[dict[str, Any]]:
     return out
 
 
+QUESTION_TIMEOUT_S = 85   # a chat waits at most 90 s for its answer; a mission asks again later
+
+
+def _handler(conn: sqlite3.Connection, s: dict[str, Any], agent: str):
+    """Answers a server's request during a call: a question goes to the user (MCP window) and waits for the answer;
+    sampling uses the Brain's model only when the user allowed it for this server, within its monthly cap."""
+    from pathlib import Path
+    db = Path(conn.execute("PRAGMA database_list").fetchone()[2])
+
+    def on_request(method: str, params: dict[str, Any], key: str) -> dict[str, Any]:
+        if method == "elicitation/create":
+            qid = "q" + uuid.uuid4().hex[:10]
+            conn.execute("INSERT INTO mcp_questions (id, server, server_name, agent, message, schema, status, created_at)"
+                         " VALUES (?, ?, ?, ?, ?, ?, 'pending', ?)", (qid, s["id"], s["name"], agent, str(params.get("message", ""))[:1000],
+                                                                    json.dumps(params.get("requestedSchema") or {}), utc_now()))
+            conn.commit()  # the question must be visible to the app now
+            import time as _t
+            deadline = _t.time() + QUESTION_TIMEOUT_S
+            while _t.time() < deadline:
+                if key and OUT.cancelled(key):
+                    raise Cancelled("stopped by the user")
+                with database.session(db) as c2:
+                    r = c2.execute("SELECT status, answer FROM mcp_questions WHERE id = ?", (qid,)).fetchone()
+                if r and r["status"] != "pending":
+                    if r["status"] == "answered":
+                        return {"action": "accept", "content": json.loads(r["answer"] or "{}")}
+                    return {"action": "decline" if r["status"] == "declined" else "cancel"}
+                _t.sleep(0.5)
+            conn.execute("UPDATE mcp_questions SET status = 'expired' WHERE id = ? AND status = 'pending'", (qid,))
+            return {"action": "cancel"}
+        if method == "sampling/createMessage":
+            if not s.get("sampling"):
+                raise McpClientError("the user does not let this server use their AI model (sampling is off)")
+            used = conn.execute("SELECT COALESCE(SUM(calls), 0) FROM mcp_usage WHERE month = ? AND server = ? AND agent = 'sampling'",
+                                (_month(), s["id"])).fetchone()[0]
+            if used >= int(s.get("sampling_cap") or 20):
+                raise McpClientError("this server used all the AI writing the user allows this month")
+            from engine.assistant.llm import make_client
+            from engine.voice import secrets
+            key_, _ = secrets.get(_layout(conn), "openai")
+            try:
+                llm = make_client(key_)
+            except PermissionError as exc:
+                raise McpClientError("no OpenAI key in the Brain") from exc
+            msgs = [{"role": "system", "content": str(params.get("systemPrompt") or "")[:4000]}] if params.get("systemPrompt") else []
+            for m in (params.get("messages") or [])[:20]:
+                content = m.get("content") or {}
+                if content.get("type") == "text":
+                    msgs.append({"role": "assistant" if m.get("role") == "assistant" else "user", "content": str(content.get("text", ""))[:8000]})
+            res = llm.complete("gpt-4o-mini", msgs, temperature=0.3)
+            text = str(res["message"].get("content") or "")[: min(int(params.get("maxTokens") or 800), 1000) * 4]
+            _record(conn, s["id"], "sampling", len(text))
+            return {"role": "assistant", "content": {"type": "text", "text": text}, "model": res.get("model", "gpt-4o-mini"),
+                    "stopReason": "endTurn"}
+        raise McpClientError(f"not supported: {method}")
+    return on_request
+
+
+def questions(conn: sqlite3.Connection, status: str = "pending") -> list[dict[str, Any]]:
+    out = []
+    for r in conn.execute("SELECT * FROM mcp_questions WHERE status = ? ORDER BY created_at DESC LIMIT 20", (status,)):
+        d = dict(r)
+        d["schema"] = json.loads(d["schema"] or "{}")
+        out.append(d)
+    return out
+
+
+def answer_question(conn: sqlite3.Connection, qid: str, action: str, content: dict[str, Any] | None = None) -> dict[str, Any]:
+    status = {"accept": "answered", "decline": "declined"}.get(action, "cancelled")
+    conn.execute("UPDATE mcp_questions SET status = ?, answer = ?, answered_at = ? WHERE id = ? AND status = 'pending'",
+                 (status, json.dumps(content or {}, ensure_ascii=False)[:4000], utc_now(), qid))
+    return {"id": qid, "status": status}
+
+
+def sign_in(conn: sqlite3.Connection, sid: str) -> dict[str, Any]:
+    """Starts the account sign-in: the URL the app opens in the user's browser."""
+    from engine.mcp import oauth
+    s = get_server(conn, sid)
+
+    def done(db) -> None:  # tokens saved: mark the server signed in and list its tools
+        with database.session(db) as c2:
+            _update(c2, sid, oauth=True)
+            refresh(c2, sid)
+    try:
+        return oauth.start(conn, s, s.get("auth_meta", ""), s.get("auth_scope", ""), done)
+    except oauth.OAuthError as exc:
+        raise McpClientError(str(exc)) from exc
+
+
+def sign_out(conn: sqlite3.Connection, sid: str) -> dict[str, Any]:
+    from engine.mcp import oauth
+    get_server(conn, sid)
+    oauth.disconnect(_layout(conn), sid)
+    _close(sid)
+    return _update(conn, sid, oauth=False, status="signin", tools=get_server(conn, sid).get("tools", []))
+
+
+def set_sampling(conn: sqlite3.Connection, sid: str, allow: bool, cap: int = 20) -> dict[str, Any]:
+    get_server(conn, sid)
+    _close(sid)  # the capability is declared when the session starts
+    return _update(conn, sid, sampling=bool(allow), sampling_cap=max(0, min(1000, int(cap))))
+
+
 def run(conn: sqlite3.Connection, name: str, args: dict[str, Any], agent: str, agent_label: str = "") -> dict[str, Any]:
     """An agent calls a server's tool: allowed for it, within budget, confirmed when it writes outside; the ⇢ light
     on during the call; the result as data."""
@@ -589,7 +748,7 @@ def run(conn: sqlite3.Connection, name: str, args: dict[str, Any], agent: str, a
         key = OUT.start(f"{agent_label or agent} → {s['name']}", t["name"])
         ok, text = True, ""
         try:
-            text = call(s, t["name"], args or {}, conn, key)
+            text = call(s, t["name"], args or {}, conn, key, _handler(conn, s, agent_label or agent))
             _record(conn, s["id"], agent, len(text))
             return {"server": s["name"], "note": UNTRUSTED, "content": text}
         except Cancelled:

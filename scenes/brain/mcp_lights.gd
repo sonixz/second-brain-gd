@@ -305,6 +305,8 @@ func _fill_servers(box: VBoxContainer) -> void:
 	head.theme_type_variation = "Heading"
 	head.text = I18n.t("MCP servers for your agents (⇢ out)")
 	box.add_child(head)
+	for qu in data.get("questions", []):
+		box.add_child(_question_row(qu, box))
 	for cf in data.get("confirmations", []):
 		box.add_child(_confirm_row(cf, box))
 	for rk in data.get("risks", []):
@@ -435,6 +437,7 @@ func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control
 	line.add_theme_constant_override("separation", 6)
 	wrap.add_child(line)
 	var ready := str(d.get("status", "")) == "ready"
+	var needs_signin := str(d.get("status", "")) == "signin"
 	var tools: Array = d.get("tools", [])
 	var off: Array = d.get("off", [])
 	var use: Dictionary = d.get("usage", {})
@@ -444,7 +447,8 @@ func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control
 	l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	l.text = ("● %s · %s · %s" % [str(d.get("name", "")), I18n.t("%d of %d tools") % [tools.size() - off.size(), tools.size()],
 		I18n.t("%d calls, ≈ %s tokens this month") % [int(use.get("calls", 0)), _k(int(use.get("tokens", 0)))]]) if ready \
-		else "○ %s · %s" % [str(d.get("name", "")), I18n.t("unreachable: %s") % str(d.get("error", ""))]
+		else ("○ %s · %s" % [str(d.get("name", "")), I18n.t("needs an account sign-in")] if needs_signin
+		else "○ %s · %s" % [str(d.get("name", "")), I18n.t("unreachable: %s") % str(d.get("error", ""))])
 	l.add_theme_color_override("font_color", Color(0.55, 0.88, 0.65) if ready else SbTheme.WARM)
 	l.tooltip_text = "%s\n%s%s" % [str(d.get("url", "")), str(d.get("publisher", "")), ("\n" + I18n.t("key saved")) if bool(d.get("has_key", false)) else ""]
 	line.add_child(l)
@@ -462,6 +466,35 @@ func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control
 		await app.backend.api.call_api("/mcp/servers/%s/agents" % sid, true, HTTPClient.METHOD_POST,
 			JSON.stringify({"agents": [str(who.get_item_metadata(i))]})))
 	line.add_child(who)
+	if needs_signin:
+		var si := Button.new()
+		si.name = "SignIn"
+		si.text = I18n.t("Sign in")
+		si.theme_type_variation = "PrimaryButton"
+		si.tooltip_text = I18n.t("Opens the sign-in page in your browser; the Brain keeps the access in Windows' credential store")
+		si.pressed.connect(func() -> void:
+			si.disabled = true
+			var r := await app.backend.api.call_api("/mcp/servers/%s/signin" % sid, true, HTTPClient.METHOD_POST, "{}")
+			if not r["ok"]:
+				si.text = str((r["data"] as Dictionary).get("detail", r["error"])).left(48)
+				return
+			if OS.get_environment("SBGD_NO_OPEN") == "":
+				OS.shell_open(str((r["data"] as Dictionary).get("url", "")))
+			si.text = I18n.t("Waiting for the sign-in…")
+			for _i in 600:
+				await app.get_tree().create_timer(0.5).timeout
+				var st := await app.backend.api.call_api("/mcp/servers/%s/signin" % sid)
+				var ss := str((st["data"] as Dictionary).get("status", "")) if st["ok"] else ""
+				if ss == "done" or ss == "failed":
+					if ss == "failed":
+						si.text = str((st["data"] as Dictionary).get("error", "")).left(48)
+						si.disabled = false
+						return
+					break
+			if is_instance_valid(box):
+				await _fill_servers(box)
+			poll())
+		line.add_child(si)
 	var more := Button.new()
 	more.text = I18n.t("Tools, key…")
 	line.add_child(more)
@@ -505,6 +538,21 @@ func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control
 		await _fill_servers(box))
 	krow.add_child(ksave)
 	details.add_child(krow)
+	if bool(d.get("oauth", false)):
+		var so := Button.new()
+		so.text = I18n.t("Disconnect the account")
+		so.tooltip_text = I18n.t("Revokes the access at the service and forgets it here")
+		so.pressed.connect(func() -> void:
+			await app.backend.api.call_api("/mcp/servers/%s/signout" % sid, true, HTTPClient.METHOD_POST, "{}")
+			await _fill_servers(box))
+		details.add_child(so)
+	var samp := CheckBox.new()
+	samp.text = I18n.t("Let this server ask your AI model to write (up to 20 times a month)")
+	samp.tooltip_text = I18n.t("Off by default: it would use your OpenAI key")
+	samp.button_pressed = bool(d.get("sampling", false))
+	samp.toggled.connect(func(on: bool) -> void:
+		await app.backend.api.call_api("/mcp/servers/%s/sampling" % sid, true, HTTPClient.METHOD_POST, JSON.stringify({"allow": on, "cap": 20})))
+	details.add_child(samp)
 	var crow := HBoxContainer.new()
 	var cl := Label.new()
 	cl.text = I18n.t("Monthly budget (thousands of tokens, 0 = none):")
@@ -522,6 +570,72 @@ func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control
 
 static func _k(n: int) -> String:
 	return ("%.1f k" % (n / 1000.0)) if n >= 1000 else str(n)
+
+
+## A server's question during a call (elicitation): its message and the fields it asks, answered here.
+func _question_row(qu: Variant, box: VBoxContainer) -> Control:
+	var d: Dictionary = qu
+	var wrap := VBoxContainer.new()
+	var l := Label.new()
+	l.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	l.custom_minimum_size.x = 300
+	l.add_theme_color_override("font_color", Color(0.95, 0.75, 0.35))
+	l.text = I18n.t("%s asks (for %s): %s") % [str(d.get("server_name", "")), str(d.get("agent", "")), str(d.get("message", ""))]
+	wrap.add_child(l)
+	var fields: Dictionary = {}
+	var props: Dictionary = ((d.get("schema", {}) as Dictionary).get("properties", {}) as Dictionary)
+	for k in props:
+		var spec: Dictionary = props[k]
+		var row := HBoxContainer.new()
+		var name_l := Label.new()
+		name_l.text = str(spec.get("title", k))
+		name_l.custom_minimum_size.x = 140
+		row.add_child(name_l)
+		var w: Control
+		if spec.has("enum"):
+			var ob := OptionButton.new()
+			for v in spec["enum"]:
+				ob.add_item(str(v))
+			w = ob
+		elif str(spec.get("type", "")) == "boolean":
+			w = CheckBox.new()
+		elif str(spec.get("type", "")) in ["number", "integer"]:
+			var sb := SpinBox.new()
+			sb.min_value = float(spec.get("minimum", -1000000))
+			sb.max_value = float(spec.get("maximum", 1000000))
+			sb.step = 1.0 if str(spec.get("type", "")) == "integer" else 0.01
+			w = sb
+		else:
+			var le := LineEdit.new()
+			le.custom_minimum_size.x = 260
+			w = le
+		fields[k] = w
+		row.add_child(w)
+		wrap.add_child(row)
+	var buttons := HBoxContainer.new()
+	var qid := str(d["id"])
+	for choice in [["accept", I18n.t("Answer")], ["decline", I18n.t("Decline")]]:
+		var b := Button.new()
+		b.text = str(choice[1])
+		var ch := str(choice[0])
+		b.pressed.connect(func() -> void:
+			var content := {}
+			for k in fields:
+				var w: Control = fields[k]
+				if w is OptionButton:
+					content[k] = (w as OptionButton).get_item_text((w as OptionButton).selected)
+				elif w is CheckBox:
+					content[k] = (w as CheckBox).button_pressed
+				elif w is SpinBox:
+					content[k] = (w as SpinBox).value
+				else:
+					content[k] = (w as LineEdit).text
+			await app.backend.api.call_api("/mcp/questions/" + qid, true, HTTPClient.METHOD_POST, JSON.stringify({"action": ch, "content": content}))
+			await _fill_servers(box)
+			poll())
+		buttons.add_child(b)
+	wrap.add_child(buttons)
+	return wrap
 
 
 func _confirm_row(cf: Variant, box: VBoxContainer) -> Control:

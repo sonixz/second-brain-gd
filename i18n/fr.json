@@ -1014,5 +1014,14 @@
  "Stop the calls under way": "Arrêter les appels en cours",
  "key": "clé",
  "MCP out · now: %s · %s": "MCP sortant · en cours : %s · %s",
- "Save the key": "Enregistrer la clé"
+ "Save the key": "Enregistrer la clé",
+ "needs an account sign-in": "demande une connexion à un compte",
+ "Sign in": "Se connecter",
+ "Opens the sign-in page in your browser; the Brain keeps the access in Windows' credential store": "Ouvre la page de connexion dans ton navigateur ; le Brain garde l’accès dans le Gestionnaire d’identification Windows",
+ "Waiting for the sign-in…": "En attente de la connexion…",
+ "Disconnect the account": "Déconnecter le compte",
+ "Revokes the access at the service and forgets it here": "Révoque l’accès chez le service et l’oublie ici",
+ "Let this server ask your AI model to write (up to 20 times a month)": "Permettre à ce serveur de demander à ton modèle d’IA d’écrire (jusqu’à 20 fois par mois)",
+ "Off by default: it would use your OpenAI key": "Désactivé par défaut : ça utiliserait ta clé OpenAI",
+ "%s asks (for %s): %s": "%s demande (pour %s) : %s"
 }

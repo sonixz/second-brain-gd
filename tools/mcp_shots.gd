@@ -71,4 +71,14 @@ func _run() -> void:
 	await pause(5.0)
 	calm()
 	await shot("m5-catalogue")
+	dlg3.hide()
+	# MCP-E: a server that needs an account sign-in (Notion: 401 with its metadata; nothing registered until clicked)
+	await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Notion", "url": "https://mcp.notion.com/mcp", "publisher": "notion.com"}))
+	var dlg4: AcceptDialog = lights.call("open_dialog")
+	await pause(3.0)
+	var sc: ScrollContainer = dlg4.find_children("*", "ScrollContainer", true, false)[0]
+	sc.scroll_vertical = 260
+	await pause(0.5)
+	calm()
+	await shot("m6-signin")
 	quit(0)

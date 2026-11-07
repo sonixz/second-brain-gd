@@ -217,6 +217,21 @@ session restart, the older transport, catalogue families). Screenshot docs/scree
   (it would spend the owner's key), allowed per server with a cap.
 - Tests: a fake authorization server (discovery, registration, PKCE, refresh, expiry), an elicitation round trip.
 
+**E done 2026-11-07.** engine/mcp/oauth.py: discovery (WWW-Authenticate resource_metadata, protected-resource
+metadata, authorization-server metadata with OpenID fallback, S256 required), dynamic registration as a public
+client, PKCE, a one-time listener on 127.0.0.1 (5 minutes), the code exchanged with the verifier and `resource`,
+tokens in the OS credential store (« mcp-<id>-oauth »), refreshed when about to expire and once on a 401,
+« Disconnect » revokes at the server. The client: a 401 with a Bearer challenge marks the server « needs an
+account sign-in »; `elicitation` declared at initialize, the server's question shown in the MCP window (fields
+from its flat schema) and the call waits up to 85 s for the answer (a chat waits 90 s); `sampling` declared only
+when the user allows it for that server (off by default, 20 a month, gpt-4o-mini, counted); ping and roots
+(none shared) answered. Migration 0020 (mcp_questions). Window: « Sign in » (opens the browser, waits),
+« Disconnect the account », the sampling switch, questions with Answer / Decline. Real check: Notion's discovery
+up to its sign-in URL (read only; nothing registered until the owner clicks). Tests: test_mcp_oauth.py (4: the
+whole sign-in with a fake authorization server, refresh, revoke; a question answered; sampling refused then
+allowed; challenge parsing). Screenshot docs/screenshots/mcp-*/m6-signin.png. The owner's first real sign-in is
+theirs to do (Notion or GitHub).
+
 ### MCP-F — local servers (stdio), with approval
 
 - Adding a local server shows the exact command (e.g. `npx -y @scope/server@1.2.3`), its publisher and source; the

@@ -41,6 +41,16 @@ class OffIn(BaseModel):
     off: list[str] = Field(default_factory=list, max_length=200)
 
 
+class SamplingIn(BaseModel):
+    allow: bool = False
+    cap: int = Field(default=20, ge=0, le=1000)
+
+
+class AnswerIn(BaseModel):
+    action: str = Field(default="accept", max_length=10)   # accept, decline, cancel
+    content: dict[str, Any] = Field(default_factory=dict)
+
+
 class CapIn(BaseModel):
     tokens: int = Field(default=0, ge=0, le=100_000_000)
 
@@ -124,6 +134,7 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
             out_servers = [{k: s.get(k) for k in ("id", "name", "status", "error")} | {"tools": len(s.get("tools") or [])}
                            for s in mcp.servers(conn)]
             waiting_out = conn.execute("SELECT COUNT(*) FROM mcp_confirms WHERE status = 'pending'").fetchone()[0]
+            waiting_out += conn.execute("SELECT COUNT(*) FROM mcp_questions WHERE status = 'pending'").fetchone()[0]
         return {**server.ACTIVITY.status(), "clients": clients, "pending": pending + waiting_out,
                 "out": {**mcp.OUT.status(), "servers": out_servers}}
 
@@ -162,11 +173,12 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
             use = mcp.usage(conn)
             risks = mcp.risks(conn)
             waiting = mcp.confirmations(conn)
+            asked = mcp.questions(conn)
         have = {s.get("url") for s in items}
         for s in items:
             s["usage"] = use.get(s["id"], {"calls": 0, "tokens": 0, "agents": {}})
         return {"servers": items, "suggested": [s for s in mcp.SUGGESTED if s["url"] not in have], "risks": risks,
-                "confirmations": waiting}
+                "confirmations": waiting, "questions": asked}
 
     @r.get("/mcp/catalog", dependencies=[Depends(auth)])
     def get_catalog(q: str = "") -> dict[str, Any]:
@@ -209,6 +221,46 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
             raise HTTPException(status_code=422, detail="approve or refuse")
         with database.session(layout.database) as conn:
             return mcp.decide(conn, cid, choice == "approve")
+
+    @r.post("/mcp/servers/{sid}/signin", dependencies=[Depends(auth)])
+    def post_signin(sid: str) -> dict[str, Any]:
+        """Starts an account sign-in: the URL to open in the user's browser; the answer comes back to 127.0.0.1."""
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            try:
+                return mcp.sign_in(conn, sid)
+            except mcp.McpClientError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @r.get("/mcp/servers/{sid}/signin", dependencies=[Depends(auth)])
+    def get_signin(sid: str) -> dict[str, Any]:
+        from engine.mcp import oauth
+        return oauth.flow_status(sid)
+
+    @r.post("/mcp/servers/{sid}/signout", dependencies=[Depends(auth)])
+    def post_signout(sid: str) -> dict[str, Any]:
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            return mcp.sign_out(conn, sid)
+
+    @r.post("/mcp/servers/{sid}/sampling", dependencies=[Depends(auth)])
+    def post_sampling(sid: str, body: SamplingIn) -> dict[str, Any]:
+        """Whether this server may ask the Brain's model to write (off by default), and how many times a month."""
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            return mcp.set_sampling(conn, sid, body.allow, body.cap)
+
+    @r.get("/mcp/questions", dependencies=[Depends(auth)])
+    def get_questions() -> dict[str, Any]:
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            return {"questions": mcp.questions(conn)}
+
+    @r.post("/mcp/questions/{qid}", dependencies=[Depends(auth)])
+    def post_question(qid: str, body: AnswerIn) -> dict[str, Any]:
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            return mcp.answer_question(conn, qid, body.action, body.content)
 
     @r.post("/mcp/out/stop", dependencies=[Depends(auth)])
     def post_out_stop() -> dict[str, Any]:
