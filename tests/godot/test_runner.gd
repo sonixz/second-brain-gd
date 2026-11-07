@@ -865,6 +865,18 @@ func _e2e() -> void:
 	lights.call("show_tab", "out")
 	check(mc_tabs_ok and mc_out.visible and not mc_in.visible and mc_dlg.find_child("CatalogSearch", true, false) != null,
 		"the MCP window has two tabs: who reads the Brain, and the agents' tools")
+	# Any MCP client: Claude Code, Codex, VS Code (Copilot), Cursor or another one gets its own way to connect
+	var mc_cmds: VBoxContainer = mc_dlg.find_child("Commands", true, false)
+	var mc_kinds := {"claude": "claude mcp add", "codex": "codex mcp add", "vscode": "\"type\":\"http\"", "cursor": "mcpServers", "other": "/mcp"}
+	var mc_kinds_ok := (mc_dlg.find_child("ClientKind", true, false) as OptionButton).item_count == mc_kinds.size()
+	for k in mc_kinds:
+		lights.call("_show_commands", mc_cmds, {"token": "t0k", "id": "c1"}, k)
+		var texts := ""
+		for e in mc_cmds.find_children("*", "LineEdit", true, false):
+			if not e.is_queued_for_deletion():
+				texts += (e as LineEdit).text + "\n"
+		mc_kinds_ok = mc_kinds_ok and texts.contains(str(mc_kinds[k]))
+	check(mc_kinds_ok, "connecting an AI tool: Claude Code, Codex, VS Code (Copilot), Cursor or any MCP client each get their command or settings")
 	mc_dlg.hide()
 	# Loop UX-C: ⚙ Settings, one entry to every setting
 	var set_menu: PopupMenu = brain.get("settings_button").find_child("SettingsMenu", true, false)
@@ -904,14 +916,14 @@ func _e2e() -> void:
 	check(not tl_mine.is_empty() and not tl_point.is_empty() and int(tl_res.get("undone", 0)) >= 1 and graph.find_node("Idée venue de Claude Code") == "",
 		"the timeline shows Claude Code's changes after its automatic restore point; going back undoes them (%d undone)" % int(tl_res.get("undone", 0)))
 	tl_dlg.hide()
-	# Loop MCP-C: MCP servers for the agents: Microsoft Learn suggested, the ⇢ out light reported.
+	# Loop MCP-C: MCP servers for the agents: starters suggested, the ⇢ out light reported.
 	var sv: Dictionary = await app.backend.api.call_api("/mcp/servers")
 	var sv_suggested: Array = (sv["data"] as Dictionary).get("suggested", [])
 	var sv_status: Dictionary = await app.backend.api.call_api("/mcp/status")
 	var sv_bad: Dictionary = await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "x", "url": "http://example.com/mcp"}))
-	check(not sv_suggested.is_empty() and str((sv_suggested[0] as Dictionary).get("name", "")) == "Microsoft Learn"
+	check(sv_suggested.size() >= 3
 		and (sv_status["data"] as Dictionary).get("out") is Dictionary and str(lights.get("out_state")) == "off" and not sv_bad["ok"],
-		"MCP servers for the agents: Microsoft Learn is suggested, an unsafe address is refused, ⇢ out stays grey with none")
+		"MCP servers for the agents: starters are suggested, an unsafe address is refused, ⇢ out stays grey with none")
 	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
 	var l14_welcome := graph.find_node("Welcome to your Second Brain")
 	var l14_pathed := await wait_until(func() -> bool: return graph.path_ids.size() >= 2, 10.0)

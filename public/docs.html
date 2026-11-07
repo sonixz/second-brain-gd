@@ -72,7 +72,7 @@
         </ul>
         <h4>Connect</h4>
         <ul>
-          <li><a href="#mcp-in">Connect Claude Code (MCP)</a></li>
+          <li><a href="#mcp-in">Connect an AI tool (MCP)</a></li>
           <li><a href="#mcp-out">MCP servers for your agents</a></li>
           <li><a href="#api">Local HTTP API</a></li>
           <li><a href="#packs">Brain packs</a></li>
@@ -103,7 +103,7 @@
           the current development build; the repository is private for now.</p>
         <div class="doc-cards">
           <a href="#install"><b>Install in 5 minutes</b><span>Godot, Python, one Setup button.</span></a>
-          <a href="#mcp-in"><b>Connect your AI tools</b><span>Claude Code reads it; your agents use MCP servers.</span></a>
+          <a href="#mcp-in"><b>Connect your AI tools</b><span>Claude Code, Codex, Copilot… read it; your agents use MCP servers.</span></a>
           <a href="#packs"><b>Share a pack</b><span>Export part of your brain as one file.</span></a>
           <a href="howto.html"><b>How-to guides</b><span>Step by step, from the real app.</span></a>
         </div>
@@ -890,11 +890,16 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
 
       <section class="doc" id="mcp-in">
         <p class="kicker">Connect</p>
-        <h2>Connect Claude Code to your Brain (MCP)</h2>
-        <p>Your Brain is also an <b>MCP server</b>: Claude Code (or any tool that speaks the Model Context Protocol) can
-          read and search it, on this computer only. Click the <b>⇠● ⇢●</b> lights at the top (or <b>⚙ → AI tools</b>); in the first tab,
-          <b>Who may read your Brain</b>, name the tool and press <b>Connect (read only)</b>: copy one of the two commands (its key is shown once), then restart Claude Code.</p>
-        <figure class="shot doc-shot"><img src="assets/showcase/mcp-connect.webp" alt="The AI tools window, first tab « Who may read your Brain »: a tool connected, what it may do, the commands to copy" loading="lazy" width="1280" height="800"><figcaption>First tab: who may read your Brain. Two commands: Claude Code on Windows, or in WSL through a small relay.</figcaption></figure>
+        <h2>Connect an AI tool to your Brain (MCP)</h2>
+        <p>Your Brain is also an <b>MCP server</b>: any AI tool that speaks the Model Context Protocol can read and
+          search it, on this computer only (127.0.0.1): Claude Code, Codex, GitHub Copilot in VS Code (agent mode),
+          Cursor, Claude Desktop… Click the <b>⇠● ⇢●</b> lights at the top (or <b>⚙ → AI tools</b>); in the first tab,
+          <b>Who may read your Brain</b>, pick your tool and press <b>Connect (read only)</b>. You get its own way to connect: a command for Claude Code
+          or Codex (on Windows, or in WSL through a small relay with the app's Python), the lines to paste in
+          <i>mcp.json</i> for VS Code or Cursor, or, for any other client, the address
+          <code>http://127.0.0.1:&lt;port&gt;/mcp</code> with its key (Streamable HTTP) or a command it starts (stdio).
+          The key is shown once; restart the tool.</p>
+        <figure class="shot doc-shot"><img src="assets/showcase/mcp-connect.webp" alt="The AI tools window, first tab « Who may read your Brain »: a tool connected, what it may do, the commands to copy" loading="lazy" width="1280" height="800"><figcaption>First tab: who may read your Brain. Pick the tool; its command or settings appear, the key shown once.</figcaption></figure>
         <ul>
           <li><b>Read</b>: overview, search, an item's text in parts, places, neighbours, paths, recent items, the Inbox,
             typed items as rows. Answers are short and paged; your content is always marked as data, never as
@@ -908,8 +913,8 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           <li>The <b>⇠</b> light turns green when a tool is connected and red during a call. <b>Disconnect</b> revokes its
             key. Local only: 127.0.0.1, nothing on the network.</li>
         </ul>
-        <figure class="shot doc-shot"><img src="assets/showcase/mcp-proposals.webp" alt="Proposals from Claude Code waiting for approval" loading="lazy" width="1280" height="800"><figcaption>Two proposals waiting: approve, refuse, or approve all.</figcaption></figure>
-        <figure class="shot doc-shot"><img src="assets/showcase/mcp-timeline.webp" alt="The timeline of changes with a restore point" loading="lazy" width="1280" height="800"><figcaption>Claude Code's changes after its automatic restore point.</figcaption></figure>
+        <figure class="shot doc-shot"><img src="assets/showcase/mcp-proposals.webp" alt="Proposals from a connected AI tool waiting for approval" loading="lazy" width="1280" height="800"><figcaption>Two proposals waiting: approve, refuse, or approve all.</figcaption></figure>
+        <figure class="shot doc-shot"><img src="assets/showcase/mcp-timeline.webp" alt="The timeline of changes with a restore point" loading="lazy" width="1280" height="800"><figcaption>A tool's changes after its automatic restore point.</figcaption></figure>
       </section>
 
       <section class="doc" id="mcp-out">
@@ -1271,7 +1276,7 @@ SBGD_SHOT_SIZE=1600x1000 ./tools/showcase.sh     # the website screenshots, from
             <tr><td>A PDF export opens as a web page</td><td>Edge was not found or refused: press Ctrl+P and choose Save as PDF. The page is in <code>exports/</code>.</td></tr>
             <tr><td>“does not allow a transcription model”</td><td>Your OpenAI project limits its models: Settings → Project → Limits on platform.openai.com, allow <code>gpt-transcribe</code>.</td></tr>
             <tr><td>An MCP server needs a key or a sign-in</td><td>In the AI tools window, tab <b>Tools for your agents</b>: open its <b>Settings</b> and save the key, or click <b>Sign in</b> on its card.</td></tr>
-            <tr><td>Claude Code in WSL cannot reach the Brain</td><td>Use the “Claude Code in WSL” command from the MCP window (a relay with the app's Python); keep the app open; restart Claude Code.</td></tr>
+            <tr><td>An AI tool in WSL cannot reach the Brain</td><td>Use its “in WSL” command from the AI tools window (a relay with the app's Python); keep the app open; restart the tool.</td></tr>
           </tbody>
         </table>
         <p>Logs: <code>logs/bootstrap.log</code> (every setup event, including pip output) and <code>logs/server.log</code>.

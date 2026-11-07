@@ -22,7 +22,7 @@ func setup(a: SbApp) -> Button:
 	theme_type_variation = "GhostButton"
 	custom_minimum_size = Vector2(64, 40)
 	size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	tooltip_text = I18n.t("MCP: no AI tool connected yet. Click to connect Claude Code.")
+	tooltip_text = I18n.t("MCP: no AI tool connected yet. Click to connect one (Claude Code, Codex, Copilot…).")
 	pressed.connect(open_dialog)
 	return self
 
@@ -61,7 +61,7 @@ func poll() -> void:
 	if last.is_empty() and not out_last.is_empty():
 		tooltip_text = _out_tip(out, out_last)
 	elif last.is_empty():
-		tooltip_text = I18n.t("MCP: no AI tool connected yet. Click to connect Claude Code.") if (status.get("clients", []) as Array).is_empty() \
+		tooltip_text = I18n.t("MCP: no AI tool connected yet. Click to connect one (Claude Code, Codex, Copilot…).") if (status.get("clients", []) as Array).is_empty() \
 			else I18n.t("MCP in: %d tools connected, no call yet") % (status.get("clients", []) as Array).size()
 	else:
 		tooltip_text = I18n.t("MCP in · last call: %s · %s") % [str(last.get("client", "")), str(last.get("tool", ""))] \
@@ -140,7 +140,7 @@ func open_dialog(tab: String = "") -> AcceptDialog:
 		(tb as Button).toggle_mode = true
 		(tb as Button).button_group = group
 		tabs.add_child(tb)
-	tab_in.tooltip_text = I18n.t("Claude Code or another AI tool reads your Brain from outside")
+	tab_in.tooltip_text = I18n.t("An AI tool (Claude Code, Codex, Copilot…) reads your Brain from outside")
 	tab_out.tooltip_text = I18n.t("Outside services your agents may use when you ask them something")
 	var gap := Control.new()
 	gap.size_flags_horizontal = Control.SIZE_EXPAND_FILL
@@ -183,7 +183,7 @@ func open_dialog(tab: String = "") -> AcceptDialog:
 	var intro := Label.new()
 	intro.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	intro.theme_type_variation = "Muted"
-	intro.text = I18n.t("An AI tool you connect here (Claude Code, for example) can read and search your Brain, on this computer only. It never writes directly: what it suggests goes through the archivist, and you decide.")
+	intro.text = I18n.t("Any AI tool that speaks MCP (Claude Code, Codex, GitHub Copilot in VS Code, Cursor…) can read and search your Brain, on this computer only. It never writes directly: what it suggests goes through the archivist, and you decide.")
 	page_in.add_child(intro)
 	var props_box := VBoxContainer.new()
 	props_box.name = "Proposals"
@@ -200,9 +200,24 @@ func open_dialog(tab: String = "") -> AcceptDialog:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override("separation", 8)
 	page_in.add_child(row)
+	var commands := VBoxContainer.new()
+	commands.name = "Commands"
+	commands.add_theme_constant_override("separation", 6)
+	var kind_pick := OptionButton.new()
+	kind_pick.name = "ClientKind"
+	kind_pick.tooltip_text = I18n.t("Which tool: its connection command or settings are shown once connected")
+	for k in CLIENT_KINDS:
+		kind_pick.add_item(I18n.t("Another MCP client") if k == "other" else str(CLIENT_KINDS[k]))
+		kind_pick.set_item_metadata(kind_pick.item_count - 1, k)
+	row.add_child(kind_pick)
 	var name_edit := LineEdit.new()
 	name_edit.name = "ClientName"
 	name_edit.text = "Claude Code"
+	kind_pick.item_selected.connect(func(i: int) -> void:
+		var k := str(kind_pick.get_item_metadata(i))
+		name_edit.text = str(CLIENT_KINDS[k]) if k != "other" else I18n.t("My AI tool")
+		if commands.has_meta("client"):
+			_show_commands(commands, commands.get_meta("client"), k))
 	name_edit.tooltip_text = I18n.t("A name to recognise it in the timeline")
 	name_edit.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_child(name_edit)
@@ -211,9 +226,6 @@ func open_dialog(tab: String = "") -> AcceptDialog:
 	connect_b.text = I18n.t("Connect (read only)")
 	connect_b.theme_type_variation = "PrimaryButton"
 	row.add_child(connect_b)
-	var commands := VBoxContainer.new()
-	commands.name = "Commands"
-	commands.add_theme_constant_override("separation", 6)
 	page_in.add_child(commands)
 	var recent_b := Button.new()
 	recent_b.name = "RecentToggle"
@@ -273,7 +285,8 @@ func open_dialog(tab: String = "") -> AcceptDialog:
 			JSON.stringify({"name": name_edit.text.strip_edges(), "level": "read"}))
 		if not res["ok"]:
 			return
-		_show_commands(commands, res["data"])
+		commands.set_meta("client", res["data"])
+		_show_commands(commands, res["data"], str(kind_pick.get_item_metadata(kind_pick.selected)))
 		fill.call())
 	tab_in.text = I18n.t("⇠ Who may read your Brain")
 	tab_out.text = I18n.t("⇢ Tools for your agents")
@@ -996,22 +1009,41 @@ static func _level(level: String) -> String:
 	return {"read": I18n.t("read only"), "propose_items": I18n.t("read, suggest new notes"), "propose_changes": I18n.t("read, suggest changes")}.get(level, level)
 
 
-## The commands with this client's token, shown once (only its hash is kept).
-func _show_commands(box: VBoxContainer, c: Dictionary) -> void:
+const CLIENT_KINDS := {"claude": "Claude Code", "codex": "Codex", "vscode": "VS Code (GitHub Copilot)",
+	"cursor": "Cursor", "other": "Another MCP client"}
+
+
+## How this client connects, with its token, shown once (only its hash is kept). Any MCP client works: over HTTP
+## on 127.0.0.1 with the token, or through the stdio relay (a command the client starts; no token in its settings).
+func _show_commands(box: VBoxContainer, c: Dictionary, kind: String = "claude") -> void:
 	for ch in box.get_children():
 		ch.queue_free()
 	var port: int = app.backend.api.port
 	var token := str(c.get("token", ""))
+	var url := "http://127.0.0.1:%d/mcp" % port
 	var relay := ProjectSettings.globalize_path("res://engine/mcp/relay.py").replace("/", "\\")
 	var py := OS.get_environment("LOCALAPPDATA").path_join("SecondBrainGD/.venv/Scripts/python.exe").replace("\\", "/")
 	var wsl_py := "/mnt/" + py.left(1).to_lower() + py.substr(2) if py.length() > 2 and py[1] == ":" else py
+	var stdio := "\"%s\" \"%s\" --client %s" % [py.replace("/", "\\"), relay, str(c.get("id", ""))]
+	var stdio_wsl := "\"%s\" \"%s\" --client %s" % [wsl_py, relay, str(c.get("id", ""))]
+	var auth := "Bearer " + token
+	var pairs: Array = {
+		"claude": [[I18n.t("Claude Code on Windows"), "claude mcp add --transport http second-brain %s --header \"Authorization: %s\"" % [url, auth]],
+			[I18n.t("Claude Code in WSL (through a small relay, no network setting)"), "claude mcp add second-brain -- " + stdio_wsl]],
+		"codex": [[I18n.t("Codex on Windows"), "codex mcp add second-brain -- " + stdio],
+			[I18n.t("Codex in WSL (through a small relay, no network setting)"), "codex mcp add second-brain -- " + stdio_wsl]],
+		"vscode": [[I18n.t("VS Code: add to mcp.json (Command palette › MCP: Open User Configuration), then use Copilot in agent mode"),
+			JSON.stringify({"servers": {"second-brain": {"type": "http", "url": url, "headers": {"Authorization": auth}}}})]],
+		"cursor": [[I18n.t("Cursor: add to ~/.cursor/mcp.json"),
+			JSON.stringify({"mcpServers": {"second-brain": {"url": url, "headers": {"Authorization": auth}}}})]],
+		"other": [[I18n.t("Address (Streamable HTTP)"), url], [I18n.t("Header to send"), "Authorization: " + auth],
+			[I18n.t("Or a command it starts (stdio relay, no key in its settings)"), stdio]],
+	}.get(kind, [])
 	var warn := Label.new()
 	warn.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	warn.text = I18n.t("Copy one command now: the key it holds is shown only this once. Then restart Claude Code (a session sees new MCP servers when it starts).")
+	warn.text = I18n.t("Copy it now: the key it holds is shown only this once. Then restart the tool (it sees new MCP servers when it starts).")
 	box.add_child(warn)
-	for pair in [
-			[I18n.t("Claude Code on Windows"), "claude mcp add --transport http second-brain http://127.0.0.1:%d/mcp --header \"Authorization: Bearer %s\"" % [port, token]],
-			[I18n.t("Claude Code in WSL (through a small relay, no network setting)"), "claude mcp add second-brain -- \"%s\" \"%s\" --client %s" % [wsl_py, relay, str(c.get("id", ""))]]]:
+	for pair in pairs:
 		var head := Label.new()
 		head.theme_type_variation = "Muted"
 		head.text = str(pair[0])

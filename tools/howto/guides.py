@@ -523,51 +523,55 @@ guide(
     [("The table and grocery lists", "docs.html#table"), ("Print on Letter paper", "docs.html#printing")],
     "The Brain")
 guide(
-    "claude-code", "Connect Claude Code to your Brain", "scripted", 4,
-    "Let Claude Code read and search your Brain over MCP, on this computer only; it proposes, the archivist decides, "
-    "and the timeline can undo it.",
-    ["Claude Code installed (Windows or WSL)", "The app open"],
+    "ai-tool", "Connect an AI tool to your Brain (MCP)", "scripted", 4,
+    "Any AI tool that speaks MCP (Claude Code, Codex, GitHub Copilot in VS Code, Cursor…) can read and search your "
+    "Brain, on this computer only; it proposes, the archivist decides, and the timeline can undo it.",
+    ["An MCP client installed (Claude Code, Codex, VS Code with Copilot, Cursor…)", "The app open"],
     [("Click the <b>⇠● ⇢●</b> lights at the top (or <b>⚙ → AI tools</b>). In the first tab, <b>Who may read your Brain</b>, "
-      "keep the name <i>Claude Code</i> and press <b>Connect (read only)</b>.",
-      "Two commands: one for Claude Code on Windows, one for Claude Code in WSL (a small relay with the app's own "
-      "Python, no network setting). Copy one: its key is shown only this once. Then restart Claude Code."),
-     ("In Claude Code, ask something about your Brain, e.g. <span class=\"say\">What is in my Brain about the "
+      "pick your tool (here <i>Codex</i>) and press <b>Connect (read only)</b>.",
+      "Its own way to connect: a command for Claude Code or Codex (on Windows, or in WSL through a small relay), the "
+      "lines to paste in <i>mcp.json</i> for VS Code or Cursor, or the address and key for any other MCP client. Copy "
+      "it: the key is shown only this once. Then restart the tool."),
+     ("In your tool, ask something about your Brain, e.g. <span class=\"say\">What is in my Brain about the "
       "renovation?</span>",
-      "Claude Code starts with an overview, searches, reads an item. The <b>⇠</b> light turns green when it is "
+      "It starts with an overview, searches, reads an item. The <b>⇠</b> light turns green when a tool is "
       "connected and red during a call; hover it for the last call."),
-     ("Let Claude Code propose something to add (or a change).",
-      "It never writes: the proposal waits in the first tab of the AI tools window, with its reason. Approve, refuse, or approve all; once "
-      "approved, the archivist files it with your rules."),
+     ("Let it propose something to add (or a change).",
+      "It never writes: the proposal waits in the first tab of the AI tools window, with its reason. Approve, refuse, "
+      "or approve all; once approved, the archivist files it with your rules."),
      ("Click <b>Timeline of changes…</b>.",
-      "Who changed what: you and the archivist, or Claude Code, after its automatic restore point. <b>Go back here</b> "
-      "undoes everything after a point, for everyone or for Claude Code only."),
+      "Who changed what: you and the archivist, or the tool, after its automatic restore point. <b>Go back here</b> "
+      "undoes everything after a point, for everyone or for that tool only."),
      ],
-    [("Claude Code does not see the Brain.", "Restart Claude Code after adding the server; keep the app open. In WSL, "
-      "use the « Claude Code in WSL » command."),
+    [("The tool does not see the Brain.", "Restart it after adding the server; keep the app open. In WSL, use the "
+      "« in WSL » command (a relay with the app's own Python, no network setting)."),
      ("It cannot add anything.", "It may <i>read only</i>: on its card, choose <i>read, suggest new notes</i> or "
       "<i>read, suggest changes</i>.")],
-    [("Connect Claude Code (MCP)", "docs.html#mcp-in")],
-    "Connect your AI tools")
+    [("Connect an AI tool (MCP)", "docs.html#mcp-in")],
+    "MCP: your AI tools")
 guide(
-    "mslearn", "Give your agents an MCP server", "real", 3,
-    "Connect an MCP server and let your agents use its tools. Any MCP server works the same way; the example here is "
-    "Microsoft Learn, a public documentation server that needs no account.",
-    ["Your OpenAI key", "The server's address, or one from the catalogue (some need a key or a sign-in)"],
-    [("Open the AI tools window (the <b>⇠● ⇢●</b> lights, or <b>⚙ → AI tools</b>), tab <b>Tools for your agents</b>. "
-      "Under <b>Add a tool</b>, pick a starter, search the registry or paste its address. Here, <b>+ Connect Microsoft Learn</b>.",
-      "It appears as a card: ready, three tools on, for all agents. The <b>⇢</b> light turns green."),
-     ("Ask the Archivist: <span class=\"say\">Using Microsoft Learn, how do I write a timer trigger for Azure "
-      "Functions in Python? Answer in three sentences and give the source.</span>",
-      "It calls Microsoft Learn (the ⇢ light turns red during the call) and answers with the decorator to use and "
-      "the page it comes from. What a server returns is information, never instructions."),
-     ("Open the window again, tab <b>Tools for your agents</b>.",
-      "Its card says how often it was used this month. <b>Settings</b> switches tools off, takes a key, sets a "
-      "monthly limit; the menu beside it chooses which agents may use it."),
+    "mcp-servers", "Give your agents tools (MCP servers)", "scripted", 3,
+    "Connect an MCP server and its tools become your agents' tools: documentation, code, web search, your other "
+    "apps. Any server works the same way, from the registry or from its address.",
+    ["The app open", "For some servers: a key or an account to sign in with"],
+    [("Open the AI tools window (the <b>⇠● ⇢●</b> lights, or <b>⚙ → AI tools</b>), tab <b>Tools for your agents</b>.",
+      "Your connected tools at the top (none yet), then <b>Add a tool</b>: a few servers checked by hand that need no "
+      "account, a search box, and, under <b>Advanced</b>, a program on this computer."),
+     ("Type what you need in the search box, e.g. <span class=\"say\">weather</span>, and press <b>Search</b>, or "
+      "paste a server's address <i>https://…</i>.",
+      "Results from the official MCP registry, each with its family (no account, a key, a sign-in, a local program), "
+      "its publisher and its source. <b>Connect</b> adds it."),
+     ("Once connected, press <b>Settings</b> on its card.",
+      "The card says it is ready and how often it was used. <b>Settings</b> switches tools off, takes a key, sets a "
+      "monthly limit; the menu beside it chooses which agents may use it. Then just ask your agent: it uses the tool "
+      "when it helps, and the <b>⇢</b> light turns red during the call."),
      ],
     [("The server shows <i>unreachable</i>.", "Check the internet connection, then <b>Settings → Remove this tool</b> and connect it again."),
-     ("The answer is long and costly.", "Results are cut at 8,000 characters; switch off the tools you do not need.")],
-    [("MCP servers for your agents", "docs.html#mcp-out")],
-    "Connect your AI tools", cost_cap=0.20)
+     ("A server asks for a key or a sign-in.", "Paste the key in <b>Settings</b>, or press <b>Sign in</b>: your browser "
+      "opens the service's page and comes back to the Brain."),
+     ("The answers are long and costly.", "Results are cut at 8,000 characters; switch off the tools you do not need.")],
+    [("MCP servers for your agents", "docs.html#mcp-out"), ("Connect an AI tool (MCP)", "docs.html#mcp-in")],
+    "MCP: your AI tools")
 # The other families (a key, an account sign-in, a local program) work the same way: docs.html#mcp-out.
 # GUIDES-END
 

@@ -2,6 +2,15 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## MCP, not one tool: any AI tool connects, a generic guide for servers (2026-11-07)
+
+The « Who may read your Brain » tab now asks which tool: Claude Code, Codex, VS Code (GitHub Copilot), Cursor or any
+other MCP client, and shows its own way in (a command, through the stdio relay from WSL; the lines for mcp.json; or
+the address and key). The How-to section is now « MCP: your AI tools »: « Connect an AI tool to your Brain » (shown
+with Codex) and « Give your agents tools (MCP servers) », a generic guide with no model call that replaces the
+Microsoft Learn example (Context7 is shown; Microsoft Learn moves to the end of the starters). Site and doc images
+redone.
+
 ## UX-A/B/C: simpler settings — the AI tools window in two tabs, agent presets, one ⚙ entry (2026-11-07)
 
 The MCP window becomes « AI tools and your Brain » with two tabs: « Who may read your Brain » (connected tools as cards with what each may do in plain words, proposals first, recent calls folded) and « Tools for your agents » (each server a folded card with its state in plain words; « Settings » opens its tools, key, monthly limit, writing with your model and « Remove this tool »; « Add a tool » below, a local program under « Advanced »). Labels no longer cut off; jargon reworded (« 0 = no limit », « read only », « apply its suggestions without asking me »). An agent's settings get three presets in one click (Read only, Assistant, Everything) and keep the tool names hidden until asked. The engine room puts « Start fresh » and « Uninstall » apart in a « Sensitive actions » box. A ⚙ button in the top bar leads to every setting: agents, AI tools, voice and key, theme and sounds, your data, the timeline. Nothing was removed.

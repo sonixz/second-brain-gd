@@ -66,10 +66,10 @@
           <li><a href="#own-agent">Create your own agent</a></li>
           <li><a href="#mission">Plan the week&#x27;s meals with a mission</a></li>
         </ul>
-        <h4>Connect your AI tools</h4>
+        <h4>MCP: your AI tools</h4>
         <ul>
-          <li><a href="#claude-code">Connect Claude Code to your Brain</a></li>
-          <li><a href="#mslearn">Give your agents an MCP server</a></li>
+          <li><a href="#ai-tool">Connect an AI tool to your Brain (MCP)</a></li>
+          <li><a href="#mcp-servers">Give your agents tools (MCP servers)</a></li>
         </ul>
       </nav>
     </aside>
@@ -134,12 +134,12 @@
           <a class="guide-card" href="#recipe-grocery"><img src="assets/howto/recipe-grocery/05.webp" alt="" loading="lazy" width="1280" height="800">
             <span class="guide-card-body"><b>From recipes to a grocery list on paper</b><span>Pick the week's recipes, get one grocery list added up by aisle, and print it (or a recipe) on Letter paper.</span>
             <span class="guide-card-meta">4 min · 5 steps · App only</span></span></a>
-          <a class="guide-card" href="#claude-code"><img src="assets/howto/claude-code/04.webp" alt="" loading="lazy" width="1280" height="800">
-            <span class="guide-card-body"><b>Connect Claude Code to your Brain</b><span>Let Claude Code read and search your Brain over MCP, on this computer only; it proposes, the archivist decides, and the timeline can undo it.</span>
+          <a class="guide-card" href="#ai-tool"><img src="assets/howto/ai-tool/04.webp" alt="" loading="lazy" width="1280" height="800">
+            <span class="guide-card-body"><b>Connect an AI tool to your Brain (MCP)</b><span>Any AI tool that speaks MCP (Claude Code, Codex, GitHub Copilot in VS Code, Cursor…) can read and search your Brain, on this computer only; it proposes, the archivist decides, and the timeline can undo it.</span>
             <span class="guide-card-meta">4 min · 4 steps · App only</span></span></a>
-          <a class="guide-card" href="#mslearn"><img src="assets/howto/mslearn/03.webp" alt="" loading="lazy" width="1280" height="800">
-            <span class="guide-card-body"><b>Give your agents an MCP server</b><span>Connect an MCP server and let your agents use its tools. Any MCP server works the same way; the example here is Microsoft Learn, a public documentation server that needs no account.</span>
-            <span class="guide-card-meta">3 min · 3 steps · Real answers</span></span></a>
+          <a class="guide-card" href="#mcp-servers"><img src="assets/howto/mcp-servers/03.webp" alt="" loading="lazy" width="1280" height="800">
+            <span class="guide-card-body"><b>Give your agents tools (MCP servers)</b><span>Connect an MCP server and its tools become your agents' tools: documentation, code, web search, your other apps. Any server works the same way, from the registry or from its address.</span>
+            <span class="guide-card-meta">3 min · 3 steps · App only</span></span></a>
         </div>
       </header>
 
@@ -694,54 +694,54 @@
         <p class="guide-next">More: <a href="docs.html#table">The table and grocery lists</a> · <a href="docs.html#printing">Print on Letter paper</a></p>
       </section>
 
-      <section class="doc guide" id="claude-code">
-        <p class="kicker">Connect your AI tools · 4 min · 4 steps</p>
-        <h2>Connect Claude Code to your Brain <span class="badge badge-scripted" title="No model answer matters in this guide">App only</span></h2>
-        <p class="guide-goal">Let Claude Code read and search your Brain over MCP, on this computer only; it proposes, the archivist decides, and the timeline can undo it.</p>
-        <div class="callout"><p><b>You need</b></p><ul><li>Claude Code installed (Windows or WSL)</li><li>The app open</li></ul></div>
+      <section class="doc guide" id="ai-tool">
+        <p class="kicker">MCP: your AI tools · 4 min · 4 steps</p>
+        <h2>Connect an AI tool to your Brain (MCP) <span class="badge badge-scripted" title="No model answer matters in this guide">App only</span></h2>
+        <p class="guide-goal">Any AI tool that speaks MCP (Claude Code, Codex, GitHub Copilot in VS Code, Cursor…) can read and search your Brain, on this computer only; it proposes, the archivist decides, and the timeline can undo it.</p>
+        <div class="callout"><p><b>You need</b></p><ul><li>An MCP client installed (Claude Code, Codex, VS Code with Copilot, Cursor…)</li><li>The app open</li></ul></div>
         <ol class="guide-steps">
           <li class="guide-step">
-            <div class="guide-step-text"><p class="guide-do">Click the <b>⇠● ⇢●</b> lights at the top (or <b>⚙ → AI tools</b>). In the first tab, <b>Who may read your Brain</b>, keep the name <i>Claude Code</i> and press <b>Connect (read only)</b>.</p><p class="guide-see">Two commands: one for Claude Code on Windows, one for Claude Code in WSL (a small relay with the app's own Python, no network setting). Copy one: its key is shown only this once. Then restart Claude Code.</p></div>
-            <figure class="shot"><img src="assets/howto/claude-code/01.webp" alt="Connect Claude Code to your Brain, step 1 of 4: Click the ⇠● ⇢● lights at the top (or ⚙ → AI tools). In the first tab, Who may read your Brain, keep the name Claude Code and press Connect (read only)." loading="lazy" width="1280" height="800"></figure>
+            <div class="guide-step-text"><p class="guide-do">Click the <b>⇠● ⇢●</b> lights at the top (or <b>⚙ → AI tools</b>). In the first tab, <b>Who may read your Brain</b>, pick your tool (here <i>Codex</i>) and press <b>Connect (read only)</b>.</p><p class="guide-see">Its own way to connect: a command for Claude Code or Codex (on Windows, or in WSL through a small relay), the lines to paste in <i>mcp.json</i> for VS Code or Cursor, or the address and key for any other MCP client. Copy it: the key is shown only this once. Then restart the tool.</p></div>
+            <figure class="shot"><img src="assets/howto/ai-tool/01.webp" alt="Connect an AI tool to your Brain (MCP), step 1 of 4: Click the ⇠● ⇢● lights at the top (or ⚙ → AI tools). In the first tab, Who may read your Brain, pick your tool (here Codex) and press Connect (read only)." loading="lazy" width="1280" height="800"></figure>
           </li>
           <li class="guide-step">
-            <div class="guide-step-text"><p class="guide-do">In Claude Code, ask something about your Brain, e.g. <span class="say">What is in my Brain about the renovation?</span></p><p class="guide-see">Claude Code starts with an overview, searches, reads an item. The <b>⇠</b> light turns green when it is connected and red during a call; hover it for the last call.</p></div>
-            <figure class="shot"><img src="assets/howto/claude-code/02.webp" alt="Connect Claude Code to your Brain, step 2 of 4: In Claude Code, ask something about your Brain, e.g. What is in my Brain about the renovation?" loading="lazy" width="1280" height="800"></figure>
+            <div class="guide-step-text"><p class="guide-do">In your tool, ask something about your Brain, e.g. <span class="say">What is in my Brain about the renovation?</span></p><p class="guide-see">It starts with an overview, searches, reads an item. The <b>⇠</b> light turns green when a tool is connected and red during a call; hover it for the last call.</p></div>
+            <figure class="shot"><img src="assets/howto/ai-tool/02.webp" alt="Connect an AI tool to your Brain (MCP), step 2 of 4: In your tool, ask something about your Brain, e.g. What is in my Brain about the renovation?" loading="lazy" width="1280" height="800"></figure>
           </li>
           <li class="guide-step">
-            <div class="guide-step-text"><p class="guide-do">Let Claude Code propose something to add (or a change).</p><p class="guide-see">It never writes: the proposal waits in the first tab of the AI tools window, with its reason. Approve, refuse, or approve all; once approved, the archivist files it with your rules.</p></div>
-            <figure class="shot"><img src="assets/howto/claude-code/03.webp" alt="Connect Claude Code to your Brain, step 3 of 4: Let Claude Code propose something to add (or a change)." loading="lazy" width="1280" height="800"></figure>
+            <div class="guide-step-text"><p class="guide-do">Let it propose something to add (or a change).</p><p class="guide-see">It never writes: the proposal waits in the first tab of the AI tools window, with its reason. Approve, refuse, or approve all; once approved, the archivist files it with your rules.</p></div>
+            <figure class="shot"><img src="assets/howto/ai-tool/03.webp" alt="Connect an AI tool to your Brain (MCP), step 3 of 4: Let it propose something to add (or a change)." loading="lazy" width="1280" height="800"></figure>
           </li>
           <li class="guide-step">
-            <div class="guide-step-text"><p class="guide-do">Click <b>Timeline of changes…</b>.</p><p class="guide-see">Who changed what: you and the archivist, or Claude Code, after its automatic restore point. <b>Go back here</b> undoes everything after a point, for everyone or for Claude Code only.</p></div>
-            <figure class="shot"><img src="assets/howto/claude-code/04.webp" alt="Connect Claude Code to your Brain, step 4 of 4: Click Timeline of changes…." loading="lazy" width="1280" height="800"></figure>
+            <div class="guide-step-text"><p class="guide-do">Click <b>Timeline of changes…</b>.</p><p class="guide-see">Who changed what: you and the archivist, or the tool, after its automatic restore point. <b>Go back here</b> undoes everything after a point, for everyone or for that tool only.</p></div>
+            <figure class="shot"><img src="assets/howto/ai-tool/04.webp" alt="Connect an AI tool to your Brain (MCP), step 4 of 4: Click Timeline of changes…." loading="lazy" width="1280" height="800"></figure>
           </li>
         </ol>
-        <h3>If it does not work</h3><ul class="guide-trouble"><li><b>Claude Code does not see the Brain.</b> Restart Claude Code after adding the server; keep the app open. In WSL, use the « Claude Code in WSL » command.</li><li><b>It cannot add anything.</b> It may <i>read only</i>: on its card, choose <i>read, suggest new notes</i> or <i>read, suggest changes</i>.</li></ul>
-        <p class="guide-next">More: <a href="docs.html#mcp-in">Connect Claude Code (MCP)</a></p>
+        <h3>If it does not work</h3><ul class="guide-trouble"><li><b>The tool does not see the Brain.</b> Restart it after adding the server; keep the app open. In WSL, use the « in WSL » command (a relay with the app's own Python, no network setting).</li><li><b>It cannot add anything.</b> It may <i>read only</i>: on its card, choose <i>read, suggest new notes</i> or <i>read, suggest changes</i>.</li></ul>
+        <p class="guide-next">More: <a href="docs.html#mcp-in">Connect an AI tool (MCP)</a></p>
       </section>
 
-      <section class="doc guide" id="mslearn">
-        <p class="kicker">Connect your AI tools · 3 min · 3 steps</p>
-        <h2>Give your agents an MCP server <span class="badge badge-real" title="Recorded from the real model, then replayed for the screenshots">Real answers</span></h2>
-        <p class="guide-goal">Connect an MCP server and let your agents use its tools. Any MCP server works the same way; the example here is Microsoft Learn, a public documentation server that needs no account.</p>
-        <div class="callout"><p><b>You need</b></p><ul><li>Your OpenAI key</li><li>The server's address, or one from the catalogue (some need a key or a sign-in)</li></ul></div>
+      <section class="doc guide" id="mcp-servers">
+        <p class="kicker">MCP: your AI tools · 3 min · 3 steps</p>
+        <h2>Give your agents tools (MCP servers) <span class="badge badge-scripted" title="No model answer matters in this guide">App only</span></h2>
+        <p class="guide-goal">Connect an MCP server and its tools become your agents' tools: documentation, code, web search, your other apps. Any server works the same way, from the registry or from its address.</p>
+        <div class="callout"><p><b>You need</b></p><ul><li>The app open</li><li>For some servers: a key or an account to sign in with</li></ul></div>
         <ol class="guide-steps">
           <li class="guide-step">
-            <div class="guide-step-text"><p class="guide-do">Open the AI tools window (the <b>⇠● ⇢●</b> lights, or <b>⚙ → AI tools</b>), tab <b>Tools for your agents</b>. Under <b>Add a tool</b>, pick a starter, search the registry or paste its address. Here, <b>+ Connect Microsoft Learn</b>.</p><p class="guide-see">It appears as a card: ready, three tools on, for all agents. The <b>⇢</b> light turns green.</p></div>
-            <figure class="shot"><img src="assets/howto/mslearn/01.webp" alt="Give your agents an MCP server, step 1 of 3: Open the AI tools window (the ⇠● ⇢● lights, or ⚙ → AI tools), tab Tools for your agents. Under Add a tool, pick a starter, search the registry or paste its address. Here, + Connect Microsoft Learn." loading="lazy" width="1280" height="800"></figure>
+            <div class="guide-step-text"><p class="guide-do">Open the AI tools window (the <b>⇠● ⇢●</b> lights, or <b>⚙ → AI tools</b>), tab <b>Tools for your agents</b>.</p><p class="guide-see">Your connected tools at the top (none yet), then <b>Add a tool</b>: a few servers checked by hand that need no account, a search box, and, under <b>Advanced</b>, a program on this computer.</p></div>
+            <figure class="shot"><img src="assets/howto/mcp-servers/01.webp" alt="Give your agents tools (MCP servers), step 1 of 3: Open the AI tools window (the ⇠● ⇢● lights, or ⚙ → AI tools), tab Tools for your agents." loading="lazy" width="1280" height="800"></figure>
           </li>
           <li class="guide-step">
-            <div class="guide-step-text"><p class="guide-do">Ask the Archivist: <span class="say">Using Microsoft Learn, how do I write a timer trigger for Azure Functions in Python? Answer in three sentences and give the source.</span></p><p class="guide-see">It calls Microsoft Learn (the ⇢ light turns red during the call) and answers with the decorator to use and the page it comes from. What a server returns is information, never instructions.</p></div>
-            <figure class="shot"><img src="assets/howto/mslearn/02.webp" alt="Give your agents an MCP server, step 2 of 3: Ask the Archivist: Using Microsoft Learn, how do I write a timer trigger for Azure Functions in Python? Answer in three sentences and give the source." loading="lazy" width="1280" height="800"></figure>
+            <div class="guide-step-text"><p class="guide-do">Type what you need in the search box, e.g. <span class="say">weather</span>, and press <b>Search</b>, or paste a server's address <i>https://…</i>.</p><p class="guide-see">Results from the official MCP registry, each with its family (no account, a key, a sign-in, a local program), its publisher and its source. <b>Connect</b> adds it.</p></div>
+            <figure class="shot"><img src="assets/howto/mcp-servers/02.webp" alt="Give your agents tools (MCP servers), step 2 of 3: Type what you need in the search box, e.g. weather, and press Search, or paste a server&#x27;s address https://…." loading="lazy" width="1280" height="800"></figure>
           </li>
           <li class="guide-step">
-            <div class="guide-step-text"><p class="guide-do">Open the window again, tab <b>Tools for your agents</b>.</p><p class="guide-see">Its card says how often it was used this month. <b>Settings</b> switches tools off, takes a key, sets a monthly limit; the menu beside it chooses which agents may use it.</p></div>
-            <figure class="shot"><img src="assets/howto/mslearn/03.webp" alt="Give your agents an MCP server, step 3 of 3: Open the window again, tab Tools for your agents." loading="lazy" width="1280" height="800"></figure>
+            <div class="guide-step-text"><p class="guide-do">Once connected, press <b>Settings</b> on its card.</p><p class="guide-see">The card says it is ready and how often it was used. <b>Settings</b> switches tools off, takes a key, sets a monthly limit; the menu beside it chooses which agents may use it. Then just ask your agent: it uses the tool when it helps, and the <b>⇢</b> light turns red during the call.</p></div>
+            <figure class="shot"><img src="assets/howto/mcp-servers/03.webp" alt="Give your agents tools (MCP servers), step 3 of 3: Once connected, press Settings on its card." loading="lazy" width="1280" height="800"></figure>
           </li>
         </ol>
-        <h3>If it does not work</h3><ul class="guide-trouble"><li><b>The server shows <i>unreachable</i>.</b> Check the internet connection, then <b>Settings → Remove this tool</b> and connect it again.</li><li><b>The answer is long and costly.</b> Results are cut at 8,000 characters; switch off the tools you do not need.</li></ul>
-        <p class="guide-next">More: <a href="docs.html#mcp-out">MCP servers for your agents</a></p>
+        <h3>If it does not work</h3><ul class="guide-trouble"><li><b>The server shows <i>unreachable</i>.</b> Check the internet connection, then <b>Settings → Remove this tool</b> and connect it again.</li><li><b>A server asks for a key or a sign-in.</b> Paste the key in <b>Settings</b>, or press <b>Sign in</b>: your browser opens the service's page and comes back to the Brain.</li><li><b>The answers are long and costly.</b> Results are cut at 8,000 characters; switch off the tools you do not need.</li></ul>
+        <p class="guide-next">More: <a href="docs.html#mcp-out">MCP servers for your agents</a> · <a href="docs.html#mcp-in">Connect an AI tool (MCP)</a></p>
       </section>
     </main>
   </div>

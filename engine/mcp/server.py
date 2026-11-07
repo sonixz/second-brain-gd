@@ -101,7 +101,7 @@ def _hash(token: str) -> str:
 
 def create_client(conn: sqlite3.Connection, name: str, level: str = "read") -> dict[str, Any]:
     """A new client and its token. The token is returned once; only its hash is kept."""
-    name = " ".join(str(name or "").split())[:60] or "Claude Code"
+    name = " ".join(str(name or "").split())[:60] or "AI tool"
     level = level if level in LEVELS else "read"
     token = "sbmcp_" + secrets.token_urlsafe(32)
     cid = "c" + uuid.uuid4().hex[:10]

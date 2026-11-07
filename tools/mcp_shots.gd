@@ -10,13 +10,16 @@ func _run() -> void:
 		quit(1)
 		return
 	var lights: Button = b.get("mcp_lights")
-	# ⇢ out: Microsoft Learn connected for real (public, free); its tools listed in the window
-	await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Microsoft Learn", "url": "https://learn.microsoft.com/api/mcp"}))
+	# ⇢ out: a public server connected for real (free, no account); its tools listed in the window
+	await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Context7", "url": "https://mcp.context7.com/mcp", "publisher": "Upstash"}))
 	var dlg: AcceptDialog = lights.call("open_dialog", "in")
 	await pause(0.8)
+	var pick: OptionButton = dlg.find_child("ClientKind", true, false)
+	pick.select(2)  # VS Code (GitHub Copilot): any MCP client works the same way
+	pick.item_selected.emit(2)
 	(dlg.find_child("ConnectButton", true, false) as Button).pressed.emit()
 	await pause(1.5)
-	var c: Dictionary = await app.backend.api.call_api("/mcp/clients", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Claude Code (WSL)", "level": "read"}))
+	var c: Dictionary = await app.backend.api.call_api("/mcp/clients", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Codex", "level": "read"}))
 	var req := HTTPRequest.new()
 	root.add_child(req)
 	req.request("http://127.0.0.1:%d/mcp" % app.backend.api.port, PackedStringArray(["Content-Type: application/json",

@@ -19,7 +19,7 @@ LOCAL = ("127.0.0.1", "::1", "localhost", "testclient")
 
 
 class ClientIn(BaseModel):
-    name: str = Field(default="Claude Code", max_length=60)
+    name: str = Field(default="AI tool", max_length=60)
     level: str = Field(default="read", max_length=20)
 
 

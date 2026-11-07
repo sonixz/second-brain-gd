@@ -926,17 +926,20 @@ func guide_recipe_grocery() -> void:
 	await b.call("set_view", "graph")
 
 
-# ---------------------------------------------------------------- Connect Claude Code to your Brain (scripted)
-func guide_claude_code() -> void:
+# ---------------------------------------------------------------- Connect an AI tool to your Brain over MCP (scripted)
+func guide_ai_tool() -> void:
 	await overview()
 	var lights: Button = b.get("mcp_lights")
 	var dlg: AcceptDialog = lights.call("open_dialog")
 	await pause(1.0)
+	var pick: OptionButton = dlg.find_child("ClientKind", true, false)
+	pick.select(1)  # Codex: any MCP client works the same way
+	pick.item_selected.emit(1)
 	(dlg.find_child("ConnectButton", true, false) as Button).pressed.emit()
 	await pause(2.0)
-	await step("Connect an AI tool: two commands, the key shown once")
+	await step("Connect an AI tool: pick it, copy its command, the key shown once")
 	dlg.hide()
-	var c: Dictionary = await app.backend.api.call_api("/mcp/clients", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Claude Code (WSL)", "level": "propose_changes"}))
+	var c: Dictionary = await app.backend.api.call_api("/mcp/clients", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Codex", "level": "propose_changes"}))
 	var token := str((c["data"] as Dictionary)["token"])
 	for msg in [{"name": "overview", "arguments": {}},
 			{"name": "propose_item", "arguments": {"title": "Reminder: renew the passport", "content": "It expires in March.", "reason": "Noted during a work session", "suggested_place": "Finances"}}]:
@@ -951,7 +954,7 @@ func guide_claude_code() -> void:
 	g.zoom_to(0.5, Vector2(-60, 0), 0.2)
 	await pause(1.0)
 	calm()
-	await step("Claude Code reads your Brain: the ⇠ light", true)
+	await step("the tool reads your Brain: the ⇠ light", true)
 	var dlg2: AcceptDialog = lights.call("open_dialog")
 	await pause(3.0)
 	await step("a proposal waits for you")
@@ -965,32 +968,35 @@ func guide_claude_code() -> void:
 	tl.hide()
 
 
-# ---------------------------------------------------------------- Give an agent Microsoft Learn (real answers)
-func guide_mslearn() -> void:
+# ---------------------------------------------------------------- Give your agents MCP servers (no model call)
+func guide_mcp_servers() -> void:
 	await overview()
 	var lights: Button = b.get("mcp_lights")
 	var dlg: AcceptDialog = lights.call("open_dialog", "out")
 	await pause(2.5)
-	for bt in dlg.find_children("AddSuggested", "Button", true, false):
-		if (bt as Button).text.contains("Microsoft Learn"):
-			(bt as Button).pressed.emit()
-			break
+	await step("the second tab: your tools, and « Add a tool »")
+	var search: LineEdit = dlg.find_child("CatalogSearch", true, false)
+	search.text = "weather"
+	search.text_submitted.emit("weather")
+	await wait_until(func() -> bool: return (dlg.find_child("CatalogResults", true, false) as Control).visible, 20.0)
+	await pause(1.5)
+	await step("a search in the official MCP registry")
+	dlg.hide()
+	await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify(
+		{"name": "Context7", "url": "https://mcp.context7.com/mcp", "publisher": "Upstash"}))
 	await wait_until(func() -> bool:
 		var st: Dictionary = lights.get("status")
 		var out: Dictionary = st.get("out", {}) if st.get("out") is Dictionary else {}
 		return (out.get("servers", []) as Array).size() > 0, 30.0)
 	await lights.call("poll")
-	await pause(2.0)
-	await step("+ Connect Microsoft Learn: its tools, for every agent")
-	dlg.hide()
-	var ap: AssistantPanel = b.get("assistant_panel")
-	await panel_send_and_wait(ap, "Using Microsoft Learn, how do I write a timer trigger for Azure Functions in Python? Answer in three sentences and give the source.")
-	await lights.call("poll")
-	await step("ask: the agent searches Microsoft Learn and cites it", true)
-	var dlg3: AcceptDialog = lights.call("open_dialog", "out")
+	var dlg2: AcceptDialog = lights.call("open_dialog", "out")
 	await pause(3.0)
-	await step("the calls and this month's tokens, per server")
-	dlg3.hide()
+	var settings_b: Button = dlg2.find_child("ServerSettings", true, false)
+	if settings_b != null:
+		settings_b.pressed.emit()
+	await pause(1.0)
+	await step("connected: a card, and its settings")
+	dlg2.hide()
 
 
 func panel_send_and_wait(panel: AssistantPanel, text: String) -> void:
