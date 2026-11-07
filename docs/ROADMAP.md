@@ -158,6 +158,19 @@ items are pinned as the context of that question, so the answer comes from them 
 retrieval. By voice: « dans la recette du poulet, … » resolves to the item. Idea seen in
 github.com/timskillet/second-brain (files only there); ours targets any Brain item. One loop.
 
+## Parked: several model providers (owner, 2026-11-07)
+
+- **Claude next to OpenAI (loop C1).** OpenAI keeps voice (transcription, live voice, the assistant's voice) and
+  embeddings (Anthropic has none). Claude can take filing, chat, Sparring, the user's agents and missions when its
+  key is there; otherwise everything stays on OpenAI. Choice per role and per agent, lists grouped by provider.
+  Keys: `ANTHROPIC_API_KEY` (dotenvx for dev and tests; in the app, a second key field in the OS credential store);
+  `ANTHROPIC_ADMIN_KEY` optional, for real costs on the dashboard (Usage and Cost API). Plain HTTP like the MCP
+  client, prompt caching for long agent instructions, a fake Claude provider for tests, the filing bench re-run on
+  Haiku / Sonnet / Opus before picking defaults (real spend asked first).
+- **Azure AI Foundry**: OpenAI and Claude models from one enterprise endpoint.
+- **Private models**: an OpenAI-compatible base URL (Ollama, LM Studio, vLLM, a company server); clean degraded
+  modes where a local model has no equivalent (voice, embeddings).
+
 ## Later: data analysis and reports (brainstorm 2026-11-06, parked)
 
 The owner wants this kept for later; the product focus stays on the Brain and missions for now.
