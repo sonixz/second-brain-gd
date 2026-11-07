@@ -1053,6 +1053,23 @@ func _perf_check() -> void:
 	await process_frame
 	check(sim_ms < 60.0, "2,000 items: one layout step takes %.1f ms" % sim_ms)
 	check(g.draw_ms < 120.0, "2,000 items: one frame draws in %.1f ms" % g.draw_ms)
+	# Loop 37: in a big graph the push between items runs on another core; the frame keeps only the rest.
+	var spread0 := ((g.nodes["n0"] as Dictionary)["pos"] as Vector2).distance_to((g.nodes["n13"] as Dictionary)["pos"] as Vector2)
+	var on_frame := 0.0
+	for k in 30:
+		await process_frame
+		var t1 := Time.get_ticks_usec()
+		g._simulate(1.0)
+		on_frame += (Time.get_ticks_usec() - t1) / 1000.0
+	var finite := true
+	for id in g.nodes:
+		var p: Vector2 = (g.nodes[id] as Dictionary)["pos"]
+		finite = finite and is_finite(p.x) and is_finite(p.y)
+	var spread1 := ((g.nodes["n0"] as Dictionary)["pos"] as Vector2).distance_to((g.nodes["n13"] as Dictionary)["pos"] as Vector2)
+	check(finite and spread1 > 0.0 and on_frame / 30.0 < sim_ms, "2,000 items: the push runs beside the frame (%.1f ms on the frame instead of %.1f; %.0f → %.0f)" % [on_frame / 30.0, sim_ms, spread0, spread1])
+	var t2 := Time.get_ticks_usec()
+	g.set_graph({"nodes": nodes, "edges": edges})
+	check((Time.get_ticks_usec() - t2) / 1000.0 < 10.0, "2,000 items: the 20-second refresh of an unchanged Brain costs nothing (%.1f ms)" % ((Time.get_ticks_usec() - t2) / 1000.0))
 	g.queue_free()
 
 

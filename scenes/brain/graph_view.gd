@@ -89,6 +89,9 @@ var _tl_t0 := 0.0
 var _tl_t1 := 1.0
 var _tl_width := 1400.0               # repulsion only reaches the 3×3 cells around an item
 var _sim_ids: Array[String] = []
+var _rep_task := -1                     # worker computing the next push (big graphs)
+var _rep_out := PackedVector2Array()     # written by the worker
+var _rep_n := 0                          # items the worker's push is for
 var _sim_index: Dictionary = {}
 var _sim_space := PackedByteArray()
 var _sim_spaces := PackedInt32Array()
@@ -108,6 +111,12 @@ var screen_offset := Vector2.ZERO  # centre of the free area (panels cover the l
 var follow := ""           # the camera stays on this node (after « zoome sur X ») until you pan
 
 
+func _exit_tree() -> void:
+	if _rep_task != -1:  # a worker still pushing: let it finish before this node goes
+		WorkerThreadPool.wait_for_task_completion(_rep_task)
+		_rep_task = -1
+
+
 func _ready() -> void:
 	clip_contents = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -123,6 +132,11 @@ func _ready() -> void:
 ## nodes are born next to their space. Returns the ids of new note nodes.
 func set_graph(data: Dictionary) -> Array[String]:
 	var born: Array[String] = []
+	# The 20-second refresh of an unchanged Brain: nothing to redo (1,000 items took 20 ms, a hitch each time).
+	var data_hash := data.hash()
+	if data_hash == _data_hash and not nodes.is_empty():
+		return born
+	_data_hash = data_hash
 	var incoming: Dictionary = {}
 	var raw_nodes: Array = data.get("nodes", [])
 	for item in raw_nodes:
@@ -133,7 +147,7 @@ func set_graph(data: Dictionary) -> Array[String]:
 			nodes.erase(id)
 	var first_load := nodes.is_empty()
 	var before := nodes.size()
-	var before_edges := _edge_signature()
+	var before_edges := _edge_sig
 	var i := 0
 	for id in incoming:
 		var src: Dictionary = incoming[id]
@@ -155,11 +169,16 @@ func set_graph(data: Dictionary) -> Array[String]:
 				born.append(str(id))
 		i += 1
 	edges.clear()
+	_edge_sig = 0
 	var raw_edges: Array = data.get("edges", [])
 	for item in raw_edges:
 		var e: Dictionary = item
-		if nodes.has(str(e["from"])) and nodes.has(str(e["to"])):
-			edges.append({"from": str(e["from"]), "to": str(e["to"]), "type": str(e.get("type", "link"))})
+		var a := str(e["from"])
+		var b := str(e["to"])
+		if nodes.has(a) and nodes.has(b):
+			var type := str(e.get("type", "link"))
+			edges.append({"from": a, "to": b, "type": type})
+			_edge_sig += hash(a + ">" + b + ":" + type)  # a sum: the same edges in any order give the same value
 	# New nodes start next to their space hub.
 	for id in born:
 		var n: Dictionary = nodes[id]
@@ -188,22 +207,14 @@ func set_graph(data: Dictionary) -> Array[String]:
 	# A periodic refresh with nothing new leaves the graph at rest; a change wakes it gently.
 	if first_load:
 		heat = 1.0
-	elif not born.is_empty() or nodes.size() != before or _edge_signature() != before_edges:
-		reheat(0.3)
+	elif not born.is_empty() or nodes.size() != before or _edge_sig != before_edges:
+		reheat(0.3 if nodes.size() < CROWD_FROM else 0.1)  # a big graph: the new items move, the rest barely
 	return born
 
 
 ## Wakes the layout softly (a filter, a fold, a new item): heat climbs to this over about half a second.
 func reheat(h: float) -> void:
 	_heat_goal = maxf(_heat_goal, h)
-
-
-func _edge_signature() -> int:
-	var parts := PackedStringArray()
-	for e in edges:
-		parts.append("%s>%s:%s" % [e["from"], e["to"], e["type"]])
-	parts.sort()
-	return hash(",".join(parts))
 
 
 func _make_node(src: Dictionary, i: int, total: int, first_load: bool) -> Dictionary:
@@ -675,7 +686,14 @@ func _process(delta: float) -> void:
 				_sim_acc = 0.0
 		else:
 			_sim_acc = 0.0
-	queue_redraw()
+	# A big graph at rest redraws at about 20 images a second (its stars and pulses still live) and frees the
+	# processor; anything moving, a gesture or a zoom brings it back to every frame at once.
+	_idle_frames += 1
+	var calm := nodes.size() >= CROWD_FROM and heat <= 0.02 and _dragging_node == "" and not _panning \
+		and follow == "" and _t - _input_at > 0.6 and not (_zoom_tween != null and _zoom_tween.is_running())
+	if not calm or _idle_frames >= 3:
+		_idle_frames = 0
+		queue_redraw()
 
 
 ## Packed arrays for the layout (Loop 15): rebuilt when the graph, the filters or the folds change.
@@ -739,49 +757,23 @@ func _simulate(step: float) -> void:
 	# Repulsion between neighbours only: a grid of CELL-sized cells. Items of the same cell push each other
 	# exactly; a neighbouring cell pushes as one body at its centre when it is crowded (a dense, unsettled
 	# graph stays cheap), item by item otherwise. Each side applies its own half, so forces stay balanced.
-	var grid: Dictionary = {}
-	for i in n:
-		var key := Vector2i(floori(pos[i].x / CELL), floori(pos[i].y / CELL))
-		# Packed arrays are values in GDScript: append to the cell's array, then store it back.
-		var cell: PackedInt32Array = grid.get(key, PackedInt32Array())
-		cell.append(i)
-		grid[key] = cell
-	var centre: Dictionary = {}
-	for key in grid:
-		var members: PackedInt32Array = grid[key]
-		if members.size() > CROWD and n >= CROWD_FROM:
-			var c := Vector2.ZERO
-			for m in members:
-				c += pos[m]
-			centre[key] = c / float(members.size())
-	for key in grid:
-		var here: PackedInt32Array = grid[key]
-		for a in here.size():
-			var i := here[a]
-			var pi := pos[i]
-			var si := _sim_space[i]
-			for b in range(a + 1, here.size()):
-				var j := here[b]
-				if si == 1 and _sim_space[j] == 1:
-					continue
-				var f := _push(pi - pos[j], si, _sim_space[j], i, j)
-				force[i] += f
-				force[j] -= f
-			for dx in range(-1, 2):
-				for dy in range(-1, 2):
-					if dx == 0 and dy == 0:
-						continue
-					var other_key := Vector2i(key.x + dx, key.y + dy)
-					if not grid.has(other_key):
-						continue
-					if centre.has(other_key):
-						var crowd: PackedInt32Array = grid[other_key]
-						force[i] += _push(pi - (centre[other_key] as Vector2), si, 0, i, -1) * float(crowd.size())
-						continue
-					for j in (grid[other_key] as PackedInt32Array):
-						if si == 1 and _sim_space[j] == 1:
-							continue
-						force[i] += _push(pi - pos[j], si, _sim_space[j], i, j)
+	if n >= CROWD_FROM:
+		# Big graph: the push computed on a worker from the previous step's positions (one step late, which a
+		# damped layout does not show); the frame never waits for it unless no result exists yet.
+		var ready := PackedVector2Array()
+		if _rep_task != -1:
+			if not WorkerThreadPool.is_task_completed(_rep_task) and _rep_n == n:
+				return  # the push is still on its way: this step waits (reusing an old push would overshoot)
+			WorkerThreadPool.wait_for_task_completion(_rep_task)
+			_rep_task = -1
+			ready = _rep_out
+		if ready.size() != n:  # the first step, or the graph changed size: computed here once
+			ready = _repulsion(pos, _sim_space)
+		force = ready
+		_rep_n = n
+		_rep_task = WorkerThreadPool.add_task(_repulsion_task.bind(pos.duplicate(), _sim_space.duplicate()))
+	else:
+		force = _repulsion(pos, _sim_space)
 	# Places push each other apart at any distance (there are few of them).
 	for a in _sim_spaces.size():
 		var i := _sim_spaces[a]
@@ -820,7 +812,9 @@ func _simulate(step: float) -> void:
 			f = force[i] - p * GRAVITY * 0.02
 		else:
 			f = force[i] - p * GRAVITY * 0.35
-		var v: Vector2 = ((node["vel"] as Vector2) + f * step * heat) * DAMPING
+		# An item just added finds its spot freely while the rest of a big graph barely stirs (Loop 37).
+		var h := maxf(heat, 0.5) if _sim_born[i] > _t - 3.0 and n >= CROWD_FROM else heat
+		var v: Vector2 = ((node["vel"] as Vector2) + f * step * h) * DAMPING
 		v = v.limit_length(MAX_SPEED)
 		if heat < 0.15 and v.length() < REST_SPEED:
 			v = Vector2.ZERO
@@ -829,10 +823,97 @@ func _simulate(step: float) -> void:
 		_sim_pos[i] = node["pos"]
 
 
+## The push between neighbours (the bulk of a step), as a pure function of positions: in a big graph it runs on
+## another core while the frame draws, and its result serves the next step (Loop 37).
+static func _repulsion(pos: PackedVector2Array, space: PackedByteArray) -> PackedVector2Array:
+	var n := pos.size()
+	var force := PackedVector2Array()
+	force.resize(n)
+	# Cells are keyed by one int and hold plain Arrays (appended in place); the push is written inline below:
+	# in GDScript a function call per pair was most of a step's cost in a 1,000-item graph (Loop 37).
+	var grid: Dictionary = {}
+	for i in n:
+		var key := (floori(pos[i].x / CELL) + 50000) * 100000 + (floori(pos[i].y / CELL) + 50000)
+		if grid.has(key):
+			(grid[key] as Array).append(i)
+		else:
+			grid[key] = [i]
+	var centre: Dictionary = {}
+	if n >= CROWD_FROM:
+		for key in grid:
+			var members: Array = grid[key]
+			if members.size() > CROWD:
+				var c := Vector2.ZERO
+				for m in members:
+					c += pos[m]
+				centre[key] = c / float(members.size())
+	var collide2 := COLLIDE * COLLIDE
+	for key in grid:
+		var here: Array = grid[key]
+		var hn := here.size()
+		var near: Array = []  # the items of the 8 neighbouring cells that push one by one
+		for dx in range(-1, 2):
+			for dy in range(-1, 2):
+				if dx == 0 and dy == 0:
+					continue
+				var other_key: int = key + dx * 100000 + dy
+				if not grid.has(other_key) or centre.has(other_key):
+					continue
+				near.append_array(grid[other_key])
+		for a in hn:
+			var i: int = here[a]
+			var pi := pos[i]
+			var si := space[i]
+			var fi := Vector2.ZERO
+			for b in range(a + 1, hn):
+				var j: int = here[b]
+				var sj := space[j]
+				if si == 1 and sj == 1:
+					continue
+				var d := pi - pos[j]
+				var l2 := d.length_squared()
+				if l2 < 0.25:  # two items on the same spot: part them in a stable direction
+					d = Vector2.from_angle(float(i * 7 + j * 13)) * 0.5
+					l2 = 0.25
+				var dist2 := maxf(l2, 100.0)
+				var dl := sqrt(dist2)
+				var f := d * (REPULSION * (2.2 if si == 1 or sj == 1 else 1.0) / (dist2 * dl))
+				if l2 < collide2 and si == 0 and sj == 0:
+					f += d * ((COLLIDE - dl) * 0.25 / dl)
+				fi += f
+				force[j] -= f
+			for j in near:
+				var sj := space[j]
+				if si == 1 and sj == 1:
+					continue
+				var d := pi - pos[j]
+				var l2 := d.length_squared()
+				if l2 < 0.25:
+					d = Vector2.from_angle(float(i * 7 + j * 13)) * 0.5
+					l2 = 0.25
+				var dist2 := maxf(l2, 100.0)
+				var dl := sqrt(dist2)
+				var f := d * (REPULSION * (2.2 if si == 1 or sj == 1 else 1.0) / (dist2 * dl))
+				if l2 < collide2 and si == 0 and sj == 0:
+					f += d * ((COLLIDE - dl) * 0.25 / dl)
+				fi += f
+			for dx in range(-1, 2):
+				for dy in range(-1, 2):
+					var other_key: int = key + dx * 100000 + dy
+					if (dx != 0 or dy != 0) and centre.has(other_key):
+						fi += _push_s(pi - (centre[other_key] as Vector2), si, 0, i, -1) * float((grid[other_key] as Array).size())
+			force[i] += fi
+	return force
+
+
+func _repulsion_task(pos: PackedVector2Array, space: PackedByteArray) -> void:
+	_rep_out = _repulsion(pos, space)
+
+
 ## The push of one item on another: inverse-square repulsion (stronger around places), plus a firm
 ## collision push between items closer than COLLIDE so cards keep their own room.
-func _push(d: Vector2, sa: int, sb: int, i: int, j: int) -> Vector2:
-	if d.length_squared() < 0.25:  # two items on the same spot: part them in a stable direction
+static func _push_s(d: Vector2, sa: int, sb: int, i: int, j: int) -> Vector2:
+	if d.length_squared() < 0.25:
 		d = Vector2.from_angle(float(i * 7 + j * 13)) * 0.5
 	var dist2 := maxf(d.length_squared(), 100.0)
 	var dl := sqrt(dist2)
@@ -968,6 +1049,10 @@ func _is_dim(id: String) -> bool:
 	return id != focus and not (_neighbors.get(focus, {}) as Dictionary).has(id)
 
 
+var _idle_frames := 0
+var _data_hash := 0
+var _edge_sig := 0         # the edges as one number, to tell a refresh that changed them
+var _input_at := -10.0
 var draw_ms := 0.0   # last _draw duration (perf checks)
 
 
@@ -1106,10 +1191,14 @@ func _draw_all() -> void:
 				if not _dense:
 					draw_circle(p + Vector2(-r * 0.3, -r * 0.3), r * 0.35, Color(1, 1, 1, 0.25 * a))
 		if n.get("layer") != null and str(n.get("layer")) != "":
-			# from an imported pack: a dotted ring, so a layer reads apart from your own items
-			for k in 12:
-				var a0 := TAU * float(k) / 12.0 + _t * 0.15
-				draw_arc(p, r + 4.0, a0, a0 + TAU / 24.0, 4, Color(SbTheme.INFO, 0.8 * a), 1.6, true)
+			# from an imported pack: a dotted ring, so a layer reads apart from your own items. In a big graph one
+			# plain ring (12 small arcs per item were half of a frame with 1,000 imported notes on screen).
+			if nodes.size() >= CROWD_FROM:
+				draw_arc(p, r + 4.0, 0, TAU, 16, Color(SbTheme.INFO, 0.55 * a), 1.4, false)
+			else:
+				for k in 12:
+					var a0 := TAU * float(k) / 12.0 + _t * 0.15
+					draw_arc(p, r + 4.0, a0, a0 + TAU / 24.0, 4, Color(SbTheme.INFO, 0.8 * a), 1.6, true)
 		if str(id) == selected:
 			draw_arc(p, r + 7.0, 0, TAU, 48, SbTheme.MINT_SOFT, 2.0, true)
 			draw_arc(p, r + 12.0 + 2.0 * breathe, 0, TAU, 48, Color(SbTheme.MINT_SOFT, 0.35), 1.5, true)
@@ -1286,14 +1375,17 @@ func _draw_label(n: Dictionary, p: Vector2, r: float, dim: bool) -> void:
 	var neighbor := hovered != "" and (_neighbors.get(hovered, {}) as Dictionary).has(id)
 	if not (important or neighbor or (zoom >= 0.85 and type == "note" and not _dense)):
 		return
-	var text := str(n["label"])
-	if text.length() > 34:
-		text = text.left(32) + "…"
 	var fs := 15 if type == "space" else 13
-	var w := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	var text := str(n["label"])
+	if str(n.get("_lt", "\u0000")) != text:  # the label's short form and width, measured once per label
+		n["_lt"] = text
+		n["_ls"] = text.left(32) + "…" if text.length() > 34 else text
+		n["_lw"] = _font.get_string_size(str(n["_ls"]), HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+	text = n["_ls"]
+	var w: float = n["_lw"]
 	var pos := p + Vector2(-w * 0.5, r + 16.0)
 	var a := 0.35 if dim else (1.0 if important else 0.8)
-	if not _dense:
+	if not _dense and nodes.size() < CROWD_FROM:  # the shadow doubles a label's cost: big graphs go without
 		draw_string(_font, pos + Vector2(0, 1), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(SbTheme.BG, 0.8 * a))
 	draw_string(_font, pos, text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs,
 		Color(SbTheme.TEXT if type != "tag" else SbTheme.MUTED, a))
@@ -1431,6 +1523,7 @@ func node_at(screen_pos: Vector2) -> String:
 
 
 func _gui_input(event: InputEvent) -> void:
+	_input_at = _t
 	if event is InputEventMouseButton:
 		var mb: InputEventMouseButton = event
 		if mb.button_index == MOUSE_BUTTON_WHEEL_UP or mb.button_index == MOUSE_BUTTON_WHEEL_DOWN:

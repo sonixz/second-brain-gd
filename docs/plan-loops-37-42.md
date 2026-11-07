@@ -54,7 +54,12 @@ Details from docs/plan-loops-35-37.md (Loop 37), plus what was left from Loop 36
 - **Done:** graph glides and rests (ff55318: no reheat on an unchanged refresh, fixed 1/60 s steps); **.zip
   import** (engine/sources/zip_import.py: safe unpack into <data>/imports/zips, nested Notion zips, size limits,
   links/absolute/../ refused; dropped or chosen zip opens the folder preview); file names with underscores read
-  as titles with spaces (D&D SRD 5.1 zip: 1,021 notes, 778 of 779 links, imported in 1.2 s, < 0.01 $).
+  as titles with spaces (D&D SRD 5.1 zip: 1,021 notes, 778 of 779 links, imported in 1.2 s, < 0.01 $). Zip import on Windows (599b6b3): the
+  app waited 4 s, unpacking took 5.2 s; imports now wait up to 10 min, « Stop » in the preview (nothing kept), the
+  same zip unpacked once. Big graph after the SRD import (owner: « ça lag »; 1,065 items, 3,904 related edges):
+  the push between items runs on a worker thread (14 ms → 2 ms on the frame), an unchanged 20-second refresh costs
+  2 ms instead of 42, a big graph at rest redraws at ~20 fps, imported items get one plain ring and labels no
+  shadow; a new item moves freely while the rest barely stirs (shaking 22 % → 2 % on the owner's graph).
 
 ## Loop 38 — @ mentions
 
