@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import queue
 import re
 import sqlite3
@@ -128,8 +129,81 @@ def add_server(conn: sqlite3.Connection, name: str, url: str, key: str = "", key
     return refresh(conn, sid)
 
 
+def add_local(conn: sqlite3.Connection, name: str, command: str | list[str], env_names: list[str] | None = None,
+              publisher: str = "", source: str = "", package: dict[str, str] | None = None) -> dict[str, Any]:
+    """A local server: kept waiting for the owner's approval of its exact command; nothing runs before."""
+    from engine.mcp import local
+    try:
+        argv = local.command_for_package(package.get("type", ""), package.get("identifier", ""), package.get("version", "")) \
+            if package else local.parse_command(command)
+    except local.LocalError as exc:
+        raise McpClientError(str(exc)) from exc
+    items = servers(conn)
+    if any(x.get("command") == argv for x in items):
+        raise McpClientError("this local server is already added")
+    name = " ".join(name.split())[:40] or os.path.basename(argv[-1])[:40]
+    sid = _slug(name)
+    while any(x.get("id") == sid for x in items):
+        sid = (sid[:9] + uuid.uuid4().hex[:3])
+    names = [n for n in (env_names or []) if re.fullmatch(r"[A-Z][A-Z0-9_]{0,60}", str(n))][:20]
+    missing = local.missing_runtime(argv)
+    server = {"id": sid, "name": name, "url": "", "transport": "stdio", "command": argv, "env_names": names,
+              "approved": False, "approved_hash": "", "agents": ["*"], "tools": [], "off": [], "publisher": publisher[:60],
+              "source": source[:300], "status": "missing" if missing else "approval",
+              "error": f"needs {missing}" if missing else "", "cap_tokens": 0, "added_at": utc_now()}
+    items.append(server)
+    _save(conn, items)
+    return server
+
+
+def approve_local(conn: sqlite3.Connection, sid: str) -> dict[str, Any]:
+    """The owner approves this exact command once; it then starts and lists its tools. A changed command needs a
+    new approval."""
+    from engine.mcp import local
+    s = get_server(conn, sid)
+    if s.get("transport") != "stdio":
+        raise McpClientError("not a local server")
+    missing = local.missing_runtime(s["command"])
+    if missing:
+        return _update(conn, sid, status="missing", error=f"needs {missing}")
+    _update(conn, sid, approved=True, approved_hash=local.command_hash(s["command"]), approved_at=utc_now())
+    return refresh(conn, sid)
+
+
+def set_env(conn: sqlite3.Connection, sid: str, name: str, value: str) -> dict[str, Any]:
+    from engine.voice import secrets
+    s = get_server(conn, sid)
+    if name not in (s.get("env_names") or []):
+        raise McpClientError("this server does not declare that variable")
+    layout = _layout(conn)
+    if value.strip():
+        secrets.store(layout, f"mcp-{sid}-env-{name}", value.strip())
+    else:
+        secrets.delete(layout, f"mcp-{sid}-env-{name}")
+    _close(sid)  # restarted with the new value at the next call
+    return s
+
+
+def stop_local(conn: sqlite3.Connection, sid: str) -> dict[str, Any]:
+    get_server(conn, sid)
+    _close(sid)
+    return {"stopped": sid}
+
+
+def local_log(sid: str) -> list[str]:
+    from engine.mcp.local import StdioSession
+    with _lock:
+        sess = _sessions.get(sid)
+    return list(sess.log)[-60:] if isinstance(sess, StdioSession) else []
+
+
 def remove_server(conn: sqlite3.Connection, sid: str) -> None:
     from engine.voice import secrets
+    try:
+        for name in get_server(conn, sid).get("env_names") or []:
+            secrets.delete(_layout(conn), f"mcp-{sid}-env-{name}")
+    except (McpClientError, OSError):
+        pass
     _save(conn, [x for x in servers(conn) if x.get("id") != sid])
     _close(sid)
     try:
@@ -191,6 +265,8 @@ def set_cap(conn: sqlite3.Connection, sid: str, tokens: int) -> dict[str, Any]:
 def refresh(conn: sqlite3.Connection, sid: str) -> dict[str, Any]:
     """Connects and lists the server's tools (kept, so agents see them even before the next call)."""
     s = get_server(conn, sid)
+    if s.get("transport") == "stdio" and not s.get("approved"):
+        return _update(conn, sid, status="approval")
     try:
         tools = list_tools(s, conn)
         return _update(conn, sid, tools=tools, status="ready", error="", checked_at=utc_now(), transport=s.get("transport", "http"))
@@ -392,14 +468,66 @@ class LegacySession:
 
 
 def _close(sid: str) -> None:
+    from engine.mcp.local import StdioSession
     with _lock:
         old = _sessions.pop(sid, None)
-    if isinstance(old, LegacySession):
+    if isinstance(old, (LegacySession, StdioSession)):
         old.close()
 
 
+def close_all() -> None:
+    """The app stops: local servers stop with it."""
+    for sid in list(_sessions):
+        _close(sid)
+
+
+import atexit  # noqa: E402
+
+atexit.register(close_all)
+
+
 # ------------------------------------------------------------------ requests
-def _initialize(s: dict[str, Any], extra: dict[str, str]) -> Any:
+def _start_local(s: dict[str, Any], conn: sqlite3.Connection | None) -> Any:
+    """Starts an approved local server with a clean environment and its declared variables."""
+    from engine.mcp import local
+    from engine.voice import secrets
+    argv = s.get("command") or []
+    if not s.get("approved") or s.get("approved_hash") != local.command_hash(argv):
+        raise McpClientError("this local server waits for your approval of its command (MCP window)")
+    missing = local.missing_runtime(argv)
+    if missing:
+        raise McpClientError(f"to run it, install {missing} first (the Brain never installs anything by itself)")
+    env: dict[str, str] = {}
+    if conn is not None:
+        layout = _layout(conn)
+        for name in s.get("env_names") or []:
+            value, _ = secrets.get(layout, f"mcp-{s['id']}-env-{name}")
+            if value:
+                env[name] = value
+    try:
+        sess = local.StdioSession(argv, local.clean_env(env))
+    except local.LocalError as exc:
+        raise McpClientError(str(exc)) from exc
+    init = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
+        "protocolVersion": PROTOCOL, "capabilities": {"elicitation": {}, **({"sampling": {}} if s.get("sampling") else {})},
+        "clientInfo": {"name": "second-brain", "version": "1.0"}}}
+    try:
+        reply = sess.send(init, 60.0)
+        sess.send({"jsonrpc": "2.0", "method": "notifications/initialized"})
+    except local.LocalError as exc:
+        sess.close()
+        raise McpClientError(str(exc)) from exc
+    if reply is None or "error" in reply:
+        sess.close()
+        raise McpClientError("the local server refused to start a session")
+    with _lock:
+        _sessions[s["id"]] = sess
+    return sess
+
+
+def _initialize(s: dict[str, Any], extra: dict[str, str], conn: sqlite3.Connection | None = None) -> Any:
+    if s.get("transport") == "stdio":
+        return _start_local(s, conn)
     init = {"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {
         "protocolVersion": PROTOCOL, "capabilities": {"elicitation": {}, **({"sampling": {}} if s.get("sampling") else {})},
         "clientInfo": {"name": "second-brain", "version": "1.0"}}}
@@ -440,11 +568,29 @@ def _rpc(s: dict[str, Any], method: str, params: dict[str, Any], conn: sqlite3.C
 
 def _rpc_once(s: dict[str, Any], method: str, params: dict[str, Any], conn: sqlite3.Connection | None, key: str,
               timeout: float, on_request: Any, force_refresh: bool) -> dict[str, Any]:
-    extra = _auth_headers(conn, s, force_refresh)
+    from engine.mcp.local import LocalError, StdioSession
+    extra = _auth_headers(conn, s, force_refresh) if s.get("transport") != "stdio" else {}
     with _lock:
         sess = _sessions.get(s["id"])
+    if isinstance(sess, StdioSession) and not sess.alive():
+        _close(s["id"])  # it stopped (crash, or closed): start it again
+        sess = None
     if sess is None:
-        sess = _initialize(s, extra)
+        sess = _initialize(s, extra, conn)
+    if isinstance(sess, StdioSession):
+        sess.on_request = on_request
+        try:
+            reply = sess.send({"jsonrpc": "2.0", "id": uuid.uuid4().hex[:8], "method": method, "params": params}, timeout,
+                              (lambda: OUT.cancelled(key)) if key else None)
+        except LocalError as exc:
+            if "stopped by the user" in str(exc):
+                raise Cancelled(str(exc)) from exc
+            raise McpClientError(str(exc)) from exc
+        if reply is None:
+            raise McpClientError("no answer from the local server")
+        if "error" in reply:
+            raise McpClientError(str(reply["error"].get("message", "error")))
+        return reply["result"]
     mid = uuid.uuid4().hex[:8]
     msg = {"jsonrpc": "2.0", "id": mid, "method": method, "params": params}
     if isinstance(sess, LegacySession):

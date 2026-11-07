@@ -355,6 +355,23 @@ func _fill_servers(box: VBoxContainer) -> void:
 	go.text = I18n.t("Search")
 	row.add_child(go)
 	box.add_child(row)
+	var lrow := HBoxContainer.new()
+	lrow.add_theme_constant_override("separation", 6)
+	var lcmd := LineEdit.new()
+	lcmd.placeholder_text = I18n.t("Or a local program, version pinned: npx -y @scope/server@1.2.3")
+	lcmd.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	lrow.add_child(lcmd)
+	var ladd := Button.new()
+	ladd.text = I18n.t("Prepare")
+	ladd.pressed.connect(func() -> void:
+		var r := await app.backend.api.call_api("/mcp/servers/local", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "", "command": lcmd.text.strip_edges()}))
+		if not r["ok"]:
+			lcmd.text = ""
+			lcmd.placeholder_text = str((r["data"] as Dictionary).get("detail", r["error"]))
+			return
+		await _fill_servers(box))
+	lrow.add_child(ladd)
+	box.add_child(lrow)
 	var results := VBoxContainer.new()
 	results.name = "CatalogResults"
 	box.add_child(results)
@@ -411,11 +428,21 @@ func _catalog_row(e: Variant, box: VBoxContainer) -> Control:
 	key.visible = fam == "key" or bool(d.get("key_optional", false))
 	line.add_child(key)
 	var b := Button.new()
-	b.text = I18n.t("Connect") if fam != "local" else I18n.t("Later (local)")
-	b.disabled = fam == "local"
-	b.tooltip_text = I18n.t("Local programs come with the next step, with your approval") if fam == "local" else ""
+	b.text = I18n.t("Connect") if fam != "local" else I18n.t("Prepare (local)")
+	b.tooltip_text = I18n.t("A program on this computer: nothing runs before you approve its exact command") if fam == "local" else ""
 	b.pressed.connect(func() -> void:
 		b.disabled = true
+		if fam == "local":
+			var rl := await app.backend.api.call_api("/mcp/servers/local", true, HTTPClient.METHOD_POST, JSON.stringify({
+				"name": str(d.get("name", "")).left(40), "package_type": str(d.get("package_type", "")), "package_id": str(d.get("package_id", "")),
+				"package_version": str(d.get("package_version", "")), "env_names": (d.get("env", []) as Array).map(func(x: Variant) -> String: return str((x as Dictionary).get("name", ""))),
+				"publisher": str(d.get("publisher", "")), "source": str(d.get("source", ""))}))
+			if rl["ok"]:
+				await _fill_servers(box)
+			else:
+				b.disabled = false
+				b.text = str((rl["data"] as Dictionary).get("detail", rl["error"])).left(40)
+			return
 		var r := await app.backend.api.call_api("/mcp/servers", true, HTTPClient.METHOD_POST, JSON.stringify({
 			"name": str(d.get("name", "")).left(40), "url": str(d.get("url", "")), "key": key.text, "key_header": str(d.get("key_header", "Authorization")),
 			"publisher": str(d.get("publisher", "")), "source": str(d.get("source", ""))}))
@@ -438,17 +465,23 @@ func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control
 	wrap.add_child(line)
 	var ready := str(d.get("status", "")) == "ready"
 	var needs_signin := str(d.get("status", "")) == "signin"
+	var is_local := str(d.get("transport", "")) == "stdio"
+	var waits := str(d.get("status", "")) == "approval"
+	var missing := str(d.get("status", "")) == "missing"
 	var tools: Array = d.get("tools", [])
 	var off: Array = d.get("off", [])
 	var use: Dictionary = d.get("usage", {})
 	var l := Label.new()
 	l.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	l.custom_minimum_size.x = 170
 	l.clip_text = true
 	l.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	l.text = ("● %s · %s · %s" % [str(d.get("name", "")), I18n.t("%d of %d tools") % [tools.size() - off.size(), tools.size()],
 		I18n.t("%d calls, ≈ %s tokens this month") % [int(use.get("calls", 0)), _k(int(use.get("tokens", 0)))]]) if ready \
+		else ("○ %s · %s" % [str(d.get("name", "")), I18n.t("waits for your approval")] if waits
+		else ("○ %s · %s" % [str(d.get("name", "")), I18n.t("install %s first (the Brain never installs anything)") % str(d.get("error", "")).trim_prefix("needs ")] if missing
 		else ("○ %s · %s" % [str(d.get("name", "")), I18n.t("needs an account sign-in")] if needs_signin
-		else "○ %s · %s" % [str(d.get("name", "")), I18n.t("unreachable: %s") % str(d.get("error", ""))])
+		else "○ %s · %s" % [str(d.get("name", "")), I18n.t("unreachable: %s") % str(d.get("error", ""))])))
 	l.add_theme_color_override("font_color", Color(0.55, 0.88, 0.65) if ready else SbTheme.WARM)
 	l.tooltip_text = "%s\n%s%s" % [str(d.get("url", "")), str(d.get("publisher", "")), ("\n" + I18n.t("key saved")) if bool(d.get("has_key", false)) else ""]
 	line.add_child(l)
@@ -466,6 +499,27 @@ func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control
 		await app.backend.api.call_api("/mcp/servers/%s/agents" % sid, true, HTTPClient.METHOD_POST,
 			JSON.stringify({"agents": [str(who.get_item_metadata(i))]})))
 	line.add_child(who)
+	if is_local:
+		var cmd := Label.new()
+		cmd.text = "  $ " + " ".join(PackedStringArray(d.get("command", [])))
+		cmd.add_theme_font_size_override("font_size", 12)
+		cmd.theme_type_variation = "Muted"
+		cmd.clip_text = true
+		cmd.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
+		cmd.tooltip_text = " ".join(PackedStringArray(d.get("command", [])))
+		wrap.add_child(cmd)
+	if waits or missing:
+		var ap := Button.new()
+		ap.name = "Approve"
+		ap.text = I18n.t("Approve and start")
+		ap.theme_type_variation = "PrimaryButton"
+		ap.tooltip_text = I18n.t("Runs exactly this command on this computer, with a clean environment, until the app closes")
+		ap.pressed.connect(func() -> void:
+			ap.disabled = true
+			await app.backend.api.call_api("/mcp/servers/%s/approve" % sid, true, HTTPClient.METHOD_POST, "{}")
+			await _fill_servers(box)
+			poll())
+		line.add_child(ap)
 	if needs_signin:
 		var si := Button.new()
 		si.name = "SignIn"
@@ -546,6 +600,45 @@ func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control
 			await app.backend.api.call_api("/mcp/servers/%s/signout" % sid, true, HTTPClient.METHOD_POST, "{}")
 			await _fill_servers(box))
 		details.add_child(so)
+	for ev in d.get("env_names", []):
+		var erow := HBoxContainer.new()
+		var el := Label.new()
+		el.text = str(ev)
+		el.custom_minimum_size.x = 160
+		erow.add_child(el)
+		var evv := LineEdit.new()
+		evv.secret = true
+		evv.placeholder_text = I18n.t("value (kept in Windows' credential store)")
+		evv.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		erow.add_child(evv)
+		var es := Button.new()
+		es.text = I18n.t("Save")
+		var evname := str(ev)
+		es.pressed.connect(func() -> void:
+			await app.backend.api.call_api("/mcp/servers/%s/env" % sid, true, HTTPClient.METHOD_POST, JSON.stringify({"name": evname, "value": evv.text}))
+			evv.text = ""
+			evv.placeholder_text = I18n.t("saved"))
+		erow.add_child(es)
+		details.add_child(erow)
+	if is_local:
+		var lrow := HBoxContainer.new()
+		var stopb := Button.new()
+		stopb.text = I18n.t("Stop the program")
+		stopb.pressed.connect(func() -> void: await app.backend.api.call_api("/mcp/servers/%s/stop" % sid, true, HTTPClient.METHOD_POST, "{}"))
+		lrow.add_child(stopb)
+		var logb := Button.new()
+		logb.text = I18n.t("Show its log")
+		var logl := Label.new()
+		logl.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		logl.theme_type_variation = "Muted"
+		logb.pressed.connect(func() -> void:
+			var lg := await app.backend.api.call_api("/mcp/servers/%s/log" % sid)
+			logl.text = "\n".join(PackedStringArray((lg["data"] as Dictionary).get("log", []))) if lg["ok"] else ""
+			if logl.text == "":
+				logl.text = I18n.t("(nothing yet: it starts at its first call)"))
+		lrow.add_child(logb)
+		details.add_child(lrow)
+		details.add_child(logl)
 	var samp := CheckBox.new()
 	samp.text = I18n.t("Let this server ask your AI model to write (up to 20 times a month)")
 	samp.tooltip_text = I18n.t("Off by default: it would use your OpenAI key")

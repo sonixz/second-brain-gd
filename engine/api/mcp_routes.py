@@ -41,6 +41,22 @@ class OffIn(BaseModel):
     off: list[str] = Field(default_factory=list, max_length=200)
 
 
+class LocalIn(BaseModel):
+    name: str = Field(default="", max_length=40)
+    command: str = Field(default="", max_length=1000)
+    env_names: list[str] = Field(default_factory=list, max_length=20)
+    publisher: str = Field(default="", max_length=60)
+    source: str = Field(default="", max_length=300)
+    package_type: str = Field(default="", max_length=10)
+    package_id: str = Field(default="", max_length=200)
+    package_version: str = Field(default="", max_length=60)
+
+
+class EnvIn(BaseModel):
+    name: str = Field(max_length=60)
+    value: str = Field(default="", max_length=4000)
+
+
 class SamplingIn(BaseModel):
     allow: bool = False
     cap: int = Field(default=20, ge=0, le=1000)
@@ -221,6 +237,47 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
             raise HTTPException(status_code=422, detail="approve or refuse")
         with database.session(layout.database) as conn:
             return mcp.decide(conn, cid, choice == "approve")
+
+    @r.post("/mcp/servers/local", dependencies=[Depends(auth)])
+    def post_local(body: LocalIn) -> dict[str, Any]:
+        """A local server, waiting for the owner's approval of its exact command (nothing starts here)."""
+        from engine.mcp import client as mcp
+        package = {"type": body.package_type, "identifier": body.package_id, "version": body.package_version} if body.package_id else None
+        with database.session(layout.database) as conn:
+            try:
+                return mcp.add_local(conn, body.name, body.command, body.env_names, body.publisher, body.source, package)
+            except mcp.McpClientError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @r.post("/mcp/servers/{sid}/approve", dependencies=[Depends(auth)])
+    def post_approve(sid: str) -> dict[str, Any]:
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            try:
+                return mcp.approve_local(conn, sid)
+            except mcp.McpClientError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @r.post("/mcp/servers/{sid}/env", dependencies=[Depends(auth)])
+    def post_env(sid: str, body: EnvIn) -> dict[str, Any]:
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            try:
+                mcp.set_env(conn, sid, body.name, body.value)
+                return {"saved": body.name}
+            except mcp.McpClientError as exc:
+                raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+    @r.post("/mcp/servers/{sid}/stop", dependencies=[Depends(auth)])
+    def post_stop_local(sid: str) -> dict[str, Any]:
+        from engine.mcp import client as mcp
+        with database.session(layout.database) as conn:
+            return mcp.stop_local(conn, sid)
+
+    @r.get("/mcp/servers/{sid}/log", dependencies=[Depends(auth)])
+    def get_local_log(sid: str) -> dict[str, Any]:
+        from engine.mcp import client as mcp
+        return {"log": mcp.local_log(sid)}
 
     @r.post("/mcp/servers/{sid}/signin", dependencies=[Depends(auth)])
     def post_signin(sid: str) -> dict[str, Any]:

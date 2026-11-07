@@ -1008,8 +1008,6 @@
  "writes outside: confirmed at each call": "écrit à l’extérieur : confirmé à chaque appel",
  "Allow once": "Autoriser une fois",
  "Catalogue — checked by hand, or search the official MCP registry:": "Catalogue — vérifiés à la main, ou cherche dans le registre officiel MCP :",
- "Local programs come with the next step, with your approval": "Les programmes locaux viennent à la prochaine étape, avec ton approbation",
- "Later (local)": "Plus tard (local)",
  "⚠ %s reads your Brain and may write outside with %s: each such call waits for your confirmation.": "⚠ %s lit ton Brain et peut écrire à l’extérieur avec %s : chacun de ces appels attend ta confirmation.",
  "Stop the calls under way": "Arrêter les appels en cours",
  "key": "clé",
@@ -1023,5 +1021,18 @@
  "Revokes the access at the service and forgets it here": "Révoque l’accès chez le service et l’oublie ici",
  "Let this server ask your AI model to write (up to 20 times a month)": "Permettre à ce serveur de demander à ton modèle d’IA d’écrire (jusqu’à 20 fois par mois)",
  "Off by default: it would use your OpenAI key": "Désactivé par défaut : ça utiliserait ta clé OpenAI",
- "%s asks (for %s): %s": "%s demande (pour %s) : %s"
+ "%s asks (for %s): %s": "%s demande (pour %s) : %s",
+ "Prepare (local)": "Préparer (local)",
+ "A program on this computer: nothing runs before you approve its exact command": "Un programme sur cet ordinateur : rien ne s’exécute avant que tu approuves sa commande exacte",
+ "waits for your approval": "attend ton approbation",
+ "install %s first (the Brain never installs anything)": "installe d’abord %s (le Brain n’installe jamais rien)",
+ "Approve and start": "Approuver et démarrer",
+ "Runs exactly this command on this computer, with a clean environment, until the app closes": "Exécute exactement cette commande sur cet ordinateur, dans un environnement propre, jusqu’à la fermeture de l’app",
+ "value (kept in Windows' credential store)": "valeur (gardée dans le Gestionnaire d’identification Windows)",
+ "saved": "enregistrée",
+ "Stop the program": "Arrêter le programme",
+ "Show its log": "Voir son journal",
+ "(nothing yet: it starts at its first call)": "(rien encore : il démarre à son premier appel)",
+ "Or a local program, version pinned: npx -y @scope/server@1.2.3": "Ou un programme local, version fixée : npx -y @scope/server@1.2.3",
+ "Prepare": "Préparer"
 }

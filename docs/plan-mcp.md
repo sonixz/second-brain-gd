@@ -243,6 +243,20 @@ theirs to do (Notion or GitHub).
 - Tests: a tiny local stdio server written in the test (Python), start / list / call / stop, a crash, a refused
   unapproved command.
 
+**F done 2026-11-07.** engine/mcp/local.py: commands parsed as one program with its arguments (no pipes or chains),
+versions pinned (npx `pkg@1.2.3`, uvx `pkg==1.2.3`, docker `image:tag`; registry packages composed from their
+pinned version), runtimes detected with `which`, never installed (the window names Node.js, uv or Docker to
+install), StdioSession (newline-delimited JSON-RPC, server requests answered, stderr kept as a 200-line log, no
+window, terminated with the app via atexit). The client: add_local (waits for approval), approve_local (approves
+the exact command's hash; a changed command needs a new approval), a clean environment (paths, temp and user
+folders only, plus the variables the server declares, from the OS credential store; no Brain secret inherited),
+restart after a crash at the next call, stop, log. Routes /mcp/servers/local, /approve, /env, /stop, /log; the
+catalogue gives a local entry its package and declared variables. Window: « Prepare (local) » from the catalogue or
+a pasted pinned command, the command shown, « Approve and start », variables, « Stop the program », « Show its
+log ». The owner's PC has no Node, uv or Docker yet (only Python): npx servers say « install Node.js first ».
+Tests: test_mcp_local.py (5: approval and clean environment with a tiny server written in the test, a changed
+command, a crash then restart, pinning and runtimes, registry packages). Screenshot docs/screenshots/mcp-*/m7-local.png.
+
 ## Later
 
 MCP resources and prompts (both directions; items as `brain://` resources), Claude Desktop extension packaging.

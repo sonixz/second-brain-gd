@@ -42,8 +42,12 @@ def normalize(entry: dict[str, Any]) -> dict[str, Any] | None:
                    family="key" if required else "open", key_header=(secret or {}).get("name", "Authorization"),
                    key_optional=bool(secret) and not required, key_about=str((secret or {}).get("description", ""))[:200])
     elif packages:
-        p = packages[0]
-        out.update(family="local", package=f"{p.get('registryType', '')}:{p.get('identifier', '')}@{p.get('version', s.get('version', ''))}")
+        p = next((x for x in packages if x.get("registryType") in ("npm", "pypi", "oci")), packages[0])
+        version = p.get("version") or s.get("version", "")
+        out.update(family="local", package=f"{p.get('registryType', '')}:{p.get('identifier', '')}@{version}",
+                   package_type=p.get("registryType", ""), package_id=p.get("identifier", ""), package_version=version,
+                   env=[{"name": str(e.get("name", "")), "secret": bool(e.get("isSecret")), "required": bool(e.get("isRequired")),
+                         "about": str(e.get("description", ""))[:200]} for e in (p.get("environmentVariables") or [])][:20])
     else:
         return None
     return out

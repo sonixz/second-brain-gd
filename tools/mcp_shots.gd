@@ -81,4 +81,15 @@ func _run() -> void:
 	await pause(0.5)
 	calm()
 	await shot("m6-signin")
+	dlg4.hide()
+	# MCP-F: a local program, version pinned, waiting for approval (or saying which runtime to install first)
+	await app.backend.api.call_api("/mcp/servers/local", true, HTTPClient.METHOD_POST, JSON.stringify({"name": "Everything (test)",
+		"command": "npx -y @modelcontextprotocol/server-everything@2025.11.25", "publisher": "modelcontextprotocol"}))
+	var dlg5: AcceptDialog = lights.call("open_dialog")
+	await pause(3.0)
+	var sc5: ScrollContainer = dlg5.find_children("*", "ScrollContainer", true, false)[0]
+	sc5.scroll_vertical = 260
+	await pause(0.5)
+	calm()
+	await shot("m7-local")
 	quit(0)
