@@ -4,10 +4,10 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Second Brain GD</title>
-  <meta name="description" content="Second Brain GD: an open-source, local-first second brain. Give it anything (a thought, a link, a PDF, your voice): an archivist files it with CODE and PARA, links it by meaning, and you explore it in a living graph you can zoom into. Godot app, local Python engine.">
+  <meta name="description" content="Second Brain GD: an AI-native, voice-first second brain on your computer. Speak, drop or browse: the Archivist files it, and every AI agent you use (Claude Code, Codex, Copilot…) shares it over MCP, on your rules. Open source.">
   <meta name="theme-color" content="#2b3c54">
   <meta property="og:title" content="Second Brain GD">
-  <meta property="og:description" content="Your knowledge. Your system. Your control. An open-source, local-first second brain you can talk to.">
+  <meta property="og:description" content="Your second brain. Every AI agent. Your rules. An AI-native, voice-first second brain that runs on your computer.">
   <meta property="og:image" content="assets/showcase/graph-zones.webp">
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
   <link rel="stylesheet" href="css/style.css">
@@ -25,10 +25,10 @@
         <span class="sr-only">Menu</span><span aria-hidden="true">☰</span>
       </button>
       <ul id="nav-links" class="nav-links">
-        <li><a href="#method">Method</a></li>
-        <li><a href="#product">Product</a></li>
-        <li><a href="#agents">Agents</a></li>
         <li><a href="#voice">Voice</a></li>
+        <li><a href="#product">Product</a></li>
+        <li><a href="#mcp">MCP</a></li>
+        <li><a href="#agents">Agents</a></li>
         <li><a href="#roadmap">Roadmap</a></li>
         <li><a href="#journal">Journal</a></li>
         <li><a href="howto.html">How-to</a></li>
@@ -43,17 +43,13 @@
       <canvas id="graph" class="hero-graph" aria-hidden="true"></canvas>
       <div class="hero-grid">
         <div class="hero-inner">
-          <p class="overline">Open source · Local-first · Voice-driven · Early development</p>
+          <p class="overline">AI-native · Voice-first · Local · Open source</p>
           <h1>SECOND BRAIN <span class="accent">GD</span></h1>
-          <p class="tagline">Your knowledge. Your system. Your control.</p>
-          <p class="lead">Give it anything: a thought, a link, a PDF, a photo, the page in your browser, your voice.
-            The Archivist reads it, files it with the CODE method and PARA, and links it by meaning to what you
-            already know. Explore it all in a living graph you can zoom into until the text is right there, and
-            think it through out loud with agents that know what your Brain holds.</p>
+          <p class="tagline">Your second brain. Every AI agent. Your rules.</p>
+          <div class="says hero-says"><span class="say">put this in Kitchen</span></div>
           <div class="hero-actions">
             <a class="btn btn-primary" href="docs.html#install">Get started</a>
             <a class="btn" href="howto.html">How-to guides</a>
-            <a class="btn" href="#product">See it work</a>
           </div>
           <ul class="stats" aria-label="Project facts">
             <li><b>100%</b> on your disk</li>
@@ -65,6 +61,36 @@
         <figure class="hero-shot">
           <img src="assets/showcase/graph-zones.webp" alt="The Second Brain GD graph: each place is a zone with its name and count (Kitchen renovation, Learn Japanese, Health…), the Inbox in the middle, the Archivist's floating panel on the left with today's briefing and an answer about countertops, the other agents waiting as letters on the rail" width="1280" height="800">
         </figure>
+      </div>
+    </section>
+
+    <section id="voice" class="section section-alt">
+      <div class="container">
+        <div class="section-head">
+          <p class="overline">Voice first</p>
+          <h2>Everything you can click, you can say</h2>
+          <p>Hold <kbd>F8</kbd> and speak, or press <kbd>F9</kbd> for a live conversation. In your own language.</p>
+        </div>
+        <div class="voice-grid">
+          <article class="card"><h3>Capture</h3><p>Thoughts, the clipboard, a working context.</p>
+            <div class="says"><span class="say">add this to the Brain</span><span class="say">note that…</span><span class="say">we are working on the X project</span></div></article>
+          <article class="card"><h3>Explore the graph</h3><p>Zoom, fold, filter, switch to the timeline.</p>
+            <div class="says"><span class="say">zoom into X</span><span class="say">fold X</span><span class="say">show the timeline</span></div></article>
+          <article class="card"><h3>Find and connect</h3><p>Meaning search, paths, related ideas.</p>
+            <div class="says"><span class="say">find…</span><span class="say">how is X connected to Y?</span><span class="say">open the captures</span></div></article>
+          <article class="card"><h3>Read documents</h3><p>Open a PDF, turn pages, show the original.</p>
+            <div class="says"><span class="say">open the document</span><span class="say">next page</span><span class="say">close the document</span></div></article>
+          <article class="card"><h3>Share</h3><p>Export, import and manage packs.</p>
+            <div class="says"><span class="say">export everything</span><span class="say">import a pack</span><span class="say">merge the pack X</span></div></article>
+          <article class="card"><h3>Organise</h3><p>Move, link, unlink, delete, by name.</p>
+            <div class="says"><span class="say">put my CVs in Job search</span><span class="say">link X to Y</span><span class="say">delete the place X</span></div></article>
+          <article class="card"><h3>The web</h3><p>Search, open, add, close tabs.</p>
+            <div class="says"><span class="say">search the web for…</span><span class="say">open the first one</span><span class="say">add this page</span></div></article>
+          <article class="card"><h3>Think it through</h3><p>With Sparring, or an agent of your own.</p>
+            <div class="says"><span class="say">play devil's advocate</span><span class="say">reassure me</span><span class="say">sum it up and save it</span></div></article>
+          <article class="card"><h3>Control the voice</h3><p>Repeat, speed up, undo, stop.</p>
+            <div class="says"><span class="say">read that again</span><span class="say">speak faster</span><span class="say">undo that</span></div></article>
+        </div>
       </div>
     </section>
 
@@ -102,9 +128,9 @@
     <section id="product" class="section section-alt">
       <div class="container">
         <div class="section-head">
-          <p class="overline">The product</p>
-          <h2>A brain that files itself, and a graph you can walk into</h2>
-          <p>Every screen below is the real application, captured automatically on demo data.</p>
+          <p class="overline">A live interface</p>
+          <h2>Built with a game engine, alive in real time</h2>
+          <p>Every screen below is the real application.</p>
         </div>
 
         <div class="feature">
@@ -233,7 +259,34 @@
       </div>
     </section>
 
-    <section id="agents" class="section">
+    <section id="mcp" class="section">
+      <div class="container">
+        <div class="section-head">
+          <p class="overline">MCP</p>
+          <h2>Every AI agent, your rules</h2>
+          <p>Claude Code, Codex, Copilot or any MCP tool reads your Brain. Nothing changes without your yes.</p>
+        </div>
+        <div class="feature">
+          <div class="feature-text">
+            <ul>
+              <li>One Brain, the same context for all your agents</li>
+              <li>They propose, the Archivist files, you approve</li>
+              <li>A timeline of every change, and Go back</li>
+              <li>Your agents use MCP servers too: docs, code, web, your apps</li>
+            </ul>
+          </div>
+          <div>
+            <figure class="shot"><img src="assets/showcase/mcp-connect.webp" alt="The AI tools window: pick your tool (here VS Code with GitHub Copilot) and connect it, read only, on this computer" loading="lazy" width="1280" height="800"><figcaption>Connect any MCP tool, read only to start</figcaption></figure>
+            <div class="mini-shots">
+              <figure class="shot"><img src="assets/showcase/mcp-proposals.webp" alt="Proposals from a connected AI tool waiting for approval" loading="lazy" width="1280" height="800"><figcaption>It proposes, you decide</figcaption></figure>
+              <figure class="shot"><img src="assets/showcase/mcp-timeline.webp" alt="The timeline of changes with a restore point" loading="lazy" width="1280" height="800"><figcaption>Every change, and Go back</figcaption></figure>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="agents" class="section section-alt">
       <div class="container">
         <div class="section-head">
           <p class="overline">Agents</p>
@@ -287,38 +340,6 @@
       </div>
     </section>
 
-    <section id="voice" class="section section-alt">
-      <div class="container">
-        <div class="section-head">
-          <p class="overline">Voice first</p>
-          <h2>Everything you can click, you can say</h2>
-          <p>Hold <kbd>F8</kbd> and speak a thought or a command, or press <kbd>F9</kbd> for a live conversation
-            you can interrupt. Your voice goes to the agent whose panel you used last: the Archivist answers
-            briefly and drives the interface, Sparring thinks with you. Speak your own language: they answer in it.
-            The phrases below are examples, not a fixed grammar.</p>
-        </div>
-        <div class="voice-grid">
-          <article class="card"><h3>Capture</h3><p>Thoughts, the clipboard, a working context.</p>
-            <div class="says"><span class="say">add this to the Brain</span><span class="say">note that…</span><span class="say">we are working on the X project</span></div></article>
-          <article class="card"><h3>Explore the graph</h3><p>Zoom, fold, filter, switch to the timeline.</p>
-            <div class="says"><span class="say">zoom into X</span><span class="say">fold X</span><span class="say">show the timeline</span></div></article>
-          <article class="card"><h3>Find and connect</h3><p>Meaning search, paths, related ideas.</p>
-            <div class="says"><span class="say">find…</span><span class="say">how is X connected to Y?</span><span class="say">open the captures</span></div></article>
-          <article class="card"><h3>Read documents</h3><p>Open a PDF, turn pages, show the original.</p>
-            <div class="says"><span class="say">open the document</span><span class="say">next page</span><span class="say">close the document</span></div></article>
-          <article class="card"><h3>Share</h3><p>Export, import and manage packs.</p>
-            <div class="says"><span class="say">export everything</span><span class="say">import a pack</span><span class="say">merge the pack X</span></div></article>
-          <article class="card"><h3>Organise</h3><p>Move, link, unlink, delete, by name.</p>
-            <div class="says"><span class="say">put my CVs in Job search</span><span class="say">link X to Y</span><span class="say">delete the place X</span></div></article>
-          <article class="card"><h3>The web</h3><p>Search, open, add, close tabs.</p>
-            <div class="says"><span class="say">search the web for…</span><span class="say">open the first one</span><span class="say">add this page</span></div></article>
-          <article class="card"><h3>Think it through</h3><p>With Sparring, or an agent of your own.</p>
-            <div class="says"><span class="say">play devil's advocate</span><span class="say">reassure me</span><span class="say">sum it up and save it</span></div></article>
-          <article class="card"><h3>Control the voice</h3><p>Repeat, speed up, undo, stop.</p>
-            <div class="says"><span class="say">read that again</span><span class="say">speak faster</span><span class="say">undo that</span></div></article>
-        </div>
-      </div>
-    </section>
 
     <section id="principles" class="section">
       <div class="container">
