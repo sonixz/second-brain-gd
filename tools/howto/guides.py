@@ -42,7 +42,7 @@ def by_id(gid: str) -> dict:
 # GUIDES-START
 guide(
     "first-minutes", "Your first five minutes", "real", 5,
-    "Add a thought and a PDF, and see where the Archivist files them, without choosing anything yourself.",
+    "Add a thought and a PDF, and see where the Archivist agent files them, without choosing anything yourself.",
     ["Second Brain GD installed, with your OpenAI key (<a href=\"docs.html#install\">Install</a>)"],
     [("Click the capture bar at the bottom (or press <kbd>Ctrl</kbd>+<kbd>Space</kbd>) and type a thought as it "
       "comes: <i>Ask Northwind if the heat pump quote includes the smart thermostat</i>.",
