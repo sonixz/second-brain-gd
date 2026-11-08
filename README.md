@@ -52,8 +52,8 @@ and what goes to the MCP servers you choose to connect. Backups, restore, start 
 - [CONTRIBUTING.md](CONTRIBUTING.md) · [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) ·
   [audit before going public](docs/audit-before-public.md)
 
-**Status:** in active development (see [STATUS](STATUS.md)). The repository is private for now; its licence is not
-chosen yet.
+**Status:** in active development (see [STATUS](STATUS.md)). Open source under the MIT licence (`LICENSE`); third-party parts in
+`THIRD_PARTY_NOTICES.md`. Part of [GD Project](https://github.com/sonixz/gd-project).
 
 ## Using it
 
