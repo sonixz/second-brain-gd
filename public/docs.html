@@ -201,6 +201,14 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         <p>Your whole Brain is backed up by itself, every day by default, while the app is open. Everything is in:
           items, documents and page pictures, conversations, your agents, the undo history, settings. Never your API
           key: it stays in the credential store. Each backup is read back and checked before it counts.</p>
+        <div class="flow" role="img" aria-label="Your Brain is backed up automatically or on demand; each backup is read back and checked; from a verified backup you can restore, start fresh, or uninstall while keeping backups.">
+          <div class="flow-group"><span class="chip">Your Brain</span><span class="chip any">every day, or now</span></div>
+          <div class="flow-arrow">back up</div>
+          <div class="flow-core"><b>Verified backup</b><span>read back and checked</span><small>on your disk, a USB key or OneDrive</small></div>
+          <div class="flow-arrow">then</div>
+          <div class="flow-group"><span class="chip">Restore</span><span class="chip warm">Start fresh</span><span class="chip warm">Uninstall, keep backups</span></div>
+        </div>
+        <p class="flow-note">Nothing is erased without a verified backup, and never by voice.</p>
         <p>All of it is in the engine room (the status pill at the top right), <b>Your data</b>:
           step by step in <a href="howto.html#backups">How-to → Back up and restore</a>.</p>
         <table>
@@ -261,6 +269,19 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         <p class="kicker">Get started</p>
         <h2>Where your data lives</h2>
         <p>Nothing is ever written inside the repository. Set <code>SBGD_HOME</code> to use another folder.</p>
+        <div class="tree" role="img" aria-label="Your data folder: data with second_brain.sqlite3 and originals, backups, exports, runtime, logs, config.json">
+          <ul><li class="root">SecondBrainGD/ <span>%LOCALAPPDATA% on Windows</span>
+            <ul>
+              <li>data/
+                <ul>
+                  <li class="core-file">second_brain.sqlite3 <span>your whole Brain, one file</span></li>
+                  <li>originals/ <span>every file and page you added</span></li>
+                </ul></li>
+              <li>backups/ <span>verified backups, until you choose another place</span></li>
+              <li>exports/ <span>the packs you shared</span></li>
+              <li>runtime/ · logs/ · config.json <span>the engine while it runs</span></li>
+            </ul></li></ul>
+        </div>
         <table>
           <thead><tr><th>System</th><th>Folder</th></tr></thead>
           <tbody>
@@ -313,6 +334,14 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
         <h2>How the Archivist agent files</h2>
         <p>The Archivist is the AI agent that keeps your Brain in order. It is data-oriented: it receives, understands, files and links. It gives no opinions and
           asks only when it cannot file an item without an answer.</p>
+        <div class="flow" role="img" aria-label="Anything you give (voice, text, PDF, web page, photo, file) goes to the Archivist agent, which reads, titles, summarises and links it, then files it in Projects, Areas, Resources or Archives, with a receipt and Undo.">
+          <div class="flow-group"><span class="chip">Voice</span><span class="chip">Text</span><span class="chip">PDF</span><span class="chip">Web page</span><span class="chip">Photo</span><span class="chip">File</span></div>
+          <div class="flow-arrow">Inbox</div>
+          <div class="flow-core"><b>The Archivist agent</b><span>reads · titles · summarises · links</span><small>asks only when it must</small></div>
+          <div class="flow-arrow">files</div>
+          <div class="flow-group"><span class="chip">Projects</span><span class="chip">Areas</span><span class="chip">Resources</span><span class="chip">Archives</span></div>
+        </div>
+        <p class="flow-note">Every filing comes with a receipt and Undo.</p>
         <h3>CODE and PARA</h3>
         <p>The Brain follows the <b>CODE</b> method (Capture, Organise, Distil, Express) and files into
           <b>PARA</b>:</p>
@@ -708,6 +737,14 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           by voice. It sends the page <b>as your browser shows it</b>: after your login, the page's scripts and any
           “I am not a robot” check. Nothing is downloaded a second time, so sites that block robots (many job boards)
           are not a problem.</p>
+        <div class="flow" role="img" aria-label="The page you are reading in Edge or Chrome, as your browser shows it, goes through the extension, paired once, to the Archivist agent, which files it in your Brain with its address and pictures.">
+          <div class="flow-group"><span class="chip">The page you read</span><span class="chip">A passage</span><span class="chip">Its pictures</span><span class="chip">Its address</span></div>
+          <div class="flow-arrow">one click</div>
+          <div class="flow-group"><span class="chip warm">Extension</span><span class="chip any">paired once · 127.0.0.1</span></div>
+          <div class="flow-arrow">sends</div>
+          <div class="flow-core"><b>The Archivist agent</b><span>files it with its context</span><small>the original page is kept</small></div>
+        </div>
+        <p class="flow-note">As your browser shows it: after your login, nothing downloaded twice.</p>
         <div class="callout"><p><b>Local and private.</b> The extension is a folder of the project
           (<code>browser-extension/</code>), loaded in your own browser. No store, no account, no publication. It talks only
           to the engine on <code>127.0.0.1</code>, with its own token obtained by pairing.</p></div>
@@ -899,6 +936,14 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           <i>mcp.json</i> for VS Code or Cursor, or, for any other client, the address
           <code>http://127.0.0.1:&lt;port&gt;/mcp</code> with its key (Streamable HTTP) or a command it starts (stdio).
           The key is shown once; restart the tool.</p>
+        <div class="flow" role="img" aria-label="Your AI tools (Claude Code, Codex, GitHub Copilot, Cursor, any MCP tool) read your Brain and propose; the Archivist agent decides; your agents use MCP servers (docs, code, web search, your apps).">
+          <div class="flow-group"><span class="chip">Claude Code</span><span class="chip">Codex</span><span class="chip">GitHub Copilot</span><span class="chip">Cursor</span><span class="chip any">any MCP tool</span></div>
+          <div class="flow-arrow both">read · propose</div>
+          <div class="flow-core"><b>Your Brain</b><span>The Archivist agent decides</span><small>you approve · Go back anytime</small></div>
+          <div class="flow-arrow both">search · fetch</div>
+          <div class="flow-group"><span class="chip">Docs</span><span class="chip">Code</span><span class="chip">Web search</span><span class="chip">Your apps</span><span class="chip any">any MCP server</span></div>
+        </div>
+        <p class="flow-note">⇠ in: your AI tools read your Brain · ⇢ out: your agents use MCP servers. On 127.0.0.1 only.</p>
         <figure class="shot doc-shot"><img src="assets/showcase/mcp-connect.webp" alt="The AI tools window, first tab « Who may read your Brain »: a tool connected, what it may do, the commands to copy" loading="lazy" width="1280" height="800"><figcaption>First tab: who may read your Brain. Pick the tool; its command or settings appear, the key shown once.</figcaption></figure>
         <ul>
           <li><b>Read</b>: overview, search, an item's text in parts, places, neighbours, paths, recent items, the Inbox,

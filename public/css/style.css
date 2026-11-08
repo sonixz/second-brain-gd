@@ -409,3 +409,34 @@ pre code { background: none; padding: 0; font-size: inherit; color: #dce9f7; }
 @media (max-width: 860px) {
   .guide-step { grid-template-columns: 1fr; gap: 12px; }
 }
+
+/* Flow diagrams (docs, how-to): chips → arrow → a glowing core → chips. Plain HTML, real text. */
+.flow { display: flex; align-items: center; gap: 12px; margin: 20px 0 28px; padding: 22px 18px; border: 1px solid var(--border);
+  border-radius: var(--radius); background: rgba(10, 20, 36, .18); }
+.flow-group { flex: 1; display: flex; flex-wrap: wrap; gap: 6px; justify-content: center; }
+.flow-group .chip, .flow-tail .chip { border: 1px solid var(--border); background: var(--panel); border-radius: 999px; padding: 4px 11px; font-size: .84rem; color: var(--text); white-space: nowrap; }
+.flow .chip.any { border-style: dashed; color: var(--muted); background: transparent; }
+.flow .chip.warm { border-color: rgba(255, 210, 161, .55); color: var(--warm); }
+.flow-arrow { display: flex; flex-direction: column; align-items: center; color: var(--faint); font-size: .76rem; min-width: 70px; text-align: center; }
+.flow-arrow::before { content: "→"; font-size: 1.4rem; color: var(--mint); line-height: 1; margin-bottom: 3px; }
+.flow-arrow.both::before { content: "⇄"; }
+.flow-core { flex: 1.1; display: flex; flex-direction: column; align-items: center; gap: 3px; text-align: center; padding: 16px 12px;
+  border-radius: var(--radius); border: 1px solid rgba(169, 212, 255, .55);
+  background: radial-gradient(circle at 50% 30%, rgba(169, 212, 255, .16), var(--panel) 70%); box-shadow: 0 0 36px -12px rgba(169, 212, 255, .5); }
+.flow-core b { font-size: 1.05rem; color: var(--mint-soft); }
+.flow-core span { color: var(--warm); font-size: .86rem; }
+.flow-core small { color: var(--muted); font-size: .76rem; }
+.flow-note { margin: -16px 0 26px; color: var(--muted); font-size: .86rem; text-align: center; }
+.tree { margin: 20px 0 28px; padding: 18px 22px; border: 1px solid var(--border); border-radius: var(--radius); background: rgba(10, 20, 36, .18);
+  font-family: var(--mono); font-size: .86rem; }
+.tree ul { list-style: none; margin: 0; padding-left: 22px; border-left: 1px dashed var(--border); }
+.tree > ul { padding-left: 0; border-left: 0; }
+.tree li { margin: 6px 0; }
+.tree li span { font-family: var(--font); color: var(--muted); margin-left: 8px; }
+.tree .root { color: var(--mint-soft); }
+.tree .core-file { color: var(--warm); }
+@media (max-width: 720px) {
+  .flow { flex-direction: column; }
+  .flow-arrow::before { content: "↓"; }
+  .flow-arrow.both::before { content: "⇅"; }
+}
