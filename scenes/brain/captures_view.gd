@@ -171,7 +171,7 @@ func _extension_section(box: VBoxContainer) -> void:
 	steps.text = I18n.t("Install it once: in the browser open edge://extensions (or chrome://extensions), turn on Developer mode, click “Load unpacked” and choose the folder browser-extension in the project. Then pair it: click below, and type the code in the extension (its icon in the toolbar). It talks only to this computer.")
 	box.add_child(steps)
 	var code_label := Label.new()
-	code_label.add_theme_font_size_override("font_size", 30)
+	code_label.add_theme_font_size_override("font_size", SbTheme.fs(30))
 	code_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	code_label.visible = false
 	box.add_child(code_label)
@@ -259,7 +259,7 @@ func _card(it: Dictionary) -> Control:
 	col.add_child(top)
 	var t := Label.new()
 	t.text = str(it.get("title", ""))
-	t.add_theme_font_size_override("font_size", 16)
+	t.add_theme_font_size_override("font_size", SbTheme.fs(16))
 	t.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	t.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
 	t.clip_text = true

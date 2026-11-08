@@ -24,7 +24,7 @@ func setup(title: String) -> InfoCard:
 	_title = Label.new()
 	_title.text = title
 	_title.theme_type_variation = "Heading"
-	_title.add_theme_font_size_override("font_size", 16)
+	_title.add_theme_font_size_override("font_size", SbTheme.fs(16))
 	_title.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	head.add_child(_title)
 	_state = Label.new()

@@ -115,10 +115,10 @@ func _build_pill() -> void:
 	_pill.add_child(row)
 	_dot = Label.new()
 	_dot.text = "●"
-	_dot.add_theme_font_size_override("font_size", 18)
+	_dot.add_theme_font_size_override("font_size", SbTheme.fs(18))
 	row.add_child(_dot)
 	_label = Label.new()
-	_label.add_theme_font_size_override("font_size", 17)
+	_label.add_theme_font_size_override("font_size", SbTheme.fs(17))
 	row.add_child(_label)
 	_meter = Label.new()
 	_meter.theme_type_variation = "Muted"

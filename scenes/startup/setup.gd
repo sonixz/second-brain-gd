@@ -77,7 +77,7 @@ func _ready() -> void:
 	headline = Label.new()
 	headline.text = I18n.t("Preparing your Second Brain")
 	headline.theme_type_variation = "Heading"
-	headline.add_theme_font_size_override("font_size", 24)
+	headline.add_theme_font_size_override("font_size", SbTheme.fs(24))
 	htext.add_child(headline)
 
 	var prow := HBoxContainer.new()
@@ -152,7 +152,7 @@ func _ready() -> void:
 	var ltitle := Label.new()
 	ltitle.text = I18n.t("Live log")
 	ltitle.theme_type_variation = "Heading"
-	ltitle.add_theme_font_size_override("font_size", 16)
+	ltitle.add_theme_font_size_override("font_size", SbTheme.fs(16))
 	ltitle.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	lhead.add_child(ltitle)
 	log_toggle = Button.new()

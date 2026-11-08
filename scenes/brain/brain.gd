@@ -438,7 +438,7 @@ func _build_top_bar() -> void:
 	bar.add_child(htext)
 	greeting = Label.new()
 	greeting.theme_type_variation = "Heading"
-	greeting.add_theme_font_size_override("font_size", 22)
+	greeting.add_theme_font_size_override("font_size", SbTheme.fs(22))
 	htext.add_child(greeting)
 	date_label = Label.new()
 	date_label.theme_type_variation = "Muted"
@@ -509,7 +509,7 @@ func _settings_menu() -> Button:
 	b.name = "SettingsButton"
 	b.text = "⚙"
 	b.theme_type_variation = "GhostButton"
-	b.add_theme_font_size_override("font_size", 20)
+	b.add_theme_font_size_override("font_size", SbTheme.fs(20))
 	b.custom_minimum_size = Vector2(44, 40)
 	b.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	b.tooltip_text = I18n.t("Settings")
@@ -1202,7 +1202,7 @@ func _build_listening_overlay() -> void:
 	listening_label = Label.new()
 	listening_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	listening_label.add_theme_color_override("font_color", SbTheme.WARM)
-	listening_label.add_theme_font_size_override("font_size", 18)
+	listening_label.add_theme_font_size_override("font_size", SbTheme.fs(18))
 	listening_overlay.add_child(listening_label)
 
 
@@ -1322,7 +1322,7 @@ func _build_inspector() -> void:
 	head.add_child(close)
 	title_edit = LineEdit.new()
 	title_edit.add_theme_font_override("font", SbTheme.font(650))
-	title_edit.add_theme_font_size_override("font_size", 20)
+	title_edit.add_theme_font_size_override("font_size", SbTheme.fs(20))
 	title_edit.text_changed.connect(func(_t: String) -> void: _queue_save())
 	col.add_child(title_edit)
 	var meta := HBoxContainer.new()

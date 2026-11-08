@@ -184,7 +184,7 @@ func show_card(space_id: String) -> void:
 	var name := LineEdit.new()
 	name.text = str(c["name"])
 	name.add_theme_font_override("font", SbTheme.font(650))
-	name.add_theme_font_size_override("font_size", 22)
+	name.add_theme_font_size_override("font_size", SbTheme.fs(22))
 	stack.add_child(name)
 	_fields["name"] = name
 	var grid := GridContainer.new()

@@ -45,7 +45,7 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = I18n.t("Missions")
 	title.theme_type_variation = "Heading"
-	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_font_size_override("font_size", SbTheme.fs(16))
 	t.add_child(title)
 	summary_label = Label.new()
 	summary_label.theme_type_variation = "Muted"

@@ -109,6 +109,17 @@ func _unit() -> void:
 		check(SbTheme.current == name and SbTheme.build() != null, "theme %s applies" % name)
 		check(SbAudio.tracks_for(name).size() >= 2, "theme %s has a music playlist" % name)
 	check(SbTheme.resolve("auto") in SbTheme.THEMES, "auto theme resolves by time of day")
+	# Themes, step 1: style tokens. The defaults are the app's look; a style changes the surface only.
+	var st_box := SbTheme.box(SbTheme.PANEL, 10, SbTheme.BORDER, 1, 12)
+	check(st_box.corner_radius_top_left == 10 and st_box.border_width_left == 1 and st_box.content_margin_left == 12.0
+		and SbTheme.fs(15) == 15 and SbTheme.font().font_names[0] == "Segoe UI Variable Text", "default style: the app's own corners, borders, padding and fonts")
+	SbTheme.set_style({"radius_scale": 0, "font_scale": 1.2, "border_scale": 2, "graph_shape": "square", "shadow": "lots", "bogus": 1,
+		"font_sans": ["Cascadia Mono"]})
+	var sq_box := SbTheme.box(SbTheme.PANEL, 10, SbTheme.BORDER, 1, 12)
+	check(sq_box.corner_radius_top_left == 0 and sq_box.border_width_left == 2 and SbTheme.fs(15) == 18 and float(SbTheme.tok("shadow")) == 1.0
+		and not SbTheme.STYLE.has("bogus") and SbTheme.font().font_names[0] == "Cascadia Mono" and SbTheme.build() != null,
+		"a style changes corners, borders, text size and fonts; unknown keys and wrong types are ignored")
+	SbTheme.set_style({})
 	# Voice encoder: 48 kHz stereo -> 24 kHz mono PCM16, continuous across calls
 	var frames := PackedVector2Array()
 	for i in 4800:
@@ -924,6 +935,15 @@ func _e2e() -> void:
 	check(sv_suggested.size() >= 3
 		and (sv_status["data"] as Dictionary).get("out") is Dictionary and str(lights.get("out_state")) == "off" and not sv_bad["ok"],
 		"MCP servers for the agents: starters are suggested, an unsafe address is refused, ⇢ out stays grey with none")
+	SbTheme.set_style({"graph_shape": "square", "graph_links": "dashed", "graph_background": "grid", "graph_glow": 0})
+	graph.draw_ms = -1.0
+	graph.queue_redraw()
+	await process_frame
+	await process_frame
+	var sq_drawn: float = graph.draw_ms
+	SbTheme.set_style({})
+	graph.queue_redraw()
+	check(sq_drawn >= 0.0, "the graph draws in a square style with dashed links, a grid and no glow (%.1f ms)" % sq_drawn)
 	await ap.send("Comment Welcome to your Second Brain est relié à Capture a thought ?", true)
 	var l14_welcome := graph.find_node("Welcome to your Second Brain")
 	var l14_pathed := await wait_until(func() -> bool: return graph.path_ids.size() >= 2, 10.0)

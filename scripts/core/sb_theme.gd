@@ -48,6 +48,23 @@ const PALETTES := {
 		"INFO": "7cc8ff", "ON_ACCENT": "06110c"},
 }
 
+## Style tokens: everything visual that is not a colour. Pure surface: no token moves a panel or changes what
+## anything does. The defaults are the app's own look; a style only overrides some of them (set_style).
+const STYLE_DEFAULTS := {
+	"font_sans": ["Segoe UI Variable Text", "Segoe UI", "Inter", "Ubuntu", "Noto Sans", "Helvetica Neue", "Arial", "sans-serif"],
+	"font_mono": ["Cascadia Mono", "Consolas", "JetBrains Mono", "DejaVu Sans Mono", "monospace"],
+	"font_scale": 1.0,        # every text size
+	"radius_scale": 1.0,      # every corner (0 = square)
+	"border_scale": 1.0,      # every border (0 = none)
+	"shadow": 1.0,            # floating panels' shadow (0 = flat)
+	"density": 1.0,           # inner padding of boxes and buttons
+	"graph_shape": "circle",  # nodes and places: circle | square
+	"graph_links": "solid",   # links between items: solid | dashed
+	"graph_glow": 1.0,        # halos, rings and the breathing glow (0 = none)
+	"graph_background": "stars",  # stars | plain | grid
+}
+static var STYLE: Dictionary = STYLE_DEFAULTS.duplicate(true)
+
 static var current := "morning"
 static var BG := Color("2b3c54")
 static var BG_2 := Color("31445e")
@@ -80,7 +97,56 @@ static func resolve(name: String) -> String:
 	return "evening"
 
 
+## Replaces the style: the defaults, then the given tokens (unknown keys and wrong types are ignored).
+static func set_style(tokens: Dictionary) -> void:
+	STYLE = STYLE_DEFAULTS.duplicate(true)
+	for k in tokens:
+		if not STYLE_DEFAULTS.has(k):
+			continue
+		var want: int = typeof(STYLE_DEFAULTS[k])
+		var v: Variant = tokens[k]
+		if want == TYPE_FLOAT and (v is float or v is int):
+			STYLE[k] = clampf(float(v), 0.0, 4.0)
+		elif want == TYPE_ARRAY and v is Array and not (v as Array).is_empty():
+			STYLE[k] = (v as Array).map(func(x: Variant) -> String: return str(x))
+		elif want == TYPE_STRING and v is String:
+			STYLE[k] = v
+
+
+## A style preview for development (Step 1 of themes): SBGD_STYLE=<a JSON file of tokens>.
+static func load_style_env() -> void:
+	var path := OS.get_environment("SBGD_STYLE")
+	if path == "" or not FileAccess.file_exists(path):
+		return
+	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
+	if data is Dictionary:
+		set_style(data)
+
+
+static func tok(key: String) -> Variant:
+	return STYLE.get(key, STYLE_DEFAULTS.get(key))
+
+
+## A corner radius, a text size, a border width, through the style.
+static func r(px: float) -> int:
+	return roundi(px * float(tok("radius_scale")))
+
+
+static func fs(px: int) -> int:
+	return maxi(6, roundi(px * float(tok("font_scale"))))
+
+
+static func bw(px: int) -> int:
+	return 0 if px <= 0 else roundi(px * float(tok("border_scale")))
+
+
+static var _style_loaded := false
+
+
 static func apply(name: String) -> String:
+	if not _style_loaded:
+		_style_loaded = true
+		load_style_env()
 	var resolved := resolve(name)
 	var p: Dictionary = PALETTES[resolved]
 	current = resolved
@@ -136,9 +202,10 @@ static func box(color: Color, radius: int = 10, border: Color = Color(0, 0, 0, 0
 		pad: float = 12.0) -> StyleBoxFlat:
 	var s := StyleBoxFlat.new()
 	s.bg_color = color
-	s.set_corner_radius_all(radius)
+	s.set_corner_radius_all(r(radius))
 	s.border_color = border
-	s.set_border_width_all(border_w)
+	s.set_border_width_all(bw(border_w))
+	pad *= float(tok("density"))
 	s.content_margin_left = pad
 	s.content_margin_right = pad
 	s.content_margin_top = pad * 0.6
@@ -149,16 +216,16 @@ static func box(color: Color, radius: int = 10, border: Color = Color(0, 0, 0, 0
 
 static func glass() -> StyleBoxFlat:
 	var s := box(Color(PANEL, 0.86), 18, Color(BORDER, 0.9), 1, 18)
-	s.shadow_color = Color(0, 0, 0, 0.22)
-	s.shadow_size = 18
+	var sh := float(tok("shadow"))
+	s.shadow_color = Color(0, 0, 0, clampf(0.22 * sh, 0.0, 1.0))
+	s.shadow_size = roundi(18 * sh)
 	s.shadow_offset = Vector2(0, 6)
 	return s
 
 
 static func font(weight: int = 400) -> SystemFont:
 	var f := SystemFont.new()
-	f.font_names = PackedStringArray(["Segoe UI Variable Text", "Segoe UI", "Inter", "Ubuntu", "Noto Sans",
-		"Helvetica Neue", "Arial", "sans-serif"])
+	f.font_names = PackedStringArray(tok("font_sans"))
 	f.font_weight = weight
 	f.antialiasing = TextServer.FONT_ANTIALIASING_GRAY
 	return f
@@ -166,36 +233,35 @@ static func font(weight: int = 400) -> SystemFont:
 
 static func mono() -> SystemFont:
 	var f := SystemFont.new()
-	f.font_names = PackedStringArray(["Cascadia Mono", "Consolas", "JetBrains Mono", "DejaVu Sans Mono",
-		"monospace"])
+	f.font_names = PackedStringArray(tok("font_mono"))
 	return f
 
 
 static func build() -> Theme:
 	var t := Theme.new()
 	t.default_font = font(400)
-	t.default_font_size = 15
+	t.default_font_size = fs(15)
 
 	t.set_color("font_color", "Label", TEXT)
 	t.set_type_variation("Muted", "Label")
 	t.set_color("font_color", "Muted", MUTED)
-	t.set_font_size("font_size", "Muted", 13)
+	t.set_font_size("font_size", "Muted", fs(13))
 	t.set_type_variation("Heading", "Label")
 	t.set_font("font", "Heading", font(650))
-	t.set_font_size("font_size", "Heading", 20)
+	t.set_font_size("font_size", "Heading", fs(20))
 	t.set_type_variation("Title", "Label")
 	t.set_font("font", "Title", font(750))
-	t.set_font_size("font_size", "Title", 34)
+	t.set_font_size("font_size", "Title", fs(34))
 	t.set_type_variation("Overline", "Label")
 	t.set_font("font", "Overline", font(650))
-	t.set_font_size("font_size", "Overline", 11)
+	t.set_font_size("font_size", "Overline", fs(11))
 	t.set_color("font_color", "Overline", MINT)
 
 	for type in ["Button", "PrimaryButton", "GhostButton"]:
 		if type != "Button":
 			t.set_type_variation(type, "Button")
 		t.set_font("font", type, font(600))
-		t.set_font_size("font_size", type, 15)
+		t.set_font_size("font_size", type, fs(15))
 	t.set_stylebox("normal", "Button", box(PANEL_2, 10, BORDER, 1, 18))
 	t.set_stylebox("hover", "Button", box(PANEL_2.lightened(0.06), 10, FOREST_LIGHT, 1, 18))
 	t.set_stylebox("pressed", "Button", box(PANEL_2.darkened(0.08), 10, MINT, 1, 18))
@@ -261,7 +327,7 @@ static func build() -> Theme:
 	t.set_type_variation("CaptureEdit", "LineEdit")
 	t.set_stylebox("normal", "CaptureEdit", box(Color(PANEL, 0.92), 26, BORDER, 1, 22))
 	t.set_stylebox("focus", "CaptureEdit", box(Color(PANEL, 0.97), 26, MINT, 2, 22))
-	t.set_font_size("font_size", "CaptureEdit", 17)
+	t.set_font_size("font_size", "CaptureEdit", fs(17))
 	t.set_color("font_uneditable_color", "CaptureEdit", TEXT)  # live transcript stays readable
 	t.set_type_variation("SearchEdit", "LineEdit")
 	t.set_stylebox("normal", "SearchEdit", box(Color(PANEL, 0.8), 20, BORDER, 1, 16))
@@ -294,9 +360,9 @@ static func build() -> Theme:
 	t.set_font("mono_font", "RichTextLabel", mono())
 	t.set_font("normal_font", "RichTextLabel", font(400))
 	t.set_font("bold_font", "RichTextLabel", font(650))
-	t.set_font_size("normal_font_size", "RichTextLabel", 13)
-	t.set_font_size("mono_font_size", "RichTextLabel", 12)
-	t.set_font_size("bold_font_size", "RichTextLabel", 13)
+	t.set_font_size("normal_font_size", "RichTextLabel", fs(13))
+	t.set_font_size("mono_font_size", "RichTextLabel", fs(12))
+	t.set_font_size("bold_font_size", "RichTextLabel", fs(13))
 
 	t.set_stylebox("panel", "TooltipPanel", box(PANEL_2, 8, BORDER, 1, 10))
 	t.set_color("font_color", "TooltipLabel", TEXT)

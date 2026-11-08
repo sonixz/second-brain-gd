@@ -42,7 +42,7 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = I18n.t("Real costs · OpenAI billing")
 	title.theme_type_variation = "Heading"
-	title.add_theme_font_size_override("font_size", 16)
+	title.add_theme_font_size_override("font_size", SbTheme.fs(16))
 	t.add_child(title)
 	state_label = Label.new()
 	state_label.theme_type_variation = "Muted"
@@ -146,7 +146,7 @@ func _tile(parent: Control, label: String, hero: bool) -> Label:
 	var value := Label.new()
 	value.text = "—"
 	value.theme_type_variation = "Heading"
-	value.add_theme_font_size_override("font_size", 28 if hero else 18)
+	value.add_theme_font_size_override("font_size", SbTheme.fs(28 if hero else 18))
 	v.add_child(value)
 	return value
 

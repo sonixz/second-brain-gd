@@ -133,8 +133,8 @@ func _draw() -> void:
 			if j == stack.size() - 1 and h >= 4.0:
 				var sb := StyleBoxFlat.new()
 				sb.bg_color = col
-				sb.corner_radius_top_left = 3
-				sb.corner_radius_top_right = 3
+				sb.corner_radius_top_left = SbTheme.r(3)
+				sb.corner_radius_top_right = SbTheme.r(3)
 				draw_style_box(sb, seg)
 			else:
 				draw_rect(seg, col)

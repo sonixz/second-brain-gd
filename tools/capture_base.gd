@@ -98,7 +98,9 @@ func boot_env() -> void:
 	var size := OS.get_environment("SBGD_SHOT_SIZE")
 	root.size = Vector2i(1280, 800) if size == "" else Vector2i(int(size.get_slice("x", 0)), int(size.get_slice("x", 1)))
 	OS.set_environment("SBGD_SETTINGS", OS.get_environment("SBGD_HOME").path_join("showcase-settings.cfg"))
-	SbSettings.set_value("ui", "theme", "morning")
+	# SBGD_SHOT_THEME=forest (…) to preview another theme; the site's screenshots are « morning »
+	var shot_theme := OS.get_environment("SBGD_SHOT_THEME")
+	SbSettings.set_value("ui", "theme", shot_theme if shot_theme != "" else "morning")
 	SbSettings.set_value("ui", "modules", false)
 	SbSettings.set_value("onboarding", "voice_done", true)
 	SbSettings.set_value("voice", "speak_replies", false)

@@ -1,0 +1,11 @@
+{
+  "font_sans": ["Cascadia Mono", "Consolas", "JetBrains Mono", "DejaVu Sans Mono", "monospace"],
+  "radius_scale": 0,
+  "border_scale": 1,
+  "shadow": 0,
+  "density": 0.9,
+  "graph_shape": "square",
+  "graph_links": "dashed",
+  "graph_glow": 0.3,
+  "graph_background": "grid"
+}

@@ -56,7 +56,7 @@ func setup(a: SbApp, id: String, profile: Dictionary, capabilities: Dictionary, 
 	box.add_child(top)
 	var badge := Label.new()
 	badge.text = str(prof.get("letter", "?"))
-	badge.add_theme_font_size_override("font_size", 26)
+	badge.add_theme_font_size_override("font_size", SbTheme.fs(26))
 	badge.custom_minimum_size = Vector2(40, 40)
 	badge.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	badge.add_theme_color_override("font_color", Color("#" + str(prof.get("color", "a9d4ff"))))
@@ -134,7 +134,7 @@ func setup(a: SbApp, id: String, profile: Dictionary, capabilities: Dictionary, 
 		checks[k] = cb
 		var tools := Label.new()
 		tools.theme_type_variation = "Muted"
-		tools.add_theme_font_size_override("font_size", 12)
+		tools.add_theme_font_size_override("font_size", SbTheme.fs(12))
 		tools.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 		tools.text = "      " + ", ".join((c.get("tools", []) as Array).map(func(t: Variant) -> String: return str(t)))
 		tools.visible = false
@@ -261,7 +261,7 @@ func _missions_block(box: VBoxContainer) -> void:
 	m_minutes.value_changed.connect(func(_v: float) -> void: _save_missions())
 	var hint := Label.new()
 	hint.theme_type_variation = "Muted"
-	hint.add_theme_font_size_override("font_size", 12)
+	hint.add_theme_font_size_override("font_size", SbTheme.fs(12))
 	hint.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	hint.text = I18n.t("Applies to the next mission. What missions cost is in the engine room.")
 	missions_box.add_child(hint)

@@ -41,7 +41,7 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = I18n.t("Talk to your Second Brain")
 	title.theme_type_variation = "Heading"
-	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_font_size_override("font_size", SbTheme.fs(24))
 	htext.add_child(title)
 	var body := Label.new()
 	body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART

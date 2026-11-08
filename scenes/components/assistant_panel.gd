@@ -615,7 +615,7 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 	rt.custom_minimum_size = Vector2(200, 0)
 	rt.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	rt.add_theme_color_override("default_color", SbTheme.TEXT)
-	rt.add_theme_font_size_override("normal_font_size", 14)
+	rt.add_theme_font_size_override("normal_font_size", SbTheme.fs(14))
 	rt.text = _linkify(text)
 	rt.meta_clicked.connect(_on_link)
 	inner.add_child(rt)
@@ -625,7 +625,7 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 		src.fit_content = true
 		src.custom_minimum_size = Vector2(200, 0)
 		src.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-		src.add_theme_font_size_override("normal_font_size", 12)
+		src.add_theme_font_size_override("normal_font_size", SbTheme.fs(12))
 		src.add_theme_color_override("default_color", SbTheme.MUTED)
 		var lines: Array[String] = [I18n.t("SOURCES")]
 		for item in sources:
@@ -648,7 +648,7 @@ func _add_bubble(role: String, text: String, actions: Array, cited: Array, sourc
 		play.text = I18n.t("▶ Replay")
 		play.tooltip_text = I18n.t("Read this answer aloud again (free: the audio is cached)")
 		play.theme_type_variation = "GhostButton"
-		play.add_theme_font_size_override("font_size", 12)
+		play.add_theme_font_size_override("font_size", SbTheme.fs(12))
 		play.set_meta("sfx", "none")
 		play.pressed.connect(func() -> void: replay_text(text))
 		tools.add_child(play)

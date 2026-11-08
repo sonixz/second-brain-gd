@@ -37,7 +37,7 @@ func setup(a: SbApp, files: Array, space: String = "") -> AcceptDialog:
 	summary_label = Label.new()
 	summary_label.name = "Summary"
 	summary_label.theme_type_variation = "Heading"
-	summary_label.add_theme_font_size_override("font_size", 18)
+	summary_label.add_theme_font_size_override("font_size", SbTheme.fs(18))
 	summary_label.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	summary_label.text = I18n.t("Listening to the files…")
 	box.add_child(summary_label)

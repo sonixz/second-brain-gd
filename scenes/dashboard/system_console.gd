@@ -66,7 +66,7 @@ func _ready() -> void:
 	var title := Label.new()
 	title.text = I18n.t("Engine Room · System Console")
 	title.theme_type_variation = "Heading"
-	title.add_theme_font_size_override("font_size", 24)
+	title.add_theme_font_size_override("font_size", SbTheme.fs(24))
 	htext.add_child(title)
 	var pill := PanelContainer.new()
 	pill.theme_type_variation = "Inset"
@@ -150,7 +150,7 @@ func _ready() -> void:
 	var etitle := Label.new()
 	etitle.text = I18n.t("Recent operations")
 	etitle.theme_type_variation = "Heading"
-	etitle.add_theme_font_size_override("font_size", 16)
+	etitle.add_theme_font_size_override("font_size", SbTheme.fs(16))
 	ecol.add_child(etitle)
 	events_view = RichTextLabel.new()
 	events_view.bbcode_enabled = true

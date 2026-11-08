@@ -45,7 +45,7 @@ func setup(a: SbApp, folder: String) -> AcceptDialog:
 	detect_label = Label.new()
 	detect_label.name = "Detected"
 	detect_label.theme_type_variation = "Heading"
-	detect_label.add_theme_font_size_override("font_size", 18)
+	detect_label.add_theme_font_size_override("font_size", SbTheme.fs(18))
 	detect_label.text = I18n.t("Reading the folder…")
 	box.add_child(detect_label)
 	counts_label = Label.new()

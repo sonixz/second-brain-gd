@@ -713,7 +713,7 @@ func _server_row(sv: Variant, agents_list: Array, box: VBoxContainer) -> Control
 	if is_local:
 		var cmd := Label.new()
 		cmd.text = "$ " + " ".join(PackedStringArray(d.get("command", [])))
-		cmd.add_theme_font_size_override("font_size", 12)
+		cmd.add_theme_font_size_override("font_size", SbTheme.fs(12))
 		cmd.theme_type_variation = "Muted"
 		cmd.autowrap_mode = TextServer.AUTOWRAP_ARBITRARY
 		wrap.add_child(cmd)

@@ -117,6 +117,58 @@ func _exit_tree() -> void:
 		_rep_task = -1
 
 
+## Style (SbTheme tokens), read once per frame: node shape, dashed links, glow strength.
+var _square := false
+var _dashed_links := false
+var _glow := 1.0
+
+
+## A filled node or place: a disc, or a square in the square style.
+func _disc(p: Vector2, r: float, col: Color) -> void:
+	if _square:
+		draw_rect(Rect2(p - Vector2(r, r), Vector2(r, r) * 2.0), col)
+	else:
+		draw_circle(p, r, col)
+
+
+## A ring from angle a0 to a1: an arc, or the same stretch of a square's outline in the square style.
+func _ring(p: Vector2, r: float, a0: float, a1: float, points: int, col: Color, width: float, aa: bool = true) -> void:
+	if not _square:
+		draw_arc(p, r, a0, a1, points, col, width, aa)
+		return
+	var angles: Array[float] = []
+	var n := maxi(2, points / 4)
+	for i in n + 1:
+		angles.append(lerpf(a0, a1, float(i) / n))
+	var k := ceili((a0 - PI * 0.25) / (PI * 0.5))
+	while PI * 0.25 + k * PI * 0.5 < a1:  # the corners inside the stretch, so the outline stays square
+		angles.append(PI * 0.25 + k * PI * 0.5)
+		k += 1
+	angles.sort()
+	var line := PackedVector2Array()
+	for ang in angles:
+		var d := Vector2.from_angle(ang)
+		line.append(p + d / maxf(absf(d.x), absf(d.y)) * r)
+	draw_polyline(line, col, width, aa)
+
+
+## The grid background: lines every 80 world units (doubled while they would sit closer than 24 px).
+func _draw_grid() -> void:
+	var step := 80.0 * zoom
+	while step < 24.0:
+		step *= 2.0
+	var o := world_to_screen(Vector2.ZERO)
+	var col := Color(SbTheme.BORDER, 0.35)
+	var x := fposmod(o.x, step)
+	while x < size.x:
+		draw_line(Vector2(x, 0), Vector2(x, size.y), col, 1.0)
+		x += step
+	var y := fposmod(o.y, step)
+	while y < size.y:
+		draw_line(Vector2(0, y), Vector2(size.x, y), col, 1.0)
+		y += step
+
+
 func _ready() -> void:
 	clip_contents = true
 	mouse_filter = Control.MOUSE_FILTER_STOP
@@ -535,7 +587,7 @@ func _draw_path() -> void:
 		draw_line(pa, pb, Color(SbTheme.WARM, 0.95), 3.0, true)
 		for k in 3:
 			var t := fmod(_t * 0.6 + float(k) / 3.0, 1.0)
-			draw_circle(pa.lerp(pb, t), 3.5, SbTheme.MINT_SOFT)
+			_disc(pa.lerp(pb, t), 3.5, SbTheme.MINT_SOFT)
 
 
 # ------------------------------------------------------------ timeline (Loop 15)
@@ -1063,14 +1115,21 @@ func _draw() -> void:
 
 
 func _draw_all() -> void:
-	# Background: soft vignette glow and slow parallax stars.
+	_square = str(SbTheme.tok("graph_shape")) == "square"
+	_dashed_links = str(SbTheme.tok("graph_links")) == "dashed"
+	_glow = float(SbTheme.tok("graph_glow"))
+	# Background (style « graph_background »): soft vignette glow and slow parallax stars, plain, or a grid.
 	draw_rect(Rect2(Vector2.ZERO, size), SbTheme.BG)
+	var bg_style := str(SbTheme.tok("graph_background"))
+	if bg_style == "grid":
+		_draw_grid()
 	var c := size * 0.5
-	for i in 10:
+	for i in (10 if bg_style == "stars" else 0):
 		var f := float(i) / 10.0
 		draw_circle(c + Vector2(-size.x * 0.18, -size.y * 0.1), size.x * 0.55 * (1.0 - f), Color(SbTheme.FOREST, 0.018))
-	draw_circle(Vector2(size.x * 0.85, size.y * 0.95), size.x * 0.35, Color(SbTheme.WARM, 0.025))
-	for s in _stars:
+	if bg_style == "stars":
+		draw_circle(Vector2(size.x * 0.85, size.y * 0.95), size.x * 0.35, Color(SbTheme.WARM, 0.025))
+	for s in (_stars if bg_style == "stars" else []):
 		var depth := 0.15 + s.z * 0.35
 		var sp := Vector2(fposmod(s.x * size.x - cam.x * depth * 0.3, size.x), fposmod(s.y * size.y - cam.y * depth * 0.3, size.y))
 		var tw := 0.5 + 0.5 * sin(_t * (0.6 + s.z) + s.x * 40.0)
@@ -1130,13 +1189,13 @@ func _draw_all() -> void:
 		elif hovered != "" and (str(e["from"]) == hovered or str(e["to"]) == hovered):
 			alpha = minf(1.0, alpha * 2.2)
 		var end := pa.lerp(pb, grow)
-		if type == "related":
-			draw_dashed_line(pa, end, Color(col, alpha * grow), width * clampf(zoom, 0.6, 1.4), 6.0 * clampf(zoom, 0.6, 1.4))
+		if type == "related" or _dashed_links:
+			draw_dashed_line(pa, end, Color(col, alpha * grow), width * clampf(zoom, 0.6, 1.4), (6.0 if type == "related" else 3.0) * clampf(zoom, 0.6, 1.4))
 		else:
 			draw_line(pa, end, Color(col, alpha * grow), width * clampf(zoom, 0.6, 1.4), true)
 		if type == "link" and not dim and grow >= 1.0:
 			var k := fmod(_t * 0.35 + float(hash(str(e["from"])) % 97) / 97.0, 1.0)
-			draw_circle(pa.lerp(pb, k), 2.2, Color(SbTheme.MINT_SOFT, 0.75))
+			_disc(pa.lerp(pb, k), 2.2, Color(SbTheme.MINT_SOFT, 0.75))
 
 	if faint.size() > 0:
 		draw_multiline_colors(faint, faint_col, 1.0)
@@ -1156,7 +1215,7 @@ func _draw_all() -> void:
 			_draw_card(n, p, level == "read")
 			continue
 		if level == "far" and ntype != "space":
-			draw_circle(p, maxf(1.5, _radius(n) * zoom), Color(_color(n), 0.25 if _is_dim(str(id)) else 0.85))
+			_disc(p, maxf(1.5, _radius(n) * zoom), Color(_color(n), 0.25 if _is_dim(str(id)) else 0.85))
 			continue
 		var g := _birth(n)
 		var bloom := _ease_out_back(g)
@@ -1167,17 +1226,18 @@ func _draw_all() -> void:
 		var breathe := 0.5 + 0.5 * sin(_t * 1.3 + float(hash(str(id)) % 50))
 		if g < 1.0:
 			# Birth ripple
-			draw_arc(p, _radius(n) * zoom * (1.0 + g * 3.5), 0, TAU, 48, Color(col, 0.6 * (1.0 - g)), 2.0, true)
+			_ring(p, _radius(n) * zoom * (1.0 + g * 3.5), 0, TAU, 48, Color(col, 0.6 * (1.0 - g)), 2.0)
 			for k in 6:
 				var ang := TAU * float(k) / 6.0 + g * 2.0
-				draw_circle(p + Vector2.from_angle(ang) * r * (1.6 + g * 2.2), 2.0 * (1.0 - g), Color(SbTheme.MINT_SOFT, 1.0 - g))
-		if not _dense:
-			draw_circle(p, r * 2.2, Color(col, (0.05 + 0.06 * breathe) * a))
+				_disc(p + Vector2.from_angle(ang) * r * (1.6 + g * 2.2), 2.0 * (1.0 - g), Color(SbTheme.MINT_SOFT, 1.0 - g))
+		if not _dense and _glow > 0.0:
+			_disc(p, r * 2.2, Color(col, (0.05 + 0.06 * breathe) * a * _glow))
 		match str(n["type"]):
 			"space":
-				draw_circle(p, r, Color(SbTheme.PANEL_2, 0.92 * a))
-				draw_arc(p, r, 0, TAU, 64, Color(col, 0.95 * a), 2.5, true)
-				draw_arc(p, r + 6.0 * zoom, _t * 0.4, _t * 0.4 + PI * 0.6, 32, Color(col, 0.45 * a), 1.5, true)
+				_disc(p, r, Color(SbTheme.PANEL_2, 0.92 * a))
+				_ring(p, r, 0, TAU, 64, Color(col, 0.95 * a), 2.5)
+				if _glow > 0.0:
+					_ring(p, r + 6.0 * zoom, _t * 0.4, _t * 0.4 + PI * 0.6, 32, Color(col, clampf(0.45 * a * _glow, 0.0, 1.0)), 1.5)
 				if folded.has(id):
 					var badge := "+%d" % place_count(str(id))
 					var bw := _font.get_string_size(badge, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x + 12.0
@@ -1185,23 +1245,24 @@ func _draw_all() -> void:
 					draw_rect(Rect2(bp, Vector2(bw, 20)), Color(col, 0.9 * a))
 					draw_string(_font, bp + Vector2(6, 15), badge, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, SbTheme.ON_ACCENT)
 			"tag":
-				draw_arc(p, r, 0, TAU, 24, Color(col, 0.8 * a), 1.5, true)
+				_ring(p, r, 0, TAU, 24, Color(col, 0.8 * a), 1.5)
 			_:
-				draw_circle(p, r, Color(col, 0.95 * a))
-				if not _dense:
-					draw_circle(p + Vector2(-r * 0.3, -r * 0.3), r * 0.35, Color(1, 1, 1, 0.25 * a))
+				_disc(p, r, Color(col, 0.95 * a))
+				if not _dense and _glow > 0.0:
+					_disc(p + Vector2(-r * 0.3, -r * 0.3), r * 0.35, Color(1, 1, 1, clampf(0.25 * a * _glow, 0.0, 1.0)))
 		if n.get("layer") != null and str(n.get("layer")) != "":
 			# from an imported pack: a dotted ring, so a layer reads apart from your own items. In a big graph one
 			# plain ring (12 small arcs per item were half of a frame with 1,000 imported notes on screen).
 			if nodes.size() >= CROWD_FROM:
-				draw_arc(p, r + 4.0, 0, TAU, 16, Color(SbTheme.INFO, 0.55 * a), 1.4, false)
+				_ring(p, r + 4.0, 0, TAU, 16, Color(SbTheme.INFO, 0.55 * a), 1.4, false)
 			else:
 				for k in 12:
 					var a0 := TAU * float(k) / 12.0 + _t * 0.15
-					draw_arc(p, r + 4.0, a0, a0 + TAU / 24.0, 4, Color(SbTheme.INFO, 0.8 * a), 1.6, true)
+					_ring(p, r + 4.0, a0, a0 + TAU / 24.0, 4, Color(SbTheme.INFO, 0.8 * a), 1.6)
 		if str(id) == selected:
-			draw_arc(p, r + 7.0, 0, TAU, 48, SbTheme.MINT_SOFT, 2.0, true)
-			draw_arc(p, r + 12.0 + 2.0 * breathe, 0, TAU, 48, Color(SbTheme.MINT_SOFT, 0.35), 1.5, true)
+			_ring(p, r + 7.0, 0, TAU, 48, SbTheme.MINT_SOFT, 2.0)
+			if _glow > 0.0:
+				_ring(p, r + 12.0 + 2.0 * breathe, 0, TAU, 48, Color(SbTheme.MINT_SOFT, clampf(0.35 * _glow, 0.0, 1.0)), 1.5)
 		_draw_label(n, p, r, dim)
 	if show_minimap and nodes.size() > 1:
 		_draw_minimap()
@@ -1232,11 +1293,12 @@ func _draw_clusters() -> void:
 		zone_reach[hub] = reach
 		var col := _color(h)
 		var sp := world_to_screen(center)
-		draw_circle(sp, reach * zoom, Color(col, 0.07))
-		draw_arc(sp, reach * zoom, 0, TAU, 64, Color(col, 0.35), 1.5, true)
+		_disc(sp, reach * zoom, Color(col, 0.07))
+		_ring(sp, reach * zoom, 0, TAU, 64, Color(col, 0.35), 1.5)
 		var text := "%s  ·  %d" % [str(h["label"]), (members[hub] as Array).size()]
-		var w := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16).x
-		draw_string(_font, sp + Vector2(-w * 0.5, -reach * zoom - 8.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, 16, Color(SbTheme.TEXT, 0.9))
+		var zfs := SbTheme.fs(16)
+		var w := _font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, zfs).x
+		draw_string(_font, sp + Vector2(-w * 0.5, -reach * zoom - 8.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, zfs, Color(SbTheme.TEXT, 0.9))
 
 
 ## Near: a card with title, place, themes and summary. Read: the full text, readable.
@@ -1254,8 +1316,8 @@ func _draw_card(n: Dictionary, p: Vector2, reading: bool) -> void:
 	var box := StyleBoxFlat.new()
 	box.bg_color = Color(SbTheme.PANEL_2, 0.94 * a)
 	box.border_color = Color(col, (0.95 if id == selected else 0.55) * a)
-	box.set_border_width_all(3 if id == selected else 1)
-	box.set_corner_radius_all(int(clampf(zoom * 2.0, 6.0, 18.0)))
+	box.set_border_width_all(SbTheme.bw(3 if id == selected else 1))
+	box.set_corner_radius_all(SbTheme.r(int(clampf(zoom * 2.0, 6.0, 18.0))))
 	draw_style_box(box, rect)
 	var stripe := clampf(zoom * 0.9, 3.0, 8.0)
 	draw_rect(Rect2(rect.position, Vector2(stripe, sz.y)), Color(col, 0.9 * a))
@@ -1375,7 +1437,7 @@ func _draw_label(n: Dictionary, p: Vector2, r: float, dim: bool) -> void:
 	var neighbor := hovered != "" and (_neighbors.get(hovered, {}) as Dictionary).has(id)
 	if not (important or neighbor or (zoom >= 0.85 and type == "note" and not _dense)):
 		return
-	var fs := 15 if type == "space" else 13
+	var fs := SbTheme.fs(15 if type == "space" else 13)
 	var text := str(n["label"])
 	if str(n.get("_lt", "\u0000")) != text:  # the label's short form and width, measured once per label
 		n["_lt"] = text

@@ -2,6 +2,14 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## Themes, step 1: style tokens, the surface beyond colours (2026-11-07)
+
+Fonts, text size, corners, borders, shadows, padding and the graph's look (circle or square nodes, solid or dashed
+links, glow, stars, plain or grid background) now go through style tokens (`SbTheme.STYLE`, docs/architecture/themes.md).
+The defaults are the app's own look: before/after captures differ only by the animation noise two runs of the same
+build already show, and still screens are identical. `SBGD_STYLE=<tokens.json>` previews a style
+(tools/style-preview/terminal.json: monospace, square, a grid). Step 2: themes as folders of data.
+
 ## MCP, not one tool: any AI tool connects, a generic guide for servers (2026-11-07)
 
 The « Who may read your Brain » tab now asks which tool: Claude Code, Codex, VS Code (GitHub Copilot), Cursor or any
