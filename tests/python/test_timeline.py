@@ -14,6 +14,7 @@ class TimelineTests(unittest.TestCase):
     def setUp(self):
         proposals._recent.clear()
         timeline.take_pending_backups()
+        timeline._session_started.clear()
         self.tmp = tempfile.TemporaryDirectory()
         self.db = Path(self.tmp.name) / "data" / "second_brain.sqlite3"
         database.migrate(self.db)
@@ -41,6 +42,29 @@ class TimelineTests(unittest.TestCase):
         self.assertEqual(timeline.take_pending_backups(), ["mcp:Claude Code"])
         self.propose("change", action="move", item=self.b["id"], target="Atelier", reason="auto")
         self.assertEqual(len(self.conn.execute("SELECT * FROM restore_points").fetchall()), 1, "one point per session")
+
+    def test_approvals_arriving_together_make_one_restore_point(self):
+        """Approve all: each approval has its own transaction; the first one's point is not committed yet."""
+        self.conn.commit()
+        self.conn.execute("BEGIN IMMEDIATE")
+        self.assertTrue(timeline.ensure_session_point(self.conn, "mcp:Claude Code"))
+        other = database.connect(self.db)
+        try:
+            self.assertFalse(timeline.ensure_session_point(other, "mcp:Claude Code"), "the second approval adds no point")
+        finally:
+            other.close()
+        self.conn.commit()
+        self.assertEqual(len(self.conn.execute("SELECT * FROM restore_points").fetchall()), 1)
+
+    def test_the_same_proposal_sent_again_waits_once(self):
+        self.conn.execute("UPDATE mcp_clients SET direct = 0 WHERE id = ?", (self.cc["id"],))
+        first = self.propose("item", title="The Ticket System — la vision", content="Un jeu.", reason="vision")
+        again = self.propose("item", title="the ticket system — la vision", content="Un jeu, encore.", reason="retry")
+        self.assertEqual(first["proposal"], again["proposal"])
+        self.assertIn("not proposed twice", again["receipt"])
+        self.assertEqual(self.conn.execute("SELECT COUNT(*) FROM mcp_proposals WHERE status = 'pending'").fetchone()[0], 1)
+        other = self.propose("item", title="Another idea", content="x", reason="y")
+        self.assertNotEqual(other["proposal"], first["proposal"])
 
     def test_the_timeline_says_who_did_what(self):
         journal = lambda c, k, n, b, a, r: __import__("engine.assistant.core", fromlist=["x"])._journal(c, k, n, b, a, r)  # noqa: E731

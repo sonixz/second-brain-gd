@@ -2,6 +2,14 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## MCP fixes from a real session: accents through the WSL relay, retried proposals, one restore point (2026-11-07)
+
+A tool connected from WSL proposed a note: its « — » arrived as « â€” » (the relay ran on Windows Python, whose
+console reads cp1252); it now speaks UTF-8 both ways. The tool had sent its proposal three times and approving gave
+three items: a proposal identical to one still waiting (same tool, same title) is now the same proposal. The three
+approvals each made a restore point: one lock and the memory of the point just made keep it to one. The owner's
+« go back » for that tool alone undid the three items cleanly.
+
 ## Themes, step 1: style tokens, the surface beyond colours (2026-11-07)
 
 Fonts, text size, corners, borders, shadows, padding and the graph's look (circle or square nodes, solid or dashed

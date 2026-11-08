@@ -151,6 +151,45 @@ class RelayTests(unittest.TestCase):
             self.assertIn("not running", json.loads(out.getvalue())["error"]["message"])
 
 
+    def test_the_relay_speaks_utf8_even_where_the_console_does_not(self):
+        """A Windows Python reads stdin in cp1252: accents and dashes must still arrive intact, both ways."""
+        seen = []
+
+        class Handler(BaseHTTPRequestHandler):
+            def do_POST(self):
+                body = json.loads(self.rfile.read(int(self.headers["Content-Length"])).decode("utf-8"))
+                seen.append(body["params"]["title"])
+                out = json.dumps({"jsonrpc": "2.0", "id": body["id"], "result": {"text": "Café — reçu"}},
+                                 ensure_ascii=False).encode("utf-8")
+                self.send_response(200)
+                self.send_header("Content-Type", "application/json")
+                self.end_headers()
+                self.wfile.write(out)
+
+            def log_message(self, *a):
+                pass
+        httpd = HTTPServer(("127.0.0.1", 0), Handler)
+        threading.Thread(target=httpd.serve_forever, daemon=True).start()
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            (root / "mcp").mkdir()
+            (root / "runtime").mkdir()
+            (root / "mcp" / "c1.token").write_text("sbmcp_x")
+            (root / "runtime" / "server.json").write_text(json.dumps({"port": httpd.server_address[1]}))
+            raw = (json.dumps({"jsonrpc": "2.0", "id": 1, "method": "x", "params": {"title": "The Ticket System — la vision é"}},
+                              ensure_ascii=False) + "\n").encode("utf-8")
+            stdin = io.TextIOWrapper(io.BytesIO(raw), encoding="cp1252")
+            buf = io.BytesIO()
+            stdout = io.TextIOWrapper(buf, encoding="cp1252")
+            with mock.patch.dict("os.environ", {"SBGD_HOME": tmp}), mock.patch("sys.stdin", stdin), mock.patch("sys.stdout", stdout):
+                relay.main(["--client", "c1"])
+                stdout.flush()
+            httpd.shutdown()
+            httpd.server_close()
+        self.assertEqual(seen, ["The Ticket System — la vision é"], "what the tool sent arrives intact")
+        self.assertIn("Café — reçu", buf.getvalue().decode("utf-8"), "the answer goes back in UTF-8")
+
+
 if __name__ == "__main__":
     unittest.main()
 

@@ -49,6 +49,12 @@ def main(argv: list[str] | None = None) -> int:
     root = home()
     token_file = root / "mcp" / f"{args.client}.token"
     session: str | None = None
+    # MCP's stdio is UTF-8; a Windows Python would read and write the console code page (cp1252) and turn « é » or
+    # « — » into « Ã© » or « â€” », both ways. Newlines stay \n.
+    for stream, kw in ((sys.stdin, {"encoding": "utf-8", "errors": "replace"}),
+                       (sys.stdout, {"encoding": "utf-8", "newline": "\n"})):
+        if hasattr(stream, "reconfigure"):
+            stream.reconfigure(**kw)
     out = sys.stdout
     for line in sys.stdin:
         line = line.strip()

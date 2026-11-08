@@ -120,6 +120,14 @@ def propose(conn: sqlite3.Connection, client: dict[str, Any], kind: str, args: d
     """Checks a proposal; applies it now (direct client) or keeps it for the user's approval. Returns the receipt."""
     _rate(client["id"])
     payload = check_item(conn, args) if kind == "item" else check_change(conn, args, llm)
+    # The same proposal sent again (a retry) while the first still waits: one proposal, not two items once approved.
+    for row in conn.execute("SELECT id, payload FROM mcp_proposals WHERE client_id = ? AND kind = ? AND status = 'pending'",
+                            (client["id"], kind)).fetchall():
+        old = json.loads(row["payload"])
+        same = (str(old.get("title", "")).casefold() == str(payload.get("title", "")).casefold()) if kind == "item" else old == payload
+        if same:
+            return {"proposal": row["id"], "status": "pending", "receipt": "already waiting for the user's approval "
+                    "(proposal " + row["id"] + "); not proposed twice. Check later with my_proposals"}
     pid = "p" + uuid.uuid4().hex[:10]
     conn.execute("INSERT INTO mcp_proposals (id, client_id, client_name, kind, payload, status, created_at)"
                  " VALUES (?, ?, ?, ?, ?, 'pending', ?)", (pid, client["id"], client["name"], kind,

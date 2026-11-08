@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import sqlite3
+import threading
 import time
 import uuid
 from typing import Any
@@ -71,8 +72,25 @@ def create_point(conn: sqlite3.Connection, name: str, auto: bool = False, author
     return dict(conn.execute("SELECT * FROM restore_points WHERE id = ?", (pid,)).fetchone())
 
 
+_session_lock = threading.Lock()
+_session_started: dict[tuple[str, str], float] = {}  # (database, author) -> when this engine last made their point
+
+
 def ensure_session_point(conn: sqlite3.Connection, author: str) -> bool:
-    """Before a client's first write of a session: an automatic restore point (and a full backup once committed)."""
+    """Before a client's first write of a session: an automatic restore point (and a full backup once committed).
+    Approvals arriving together (approve all) each run in their own transaction: the lock and the memory of the point
+    just made keep it to one point."""
+    key = (str(conn.execute("PRAGMA database_list").fetchone()[2] or id(conn)), author)
+    with _session_lock:
+        if time.time() - _session_started.get(key, 0.0) < SESSION_GAP_S:
+            return False
+        made = _ensure_session_point(conn, author)
+        if made:
+            _session_started[key] = time.time()
+        return made
+
+
+def _ensure_session_point(conn: sqlite3.Connection, author: str) -> bool:
     last = conn.execute("SELECT created_at FROM assistant_actions WHERE author = ? ORDER BY id DESC LIMIT 1", (author,)).fetchone()
     if last:
         import calendar
