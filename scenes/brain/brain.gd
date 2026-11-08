@@ -1435,11 +1435,10 @@ func _update_greeting() -> void:
 		I18n.t("Friday"), I18n.t("Saturday")]
 	var months := [I18n.t("January"), I18n.t("February"), I18n.t("March"), I18n.t("April"), I18n.t("May"), I18n.t("June"),
 		I18n.t("July"), I18n.t("August"), I18n.t("September"), I18n.t("October"), I18n.t("November"), I18n.t("December")]
-	var themes := {"morning": I18n.t("Morning"), "focus": I18n.t("Focus"), "evening": I18n.t("Evening"), "forest": I18n.t("Forest")}
 	# Named fields: French puts the day before the month (« jeudi 5 novembre »).
 	var line := I18n.t("{weekday}, {month} {day} · {theme} theme").format({"weekday": days[int(d["weekday"])],
 		"month": months[int(d["month"]) - 1], "day": int(d["day"]),
-		"theme": str(themes.get(SbTheme.current, SbTheme.current.capitalize()))})
+		"theme": SbTheme.theme_label(SbTheme.current)})
 	date_label.text = line.left(1).to_upper() + line.substr(1)
 
 

@@ -107,7 +107,22 @@ func _unit() -> void:
 	for name in SbTheme.THEMES:
 		SbTheme.apply(name)
 		check(SbTheme.current == name and SbTheme.build() != null, "theme %s applies" % name)
-		check(SbAudio.tracks_for(name).size() >= 2, "theme %s has a music playlist" % name)
+		check(SbAudio.tracks_for(SbTheme.sound_of(name)).size() >= 2, "theme %s has a music playlist" % name)
+		var low: Array[String] = []
+		for pair in [["TEXT", "BG", 7.0], ["TEXT", "PANEL", 7.0], ["TEXT", "PANEL_2", 7.0], ["MUTED", "PANEL", 4.5],
+				["ON_ACCENT", "MINT", 4.5], ["ON_ACCENT", "MINT_SOFT", 4.5], ["MINT", "PANEL", 4.5], ["MINT_SOFT", "PANEL_2", 4.5],
+				["WARM", "PANEL", 4.5], ["INFO", "PANEL", 4.5], ["ERROR", "PANEL", 4.5], ["WARN", "PANEL", 4.5], ["FAINT", "PANEL", 2.8]]:
+			var ratio := SbTheme.contrast(SbTheme.role(pair[0]), SbTheme.role(pair[1]))
+			if ratio < float(pair[2]):
+				low.append("%s/%s %.1f" % [pair[0], pair[1], ratio])
+		check(low.is_empty(), "theme %s keeps text readable %s" % [name, low])
+	check(absf(SbTheme.contrast(Color.BLACK, Color.WHITE) - 21.0) < 0.01, "contrast is the WCAG ratio")
+	SbTheme.apply("terminal")
+	check(SbTheme.r(10) == 0 and SbTheme.tok("graph_shape") == "square" and SbTheme.font().font_names[0] == "Cascadia Mono",
+		"the Terminal theme brings its own style: square corners, square graph, a mono font")
+	SbTheme.apply("morning")
+	check(SbTheme.r(10) == 10 and SbTheme.tok("graph_shape") == "circle" and SbTheme.sound_of("paper") == "morning",
+		"back to Morning, the default style returns; new themes borrow the first themes' music")
 	check(SbTheme.resolve("auto") in SbTheme.THEMES, "auto theme resolves by time of day")
 	# Themes, step 1: style tokens. The defaults are the app's look; a style changes the surface only.
 	var st_box := SbTheme.box(SbTheme.PANEL, 10, SbTheme.BORDER, 1, 12)

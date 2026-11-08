@@ -536,7 +536,7 @@ func say(text: String, force: bool = false) -> void:
 	if not (speak_toggle.button_pressed or force) or app.audio.muted or text.strip_edges() == "":
 		return
 	var res := await app.backend.api.call_api("/assistant/speak", true, HTTPClient.METHOD_POST,
-		JSON.stringify({"text": spoken(text), "theme": SbTheme.current}), true)
+		JSON.stringify({"text": spoken(text), "theme": SbTheme.sound_of(SbTheme.current)}), true)
 	if res["ok"] and is_inside_tree():
 		app.audio.play_voice(res["bytes"])
 

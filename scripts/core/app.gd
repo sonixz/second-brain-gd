@@ -46,7 +46,7 @@ func _ready() -> void:
 	audio = SbAudio.new()
 	audio.name = "Audio"
 	add_child(audio)
-	audio.set_theme(SbTheme.current)
+	audio.set_theme(SbTheme.sound_of(SbTheme.current))
 	show_welcome()
 	_widget = AudioWidget.new().setup(self)
 	add_child(_widget)
@@ -100,7 +100,7 @@ func set_theme_choice(choice: String) -> void:
 	if SbTheme.current == before:
 		return
 	audio.play("theme_switch")
-	audio.set_theme(SbTheme.current)
+	audio.set_theme(SbTheme.sound_of(SbTheme.current))
 	theme = SbTheme.build()
 	_backdrop.queue_redraw()
 	# Rebuild the current screen so every colour follows the new palette.

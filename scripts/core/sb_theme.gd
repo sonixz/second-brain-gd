@@ -5,9 +5,10 @@ extends RefCounted
 ## MINT = accent, MINT_SOFT = soft accent, WARM = secondary accent (ideas).
 ## Several themes swap these roles; `apply()` switches and rebuilds the Theme.
 
-const THEMES := ["morning", "focus", "evening", "forest"]
+const THEMES := ["morning", "focus", "evening", "forest", "terminal", "paper", "neon"]
 const THEME_LABELS := {"auto": "Auto (time of day)", "morning": "Morning", "focus": "Focus",
-	"evening": "Evening", "forest": "Forest"}  # English; shown text is theme_label()
+	"evening": "Evening", "forest": "Forest", "terminal": "Terminal", "paper": "Paper",
+	"neon": "Neon"}  # English; shown text is theme_label()
 
 
 ## A theme's name as shown, in the interface language ("auto" included).
@@ -23,6 +24,12 @@ static func theme_label(key: String) -> String:
 			return I18n.t("Evening")
 		"forest":
 			return I18n.t("Forest")
+		"terminal":
+			return I18n.t("Terminal")
+		"paper":
+			return I18n.t("Paper")
+		"neon":
+			return I18n.t("Neon")
 	return str(THEME_LABELS.get(key, key.capitalize()))
 
 const PALETTES := {
@@ -46,7 +53,45 @@ const PALETTES := {
 		"FOREST": "1e6b4c", "FOREST_LIGHT": "2f8f68", "MINT": "5ef2b0", "MINT_SOFT": "a8f7d3", "WARM": "f4d58d",
 		"TEXT": "e4f1ea", "MUTED": "88a598", "FAINT": "4f6b5f", "WARN": "f4c35a", "ERROR": "ff6f6f",
 		"INFO": "7cc8ff", "ON_ACCENT": "06110c"},
+	# Green phosphor on black, amber for ideas: an old terminal.
+	"terminal": {"BG": "0a0e0b", "BG_2": "0d130f", "PANEL": "101813", "PANEL_2": "15201a", "BORDER": "2a4233",
+		"FOREST": "1d5a35", "FOREST_LIGHT": "3fa462", "MINT": "7dfa9b", "MINT_SOFT": "c2ffd1", "WARM": "ffb454",
+		"TEXT": "d4f5dc", "MUTED": "8fb79b", "FAINT": "5c7a66", "WARN": "ffcc66", "ERROR": "ff7070",
+		"INFO": "74d4ff", "ON_ACCENT": "04120a"},
+	# The light one: warm paper, ink blue, rust for ideas. Accents are dark here (they are read on paper).
+	"paper": {"BG": "efe9dc", "BG_2": "e7e0d0", "PANEL": "f8f4ea", "PANEL_2": "efe8d9", "BORDER": "cfc4ad",
+		"FOREST": "b9c7d6", "FOREST_LIGHT": "5b7fa6", "MINT": "2a5d8f", "MINT_SOFT": "1d4670", "WARM": "a4521c",
+		"TEXT": "26221c", "MUTED": "5f574a", "FAINT": "8a806e", "WARN": "8a5a00", "ERROR": "a8281f",
+		"INFO": "1f6596", "ON_ACCENT": "fbf8f0"},
+	# Night city: deep violet, hot pink and cyan.
+	"neon": {"BG": "150f24", "BG_2": "1a132c", "PANEL": "1f1734", "PANEL_2": "281e42", "BORDER": "4a3577",
+		"FOREST": "5a2a7a", "FOREST_LIGHT": "b45cff", "MINT": "ff5fc8", "MINT_SOFT": "ffb3e6", "WARM": "48e5ff",
+		"TEXT": "f5eeff", "MUTED": "c3b2e3", "FAINT": "8572aa", "WARN": "ffd166", "ERROR": "ff6b8b",
+		"INFO": "6fe6ff", "ON_ACCENT": "1a0820"},
 }
+
+## A theme's own style (see STYLE_DEFAULTS); themes not listed keep the defaults.
+const THEME_STYLES := {
+	"terminal": {"font_sans": ["Cascadia Mono", "Consolas", "JetBrains Mono", "DejaVu Sans Mono", "monospace"],
+		"font_scale": 0.88, "radius_scale": 0.0, "shadow": 0.0, "density": 0.9, "graph_shape": "square",
+		"graph_links": "dashed", "graph_glow": 0.35, "graph_background": "grid"},
+	"paper": {"radius_scale": 0.6, "shadow": 0.35, "graph_glow": 0.25, "graph_background": "plain"},
+	"neon": {"radius_scale": 1.3, "border_scale": 1.5, "graph_glow": 1.8},
+}
+
+## Which music, ambience and voice tone a theme uses (the new themes borrow those of the first four).
+const THEME_SOUNDS := {"terminal": "focus", "paper": "morning", "neon": "evening"}
+
+
+static func sound_of(name: String) -> String:
+	return str(THEME_SOUNDS.get(name, name))
+
+
+## WCAG contrast ratio between two colours (1 to 21): text must stay readable in every theme.
+static func contrast(a: Color, b: Color) -> float:
+	var la := a.srgb_to_linear().get_luminance()
+	var lb := b.srgb_to_linear().get_luminance()
+	return (maxf(la, lb) + 0.05) / (minf(la, lb) + 0.05)
 
 ## Style tokens: everything visual that is not a colour. Pure surface: no token moves a panel or changes what
 ## anything does. The defaults are the app's own look; a style only overrides some of them (set_style).
@@ -113,14 +158,17 @@ static func set_style(tokens: Dictionary) -> void:
 			STYLE[k] = v
 
 
-## A style preview for development (Step 1 of themes): SBGD_STYLE=<a JSON file of tokens>.
+## A style preview for development: SBGD_STYLE=<a JSON file of tokens>, laid over the theme's own style.
+static var _env_style: Dictionary = {}
+
+
 static func load_style_env() -> void:
 	var path := OS.get_environment("SBGD_STYLE")
 	if path == "" or not FileAccess.file_exists(path):
 		return
 	var data: Variant = JSON.parse_string(FileAccess.get_file_as_string(path))
 	if data is Dictionary:
-		set_style(data)
+		_env_style = data
 
 
 static func tok(key: String) -> Variant:
@@ -150,6 +198,10 @@ static func apply(name: String) -> String:
 	var resolved := resolve(name)
 	var p: Dictionary = PALETTES[resolved]
 	current = resolved
+	_palette = p
+	var tokens: Dictionary = (THEME_STYLES.get(resolved, {}) as Dictionary).duplicate(true)
+	tokens.merge(_env_style, true)
+	set_style(tokens)
 	BG = Color(str(p["BG"]))
 	BG_2 = Color(str(p["BG_2"]))
 	PANEL = Color(str(p["PANEL"]))
@@ -168,6 +220,14 @@ static func apply(name: String) -> String:
 	INFO = Color(str(p["INFO"]))
 	ON_ACCENT = Color(str(p["ON_ACCENT"]))
 	return resolved
+
+
+static var _palette: Dictionary = PALETTES["morning"]
+
+
+## A colour role of the current theme by name ("TEXT", "PANEL"…).
+static func role(key: String) -> Color:
+	return Color(str(_palette.get(key, "ff00ff")))
 
 
 static func kind_color(kind: String) -> Color:
@@ -270,6 +330,15 @@ static func build() -> Theme:
 	t.set_color("font_color", "Button", TEXT)
 	t.set_color("font_hover_color", "Button", MINT_SOFT)
 	t.set_color("font_disabled_color", "Button", FAINT)
+	# Godot's defaults are white: set them, or a pressed tab or a focused button vanishes in a light theme.
+	for c in ["font_pressed_color", "font_hover_pressed_color", "font_focus_color"]:
+		for type in ["Button", "GhostButton", "OptionButton", "CheckButton"]:
+			t.set_color(c, type, TEXT)
+	for type in ["Button", "OptionButton"]:
+		t.set_color("icon_normal_color", type, TEXT)
+		t.set_color("icon_pressed_color", type, TEXT)
+		t.set_color("icon_focus_color", type, TEXT)
+		t.set_color("icon_hover_color", type, MINT_SOFT)
 
 	t.set_stylebox("normal", "PrimaryButton", box(MINT, 12, Color(0, 0, 0, 0), 0, 26))
 	t.set_stylebox("hover", "PrimaryButton", box(MINT_SOFT, 12, Color(0, 0, 0, 0), 0, 26))
@@ -280,8 +349,8 @@ static func build() -> Theme:
 	t.set_color("font_disabled_color", "PrimaryButton", MUTED)
 
 	t.set_stylebox("normal", "GhostButton", box(Color(0, 0, 0, 0), 10, Color(0, 0, 0, 0), 0, 12))
-	t.set_stylebox("hover", "GhostButton", box(Color(1, 1, 1, 0.04), 10, Color(0, 0, 0, 0), 0, 12))
-	t.set_stylebox("pressed", "GhostButton", box(Color(1, 1, 1, 0.07), 10, Color(0, 0, 0, 0), 0, 12))
+	t.set_stylebox("hover", "GhostButton", box(Color(TEXT, 0.05), 10, Color(0, 0, 0, 0), 0, 12))
+	t.set_stylebox("pressed", "GhostButton", box(Color(TEXT, 0.09), 10, Color(0, 0, 0, 0), 0, 12))
 	t.set_color("font_color", "GhostButton", MUTED)
 	t.set_color("font_hover_color", "GhostButton", MINT_SOFT)
 
@@ -317,8 +386,8 @@ static func build() -> Theme:
 	for cb_type in ["CheckBox"]:
 		t.set_stylebox("normal", cb_type, box(Color(0, 0, 0, 0), 8, Color(0, 0, 0, 0), 0, 6))
 		t.set_stylebox("pressed", cb_type, box(Color(0, 0, 0, 0), 8, Color(0, 0, 0, 0), 0, 6))
-		t.set_stylebox("hover", cb_type, box(Color(1, 1, 1, 0.05), 8, Color(0, 0, 0, 0), 0, 6))
-		t.set_stylebox("hover_pressed", cb_type, box(Color(1, 1, 1, 0.05), 8, Color(0, 0, 0, 0), 0, 6))
+		t.set_stylebox("hover", cb_type, box(Color(TEXT, 0.05), 8, Color(0, 0, 0, 0), 0, 6))
+		t.set_stylebox("hover_pressed", cb_type, box(Color(TEXT, 0.05), 8, Color(0, 0, 0, 0), 0, 6))
 		t.set_stylebox("focus", cb_type, box(Color(0, 0, 0, 0), 8, Color(MINT, 0.5), 1, 6))
 		t.set_color("font_color", cb_type, TEXT)
 		t.set_color("font_pressed_color", cb_type, MUTED)
@@ -354,6 +423,8 @@ static func build() -> Theme:
 	t.set_stylebox("focus", "LineEdit", box(BG_2, 8, MINT, 1, 10))
 	t.set_color("font_color", "LineEdit", TEXT)
 	t.set_color("font_placeholder_color", "LineEdit", FAINT)
+	t.set_color("font_selected_color", "LineEdit", TEXT)
+	t.set_color("font_selected_color", "TextEdit", TEXT)
 
 	t.set_stylebox("normal", "RichTextLabel", box(Color(0, 0, 0, 0), 0, Color(0, 0, 0, 0), 0, 0))
 	t.set_color("default_color", "RichTextLabel", MUTED)

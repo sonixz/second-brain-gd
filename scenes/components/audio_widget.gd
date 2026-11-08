@@ -60,7 +60,7 @@ func _build_popup() -> void:
 	col.add_child(over)
 	theme_option = OptionButton.new()
 	var choice := str(SbSettings.get_value("ui", "theme", "auto"))
-	for key in ["auto", "morning", "focus", "evening", "forest"]:
+	for key in ["auto"] + SbTheme.THEMES:
 		theme_option.add_item(SbTheme.theme_label(key))
 		theme_option.set_item_metadata(theme_option.item_count - 1, key)
 		if key == choice:

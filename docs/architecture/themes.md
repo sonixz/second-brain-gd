@@ -33,6 +33,10 @@ ignored, numbers are clamped to 0–4.
 `tools/style-preview/terminal.json` (monospace, square, a grid, little glow). With the captures:
 `SBGD_STYLE=$PWD/tools/style-preview/terminal.json SBGD_SHOT_THEME=forest tools/showcase.sh terminal`.
 
-**Next (step 2).** A theme as a folder of data: `theme.json` (palette + tokens), an OFL font file, optional
+**Built-in themes.** Morning, Focus, Evening, Forest, then Terminal, Paper (light) and Neon: each is a palette in
+`PALETTES` plus optional style tokens in `THEME_STYLES` and a sound borrowing in `THEME_SOUNDS`; a test keeps every
+theme's contrast readable (text 7:1, the rest 4.5:1).
+
+**Next (step 2, parked).** A theme as a folder of data: `theme.json` (palette + tokens), an OFL font file, optional
 sounds; the built-in ones plus the user's `themes/` folder; data only, never code; a check that text stays
 readable. Then a "Make a theme" page for the community.

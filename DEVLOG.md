@@ -2,6 +2,16 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## Three new built-in themes: Terminal, Paper, Neon (2026-11-07)
+
+Ambiance → Theme now offers Terminal (green phosphor, a monospace font, square corners and nodes, dashed links on a
+grid), Paper (the first light theme: warm paper, ink blue) and Neon (deep violet, pink and cyan, rounder, more glow).
+A theme now brings its own style tokens as well as its colours (`THEME_STYLES`); new themes borrow the music and voice
+tone of the first four (`THEME_SOUNDS`). A test checks every theme's contrast (WCAG ratio: text 7:1, secondary text
+and accents 4.5:1). The light theme showed that Godot's white defaults for pressed, focused and icon colours were never
+set: they now come from the theme, so a pressed tab stays readable on paper. Themes as folders and their import stay
+parked.
+
 ## MCP fixes from a real session: accents through the WSL relay, retried proposals, one restore point (2026-11-07)
 
 A tool connected from WSL proposed a note: its « — » arrived as « â€” » (the relay ran on Windows Python, whose
