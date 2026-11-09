@@ -10,7 +10,7 @@
   <meta property="og:description" content="Your second brain. Every AI agent. Your rules. An AI-native, voice-first second brain that runs on your computer.">
   <meta property="og:image" content="assets/showcase/graph-zones.webp">
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=2026-11-07b">
+  <link rel="stylesheet" href="css/style.css?v=2026-11-09">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -60,9 +60,24 @@
             <li><b>2 OS</b> Windows &amp; Linux</li>
           </ul>
         </div>
-        <figure class="hero-shot">
-          <img src="assets/showcase/graph-zones.webp" alt="The Second Brain GD graph: each place is a zone with its name and count (Kitchen renovation, Learn Japanese, Health…), the Inbox in the middle, the Archivist's floating panel on the left with today's briefing and an answer about countertops, the other agents waiting as letters on the rail" width="1280" height="800">
-        </figure>
+        <div class="hero-demo">
+          <figure class="hero-shot hero-live">
+            <canvas id="brain-demo" role="img" aria-label="A small live graph, as in the app: places as rings (Inbox, Kitchen renovation, Learn Japanese, Health, Recipes, Reading) and their notes as dots"></canvas>
+            <div class="live-receipt" id="live-receipt" role="status" aria-live="polite" hidden></div>
+            <form class="live-capture" id="live-capture" autocomplete="off">
+              <label class="sr-only" for="live-in">Capture a thought</label>
+              <input id="live-in" maxlength="70" placeholder="Capture a thought… (Enter)">
+              <button type="submit" aria-label="Capture">↵</button>
+            </form>
+            <noscript><img src="assets/showcase/graph-zones.webp" alt="The Second Brain GD graph: each place is a zone with its name and count (Kitchen renovation, Learn Japanese, Health…), the Inbox in the middle, the Archivist's floating panel on the left" width="1280" height="800"></noscript>
+          </figure>
+          <p class="live-try">Try it:
+            <button type="button" data-try="Quartz countertop quote from the contractor">quartz countertop quote</button>
+            <button type="button" data-try="Kanji flashcards every morning">kanji flashcards</button>
+            <button type="button" data-try="Ramen recipe from the podcast">ramen recipe</button>
+          </p>
+          <p class="live-note">A toy version that runs in this page; nothing is sent. In the app, the Archivist files by meaning, with AI.</p>
+        </div>
       </div>
     </section>
 
@@ -1103,6 +1118,7 @@
       <span class="muted"><a href="howto.html">How-to</a> · <a href="docs.html">Docs</a> · <a href="#journal">Journal</a> · <a href="https://github.com/sonixz/second-brain-gd" rel="noopener">GitHub</a> · Local-first knowledge system · Godot + Python</span>
     </div>
   </footer>
-  <script src="js/main.js?v=2026-11-07b"></script>
+  <script src="js/main.js?v=2026-11-09"></script>
+  <script src="js/brain-demo.js?v=2026-11-09"></script>
 </body>
 </html>
