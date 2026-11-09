@@ -36,16 +36,15 @@ Windows PC. Real calls made while building (with the owner's key or free public 
 
 ## Branches (2026-11-08)
 
-- `loop-33` (worktree `second-brain-gd-dev`, the copy the owner runs) = `main` + the MCP approvals fix (Approve all is
-  instant, the archivist files in the background with progress). Not pushed; `main` is one commit ahead of origin (the
-  MIT licence). Merge `loop-33` into `main` and push only on the owner's word.
+- One branch, `main`, in one folder (`C:\git-2026\second-brain-gd`), the same as GitHub. The old `loop-27`…`loop-33`
+  branches and the `second-brain-gd-dev` copy were merged and removed; the owner's launcher starts the app from here.
 
 ## Waiting on the owner
 
 - Restart the app to get the latest loops; try the MCP window (⇠● ⇢●).
 - Connect Claude Code to the real Brain (the command from the MCP window; OK given 2026-11-07).
 - A first account sign-in (Notion or GitHub) for an MCP server.
-- Say whether to merge `loop-33` (the approvals fix) and push; restart the app to try it.
+- Restart the app to try the approvals fix (MCP window: « Approve all »).
 - Agent Manager GD and the GD Project site (sibling repositories in `C:\git-2026`) now use the Brain over MCP: the
   Brain itself needed no change; a ✦ Brain tab in Agent Manager is proposed there (its docs/HANDOFF.md).
 - Before going public: [docs/audit-before-public.md](docs/audit-before-public.md) (keys, `.env`, audio rights, the
