@@ -149,8 +149,10 @@ def _journal_as(author: str):
     return journal
 
 
-def apply(conn: sqlite3.Connection, pid: str, llm: Any = None) -> dict[str, Any]:
-    """Applies one proposal through the archivist; its receipt says what happened."""
+def apply(conn: sqlite3.Connection, pid: str, llm: Any = None, file_now: bool = True) -> dict[str, Any]:
+    """Applies one proposal through the archivist; its receipt says what happened.
+    file_now=False (approvals from the app): the item is created at once and the archivist files it afterwards, in the
+    background (one OpenAI call each, the slow part); the result then carries « to_file »."""
     from engine import brain
     from engine.assistant import actions as act
     from engine.brain import archivist, types
@@ -165,6 +167,7 @@ def apply(conn: sqlite3.Connection, pid: str, llm: Any = None) -> dict[str, Any]
     journal = _journal_as(author)
     done: list = []
     note_id = None
+    to_file = None
     try:
         from engine.brain import timeline
         timeline.ensure_session_point(conn, author)  # a client's first write of a session: a restore point first
@@ -180,7 +183,10 @@ def apply(conn: sqlite3.Connection, pid: str, llm: Any = None) -> dict[str, Any]
             journal(conn, "create_note", note_id, None, {"title": note["title"]}, f"proposée par {r['client_name']}")
             if p.get("type"):
                 types.set_props(conn, note_id, p["type"], p.get("fields") or {}, merge=False)
-            if llm is not None:
+            if llm is not None and not file_now:
+                receipt = "added to the Inbox; the archivist is filing it"
+                to_file = note_id
+            elif llm is not None:
                 filed = archivist.file_item(conn, llm, note_id)
                 receipt = str(filed.get("receipt") or "added to the Inbox; the archivist will file it")
             else:
@@ -215,7 +221,47 @@ def apply(conn: sqlite3.Connection, pid: str, llm: Any = None) -> dict[str, Any]
         status, receipt = "failed", str(exc)
     conn.execute("UPDATE mcp_proposals SET status = ?, receipt = ?, note_id = ?, decided_at = ? WHERE id = ?",
                  (status, receipt, note_id, utc_now(), pid))
-    return {"proposal": pid, "status": status, "receipt": receipt, "item": note_id}
+    out = {"proposal": pid, "status": status, "receipt": receipt, "item": note_id}
+    if to_file and status == "applied":
+        out["to_file"] = to_file
+    return out
+
+
+# ---------------------------------------------------------------- filing in the background (after approvals)
+FILING: dict[str, Any] = {"total": 0, "done": 0, "running": False, "last": ""}
+
+
+def file_later(db_path: Any, llm: Any, jobs: list[tuple[str, str]], connect: Any) -> None:
+    """The archivist files approved items one by one, each in its own transaction; the proposal's receipt then says
+    where it went. jobs: (proposal id, item id). Runs in a thread; FILING is what the app shows."""
+    import threading
+
+    from engine.brain import archivist
+
+    def run() -> None:
+        for pid, note_id in jobs:
+            try:
+                conn = connect(db_path)
+                try:
+                    filed = archivist.file_item(conn, llm, note_id)
+                    receipt = str(filed.get("receipt") or "added to the Inbox; the archivist will file it")
+                    conn.execute("UPDATE mcp_proposals SET receipt = ? WHERE id = ?", (receipt, pid))
+                    conn.commit()
+                    FILING["last"] = receipt
+                finally:
+                    conn.close()
+            except Exception as exc:  # the item stays in the Inbox, never lost
+                FILING["last"] = f"left in the Inbox ({str(exc)[:80]})"
+            FILING["done"] += 1
+        FILING["running"] = FILING["done"] < FILING["total"]
+
+    if not jobs:
+        return
+    if not FILING["running"]:
+        FILING.update(total=0, done=0)
+    FILING["total"] += len(jobs)
+    FILING["running"] = True
+    threading.Thread(target=run, daemon=True, name="archivist-filing").start()
 
 
 def reject(conn: sqlite3.Connection, pid: str, why: str = "") -> dict[str, Any]:

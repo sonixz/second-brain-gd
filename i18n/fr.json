@@ -1077,5 +1077,8 @@
  "✕ Unlinked “%s”": "✕ Délié “%s”",
  "✚ Added from the web “%s”": "✚ Ajouté du web “%s”",
  "✚ Created the agent “%s”": "✚ Agent créé “%s”",
- "✚ Created “%s”": "✚ Créé “%s”"
+ "✚ Created “%s”": "✚ Créé “%s”",
+ "Approving %d…": "Approbation de %d…",
+ "The archivist is filing the approved items: %d of %d…": "L'archiviste classe les éléments approuvés : %d sur %d…",
+ "The archivist filed %d items. Last one: %s": "L'archiviste a classé %d éléments. Le dernier : %s"
 }

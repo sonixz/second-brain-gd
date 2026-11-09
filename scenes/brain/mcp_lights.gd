@@ -380,12 +380,24 @@ func _fill_proposals(box: VBoxContainer) -> int:
 	all.name = "ApproveAll"
 	all.text = I18n.t("Approve all")
 	all.theme_type_variation = "PrimaryButton"
-	all.pressed.connect(func() -> void:
-		await app.backend.api.call_api("/mcp/proposals/all/approve", true, HTTPClient.METHOD_POST, "{}")
-		await _fill_proposals(box)
-		_changed())
 	head.add_child(all)
 	box.add_child(head)
+	var rows: Array[Control] = []
+	all.pressed.connect(func() -> void:
+		# instant feedback: nothing can be clicked twice, the rows dim, the count says what is happening
+		all.disabled = true
+		all.text = I18n.t("Approving %d…") % items.size()
+		for row in rows:
+			if is_instance_valid(row):
+				row.modulate.a = 0.45
+				for b in row.find_children("*", "Button", true, false):
+					b.disabled = true
+		var done_all := await app.backend.api.call_api("/mcp/proposals/all/approve", true, HTTPClient.METHOD_POST, "{}")
+		var filing := int((done_all.get("data", {}) as Dictionary).get("filing", 0)) if done_all["ok"] else 0
+		await _fill_proposals(box)
+		_changed()
+		if filing > 0 and is_instance_valid(box):
+			_watch_filing(box))
 	for p in items.slice(0, 30):
 		var d: Dictionary = p
 		var line := HBoxContainer.new()
@@ -401,12 +413,42 @@ func _fill_proposals(box: VBoxContainer) -> int:
 			b.text = str(choice[1])
 			var ch := str(choice[0])
 			b.pressed.connect(func() -> void:
-				await app.backend.api.call_api("/mcp/proposals/%s/%s" % [pid, ch], true, HTTPClient.METHOD_POST, "{}")
+				for other in line.find_children("*", "Button", true, false):
+					other.disabled = true
+				b.text = "…"
+				line.modulate.a = 0.6
+				var done_one := await app.backend.api.call_api("/mcp/proposals/%s/%s" % [pid, ch], true, HTTPClient.METHOD_POST, "{}")
+				var filing := int((done_one.get("data", {}) as Dictionary).get("filing", 0)) if done_one["ok"] else 0
 				await _fill_proposals(box)
-				_changed())
+				_changed()
+				if filing > 0 and is_instance_valid(box):
+					_watch_filing(box))
 			line.add_child(b)
 		box.add_child(line)
+		rows.append(line)
 	return items.size()
+
+
+## After approvals: the archivist files the items in the background; a line says how far it is, then what it did.
+func _watch_filing(box: VBoxContainer) -> void:
+	var note := Label.new()
+	note.name = "Filing"
+	note.theme_type_variation = "Muted"
+	note.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	box.add_child(note)
+	box.move_child(note, 0)
+	while is_instance_valid(note):
+		var res := await app.backend.api.call_api("/mcp/filing")
+		if not res["ok"] or not is_instance_valid(note):
+			return
+		var f: Dictionary = res["data"]
+		if bool(f.get("running", false)):
+			note.text = I18n.t("The archivist is filing the approved items: %d of %d…") % [int(f.get("done", 0)), int(f.get("total", 0))]
+		else:
+			note.text = I18n.t("The archivist filed %d items. Last one: %s") % [int(f.get("total", 0)), str(f.get("last", ""))]
+			_changed()
+			return
+		await get_tree().create_timer(0.8).timeout
 
 
 ## ⇢ out: what waits for you first (a server's question, a call to confirm, a warning), then the servers as folded

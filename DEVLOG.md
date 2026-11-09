@@ -2,6 +2,18 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## Approving agents' proposals no longer freezes: instant approval, filing in the background (2026-11-08)
+
+Owner's report: with many MCP proposals, « Approve all » showed nothing for 30 to 60 seconds, then everything updated
+at once. Cause: one request applied every proposal in turn, and each one waited for the archivist to file it (one
+OpenAI call each); the dialog gave no feedback and the button stayed live. Now an approval only creates the item (a
+database write), the request answers at once, and the archivist files the items afterwards in a background thread,
+each in its own transaction; the proposal's receipt is then updated with where the item went. Nothing is lost if the
+app closes meanwhile: the items are already in the Inbox. The dialog disables the buttons and dims the rows as soon as
+you click (« Approving 12… »), then shows « The archivist is filing the approved items: 3 of 12… » until it is done
+(`GET /mcp/filing`). A test checks that approving makes no model call and that filing reaches 5 of 5.
+Tests: Python 350 (with the app's own environment), Godot end to end 281.
+
 ## Three new built-in themes: Terminal, Paper, Neon (2026-11-07)
 
 Ambiance → Theme now offers Terminal (green phosphor, a monospace font, square corners and nodes, dashed links on a

@@ -378,11 +378,21 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         with database.session(layout.database) as conn:
             ids = [p["id"] for p in proposals.listing(conn, "pending", None, 500)] if pid == "all" else [pid]
             try:
-                out = [proposals.apply(conn, i, llm) if choice == "approve" else proposals.reject(conn, i) for i in ids]
+                # approving is instant (the items are created now); the archivist files them afterwards, in the
+                # background, so the app never waits on one OpenAI call per item
+                out = [proposals.apply(conn, i, llm, file_now=False) if choice == "approve" else proposals.reject(conn, i) for i in ids]
             except proposals.Refused as exc:
                 raise HTTPException(status_code=404, detail=str(exc)) from exc
         backups_after_commit()
-        return {"results": out}
+        jobs = [(o["proposal"], o["to_file"]) for o in out if o.get("to_file")]
+        proposals.file_later(layout.database, llm, jobs, database.connect)
+        return {"results": out, "filing": len(jobs)}
+
+    @r.get("/mcp/filing", dependencies=[Depends(auth)])
+    def get_filing() -> dict[str, Any]:
+        """The archivist filing approved items in the background: how many, how far."""
+        from engine.mcp import proposals
+        return dict(proposals.FILING)
 
     @r.delete("/mcp/clients/{cid}", dependencies=[Depends(auth)])
     def delete_client(cid: str) -> dict[str, Any]:

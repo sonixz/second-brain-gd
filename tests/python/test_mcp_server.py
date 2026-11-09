@@ -251,6 +251,39 @@ class ProposalTests(unittest.TestCase):
         self.assertEqual(mine["proposals"][0]["status"], "applied")
         self.assertTrue(mine["proposals"][0]["receipt"])
 
+    def test_approve_all_is_instant_and_the_archivist_files_in_the_background(self):
+        """The app's approvals: items created at once, filing afterwards (it was one OpenAI call each, in the request)."""
+        import time as _t
+        from engine.assistant.llm import FakeChat
+        from engine.mcp import proposals
+        pids = []
+        for i in range(5):
+            _r, out = self.call(self.cc, "propose_item", title=f"Idée {i}", content="x", reason="test")
+            pids.append(out["proposal"])
+        self.conn.commit()
+        slow_calls = []
+
+        class SlowChat(FakeChat):
+            def chat(self, *a, **k):
+                slow_calls.append(1)
+                _t.sleep(0.2)
+                return super().chat(*a, **k)
+        t0 = _t.time()
+        results = [proposals.apply(self.conn, pid, SlowChat(), file_now=False) for pid in pids]
+        self.conn.commit()
+        self.assertLess(_t.time() - t0, 0.5, "approving does not wait for the archivist")
+        self.assertEqual(slow_calls, [], "no model call while approving")
+        self.assertTrue(all(r["status"] == "applied" and r["to_file"] for r in results))
+        self.assertTrue(all("is filing it" in r["receipt"] for r in results))
+        proposals.FILING.update(total=0, done=0, running=False)
+        proposals.file_later(self.db, SlowChat(), [(r["proposal"], r["to_file"]) for r in results], database.connect)
+        end = _t.time() + 15
+        while proposals.FILING["running"] and _t.time() < end:
+            _t.sleep(0.05)
+        self.assertEqual((proposals.FILING["done"], proposals.FILING["total"], proposals.FILING["running"]), (5, 5, False))
+        receipts = [r[0] for r in self.conn.execute("SELECT receipt FROM mcp_proposals WHERE id IN (%s)" % ",".join("?" * 5), pids)]
+        self.assertFalse(any("is filing it" in x for x in receipts), "each receipt says where the item went")
+
     def test_refusals_explain_the_protocol(self):
         _r, out = self.call(self.cc, "propose_item", title="Sans raison", content="x")
         self.assertIn("needs reason", out["refused"])
