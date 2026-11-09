@@ -21,20 +21,32 @@ A snapshot of what works today. The history of each loop is in [DEVLOG](DEVLOG.m
 | **MCP out** | Agents use any MCP server you connect: a hand-checked starter list, the official registry, keys, account sign-in (OAuth), local programs with approval; writes outside confirmed each time; budget; ⇠● ⇢● lights |
 | **Your data** | Backups, restore, export, packs, repair, start fresh, uninstall; English or French (FR / EN) |
 
-## Tests (2026-11-07)
+## Tests (2026-11-08)
 
 | Suite | Platform | Result |
 |---|---|---|
-| Python (346, 3 skipped without the PDF libraries) | Linux 3.12 | OK |
-| Godot end-to-end (258 checks) | Linux, headless | 258 passed |
+| Python (350, 1 skipped), with the app's own environment | Windows venv run from WSL | OK |
+| Godot end-to-end (281 checks) | Linux, headless | 281 passed |
+
+The system python3 in WSL has no fastapi: run the Python suite with the app's environment,
+`PYTHON=/mnt/c/Users/<you>/AppData/Local/SecondBrainGD/.venv/Scripts/python.exe tools/test.sh`.
 
 The suites were run natively on Windows at earlier loops (see DEVLOG); the app itself runs daily on the owner's
 Windows PC. Real calls made while building (with the owner's key or free public servers) are noted in each loop.
+
+## Branches (2026-11-08)
+
+- `loop-33` (worktree `second-brain-gd-dev`, the copy the owner runs) = `main` + the MCP approvals fix (Approve all is
+  instant, the archivist files in the background with progress). Not pushed; `main` is one commit ahead of origin (the
+  MIT licence). Merge `loop-33` into `main` and push only on the owner's word.
 
 ## Waiting on the owner
 
 - Restart the app to get the latest loops; try the MCP window (⇠● ⇢●).
 - Connect Claude Code to the real Brain (the command from the MCP window; OK given 2026-11-07).
 - A first account sign-in (Notion or GitHub) for an MCP server.
+- Say whether to merge `loop-33` (the approvals fix) and push; restart the app to try it.
+- Agent Manager GD and the GD Project site (sibling repositories in `C:\git-2026`) now use the Brain over MCP: the
+  Brain itself needed no change; a ✦ Brain tab in Agent Manager is proposed there (its docs/HANDOFF.md).
 - Before going public: [docs/audit-before-public.md](docs/audit-before-public.md) (keys, `.env`, audio rights, the
   licence, visibility — the owner's decisions).
