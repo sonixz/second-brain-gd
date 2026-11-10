@@ -2,6 +2,9 @@
 
 **Your knowledge. Your system. Your control.**
 
+> **This is a lab.** Run it on your own computer; don't put it on the internet unless you know what you're doing
+> (TCP/IP, TLS, authentication, infrastructure as code, DevOps). Read the [AI notice](AI-NOTICE.md).
+
 Second Brain GD is a local-first second brain you can talk to. Give it anything (a thought, a link, a PDF, a
 scanned letter, a picture, a web page from your browser, your voice): an archivist files it with the CODE method
 and PARA, links it by meaning to what you already know, and you explore it all in a living graph you can zoom into
