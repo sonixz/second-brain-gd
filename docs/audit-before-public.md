@@ -20,8 +20,8 @@ keys). To stop versioning it without deleting your local copy, back it up first:
 deletes it from the working folder on the next update.
 
 No personal path or user name in the files (the guides' recordings contain base64 data that matches such searches
-by chance only). The commit metadata shows the author e-mail `the owner's personal e-mail` on every commit: GitHub can use a
-`noreply` address for future commits if you prefer; past commits keep theirs unless the history is rewritten.
+by chance only). The commit metadata showed the owner's personal e-mail on every commit: before going public the
+history is rewritten with the GitHub `noreply` address (see section 6).
 
 ## 2. What the repository redistributes
 | Part | Licence | Status |
