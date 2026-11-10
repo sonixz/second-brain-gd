@@ -10,7 +10,7 @@
   <meta property="og:description" content="Your second brain. Every AI agent. Your rules. An AI-native, voice-first second brain that runs on your computer.">
   <meta property="og:image" content="assets/showcase/graph-zones.webp">
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=2026-11-09">
+  <link rel="stylesheet" href="css/style.css?v=2026-11-09d">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -39,8 +39,8 @@
   </header>
 
   <main id="main">
-    <section class="hero hero-split" id="top">
-      <canvas id="graph" class="hero-graph" aria-hidden="true"></canvas>
+    <section class="hero hero-split hero-live" id="top">
+      <canvas id="brain-demo" class="live-graph" role="img" aria-label="A live graph, as in the app: places as rings (Inbox, Kitchen renovation, Learn Japanese, Health, Recipes, Reading) and their notes as dots. A scripted scene plays on it: a spoken note, a PDF, a web page, a question and an AI agent's proposal, each filed by the Archivist."></canvas>
       <div class="hero-grid">
         <div class="hero-inner">
           <p class="overline">AI-native · Voice-first · Local · Open source</p>
@@ -48,36 +48,31 @@
           <p class="tagline">Your second brain. Every AI agent. Your rules.</p>
           <p class="lead">A second brain that lives on your computer and runs on AI. Speak, drop a file or send a web
             page: the Archivist agent files it for you, and every AI agent you use shares what you know.</p>
-          <div class="says hero-says"><span class="say">put this in Kitchen</span></div>
           <div class="hero-actions">
             <a class="btn btn-primary" href="docs.html#install">Get started</a>
             <a class="btn" href="howto.html">How-to guides</a>
           </div>
-          <ul class="stats" aria-label="Project facts">
-            <li><b>100%</b> on your disk</li>
-            <li><b>30</b> loops shipped</li>
-            <li><b>400</b> automated tests</li>
-            <li><b>2 OS</b> Windows &amp; Linux</li>
-          </ul>
         </div>
-        <div class="hero-demo">
-          <figure class="hero-shot hero-live">
-            <canvas id="brain-demo" role="img" aria-label="A small live graph, as in the app: places as rings (Inbox, Kitchen renovation, Learn Japanese, Health, Recipes, Reading) and their notes as dots"></canvas>
-            <div class="live-receipt" id="live-receipt" role="status" aria-live="polite" hidden></div>
-            <form class="live-capture" id="live-capture" autocomplete="off">
-              <label class="sr-only" for="live-in">Capture a thought</label>
-              <input id="live-in" maxlength="70" placeholder="Capture a thought… (Enter)">
-              <button type="submit" aria-label="Capture">↵</button>
-            </form>
-            <noscript><img src="assets/showcase/graph-zones.webp" alt="The Second Brain GD graph: each place is a zone with its name and count (Kitchen renovation, Learn Japanese, Health…), the Inbox in the middle, the Archivist's floating panel on the left" width="1280" height="800"></noscript>
-          </figure>
-          <p class="live-try">Try it:
-            <button type="button" data-try="Quartz countertop quote from the contractor">quartz countertop quote</button>
-            <button type="button" data-try="Kanji flashcards every morning">kanji flashcards</button>
-            <button type="button" data-try="Ramen recipe from the podcast">ramen recipe</button>
-          </p>
-          <p class="live-note">A toy version that runs in this page; nothing is sent. In the app, the Archivist files by meaning, with AI.</p>
-        </div>
+        <aside class="archivist" aria-label="The Archivist">
+          <header class="a-head"><span class="a-badge" aria-hidden="true">A</span><b>Archivist</b><span class="a-state" data-s="ready">● ready</span><button class="a-pause" type="button" aria-pressed="false" hidden>❚❚</button></header>
+          <div class="a-log" id="a-log" role="log" aria-live="polite">
+            <p class="a-say">Hello. This Brain holds 33 notes in 6 places, and Kitchen renovation grew this week. Tell me anything: I'll file it and link it.</p>
+          </div>
+        </aside>
+      </div>
+      <div class="hero-capture">
+        <form class="live-capture" id="live-capture" autocomplete="off">
+          <label class="sr-only" for="live-in">Capture a thought</label>
+          <input id="live-in" maxlength="70" placeholder="Capture a thought… (Enter)">
+          <div class="live-voice" aria-hidden="true"><span class="lv-key">F8</span><span class="lv-meter"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="lv-said"></span></div>
+          <button type="submit" aria-label="Capture">↵</button>
+        </form>
+        <p class="live-try">Try it:
+          <button type="button" data-try="Quartz countertop quote from the contractor">quartz countertop quote</button>
+          <button type="button" data-try="Kanji flashcards every morning">kanji flashcards</button>
+          <button type="button" data-try="Ramen recipe from the podcast">ramen recipe</button>
+        </p>
+        <p class="live-note">A scripted reconstruction of the app at work. Type or click above and it's your turn: a toy version that runs in this page, nothing is sent. In the app, the Archivist files by meaning, with AI.</p>
       </div>
     </section>
 
@@ -1118,7 +1113,7 @@
       <span class="muted"><a href="howto.html">How-to</a> · <a href="docs.html">Docs</a> · <a href="#journal">Journal</a> · <a href="https://github.com/sonixz/second-brain-gd" rel="noopener">GitHub</a> · Local-first knowledge system · Godot + Python</span>
     </div>
   </footer>
-  <script src="js/main.js?v=2026-11-09"></script>
-  <script src="js/brain-demo.js?v=2026-11-09"></script>
+  <script src="js/main.js?v=2026-11-09d"></script>
+  <script src="js/brain-demo.js?v=2026-11-09d"></script>
 </body>
 </html>
