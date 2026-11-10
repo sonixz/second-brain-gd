@@ -70,6 +70,14 @@ Checked again after the MCP loops; nothing secret is in the repository.
   recipe in the export screenshots is our own sample.
 - **Third-party content stays out**: RICARDO pages, Obsidian Hub and obsidian-help were used locally only.
 
+## 6. Owner's decisions (2026-11-09)
+- `.env` is **no longer versioned** (each developer keeps their own, see `.env.example`) and is removed from the
+  whole history before going public.
+- Audio: the owner confirms the ElevenLabs rights are fine.
+- The How-to recordings holding third-party pages are re-recorded on our own or openly licensed content, and the
+  old ones are removed from the history.
+- Commit author e-mail: the GitHub `noreply` address, rewritten on every past commit.
+
 ## Checklist before making the repository public
 1. Rotate the OpenAI, OpenAI admin and ElevenLabs keys.
 2. Decide about `.env` (keep it encrypted in git, or stop versioning it: back it up first).

@@ -102,13 +102,13 @@ then run:
 ./tools/audio.sh music/focus_2 # one file again
 ```
 
-The ElevenLabs key comes from the encrypted `.env` via dotenvx (`dotenvx set ELEVENLABS_API_KEY ...`).
-`.env.keys` is never committed.
+The ElevenLabs key comes from your own local `.env`, encrypted with dotenvx (`dotenvx set ELEVENLABS_API_KEY ...`).
+Neither `.env` nor `.env.keys` is committed: each developer keeps their own (see `.env.example`).
 
 ## Voice benchmark (developers)
 
 ```bash
-# once: add the key to the encrypted .env without showing it
+# once: add the key to your local, encrypted .env without showing it
 read -rsp "OpenAI key: " K && echo && ~/.local/bin/dotenvx set OPENAI_API_KEY "$K" && unset K
 ./tools/voice-bench.sh --models gpt-realtime-whisper,gpt-live-transcribe
 ```
