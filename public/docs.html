@@ -1261,7 +1261,9 @@ SBGD_SHOT_SIZE=1600x1000 ./tools/showcase.sh     # the website screenshots, from
         <p>A recording keeps the model's answers, web searches and downloaded pages
           (<code>tools/howto/recordings/</code>); item ids are mapped to the new ones on each run. A guide whose steps no
           longer play, or whose screenshots do not match its steps, makes the run fail, so the guides double as end-to-end
-          tests. After a recorded run, the tokens used are checked against a cap per guide.</p>
+          tests. After a recorded run, the tokens used are checked against a cap per guide. The recordings that hold
+          full copies of third-party pages (mission, web, browser) are not in the repository: those guides need a new
+          <code>--record</code>.</p>
         <p>The browser guide's Edge screenshots are the real Edge window. <code>tools/howto/edge.ps1</code> starts a separate
           Edge with a throwaway profile (no sign-in, no sync, nothing from your own Edge), loads the extension from
           <code>browser-extension/</code>, drives it through DevTools on <code>127.0.0.1</code> and Windows UI Automation (for

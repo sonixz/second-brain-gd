@@ -55,7 +55,7 @@ for G in "${GUIDES[@]}"; do
       RUN=("$HOME/.local/bin/dotenvx" run --quiet "${KEYS[@]}" -- env -u OPENAI_ADMIN_KEY)
     else
       PROVIDER=replay
-      [[ -f "$REC" ]] || { echo "$G: no recording yet (run tools/howto.sh --record $G)" >&2; FAILED=1; continue; }
+      [[ -f "$REC" ]] || { echo "$G: no recording here (some stay out of the repository, see .gitignore; run tools/howto.sh --record $G)" >&2; FAILED=1; continue; }
     fi
   fi
   echo "== $G ($PROVIDER)"

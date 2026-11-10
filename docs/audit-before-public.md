@@ -74,8 +74,10 @@ Checked again after the MCP loops; nothing secret is in the repository.
 - `.env` is **no longer versioned** (each developer keeps their own, see `.env.example`) and is removed from the
   whole history before going public.
 - Audio: the owner confirms the ElevenLabs rights are fine.
-- The How-to recordings holding third-party pages are re-recorded on our own or openly licensed content, and the
-  old ones are removed from the history.
+- The How-to recordings holding full third-party pages stay on the owner's disk only (ignored by git) and are
+  removed from the history: `mission.json` (RICARDO recipes, Maxi flyers: the 2026-11-07 note that RICARDO pages
+  were "used locally only" missed this recording), `web.json` (a commercial blog), `browser.json` (NRCan PDF). The
+  site keeps their screenshots.
 - Commit author e-mail: the GitHub `noreply` address, rewritten on every past commit.
 
 ## Checklist before making the repository public
