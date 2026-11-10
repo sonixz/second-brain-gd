@@ -24,7 +24,7 @@ fast-forward main, push.
   and English: « 2 tasses (500 ml) de farine », « 1 boîte de 796 ml de tomates », « sel et poivre »). The summary
   call still runs for the meaning; the fields never depend on it.
 - **Agents define types.** An agent's instructions can describe its own type (« fiche Livre : auteur, année, lu ou
-  non »); a tool lets it create the type once and save items with their properties. Cuisin'Plan saves recipes as
+  non »); a tool lets it create the type once and save items with their properties. A meal-planning agent saves recipes as
   the recipe type.
 - **The card.** A typed item's card shows its fields: a recipe shows its picture, servings, times, ingredients
   with quantities, steps and rating. Fields can be edited on the card.

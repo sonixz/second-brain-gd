@@ -50,7 +50,7 @@ fast-forward main, push.
 
 In the top bar, beside « Tout fonctionne »: two small, subtle dots, **⇠ in** and **⇢ out**. Grey when nothing is
 plugged in, green when a client is connected (in) or a server is ready (out), a soft red while a call is under way.
-Hover: the last call (« Claude Code · search · il y a 3 s », « Cuisin'Plan → Microsoft Learn · docs_search »).
+Hover: the last call (« Claude Code · search · il y a 3 s », « Coach → Microsoft Learn · docs_search »).
 Click: the details (clients, servers, recent calls, costs) in a small panel; the engine room keeps the settings.
 
 ## MCP-A — MCP in, read

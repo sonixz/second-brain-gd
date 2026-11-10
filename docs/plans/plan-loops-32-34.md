@@ -4,7 +4,7 @@ Agreed with the owner on 2026-11-05. Goal: an agent can be given a **real job** 
 specials") and carry it through: a plan, visible progress, a question when it needs the user's choice, real sources
 (never invented), a draft to approve, and the result kept in the Brain as linked items that have value later.
 
-Why (seen in the owner's Cuisin'Plan session, 2026-11-05): in a live voice conversation the agent announced actions
+Why (seen in the owner's session with a meal-planning test agent, 2026-11-05): in a live voice conversation the agent announced actions
 without doing them, gave short answers and went round in circles. Causes:
 - the voice model (gpt-realtime-2.1-mini) is small and built for speed, weak at chaining tools;
 - voice pushes towards short answers;
@@ -86,14 +86,14 @@ with Loop 34's real run.
 
 | What | How |
 |---|---|
-| Cuisin'Plan's method | Instructions rewritten as steps: read the week's specials (IGA, Maxi, Provigo) → ask which ones tempt you → search real recipes using about 60 % of them → read each one → weekly plan + grocery list → draft. |
+| Meal-planning method | Instructions rewritten as steps: read the week's specials (IGA, Maxi, Provigo) → ask which ones tempt you → search real recipes using about 60 % of them → read each one → weekly plan + grocery list → draft. |
 | Reading the flyers | Through the paired Edge extension (pages as the user sees them) when a site blocks robots or builds its flyer in JavaScript; through the web otherwise. Honest result per store: read / partly / not readable. |
 | Real run | On the real model, the current week's flyers; cost and time measured; findings checked by hand against the flyers. |
 | Recipes in the Brain | Checked after approval: items, links to ingredients and to the plan, source links work. |
 
-**Done 2026-11-06** (docs/agents/cuisinplan-method.md): three real runs; all three flyers readable through flyer
+**Done 2026-11-06**: three real runs; all three flyers readable through flyer
 sites without the extension; 23 specials checked by hand against their pages (match); 0.41 $ for a full week.
-Owner's part: paste the method into Cuisin'Plan (or ask the Builder), switch on its Missions capability, reload the
+Owner's part: paste the method into the test agent (or ask the Builder), switch on its Missions capability, reload the
 extension (1.1.0) for pages that need the browser. The How-to guide recorded on the real model is still to do.
 
 **Confidence**: mechanics 80 %, real recipes with sources 75 %, **reading the flyers 55 %** (the fragile part: flyer
@@ -110,5 +110,5 @@ user (e.g. paste or photograph the flyer: pictures already go through OCR and vi
 - **Site terms**: reading a public flyer in the user's own browser for personal use; nothing is republished.
 
 ## What the owner can test meanwhile
-- Cuisin'Plan in **text** mode for heavy requests (gpt-6-sol), voice for short questions.
+- The meal-planning agent in **text** mode for heavy requests (gpt-6-sol), voice for short questions.
 - Reload the Edge extension.

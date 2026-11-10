@@ -5,7 +5,7 @@ their go. Each loop ends like the others: Python and Godot suites green, French 
 screenshots where the UI changes, docs updated, committed on loop-32, merged fast-forward into main, pushed.
 
 Order and why:
-1. **Loop 37** first: the owner's real Cuisin'Plan missions decide what routines must remember and which
+1. **Loop 37** first: the owner's real meal-planning missions decide what routines must remember and which
    output template a recipe needs.
 2. **Loop 38, @ mentions**: small, asked for clearly, a quick win in daily use.
 3. **Loops 39–40, folder import**: the owner's favourite of the brainstorm; independent of missions.
@@ -152,7 +152,7 @@ first), paced by the owner.
 - More import detections by demand (Evernote, Bear, Joplin, Day One, Google Keep, Roam).
 
 ## Owner actions still pending
-- Restart the app; reload the Edge extension (1.1.0); paste docs/agents/cuisinplan-method.md into
-  Cuisin'Plan's instructions; turn on its Missions capability; run real missions (Loop 37 input).
+- Restart the app; reload the Edge extension (1.1.0); give a test agent the meal-planning
+  method (Agent Builder); turn on its Missions capability; run real missions (Loop 37 input).
 - From docs/audit-before-public.md: rotate the keys, decide whether .env stays versioned, ElevenLabs audio
   rights, third-party pages in recordings, the licence, a backups folder.

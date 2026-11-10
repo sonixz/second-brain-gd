@@ -62,8 +62,8 @@ Not done: the separate scripted "voice hand-over" guide; the guide's troubleshoo
 
 ## Loop 37 — Fixes from the owner's real use
 
-Starts after the owner has run at least one mission on their own Brain with Cuisin'Plan (method from
-docs/agents/cuisinplan-method.md, Missions capability on, extension 1.1.0).
+Starts after the owner has run at least one mission on their own Brain with a meal-planning agent made with
+the Agent Builder (Missions capability on, extension 1.1.0).
 
 | What | How |
 |---|---|

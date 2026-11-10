@@ -203,7 +203,7 @@ class McpClientTests(unittest.TestCase):
         s = mcp.add_server(self.conn, "Fake Docs", self.fake.url)
         mcp.set_off(self.conn, s["id"], ["create_page", "unknown"])
         self.assertEqual([d["function"]["name"] for d in mcp.tool_defs(self.conn, "archivist")], ["mcp__fakedocs__docs_search"])
-        mcp.set_agents(self.conn, s["id"], ["cuisinplan"])
+        mcp.set_agents(self.conn, s["id"], ["some-agent"])
         self.assertEqual(mcp.tool_defs(self.conn, "archivist"), [])
         mcp.set_agents(self.conn, s["id"], ["*"])
         mcp.run(self.conn, "mcp__fakedocs__docs_search", {"query": "a" * 400}, "archivist")

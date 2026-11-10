@@ -8,7 +8,7 @@ Brain as linked items. Code: `engine/missions.py`, routes `engine/api/mission_ro
 ## Why
 A chat message gets 8 tool rounds and reads 8,000 characters of a page: enough to answer, not to do a job. In a live
 voice conversation it is worse: the realtime model is small, announces actions without doing them, and keeps answers
-short (2026-11-05, the owner's Cuisin'Plan session). So: **voice is the remote control, the mission does the work.**
+short (2026-11-05, the owner's session with a test agent). So: **voice is the remote control, the mission does the work.**
 
 ## How it runs
 - `missions.start(conn, agent, goal)` stores it as `running` and wakes the worker.

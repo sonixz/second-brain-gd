@@ -123,7 +123,7 @@ loop. See docs/plans/plan-loops-37-42.md.
 
 A routine is a mission on a schedule, so a standard workflow runs by itself (« chaque vendredi, prépare les
 soupers de la semaine avec la circulaire Maxi ») and lands the same structured data in the graph each time.
-Planned after Loop 37 (notifications, missions using past choices) and shaped by the owner's real Cuisin'Plan
+Planned after Loop 37 (notifications, missions using past choices) and shaped by the owner's real meal-planning
 missions.
 
 - **Settings.** When (weekly, monthly, a time); which agent; the goal with variables ({lundi}, {dimanche},

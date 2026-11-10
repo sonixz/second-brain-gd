@@ -145,7 +145,7 @@ Type @ in an agent's panel to pin Brain items to one question: a title picker (n
 
 - Agent profile gets missions {max_cost, max_minutes, model}; GET /missions/limits; the next mission uses it - Engine room Missions card: month summary, per-mission status/rounds/minutes/cost, detail with source links - POST /missions/{id}/again; GET /missions returns a summary - Mission rules: source link next to every price in the draft - Agent settings saves one at a time (two quick changes erased each other)
 
-## Loop 34: first real missions on the IGA, Maxi and Provigo flyers; Cuisin'Plan's method (2026-11-06)
+## Loop 34: first real missions on the IGA, Maxi and Provigo flyers; a meal-planning method (2026-11-06)
 
 Three real runs (gpt-6-sol): the three flyers read through flyer sites, 23 specials checked by hand against their pages, seven real recipes, four suppers with the grocery list, 0.41 USD. Mission rules: one choice per item in a question (they were grouped by store), prices and conditions copied as the page gives them.
 
