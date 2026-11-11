@@ -1,0 +1,399 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>How Second Brain Thinks</title>
+  <meta name="description" content="How Second Brain GD thinks: search by meaning, an archivist that files and links, the right AI model for each job, agents that search instead of reading everything, and one memory shared over MCP.">
+  <meta name="theme-color" content="#2b3c54">
+  <meta property="og:title" content="How Second Brain GD thinks">
+  <meta property="og:description" content="Not a folder of files: a memory that understands. Meaning, models, routing and MCP, simulated in your browser.">
+  <meta property="og:image" content="assets/showcase/graph-zones.webp">
+  <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="css/style.css?v=2026-11-10d">
+  <link rel="stylesheet" href="css/semantic.css?v=2026-11-10d">
+</head>
+<body class="page-think">
+  <a class="skip" href="#main">Skip to content</a>
+
+  <header class="site-header">
+    <nav class="nav" aria-label="Main">
+      <a class="brand" href="index.html" aria-label="Second Brain GD home">
+        <img src="assets/logo.svg" alt="" width="32" height="32">
+        <span>SECOND BRAIN <b>GD</b></span>
+      </a>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links">
+        <span class="sr-only">Menu</span><span aria-hidden="true">☰</span>
+      </button>
+      <ul id="nav-links" class="nav-links">
+        <li><a href="#meaning">Meaning</a></li>
+        <li><a href="#capture">Capture</a></li>
+        <li><a href="#map">Map</a></li>
+        <li><a href="#models">Models</a></li>
+        <li><a href="#agents">Agents</a></li>
+        <li><a href="#mcp">MCP</a></li>
+        <li><a href="index.html">Home</a></li>
+        <li><a href="docs.html">Docs</a></li>
+        <li><a href="https://github.com/sonixz/second-brain-gd" class="nav-cta" rel="noopener">GitHub</a></li>
+      </ul>
+    </nav>
+  </header>
+
+  <main id="main">
+
+    <!-- 1. Meaning, not words -->
+    <section class="think-hero" id="meaning" aria-labelledby="meaning-title">
+      <div class="container">
+        <p class="overline">How it thinks</p>
+        <h1 id="meaning-title">Not a folder of files.<br><span class="accent">A memory that understands.</span></h1>
+        <p class="lead think-lead">Ask the way you think, in any language you like. Second Brain finds what you meant, even when you
+          wrote it in other words. Try it on this small sample Brain of 29 notes.</p>
+
+        <form class="ask" id="ask" role="search" autocomplete="off">
+          <label class="sr-only" for="ask-q">Ask the sample Brain</label>
+          <input id="ask-q" type="search" placeholder="Ask anything… e.g. what did I decide for the countertop?" maxlength="120">
+          <button class="btn btn-primary" type="submit">Search</button>
+        </form>
+        <div class="ask-chips" aria-label="Example questions">
+          <button type="button" data-q="what did I decide for the countertop?">what did I decide for the countertop?</button>
+          <button type="button" data-q="how much is the kitchen costing me?">how much is the kitchen costing me?</button>
+          <button type="button" data-q="something warm for winter">something warm for winter</button>
+          <button type="button" data-q="how do I stop forgetting what I learn?">how do I stop forgetting what I learn?</button>
+          <button type="button" data-q="I can't fall asleep at night">I can't fall asleep at night</button>
+        </div>
+
+        <div class="duel" aria-live="polite">
+          <div class="duel-col duel-words">
+            <header><span class="duel-tag">Exact words</span><b id="words-count">–</b></header>
+            <p class="duel-how">Finds a note only if it contains the very words you typed, spelled the same way.</p>
+            <ol id="words-list" class="hits"></ol>
+          </div>
+          <div class="duel-col duel-meaning">
+            <header><span class="duel-tag">By meaning · Second Brain</span><b id="meaning-count">–</b></header>
+            <p class="duel-how">Compares what the question means with what each note means.</p>
+            <ol id="meaning-list" class="hits"></ol>
+          </div>
+        </div>
+        <p class="sim-note">A simulation in this page: nothing is sent. The sample Brain uses a small hand-made map of ideas.
+          In the app, every note and every page of your documents gets a real meaning vector from an embeddings model, and
+          a hit counts from a score of 0.25.</p>
+      </div>
+    </section>
+
+    <!-- 2. One capture, end to end -->
+    <section class="section section-alt" id="capture" aria-labelledby="capture-title">
+      <div class="container">
+        <div class="section-head">
+          <p class="overline">One capture, end to end</p>
+          <h2 id="capture-title">What happens between “add this” and the receipt</h2>
+          <p>Speak, drop a PDF, send a web page or a photo. The Archivist reads it, understands it, files it, indexes it twice
+            and links it to what you already know. Pick something to capture and follow it through.</p>
+        </div>
+
+        <div class="pipe" id="pipe">
+          <div class="pipe-inputs" role="group" aria-label="What to capture">
+            <button type="button" data-in="voice" aria-pressed="true"><span class="ico">🎙</span>A spoken note<small>hold F8</small></button>
+            <button type="button" data-in="pdf" aria-pressed="false"><span class="ico">📄</span>A PDF quote<small>drop a file</small></button>
+            <button type="button" data-in="web" aria-pressed="false"><span class="ico">🌐</span>A web page<small>from your browser</small></button>
+            <button type="button" data-in="photo" aria-pressed="false"><span class="ico">📷</span>A photo<small>a whiteboard</small></button>
+            <button type="button" data-in="unsure" aria-pressed="false"><span class="ico">❔</span>Something unclear<small>“gift for Mom”</small></button>
+          </div>
+
+          <ol class="pipe-track" id="pipe-track" aria-label="The steps">
+            <li data-step="0"><span class="dot"></span><b>Capture</b><small>you</small></li>
+            <li data-step="1"><span class="dot"></span><b>Read</b><small>hear · extract · see</small></li>
+            <li data-step="2"><span class="dot"></span><b>Understand</b><small>the Archivist</small></li>
+            <li data-step="3"><span class="dot"></span><b>File</b><small>PARA</small></li>
+            <li data-step="4"><span class="dot"></span><b>Index</b><small>words + meaning</small></li>
+            <li data-step="5"><span class="dot"></span><b>Link</b><small>same ideas</small></li>
+            <li data-step="6"><span class="dot"></span><b>Receipt</b><small>Undo</small></li>
+          </ol>
+
+          <div class="pipe-stage">
+            <div class="pipe-detail" id="pipe-detail" aria-live="polite">
+              <header><span class="model-chip" id="pipe-model">–</span><h3 id="pipe-title">–</h3></header>
+              <p id="pipe-text" class="muted">–</p>
+              <pre id="pipe-art" class="art" tabindex="0"></pre>
+            </div>
+            <div class="pipe-ctrl">
+              <button type="button" class="btn" id="pipe-prev" aria-label="Previous step">‹</button>
+              <button type="button" class="btn" id="pipe-play" aria-pressed="true">❚❚ Pause</button>
+              <button type="button" class="btn" id="pipe-next" aria-label="Next step">›</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. The meaning map -->
+    <section class="section" id="map" aria-labelledby="map-title">
+      <div class="container">
+        <div class="section-head">
+          <p class="overline">The meaning map</p>
+          <h2 id="map-title">Notes that mean the same thing find each other</h2>
+          <p>Each dot is a note, placed by what it means, not by where it was filed. Notes about the same idea drift together,
+            across places. The dashed lines are the “same idea” links the Brain suggests; you keep them
+            or dismiss them.</p>
+        </div>
+
+        <div class="map-wrap">
+          <canvas id="mmap" class="mmap" role="img" aria-label="A map of 29 notes placed by meaning. Kitchen notes gather on one side, Japanese study on another; notes about memory bridge reading, learning and sleep."></canvas>
+          <aside class="map-side">
+            <div class="map-ctl">
+              <label for="thr">Link a pair from a score of <b id="thr-v">0.33</b></label>
+              <input id="thr" type="range" min="0.20" max="0.60" step="0.01" value="0.33">
+              <p class="small muted"><span id="thr-n">–</span> “same idea” links. In the app: a note keeps its closest neighbour
+                from 0.33, and any note from 0.45.</p>
+              <label class="map-check"><input type="checkbox" id="by-place" checked> Colour by place</label>
+              <p class="small muted">Turn the colours off: the groups are still there. Nobody drew them; the meaning did.</p>
+            </div>
+            <div class="map-pick" id="map-pick" aria-live="polite">
+              <p class="muted small">Click a dot to see its closest notes.</p>
+            </div>
+            <ul class="map-legend" id="map-legend"></ul>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Three layers, one file -->
+    <section class="section section-alt" id="layers" aria-labelledby="layers-title">
+      <div class="container">
+        <div class="section-head">
+          <p class="overline">Under the hood</p>
+          <h2 id="layers-title">Three layers of knowing, in one file on your computer</h2>
+          <p>Your Brain is a single SQLite database in your user folder. Every item lives there with three ways to be found,
+            next to its original file and the history of every change.</p>
+        </div>
+
+        <div class="layers">
+          <div class="layer l-words">
+            <span class="l-n">1</span>
+            <h3>Words</h3>
+            <p>A full-text index ranks notes and document pages by the words they hold (BM25). A word in the title counts four
+              times as much as in the body. Exact names, numbers and codes are found here.</p>
+            <code>notes_fts · chunks_fts</code>
+          </div>
+          <div class="layer l-meaning">
+            <span class="l-n">2</span>
+            <h3>Meaning</h3>
+            <p>Every note, and every page of every document cut into pieces of about 1,200 characters, gets a vector of 1,536
+              numbers that captures what it means. Same idea in other words, even in another language: close vectors.</p>
+            <code>note_embeddings · source_chunks</code>
+          </div>
+          <div class="layer l-links">
+            <span class="l-n">3</span>
+            <h3>Links</h3>
+            <p>Your own links, the ones the Archivist adds when it files, and the “same idea” pairs it computes. You keep a
+              suggestion or dismiss it, and the Brain remembers your answer.</p>
+            <code>links · note_related · related_choices</code>
+          </div>
+          <div class="layer l-base">
+            <p><b>Around them:</b> places (PARA), types and fields (a recipe has servings), tags, originals of your files,
+              restore points and a timeline of every change. <code>spaces · item_types · sources · restore_points</code></p>
+          </div>
+        </div>
+
+        <div class="flow-q">
+          <h3>How a question is answered</h3>
+          <ol>
+            <li><b>Meaning first.</b> The question becomes a vector; the closest notes above 0.25 come back, best first.</li>
+            <li><b>Words complete it.</b> Keyword hits not already found fill the list: an exact name is never lost.</li>
+            <li><b>Documents next.</b> For “what does the quote say?”, the same two searches run on document pieces, and the
+              answer cites the page.</li>
+            <li><b>Places when you name one.</b> “What's in my Inbox?” lists the place itself, newest first.</li>
+          </ol>
+        </div>
+
+        <div class="versus">
+          <h3>Compared with a folder of text files and an AI that reads them</h3>
+          <div class="table-scroll">
+            <table>
+              <thead><tr><th scope="col"></th><th scope="col">A folder of text files</th><th scope="col">Second Brain GD</th></tr></thead>
+              <tbody>
+                <tr><th scope="row">You wrote “quartz for the island”, you search “countertop”</th><td>Not found</td><td>Found by meaning</td></tr>
+                <tr><th scope="row">Related notes</th><td>The links you typed by hand</td><td>Suggested for every note, kept or dismissed by you</td></tr>
+                <tr><th scope="row">A scanned PDF</th><td>An image nobody can search</td><td>Read page by page (local OCR), searchable, cited by page</td></tr>
+                <tr><th scope="row">Filing</th><td>You pick the folder</td><td>The Archivist files in PARA and asks when it isn't sure</td></tr>
+                <tr><th scope="row">An AI looking for an answer</th><td>Opens and reads files until it finds it</td><td>Searches with tools, reads only the few items that matter</td></tr>
+                <tr><th scope="row">An AI that writes</th><td>Edits your files directly</td><td>Proposes; the Archivist files with your rules; a receipt and Undo</td></tr>
+                <tr><th scope="row">Going back</th><td>If you set up versioning</td><td>Restore points and a timeline of every change, built in</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Models and routing -->
+    <section class="section" id="models" aria-labelledby="models-title">
+      <div class="container">
+        <div class="section-head">
+          <p class="overline">AI-native</p>
+          <h2 id="models-title">The right model for each job</h2>
+          <p>Second Brain is not one chatbot. Each job goes to the model that does it best: a fast one to talk, a reasoning
+            one for the weekly review, a transcriber for your voice, an embeddings model for meaning, and your own computer
+            for what it can do alone. Pick a way in to see the route.</p>
+        </div>
+
+        <div class="route" id="route">
+          <svg class="route-wires" id="route-wires" aria-hidden="true"></svg>
+          <div class="route-col route-in" role="group" aria-label="Ways in">
+            <h3 class="route-h">You</h3>
+            <button type="button" data-r="type">⌨ Type a message</button>
+            <button type="button" data-r="f8">🎙 Hold F8 and speak</button>
+            <button type="button" data-r="f9">💬 F9: talk live</button>
+            <button type="button" data-r="file">📄 Drop a document</button>
+            <button type="button" data-r="scan">🖨 A scanned letter</button>
+            <button type="button" data-r="photo">📷 A picture</button>
+            <button type="button" data-r="web">🌐 Search the web</button>
+            <button type="button" data-r="review">🗓 Weekly review</button>
+            <button type="button" data-r="mission">🧭 A mission</button>
+          </div>
+          <div class="route-col route-mid">
+            <h3 class="route-h">The engine</h3>
+            <div class="route-node" data-n="ear">Hearing<small>speech to text</small></div>
+            <div class="route-node" data-n="reader">Reading<small>text, pages, pictures</small></div>
+            <div class="route-node" data-n="arch">Archivist<small>files, links, answers, tools</small></div>
+            <div class="route-node" data-n="memory">Memory<small>words + meaning</small></div>
+            <div class="route-node" data-n="voice">Voice<small>speaks back</small></div>
+          </div>
+          <div class="route-col route-out">
+            <h3 class="route-h">Models</h3>
+            <div class="route-model" data-m="whisper"><b>gpt-realtime-whisper</b><small>dictation, live transcription</small></div>
+            <div class="route-model" data-m="live"><b>gpt-realtime-2.1-mini</b><small>live conversation</small></div>
+            <div class="route-model" data-m="sol"><b>gpt-6-sol</b><small>chat with tools, filing, agents, missions</small></div>
+            <div class="route-model" data-m="astra"><b>gpt-6-astra</b><small>reasoning: weekly review, syntheses</small></div>
+            <div class="route-model" data-m="mini"><b>gpt-4o-mini</b><small>vision, hosted web search</small></div>
+            <div class="route-model" data-m="embed"><b>text-embedding-3-small</b><small>meaning vectors</small></div>
+            <div class="route-model" data-m="tts"><b>gpt-4o-mini-tts</b><small>spoken replies</small></div>
+            <div class="route-model local" data-m="ocr"><b>This computer</b><small>PDF text, OCR, search, graph</small></div>
+          </div>
+        </div>
+        <div class="route-why" id="route-why" aria-live="polite">
+          <p class="muted">Pick a way in on the left.</p>
+        </div>
+
+        <div class="model-notes">
+          <div class="card"><h3>Measured, not guessed</h3><p>Chat with tools moved to gpt-6-sol after replaying the owner's real
+            failures on a throwaway Brain: 12 out of 12, against 11 for gpt-4o. Filing: 10 out of 10 test captures in 1.45 s.</p></div>
+          <div class="card"><h3>Never stuck</h3><p>Every model is a setting. When your OpenAI project lacks one, the job falls back
+            (to gpt-4o or gpt-4o-mini) instead of failing.</p></div>
+          <div class="card"><h3>Local where it can be</h3><p>PDF text, scanned pages (Windows OCR or Tesseract), keyword search, the
+            graph and your files stay on your computer. Local AI models are on the roadmap.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Agents that search -->
+    <section class="section section-alt" id="agents" aria-labelledby="agents-title">
+      <div class="container">
+        <div class="section-head">
+          <p class="overline">Agents</p>
+          <h2 id="agents-title">An AI that searches, instead of reading everything</h2>
+          <p>A Brain grows to thousands of items; no model should swallow it whole. The agents use tools, like you would use
+            a search engine: search, open the few items that matter, cite them, act only through tools you can undo.</p>
+        </div>
+
+        <div class="trace-wrap">
+          <div class="trace" id="trace" aria-live="polite">
+            <header><span class="a-badge" aria-hidden="true">A</span><b>Archivist</b><span class="trace-state" id="trace-state">ready</span>
+              <button type="button" class="trace-play" id="trace-play">▶ Play</button></header>
+            <div class="trace-log" id="trace-log"></div>
+          </div>
+          <aside class="trace-side">
+            <div class="ctx">
+              <h3>What it read</h3>
+              <div class="ctx-bar"><i id="ctx-fill"></i></div>
+              <p><b id="ctx-items">0 items</b> · <span id="ctx-tok">0 tokens</span></p>
+              <p class="small muted">Out of a Brain of 2,400 items (about 3 million tokens): it opened only what the search
+                pointed to. Example figures.</p>
+            </div>
+            <div class="guards">
+              <h3>Guardrails, in the code</h3>
+              <ul>
+                <li><b>At most 8 tool rounds</b> per reply.</li>
+                <li><b>No claim without a tool.</b> A reply that says “done” when no tool ran is caught and corrected.</li>
+                <li><b>Not sure? It asks.</b> Below a confidence of 0.6, the item waits in the Inbox with a question.</li>
+                <li><b>Your clipboard</b> is read only when you mention it.</li>
+                <li><b>Every change</b> leaves a receipt, an Undo and a restore point.</li>
+              </ul>
+            </div>
+          </aside>
+        </div>
+
+        <div class="cards cards-3 trio">
+          <div class="card"><span class="who" style="--c:#a9d4ff">A</span><h3>Archivist</h3><p>Agent number one. Files, links,
+            answers with sources, drives the app by voice. About sixty tools, every write undoable.</p></div>
+          <div class="card"><span class="who" style="--c:#ffd27a">S</span><h3>Sparring</h3><p>Your thinking partner. Reads your
+            Brain to question, challenge or reassure you; changes nothing, and saves a synthesis only when you approve it.</p></div>
+          <div class="card"><span class="who" style="--c:#a9f0c7">B</span><h3>Agent Builder</h3><p>Interviews you, writes a new
+            agent's instructions and picks its tools. You see the draft; it exists when you say yes.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. MCP -->
+    <section class="section" id="mcp" aria-labelledby="mcp-title">
+      <div class="container">
+        <div class="section-head">
+          <p class="overline">Over MCP</p>
+          <h2 id="mcp-title">One memory for every agent you use</h2>
+          <p>Claude Code, Codex or Claude Desktop plug into the Brain over MCP. They search it by meaning; what they learn comes
+            back as proposals the Archivist files with your rules. What one agent learns, the next one knows.</p>
+        </div>
+
+        <div class="loop">
+          <svg class="loop-svg" id="loop-svg" viewBox="0 0 420 420" role="img" aria-labelledby="loop-desc">
+            <desc id="loop-desc">A loop in five steps: an agent asks, the Brain answers by meaning with sources, the agent proposes what it learned, the Archivist files it with your rules, and the next session finds it.</desc>
+          </svg>
+          <div class="loop-side">
+            <ol class="loop-steps" id="loop-steps">
+              <li data-k="0"><b>Ask.</b> A Claude Code session in Agent Manager calls <code>search</code>: “what do we know about the quote?”</li>
+              <li data-k="1"><b>Answer.</b> The Brain searches by meaning and words, and sends three short hits with their ids.</li>
+              <li data-k="2"><b>Propose.</b> The session learned something; it calls <code>propose_item</code>. Nothing is written yet.</li>
+              <li data-k="3"><b>File.</b> The Archivist checks it with your rules, files it, links it, and answers with a receipt.</li>
+              <li data-k="4"><b>Remember.</b> Tomorrow, a Codex session asks a related question and finds it.</li>
+            </ol>
+            <pre class="art" id="loop-msg" tabindex="0" aria-label="The MCP message for this step"></pre>
+          </div>
+        </div>
+
+        <div class="levels">
+          <div class="lv"><b>read</b><span>Search, open items, list places, find paths.</span></div>
+          <div class="lv"><b>propose items</b><span>Read, plus propose new items to the Archivist.</span></div>
+          <div class="lv"><b>propose changes</b><span>Also propose changes to existing items. Still never a direct write.</span></div>
+        </div>
+        <p class="small muted center">Each agent has its own token and level, and the Brain listens on your computer only. Levels
+          are permissions inside the app, not network security: read the <a href="https://github.com/sonixz/second-brain-gd/blob/main/AI-NOTICE.md" rel="noopener">AI notice</a>.</p>
+      </div>
+    </section>
+
+    <!-- 8. Honest -->
+    <section class="section section-alt" aria-labelledby="honest-title">
+      <div class="container narrow">
+        <h2 id="honest-title">What it takes, honestly</h2>
+        <ul class="honest">
+          <li><b>Meaning needs an OpenAI key.</b> Without one, everything still works with words: search, filing by hand, the graph.</li>
+          <li><b>What you send to a model leaves your computer.</b> The text of a note to make its vector, your question to answer
+            it. Your Brain itself, its files and its history stay in your user folder.</li>
+          <li><b>Built for one person on one computer.</b> It is a lab, not a server: don't put it on the internet.</li>
+        </ul>
+        <div class="hero-actions">
+          <a class="btn btn-primary" href="docs.html#install">Get started</a>
+          <a class="btn" href="howto.html">How-to guides</a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <div class="container footer-inner">
+      <span><img src="assets/logo.svg" alt="" width="20" height="20"> Second Brain GD</span>
+      <span class="muted"><a href="index.html">Home</a> · <a href="howto.html">How-to</a> · <a href="docs.html">Docs</a> · <a href="https://github.com/sonixz/second-brain-gd" rel="noopener">GitHub</a> · Local-first knowledge system · Godot + Python</span>
+    </div>
+  </footer>
+  <script src="js/main.js?v=2026-11-10d"></script>
+  <script src="js/semantic.js?v=2026-11-10d"></script>
+</body>
+</html>
