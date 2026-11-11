@@ -10,7 +10,7 @@
   <meta property="og:description" content="Your second brain. Every AI agent. Your rules. An AI-native, voice-first second brain that runs on your computer.">
   <meta property="og:image" content="assets/showcase/graph-zones.webp">
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=2026-11-09d">
+  <link rel="stylesheet" href="css/style.css?v=2026-11-11d">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -31,6 +31,7 @@
         <li><a href="#agents">Agents</a></li>
         <li><a href="#roadmap">Roadmap</a></li>
         <li><a href="#journal">Journal</a></li>
+        <li><a href="semantic.html">How it thinks</a></li>
         <li><a href="howto.html">How-to</a></li>
         <li><a href="docs.html">Docs</a></li>
         <li><a href="https://github.com/sonixz/second-brain-gd" class="nav-cta" rel="noopener">GitHub</a></li>
@@ -53,26 +54,26 @@
             <a class="btn" href="howto.html">How-to guides</a>
           </div>
         </div>
-        <aside class="archivist" aria-label="The Archivist">
-          <header class="a-head"><span class="a-badge" aria-hidden="true">A</span><b>Archivist</b><span class="a-state" data-s="ready">● ready</span><button class="a-pause" type="button" aria-pressed="false" hidden>❚❚</button></header>
-          <div class="a-log" id="a-log" role="log" aria-live="polite">
-            <p class="a-say">Hello. This Brain holds 33 notes in 6 places, and Kitchen renovation grew this week. Tell me anything: I'll file it and link it.</p>
-          </div>
-        </aside>
-      </div>
-      <div class="hero-capture">
-        <form class="live-capture" id="live-capture" autocomplete="off">
-          <label class="sr-only" for="live-in">Capture a thought</label>
-          <input id="live-in" maxlength="70" placeholder="Capture a thought… (Enter)">
-          <div class="live-voice" aria-hidden="true"><span class="lv-key">F8</span><span class="lv-meter"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="lv-said"></span></div>
-          <button type="submit" aria-label="Capture">↵</button>
-        </form>
-        <p class="live-try">Try it:
-          <button type="button" data-try="Quartz countertop quote from the contractor">quartz countertop quote</button>
-          <button type="button" data-try="Kanji flashcards every morning">kanji flashcards</button>
-          <button type="button" data-try="Ramen recipe from the podcast">ramen recipe</button>
-        </p>
-        <p class="live-note">A scripted reconstruction of the app at work. Type or click above and it's your turn: a toy version that runs in this page, nothing is sent. In the app, the Archivist files by meaning, with AI.</p>
+        <div class="hero-capture">
+          <aside class="archivist" aria-label="The Archivist">
+            <header class="a-head"><span class="a-badge" aria-hidden="true">A</span><b>Archivist</b><span class="a-state" data-s="ready">● ready</span><button class="a-pause" type="button" aria-pressed="false" hidden>❚❚</button></header>
+            <div class="a-log" id="a-log" role="log" aria-live="polite">
+              <p class="a-say">Hello. This Brain holds 47 notes in 6 places, and Kitchen renovation grew this week. Tell me anything: I'll file it and link it.</p>
+            </div>
+          </aside>
+          <form class="live-capture" id="live-capture" autocomplete="off">
+            <label class="sr-only" for="live-in">Capture a thought</label>
+            <input id="live-in" maxlength="70" placeholder="Capture a thought… (Enter)">
+            <div class="live-voice" aria-hidden="true"><span class="lv-key">F8</span><span class="lv-meter"><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i></span><span class="lv-said"></span></div>
+            <button type="submit" aria-label="Capture">↵</button>
+          </form>
+          <p class="live-try">Try it:
+            <button type="button" data-try="Quartz countertop quote from the contractor">quartz countertop quote</button>
+            <button type="button" data-try="Kanji flashcards every morning">kanji flashcards</button>
+            <button type="button" data-try="Ramen recipe from the podcast">ramen recipe</button>
+          </p>
+          <p class="live-note">A scripted reconstruction of the app at work. Type or click above and it's your turn: a toy version that runs in this page, nothing is sent. In the app, the Archivist files by meaning, with AI.</p>
+        </div>
       </div>
     </section>
 
@@ -267,6 +268,24 @@
           <figure class="shot"><img src="assets/showcase/live.webp" alt="Live conversation: a spoken question about how two ideas connect, the answer in the panel and the path drawn in the graph" loading="lazy" width="1280" height="800"><figcaption>Talk live (F9), the graph follows</figcaption></figure>
           <figure class="shot"><img src="assets/showcase/engine-room.webp" alt="The engine room with real measurements of the local engine" loading="lazy" width="1280" height="800"><figcaption>The engine room, real numbers only</figcaption></figure>
           <figure class="shot"><img src="assets/showcase/costs.webp" alt="Real OpenAI costs and tokens read from OpenAI" loading="lazy" width="1280" height="800"><figcaption>Your real AI costs</figcaption></figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="think-band" aria-labelledby="think-title">
+      <div class="container think-band-inner">
+        <div>
+          <p class="overline">How it thinks</p>
+          <h2 id="think-title">Not a folder of files. <span class="accent">A memory that understands.</span></h2>
+          <p class="muted">You wrote “quartz for the island”; you ask what you decided for the countertop. Second Brain finds it by
+            meaning, links it to what you already know, and gives every AI agent the same memory over MCP.</p>
+          <a class="btn btn-primary" href="semantic.html">See how it thinks →</a>
+        </div>
+        <div class="think-mini" aria-hidden="true">
+          <p class="tm-q">“what did I decide for the countertop?”</p>
+          <div class="tm-row tm-words"><span>Exact words</span><b>0 notes</b></div>
+          <div class="tm-row tm-meaning"><span>By meaning</span><b>Quartz or granite? · 0.59</b></div>
+          <div class="tm-row tm-meaning"><span></span><b>Quartz quote · $4,200 · 0.40</b></div>
         </div>
       </div>
     </section>
@@ -1113,7 +1132,7 @@
       <span class="muted"><a href="howto.html">How-to</a> · <a href="docs.html">Docs</a> · <a href="#journal">Journal</a> · <a href="https://github.com/sonixz/second-brain-gd" rel="noopener">GitHub</a> · Local-first knowledge system · Godot + Python</span>
     </div>
   </footer>
-  <script src="js/main.js?v=2026-11-09d"></script>
-  <script src="js/brain-demo.js?v=2026-11-09d"></script>
+  <script src="js/main.js?v=2026-11-11d"></script>
+  <script src="js/brain-demo.js?v=2026-11-11d"></script>
 </body>
 </html>
