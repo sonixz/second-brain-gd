@@ -2,6 +2,19 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## VIEW-I: light in the 3D layers (2026-11-10)
+
+Second step on the graphic side (owner: « oui pars sur 1 puis 2 et enchaine »). In « Layers (3D) » every item now
+wears a soft halo in its colour; links add their light where they cross and each carries a small signal travelling
+along it, at its own pace; the far side of the scene fades into a light fog; stars sit far behind and slide as the
+scene turns; the selected item's ring breathes. A click flies the camera to the item and closer, a click on nothing
+flies home, and the wheel and every camera move now glide instead of jumping. An arrival during the play flashes its
+halo wide before it settles. The strength follows the theme's `graph_glow` but never goes off. Still no lights and
+no post-processing: flat colours and additive sprites, three more draw calls, GL Compatibility. Known limit: on the
+light Paper theme additive light shows little.
+Tests: Godot end to end 287. An older check, « the Captures view lists what came in, newest first », failed in two
+of the last five runs and passed in the others; it is in a part these loops do not touch and its cause is not found.
+
 ## VIEW-H: the play becomes a moment to watch (2026-11-10)
 
 The owner tried the views: « quand on met le temps puis qu'on peut faire le play, c'est vraiment nice », then asked

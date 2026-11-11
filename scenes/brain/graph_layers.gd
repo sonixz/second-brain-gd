@@ -6,7 +6,9 @@ extends Control
 ## click; reading happens back in the 2D graph (double-click an item to land on it there).
 ##
 ## Input: drag = turn, wheel = zoom, click = select (item_selected), double-click = item_landed.
-## Sober on purpose: unshaded colours, no lights, no effects — it runs in GL Compatibility on any machine.
+## Light without weight (VIEW-I): every item wears a soft halo, links glow and carry small signals, the far side
+## fades into a light fog, stars sit behind, and a click flies the camera to the item. All of it is flat colours
+## and additive sprites — no lights, no post-processing — so it still runs in GL Compatibility on any machine.
 
 signal item_selected(id: String)
 signal item_landed(id: String)
@@ -32,6 +34,18 @@ var _born: Dictionary = {}       # id -> _clock when it appeared (while a scene 
 var _known: Dictionary = {}      # ids of the scene before this one
 var _home := Vector3.ZERO        # where the camera looks at rest
 var _rise := 0.0                 # the height the play looks at: the plane of the latest arrival
+const MAX_SIGNALS := 240         # links that carry a travelling signal
+var glow := 1.0                  # how strong the halos and signals are (follows the theme's graph_glow, never off)
+var _aim := Vector3.ZERO         # where the camera is going to look: it glides, it never jumps
+var _aim_dist := 30.0
+var _home_dist := 30.0
+var _flown := false              # the camera flew to an item (a click on nothing brings it home)
+var _zoomed := false             # the wheel was used: a rebuild keeps that distance
+var _built := false
+var _halos: MultiMeshInstance3D
+var _signals: MultiMeshInstance3D
+var _signal_ab: Array = []       # [from, to, phase, speed] for each signal
+var _glow_tex: GradientTexture2D
 var screen_offset := Vector2.ZERO   # centre of the free area, as for the 2D graph (docked panels cover the sides)
 
 var _viewport: SubViewport
@@ -71,6 +85,22 @@ func _ready() -> void:
 	_camera.fov = 42.0
 	_camera.far = 400.0
 	_viewport.add_child(_camera)
+	env.fog_enabled = true           # the far side of the scene fades a little: depth without any light
+	env.fog_light_color = SbTheme.BG
+	env.fog_density = 0.007
+	env.fog_sky_affect = 0.0
+	_glow_tex = GradientTexture2D.new()
+	_glow_tex.fill = GradientTexture2D.FILL_RADIAL
+	_glow_tex.fill_from = Vector2(0.5, 0.5)
+	_glow_tex.fill_to = Vector2(1.0, 0.5)
+	_glow_tex.width = 64
+	_glow_tex.height = 64
+	var fade := Gradient.new()
+	fade.set_color(0, Color(1, 1, 1, 1))
+	fade.set_color(1, Color(1, 1, 1, 0))
+	fade.add_point(0.35, Color(1, 1, 1, 0.32))
+	_glow_tex.gradient = fade
+	_build_stars()
 	_root = Node3D.new()
 	_viewport.add_child(_root)
 	_tip = Label.new()
@@ -84,6 +114,49 @@ func _ready() -> void:
 	_date.position = Vector2(legend_x + 6.0, 196.0)
 	add_child(_date)
 	_place_camera()
+
+
+## A soft round sprite that always faces the camera and adds its light to what is behind it.
+func _sprite_material() -> StandardMaterial3D:
+	var m := StandardMaterial3D.new()
+	m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	m.blend_mode = BaseMaterial3D.BLEND_MODE_ADD
+	m.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	m.billboard_mode = BaseMaterial3D.BILLBOARD_ENABLED
+	m.billboard_keep_scale = true
+	m.albedo_texture = _glow_tex
+	m.vertex_color_use_as_albedo = true
+	m.depth_draw_mode = BaseMaterial3D.DEPTH_DRAW_DISABLED
+	m.disable_fog = true
+	return m
+
+
+func _sprites(count: int, quad_size: float) -> MultiMeshInstance3D:
+	var quad := QuadMesh.new()
+	quad.size = Vector2.ONE * quad_size
+	var mm := MultiMesh.new()
+	mm.transform_format = MultiMesh.TRANSFORM_3D
+	mm.use_colors = true
+	mm.mesh = quad
+	mm.instance_count = count
+	var mi := MultiMeshInstance3D.new()
+	mi.multimesh = mm
+	mi.material_override = _sprite_material()
+	return mi
+
+
+## Stars far behind the scene: they slide as it turns, which gives the depth. Always the same sky.
+func _build_stars() -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 2026
+	var stars := _sprites(320, 1.0)
+	for i in 320:
+		var dir := Vector3(rng.randfn(), rng.randfn() * 0.7, rng.randfn()).normalized()
+		var big := rng.randf() < 0.12
+		stars.multimesh.set_instance_transform(i, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * (2.6 if big else rng.randf_range(0.7, 1.5))), dir * rng.randf_range(170.0, 300.0)))
+		stars.multimesh.set_instance_color(i, Color(SbTheme.MINT_SOFT, rng.randf_range(0.25, 0.9 if big else 0.6)))
+	stars.extra_cull_margin = 1000.0
+	_viewport.add_child(stars)
 
 
 ## Builds the scene from the 2D graph as it is now: its places, the items its filters and time cursor show,
@@ -151,10 +224,18 @@ func show_graph(graph: GraphView) -> void:
 			places.append([str(n["label"]), flat, graph._color(n)])
 	bounds = bounds.grow(2.5)
 	_known = seen
+	glow = clampf(0.5 + 0.5 * graph._glow, 0.5, 1.6)
 	_home = Vector3(bounds.get_center().x, (count - 1) * GAP * 0.5, bounds.get_center().y)
-	_centre = Vector3(_home.x, _centre.y if playing else _home.y, _home.z)
 	var free_w := maxf(400.0, size.x - absf(screen_offset.x) * 2.0 - 80.0)  # the scene fits the room the panels leave
-	distance = clampf((maxf(bounds.size.x, bounds.size.y) * 0.95 + count * GAP) * clampf(size.x / free_w, 1.0, 2.2), 12.0, 260.0)
+	_home_dist = clampf((maxf(bounds.size.x, bounds.size.y) * 0.95 + count * GAP) * clampf(size.x / free_w, 1.0, 2.2), 12.0, 260.0)
+	if not _flown:
+		_aim = Vector3(_home.x, _rise if playing else _home.y, _home.z)
+		if not _zoomed:
+			_aim_dist = _home_dist
+	if not _built:  # the first scene is simply there; after that the camera glides
+		_centre = _aim
+		distance = _aim_dist
+		_built = true
 	_build_planes(bounds)
 	_build_places(places, count)
 	_build_dots()
@@ -269,10 +350,19 @@ func _build_dots() -> void:
 	_dots.multimesh = mm
 	_dots.material_override = _flat(Color.WHITE, true)
 	_root.add_child(_dots)
+	# A halo around each ball, in its colour.
+	_halos = _sprites(items.size(), 2.6)
+	for i in items.size():
+		var grown := 0.01 if _born.has(items[i]["id"]) else 1.0
+		_halos.multimesh.set_instance_transform(i, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * grown), items[i]["pos"]))
+		_halos.multimesh.set_instance_color(i, Color(items[i]["col"], 0.42 * glow))
+	_root.add_child(_halos)
 
 
 ## Real links (clear) and related ideas (warm, fainter), across the planes: a line climbing is an idea coming back.
 func _build_links(graph: GraphView, index: Dictionary) -> void:
+	_signal_ab.clear()
+	var signal_cols: Array = []
 	for kind in ["link", "related"]:
 		var mesh := ImmediateMesh.new()
 		var any := false
@@ -281,17 +371,56 @@ func _build_links(graph: GraphView, index: Dictionary) -> void:
 				if not any:
 					mesh.surface_begin(Mesh.PRIMITIVE_LINES)
 					any = true
-				mesh.surface_add_vertex(items[index[e["from"]]]["pos"])
-				mesh.surface_add_vertex(items[index[e["to"]]]["pos"])
+				var a: Vector3 = items[index[e["from"]]]["pos"]
+				var b: Vector3 = items[index[e["to"]]]["pos"]
+				mesh.surface_add_vertex(a)
+				mesh.surface_add_vertex(b)
+				if _signal_ab.size() < MAX_SIGNALS:  # a small light travels along the link, each at its own pace
+					var n := _signal_ab.size()
+					_signal_ab.append([a, b, fmod(n * 0.37, 1.0), 0.16 + 0.07 * fmod(n * 0.61, 1.0)])
+					signal_cols.append(Color(SbTheme.MINT_SOFT if kind == "link" else SbTheme.WARM, (0.85 if kind == "link" else 0.6) * glow))
 		if not any:
 			continue
 		mesh.surface_end()
 		var mi := MeshInstance3D.new()
 		mi.mesh = mesh
-		mi.material_override = _flat(Color(SbTheme.MINT, 0.55) if kind == "link" else Color(SbTheme.WARM, 0.3))
+		var line := _flat(Color(SbTheme.MINT, 0.6) if kind == "link" else Color(SbTheme.WARM, 0.34))
+		line.blend_mode = BaseMaterial3D.BLEND_MODE_ADD  # crossing links add up: the busy places shine
+		mi.material_override = line
 		_root.add_child(mi)
 		if kind == "link":
 			_lines = mi
+	_signals = _sprites(_signal_ab.size(), 0.55)
+	for i in _signal_ab.size():
+		_signals.multimesh.set_instance_color(i, signal_cols[i])
+	_root.add_child(_signals)
+	_move_signals()
+
+
+func _move_signals() -> void:
+	if _signals == null:
+		return
+	for i in _signal_ab.size():
+		var s: Array = _signal_ab[i]
+		var k := fmod(_clock * float(s[3]) + float(s[2]), 1.0)
+		_signals.multimesh.set_instance_transform(i, Transform3D(Basis.IDENTITY, (s[0] as Vector3).lerp(s[1], smoothstep(0.0, 1.0, k))))
+
+
+## The camera glides to an item and comes closer; fly_home() brings it back.
+func fly_to(id: String) -> void:
+	for it in items:
+		if str(it["id"]) == id:
+			_flown = true
+			spinning = false
+			_aim = it["pos"]
+			_aim_dist = clampf(_home_dist * 0.42, 9.0, 60.0)
+
+
+func fly_home() -> void:
+	_flown = false
+	_zoomed = false
+	_aim = _home
+	_aim_dist = _home_dist
 
 
 func _place_camera() -> void:
@@ -308,29 +437,40 @@ func _place_camera() -> void:
 ## The play starts or stops: while it plays the scene turns and the camera rises with the latest arrivals.
 func set_playing(on: bool) -> void:
 	playing = on
+	_flown = false
 	if on:
 		spinning = true
 		_rise = 0.0
+	else:
+		_aim = _home
 
 
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return
 	_clock += delta
-	var goal := _rise if playing else _home.y
-	var moving := absf(_centre.y - goal) > 0.01
+	if playing and not _flown:
+		_aim.y = _rise
+	var moving := _centre.distance_to(_aim) > 0.01 or absf(distance - _aim_dist) > 0.01
 	if moving:
-		_centre.y = lerpf(_centre.y, goal, minf(1.0, delta * 1.6))
+		var k := minf(1.0, delta * (1.6 if playing else 3.2))
+		_centre = _centre.lerp(_aim, k)
+		distance = lerpf(distance, _aim_dist, k)
 	if spinning:
 		yaw += delta * SPIN
 	if spinning or moving:
 		_place_camera()
+	_move_signals()
+	if _halo != null and _halo.visible:  # the selected item's ring breathes
+		_halo.scale = Vector3.ONE * (1.0 + 0.12 * sin(_clock * 3.0))
 	if not _born.is_empty() and _dots != null:  # arrivals grow in
 		for i in items.size():
 			var id: String = items[i]["id"]
 			if _born.has(id):
 				var k := clampf((_clock - float(_born[id])) / POP_S, 0.0, 1.0)
 				_dots.multimesh.set_instance_transform(i, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * GraphView._ease_out_back(k) * (1.0 + 0.9 * (1.0 - k))), items[i]["pos"]))
+				# its halo flashes wide, then settles
+				_halos.multimesh.set_instance_transform(i, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * (1.0 + 2.6 * (1.0 - k)) * minf(1.0, k * 6.0)), items[i]["pos"]))
 				if k >= 1.0:
 					_born.erase(id)
 
@@ -374,8 +514,8 @@ func _gui_input(event: InputEvent) -> void:
 		var mb: InputEventMouseButton = event
 		if mb.pressed and mb.button_index in [MOUSE_BUTTON_WHEEL_UP, MOUSE_BUTTON_WHEEL_DOWN]:
 			spinning = false
-			distance = clampf(distance * (1.0 / 1.15 if mb.button_index == MOUSE_BUTTON_WHEEL_UP else 1.15), 6.0, 260.0)
-			_place_camera()
+			_zoomed = true
+			_aim_dist = clampf(_aim_dist * (1.0 / 1.15 if mb.button_index == MOUSE_BUTTON_WHEEL_UP else 1.15), 6.0, 260.0)
 		elif mb.button_index == MOUSE_BUTTON_LEFT:
 			if mb.pressed:
 				spinning = false
@@ -387,7 +527,10 @@ func _gui_input(event: InputEvent) -> void:
 				var hit := item_at(mb.position)
 				select(hit)
 				if hit != "":
+					fly_to(hit)  # the camera glides to it; a click on nothing flies home
 					item_selected.emit(hit)
+				else:
+					fly_home()
 		accept_event()
 	elif event is InputEventMouseMotion:
 		var mm: InputEventMouseMotion = event

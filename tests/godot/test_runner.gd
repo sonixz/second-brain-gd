@@ -1177,6 +1177,20 @@ func _e2e() -> void:
 	var vf_first: String = str((vf.items[0] as Dictionary)["id"])
 	vf.spinning = false
 	var vf_pick: bool = vf.item_at(vf.screen_of(vf_first)) != "" and vf.item_at(Vector2(-500, -500)) == ""
+	# Light (VIEW-I): a halo per item, a signal per link, and the camera flies to an item and home again.
+	var vf_links := 0
+	for ed in graph.edges:
+		if str(ed["type"]) in ["link", "related"] and graph.is_shown(str(ed["from"])) and graph.is_shown(str(ed["to"])):
+			vf_links += 1
+	var vf_light: bool = vf._halos.multimesh.instance_count == vf.items.size() and vf._signal_ab.size() == mini(vf_links, GraphLayers3D.MAX_SIGNALS) and vf_links > 0
+	vf.fly_to(vf_first)
+	var vf_near: float = vf._aim_dist
+	await create_timer(0.6).timeout
+	vf_light = vf_light and vf._flown and vf._aim == (vf.items[0] as Dictionary)["pos"] and vf.distance < vf._home_dist and vf_near < vf._home_dist
+	vf.fly_home()
+	vf_pick = vf_pick and vf_light and not vf._flown
+	await create_timer(1.5).timeout  # home again before picking by screen position
+	vf_pick = vf_pick and vf.item_at(vf.screen_of(vf_first)) != ""
 	fbar.apply({"types": ["note"]})
 	var vf_filtered: bool = vf.items.size() == graph.shown_note_count() and vf.items.size() < vf_counted
 	fbar.apply({})

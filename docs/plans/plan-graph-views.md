@@ -122,6 +122,10 @@ gaps plays mostly emptiness), sound on arrivals.
 - Balls with a halo, luminous links with signals travelling on them, depth fog, a starry background, a smooth
   flight to the item you click. Still GL Compatibility.
 
+**Done (2026-11-10).** `GraphLayers3D`: `_sprites` and `_sprite_material` (halos, signals, stars), fog in the
+environment, `fly_to` / `fly_home`, a gliding camera (`_aim`, `_aim_dist`). Left: the same light for the 2D play
+(signals on links exist there already), place names that avoid each other, the Paper theme.
+
 ### VIEW-G — Constellation 3D (L)
 
 - A true 3D scene beside the 2D graph: places as bodies, items as stars (MultiMesh), links as light filaments,
