@@ -23,10 +23,11 @@ static func origins() -> Array:
 		["pack", I18n.t("Packs")]]
 
 
-## The views of the graph, in the picker's order: [layout id, label]. The ids are GraphView.LAYOUTS.
+## The views of the graph, in the picker's order: [layout id, label]. The ids are GraphView.LAYOUTS, plus "layers":
+## the zones stacked in 3D, one plane per period (GraphLayers3D, shown over the graph by the brain screen).
 static func views() -> Array:
 	return [["zones", I18n.t("Zones")], ["timeline", I18n.t("Timeline")], ["focus", I18n.t("Focus")],
-		["meaning", I18n.t("Meaning map")]]
+		["meaning", I18n.t("Meaning map")], ["layers", I18n.t("Layers (3D)")]]
 
 
 static func days() -> Array:
@@ -82,7 +83,7 @@ func _ready() -> void:
 	add_child(clear_button)
 	view_pick = OptionButton.new()
 	view_pick.name = "ViewPick"
-	view_pick.tooltip_text = I18n.t("The view of the graph. Zones: items around their place. Timeline: items on a time axis, one lane per place. Focus: one item and what is linked to it, ring by ring. Meaning map: items placed by what they mean, whatever their place")
+	view_pick.tooltip_text = I18n.t("The view of the graph. Zones: items around their place. Timeline: items on a time axis, one lane per place. Focus: one item and what is linked to it, ring by ring. Meaning map: items placed by what they mean, whatever their place. Layers (3D): the zones stacked through time, to turn and explore")
 	for v in views():
 		view_pick.add_item(str(v[1]))
 	view_pick.item_selected.connect(func(i: int) -> void:

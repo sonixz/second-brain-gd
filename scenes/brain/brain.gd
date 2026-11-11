@@ -8,6 +8,7 @@ const SAVE_DELAY_S := 0.8
 
 var app: SbApp
 var graph: GraphView
+var layers_view: GraphLayers3D
 var greeting: Label
 var date_label: Label
 var status_dot: StatusDot
@@ -117,13 +118,19 @@ func _ready() -> void:
 		if mode == "meaning":  # the engine places the items by meaning; no map (no meaning memory yet) = stay here
 			if not await load_meaning_map():
 				show_toast(I18n.t("No meaning map yet: it needs a few items and the meaning memory (an OpenAI key)"))
-		graph.set_layout(mode)
-		if graph.graph_layout != mode:  # a view with nothing to show (focus, meaning): the picker says what is shown
+		var in_3d := mode == "layers"  # the 3D layers stand on the zones
+		graph.set_layout("zones" if in_3d else mode)
+		layers_view.visible = in_3d
+		if in_3d:
+			layers_view.spinning = true
+			layers_view.show_graph(graph)
+		elif graph.graph_layout != mode:  # a view with nothing to show (focus, meaning): the picker says what is shown
 			filters_bar.show_view(graph.graph_layout)
-		app.state["graph_layout"] = graph.graph_layout)
+		app.state["graph_layout"] = "layers" if in_3d else graph.graph_layout)
 	graph.focus_changed.connect(func(id: String) -> void: app.state["graph_focus"] = id)
 	filters_bar.changed.connect(func(f: Dictionary) -> void:
 		graph.set_filter(f)
+		_refresh_layers()
 		app.state["graph_filter"] = f
 		_update_stats())
 	filters_bar.time_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
@@ -134,6 +141,7 @@ func _ready() -> void:
 	filters_bar.lanes_changed.connect(func(mode: String) -> void: graph.set_timeline_lanes(mode))
 	filters_bar.time_changed.connect(func(fraction: float) -> void:
 		graph.set_time_fraction(fraction)
+		_refresh_layers()
 		filters_bar.time_label.text = I18n.t("Now") if graph.time_cursor < 0.0 else I18n.t("%s · %d items") % [
 			Time.get_datetime_string_from_unix_time(int(graph.time_cursor) + int(Time.get_time_zone_from_system().get("bias", 0)) * 60, true).left(16),
 			graph.shown_note_count()]
@@ -153,6 +161,17 @@ func _ready() -> void:
 		graph.select("")
 		_close_inspector())
 	add_child(graph)
+	layers_view = GraphLayers3D.new()  # the 3D layers (VIEW-F) cover the graph when that view is picked
+	layers_view.set_anchors_preset(Control.PRESET_FULL_RECT)
+	layers_view.visible = false
+	layers_view.item_selected.connect(func(id: String) -> void:
+		graph.select(id)
+		_on_node_selected(id, "note"))
+	layers_view.item_landed.connect(func(id: String) -> void:  # reading happens in 2D: land on the item there
+		filters_bar.set_view("zones")
+		graph.select(id)
+		graph.zoom_to(GraphView.NEAR + 0.4, graph.nodes[id]["pos"], 0.9))
+	add_child(layers_view)
 	_build_views()
 	_build_top_bar()
 	_build_left_panel()
@@ -160,7 +179,7 @@ func _ready() -> void:
 	_build_capture_bar()
 	_build_toast()
 	_build_listening_overlay()
-	move_child(filters_bar, graph.get_index() + 1)  # above the graph (which paints its own background), below the panels
+	move_child(filters_bar, layers_view.get_index() + 1)  # above the graph and its 3D layers, below the panels
 	move_child(filters_bar.time_bar, filters_bar.get_index() + 1)
 	get_window().files_dropped.connect(_on_files_dropped)
 	voice_capture = VoiceCapture.new()
@@ -425,6 +444,8 @@ func _on_panel_edges(left: float, right: float) -> void:
 	filters_bar.offset_left = panel_layer.margin_side + left
 	filters_bar.time_bar.offset_left = panel_layer.margin_side + left
 	graph.screen_offset = Vector2((left - right) * 0.5, 0)
+	layers_view.screen_offset = graph.screen_offset
+	_refresh_layers()
 	graph.legend_x = panel_layer.margin_side + left
 	graph.right_inset = right
 	graph.queue_redraw()
@@ -620,6 +641,7 @@ func set_view(name: String) -> void:
 	captures_view.visible = name == "captures"
 	if filters_bar != null:
 		filters_bar.visible = name == "graph"
+		layers_view.visible = name == "graph" and filters_bar.view() == "layers"
 		filters_bar.time_bar.visible = name == "graph" and filters_bar.time_button.button_pressed
 	if results_box != null:
 		(results_box.get_parent() as Control).visible = name == "graph" and search_edit.text.strip_edges() != ""
@@ -1488,6 +1510,8 @@ func refresh_graph() -> Array[String]:
 			filters_bar.apply(app.state["graph_filter"])
 		graph.focus_id = str(app.state.get("graph_focus", ""))
 		filters_bar.set_view(str(app.state.get("graph_layout", "zones")))
+	if not born.is_empty():
+		_refresh_layers()
 	if graph.graph_layout == "meaning" and not born.is_empty():  # new items take their seat on the meaning map
 		load_meaning_map()
 	graph.details.clear()  # cards fetch their place, themes and text again when they are on screen
@@ -2420,7 +2444,7 @@ class _MicRing:
 # ------------------------------------------------------------ saved views (VIEW-B)
 ## Saves what the graph shows now (its view, its filters, where you look) under a name.
 func save_graph_view(view_name: String) -> void:
-	GraphFilters.store_view({"name": view_name, "layout": graph.graph_layout, "filter": filters_bar.filter.duplicate(true),
+	GraphFilters.store_view({"name": view_name, "layout": filters_bar.view(), "filter": filters_bar.filter.duplicate(true),
 		"center": graph.view_center(), "zoom": graph.zoom, "focus": graph.focus_id if graph.graph_layout == "focus" else "",
 		"lanes": graph.timeline_lanes})
 
@@ -2445,4 +2469,10 @@ func load_meaning_map() -> bool:
 		return false
 	graph.set_meaning_points((res["data"] as Dictionary).get("points", {}))
 	return not graph.meaning_points.is_empty()
+
+
+## The 3D layers follow the graph: its filters, its time cursor, its new items.
+func _refresh_layers() -> void:
+	if layers_view != null and layers_view.visible:
+		layers_view.show_graph(graph)
 

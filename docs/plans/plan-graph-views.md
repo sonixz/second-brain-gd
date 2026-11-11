@@ -1,8 +1,8 @@
 # Plan — richer views in the graph (loops VIEW-A to VIEW-G)
 
 **Status: started.** Written on 2026-11-10 after a brainstorm with the owner, who said the same day « commence par
-VIEW-A et enchaine ». The loops are built in the suggested order; the 3D loops (F, G) wait for the owner's answers
-to the open questions at the end.
+VIEW-A et enchaine ». A to F are built. The owner answered the questions on 3D the same day (a showcase, the light
+version first, a sober rendering); VIEW-G waits for him to have tried VIEW-F.
 
 The owner's words (2026-11-10): « Les vues possibles dans la vue graph, filtrer, chronologie, c'est une vue.
 J'aime bien la vue chronologie. Est-ce qu'on pourrait avoir des vues plus avancées, plus étendues, plus
@@ -97,6 +97,13 @@ map is the same for the same items, but may turn when many are added), name the 
   turn. Each plane is the 2D view rendered to a texture (a SubViewport).
 - Why: a real 3D feel without a second graph renderer. A cheap test of whether 3D helps in daily use.
 
+**Done (2026-11-10).** The owner's decision the same day: 3D is « comme une vitrine, exploration », « la version
+légère » first, « un rendu sobre pour commencer ». Built as `scenes/brain/graph_layers.gd` (`GraphLayers3D`), shown
+over the graph by « Layers (3D) » in the picker: one plane per period, places as columns, items as balls (one
+MultiMesh), links as lines, orbit and zoom, click selects, double-click lands in 2D. Drawn directly in 3D instead of
+2D views rendered to textures (sharper, lighter, and the base VIEW-G needs). Left: place names crowd from some
+angles; planes per place as an alternative to planes per period; the camera angle in saved views.
+
 ### VIEW-G — Constellation 3D (L)
 
 - A true 3D scene beside the 2D graph: places as bodies, items as stars (MultiMesh), links as light filaments,
@@ -116,7 +123,8 @@ map is the same for the same items, but may turn when many are added), name the 
 ## Suggested order
 
 A → B → C → D → E, then decide on 3D with the meaning map in hand: F as a cheap trial, or straight to G.
-A to E were built in that order on 2026-11-10; F and G wait for the owner.
+A to F were built in that order on 2026-11-10 (F after the owner chose the light 3D first). G waits for the owner
+to have tried F.
 The order changes with the answers below: if the 3D comes first, A → E → G, since G needs E's coordinates.
 
 ## Open questions for the owner

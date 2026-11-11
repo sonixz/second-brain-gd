@@ -2,6 +2,21 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## VIEW-F: layers in 3D, a first and sober one (2026-11-10)
+
+The owner decided the same day: 3D is « comme une vitrine, exploration », not a daily working view; « la version
+légère » first; « un rendu sobre pour commencer ». So the picker gains « Layers (3D) »: the zones stacked in space,
+one plane per period of the brain's life, oldest at the bottom. An item is a small ball on the plane of the moment it
+came in, above its place; a place is a column through the planes with its name on top, so a column of balls is a
+place growing through time and a line climbing between planes is an idea coming back. It turns slowly by itself until
+you touch it; drag turns, the wheel zooms, a click selects an item (its name follows the pointer), a double-click
+lands on it in the 2D graph, where reading happens. It follows the filters and the time cursor (▶ plays the planes
+filling up), stays clear of docked panels, and a saved view can open it. Sober on purpose: flat colours, no lights
+or effects, one draw call for the items, GL Compatibility. Not the plan's first idea (the 2D view rendered to
+textures): drawing the planes directly is sharper and lighter, and it is the same scene the constellation would need.
+Known limits: place names crowd each other from some angles; the camera's angle is not saved with a view.
+Tests: Python 352 (with the app's own environment), Godot end to end 287.
+
 ## VIEW-E: the meaning map (2026-11-10)
 
 A fourth view in the picker: Meaning map. Items sit where their meaning puts them, whatever place they are filed in:

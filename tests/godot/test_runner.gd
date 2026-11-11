@@ -1016,7 +1016,7 @@ func _e2e() -> void:
 	var va_ignored: bool = graph.graph_layout == "timeline"
 	fbar.set_view("zones")
 	var va_back: bool = graph.graph_layout == "zones" and fbar.view_pick.selected == 0 and (graph.nodes[va_id]["pos"] as Vector2).distance_to(va_before) < 0.5
-	check(va_on and va_moved and va_ignored and va_back and GraphFilters.views().size() == GraphView.LAYOUTS.size(),
+	check(va_on and va_moved and va_ignored and va_back and GraphFilters.views().size() == GraphView.LAYOUTS.size() + 1,  # + the 3D layers
 		"the view picker switches views, ignores an unknown one, and the zones come back where they were")
 	# Saved views (VIEW-B): a view, its filter and the camera under a name; opened again from anywhere.
 	fbar.apply({"types": ["note"]})
@@ -1152,6 +1152,29 @@ func _e2e() -> void:
 			ve_back = false
 	check(ve_on and fbar.view() == "zones" and ve_only and ve_apart and ve_shown.size() >= 3 and ve_shown.size() == int(ve_map.get("count", -1)) and ve_back,
 		"the meaning map places the %d items the engine mapped, apart from each other, without the places, and the zones return" % ve_shown.size())
+	# Layers in 3D (VIEW-F): the zones stacked through time over the graph; a click selects, a double-click lands in 2D.
+	var vf: GraphLayers3D = brain.get("layers_view")
+	fbar.set_view("layers")
+	await create_timer(0.5).timeout
+	var vf_on: bool = vf.visible and fbar.view() == "layers" and graph.graph_layout == "zones" and str(app.state.get("graph_layout", "")) == "layers"
+	var vf_all: bool = vf.items.size() == graph.shown_note_count() and vf.layers.size() >= 1
+	var vf_counted := 0
+	for vf_layer in vf.layers:
+		vf_counted += int((vf_layer as Dictionary)["count"])
+	var vf_first: String = str((vf.items[0] as Dictionary)["id"])
+	vf.spinning = false
+	var vf_pick: bool = vf.item_at(vf.screen_of(vf_first)) != "" and vf.item_at(Vector2(-500, -500)) == ""
+	fbar.apply({"types": ["note"]})
+	var vf_filtered: bool = vf.items.size() == graph.shown_note_count() and vf.items.size() < vf_counted
+	fbar.apply({})
+	vf.item_landed.emit(vf_first)
+	await create_timer(1.2).timeout
+	check(vf_on and vf_all and vf_counted == vf.items.size() and vf_pick and vf_filtered and not vf.visible and fbar.view() == "zones"
+		and graph.selected == vf_first and graph.zoom >= GraphView.NEAR,
+		"the 3D layers stack the %d items on %d planes, follow the filters, pick an item and land on it in the 2D graph" % [vf_counted, vf.layers.size()])
+	graph.select("")
+	graph.zoom_to(0.6, Vector2.ZERO, 0.0)
+	await create_timer(0.2).timeout
 	await ap.send("Vue d'ensemble", true)
 	var overview := await wait_until(func() -> bool: return graph.lod() == "far", 5.0)
 	check(overview, "« vue d'ensemble » zooms back out to the places")

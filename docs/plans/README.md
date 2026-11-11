@@ -5,7 +5,7 @@ sections with a « Done » note). Newest first.
 
 | Plan | Loops | Agreed |
 |---|---|---|
-| [plan-graph-views.md](plan-graph-views.md) | VIEW-A to VIEW-G: richer views in the graph, up to 3D (in progress) | 2026-11-10 (A to E; 3D open) |
+| [plan-graph-views.md](plan-graph-views.md) | VIEW-A to VIEW-G: richer views in the graph, up to 3D (in progress) | 2026-11-10 (A to F built; G open) |
 | [plan-docs-site.md](plan-docs-site.md) | DOC-A to SITE-D: documents, Docs, How-to, website | 2026-11-07 |
 | [plan-mcp.md](plan-mcp.md) | MCP-A to MCP-F: the Brain as an MCP server and client | 2026-11-07 |
 | [plan-typed-table-export.md](plan-typed-table-export.md) | 37B–37D: typed items, the table, Letter export | 2026-11-07 |
