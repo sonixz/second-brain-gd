@@ -19,13 +19,18 @@ static func origins() -> Array:
 		["pack", I18n.t("Packs")]]
 
 
+## The views of the graph, in the picker's order: [layout id, label]. The ids are GraphView.LAYOUTS.
+static func views() -> Array:
+	return [["zones", I18n.t("Zones")], ["timeline", I18n.t("Timeline")]]
+
+
 static func days() -> Array:
 	return [[0, I18n.t("Any time")], [1, I18n.t("Today")], [7, I18n.t("Last 7 days")], [30, I18n.t("Last 30 days")]]
 
 var filter: Dictionary = {}
 var summary: Label
 var clear_button: Button
-var timeline_button: Button
+var view_pick: OptionButton
 var legend_button: Button
 var popup: PopupPanel
 var _checks: Dictionary = {}
@@ -51,12 +56,13 @@ func _ready() -> void:
 	clear_button.visible = false
 	clear_button.pressed.connect(func() -> void: apply({}))
 	add_child(clear_button)
-	timeline_button = Button.new()
-	timeline_button.text = I18n.t("Timeline")
-	timeline_button.toggle_mode = true
-	timeline_button.tooltip_text = I18n.t("Show items on a time axis, one lane per place")
-	timeline_button.toggled.connect(func(on: bool) -> void: layout_changed.emit("timeline" if on else "zones"))
-	add_child(timeline_button)
+	view_pick = OptionButton.new()
+	view_pick.name = "ViewPick"
+	view_pick.tooltip_text = I18n.t("The view of the graph. Zones: items around their place. Timeline: items on a time axis, one lane per place")
+	for v in views():
+		view_pick.add_item(str(v[1]))
+	view_pick.item_selected.connect(func(i: int) -> void: layout_changed.emit(str(views()[i][0])))
+	add_child(view_pick)
 	legend_button = Button.new()
 	legend_button.text = "?"
 	legend_button.toggle_mode = true
@@ -92,6 +98,20 @@ func _ready() -> void:
 	_text.text_changed.connect(func(_t: String) -> void: _from_controls())
 	col.add_child(_text)
 	_render()
+
+
+## The view shown in the picker ("zones", "timeline"…).
+func view() -> String:
+	return str(views()[maxi(0, view_pick.selected)][0])
+
+
+## Picks a view from outside (the assistant, saved state, the tools); unknown ids are ignored.
+func set_view(mode: String) -> void:
+	var all := views()
+	for i in all.size():
+		if str(all[i][0]) == mode and view_pick.selected != i:
+			view_pick.select(i)
+			layout_changed.emit(mode)
 
 
 func _open() -> void:

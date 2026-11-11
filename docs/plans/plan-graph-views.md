@@ -1,7 +1,8 @@
 # Plan — richer views in the graph (loops VIEW-A to VIEW-G)
 
-**Status: proposed, not agreed yet.** Written on 2026-11-10 after a brainstorm with the owner. Nothing here is
-built. The order and the scope wait for the owner's answers to the open questions at the end.
+**Status: started.** Written on 2026-11-10 after a brainstorm with the owner, who said the same day « commence par
+VIEW-A et enchaine ». The loops are built in the suggested order; the 3D loops (F, G) wait for the owner's answers
+to the open questions at the end.
 
 The owner's words (2026-11-10): « Les vues possibles dans la vue graph, filtrer, chronologie, c'est une vue.
 J'aime bien la vue chronologie. Est-ce qu'on pourrait avoir des vues plus avancées, plus étendues, plus
@@ -35,6 +36,10 @@ Sizes: S = about one session, M = two or three, L = a week of sessions or more.
 - The Timeline toggle becomes a **view picker** in the filter bar (Zones, Timeline, then the new ones).
 - No visible change beyond the picker. Every later loop plugs in here.
 - Tests: switching layouts keeps positions, selection and filters; the existing timeline tests still pass.
+
+**Done (2026-11-10).** `GraphView.LAYOUTS`, `_layout_targets`, `_frame_layout`, `_glide_step`; `GraphFilters.views()`,
+`view_pick`, `set_view`. The owner said « commence par VIEW-A et enchaine » the same day. Left: capture the How-to
+graph guide again (step 7 still shows the old toggle).
 
 ### VIEW-B — Saved views (S)
 

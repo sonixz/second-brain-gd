@@ -996,10 +996,28 @@ func _e2e() -> void:
 		if str(by_time[i][0]).left(16) > str(by_time[i - 1][0]).left(16) and float(by_time[i][1]) + 30.0 < float(by_time[i - 1][1]):
 			ordered = false
 	var fbar: GraphFilters = brain.get("filters_bar")
-	check(tl_on and ordered and fbar.timeline_button.button_pressed, "« montre la chronologie » lays items out in time order (%d items)" % by_time.size())
+	check(tl_on and ordered and fbar.view() == "timeline", "« montre la chronologie » lays items out in time order (%d items)" % by_time.size())
 	await ap.send("Retour aux zones", true)
 	var back := await wait_until(func() -> bool: return graph.graph_layout == "zones", 5.0)
-	check(back and not fbar.timeline_button.button_pressed, "« retour aux zones » brings the organised graph back")
+	check(back and fbar.view() == "zones", "« retour aux zones » brings the organised graph back")
+	# The view picker (VIEW-A): a view picked by hand, and the zones come back exactly where they were.
+	var va_id := ""
+	for nid in graph.nodes:
+		if str((graph.nodes[nid] as Dictionary)["type"]) == "note" and graph.is_shown(str(nid)):
+			va_id = str(nid)
+			break
+	var va_before: Vector2 = graph.nodes[va_id]["pos"]
+	fbar.view_pick.select(1)
+	fbar.view_pick.item_selected.emit(1)
+	var va_on: bool = graph.graph_layout == "timeline" and str(app.state.get("graph_layout", "")) == "timeline"
+	await create_timer(0.6).timeout
+	var va_moved: bool = (graph.nodes[va_id]["pos"] as Vector2).distance_to(va_before) > 1.0
+	graph.set_layout("no-such-view")
+	var va_ignored: bool = graph.graph_layout == "timeline"
+	fbar.set_view("zones")
+	var va_back: bool = graph.graph_layout == "zones" and fbar.view_pick.selected == 0 and (graph.nodes[va_id]["pos"] as Vector2).distance_to(va_before) < 0.5
+	check(va_on and va_moved and va_ignored and va_back and GraphFilters.views().size() == GraphView.LAYOUTS.size(),
+		"the view picker switches views, ignores an unknown one, and the zones come back where they were")
 	await ap.send("Vue d'ensemble", true)
 	var overview := await wait_until(func() -> bool: return graph.lod() == "far", 5.0)
 	check(overview, "« vue d'ensemble » zooms back out to the places")

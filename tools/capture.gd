@@ -283,10 +283,10 @@ func _run() -> void:
 		gz.clear_path()
 	await pause(0.5)
 	# Timeline (Loop 15): items on a time axis, one lane per place.
-	(bz.get("filters_bar") as GraphFilters).timeline_button.button_pressed = true
+	(bz.get("filters_bar") as GraphFilters).set_view("timeline")
 	await pause(3.0)
 	await shot("21-graph-timeline")
-	(bz.get("filters_bar") as GraphFilters).timeline_button.button_pressed = false
+	(bz.get("filters_bar") as GraphFilters).set_view("zones")
 	await pause(1.5)
 	# Originals and the document viewer (Loop 12): a PDF in its card, then full screen.
 	await bz.call("add_source_file", ProjectSettings.globalize_path("res://tests/fixtures/docs/sample.pdf"))

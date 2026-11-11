@@ -151,8 +151,8 @@ guide(
      ("Click <b>?</b>.",
       "What each line means: a real link (solid, with a dot travelling along), a suggestion by meaning (dashed), "
       "belonging to a place, carrying a theme, and the golden path that answers “how is X connected to Y?”."),
-     ("Click <b>Timeline</b>, or say <span class=\"say\">show the timeline</span>.",
-      "The same items along time, one lane per place, from minutes to months. Click <b>Timeline</b> again to go back "
+     ("Open the view picker (<b>Zones</b>) and choose <b>Timeline</b>, or say <span class=\"say\">show the timeline</span>.",
+      "The same items along time, one lane per place, from minutes to months. Choose <b>Zones</b> to go back "
       "to the zones."),
      ],
     [("The graph feels crowded.", "Fold places, filter, or press <kbd>Tab</kbd> to hide the panels."),

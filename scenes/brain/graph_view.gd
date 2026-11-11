@@ -83,6 +83,10 @@ var _mini_pts := PackedVector2Array()
 var _mini_col := PackedColorArray()
 var _mini_tr: Array = []
 var _mini_tr_at := -1.0
+## Layouts (VIEW-A). "zones" is the living force layout. Every other layout gives each shown item a target
+## position (the "tl" key, set by _layout_targets) and the graph glides to it: a new view is one more entry here,
+## one more branch in _layout_targets, and one more line in GraphFilters.views().
+const LAYOUTS := ["zones", "timeline"]
 var graph_layout := "zones"
 var _tl_lanes: Dictionary = {}   # place id -> lane y
 var _tl_t0 := 0.0
@@ -254,8 +258,8 @@ func set_graph(data: Dictionary) -> Array[String]:
 			if str(n["type"]) == "note" and anchors.has(hub):
 				n["pos"] = (anchors[hub] as Vector2) + Vector2.from_angle(randf() * TAU) * (60.0 + randf() * 80.0)
 	_update_shown()
-	if graph_layout == "timeline":
-		_timeline_targets()
+	if graph_layout != "zones":
+		_layout_targets()
 	# A periodic refresh with nothing new leaves the graph at rest; a change wakes it gently.
 	if first_load:
 		heat = 1.0
@@ -590,22 +594,24 @@ func _draw_path() -> void:
 			_disc(pa.lerp(pb, t), 3.5, SbTheme.MINT_SOFT)
 
 
-# ------------------------------------------------------------ timeline (Loop 15)
-## "zones" (the organised graph) or "timeline": items slide onto a time axis, one lane per place.
+# ------------------------------------------------- layouts (VIEW-A), timeline (Loop 15)
+## One of LAYOUTS. "zones" is the organised graph; "timeline" slides items onto a time axis, one lane per place.
+## Leaving the zones remembers where every item was; coming back puts it there again, whatever came in between.
 func set_layout(mode: String) -> void:
-	if mode == graph_layout or not mode in ["zones", "timeline"]:
+	if mode == graph_layout or not mode in LAYOUTS:
 		return
-	if mode == "timeline":
+	if graph_layout == "zones":
 		for id in nodes:
 			(nodes[id] as Dictionary)["zone_pos"] = (nodes[id] as Dictionary)["pos"]
 	graph_layout = mode
 	_update_shown()
-	if mode == "timeline":
-		_timeline_targets()
+	if mode != "zones":
+		_layout_targets()
 		follow = ""
-		var free_w := maxf(400.0, size.x - screen_offset.x * 2.0 - 80.0)
-		zoom_to(clampf(free_w / (_tl_width + 420.0), ZOOM_MIN, 1.2), Vector2(-110.0, 0))
+		_frame_layout()
 	else:
+		for id in nodes:
+			(nodes[id] as Dictionary).erase("tl")
 		for id in nodes:
 			var n: Dictionary = nodes[id]
 			if n.has("zone_pos"):
@@ -614,6 +620,23 @@ func set_layout(mode: String) -> void:
 		reheat(0.4)
 		zoom_to(0.6, Vector2.ZERO)
 	queue_redraw()
+
+
+## Where every item goes in the current layout (not the zones: those are a simulation, not targets).
+func _layout_targets() -> void:
+	for id in nodes:
+		(nodes[id] as Dictionary).erase("tl")
+	match graph_layout:
+		"timeline":
+			_timeline_targets()
+
+
+## The camera move that shows the current layout whole.
+func _frame_layout() -> void:
+	match graph_layout:
+		"timeline":
+			var free_w := maxf(400.0, size.x - screen_offset.x * 2.0 - 80.0)
+			zoom_to(clampf(free_w / (_tl_width + 420.0), ZOOM_MIN, 1.2), Vector2(-110.0, 0))
 
 
 static func _unix(iso: String) -> float:
@@ -661,7 +684,8 @@ func _timeline_targets() -> void:
 		n["tl"] = Vector2(x, y + (k % 3 - 1) * 26.0 + (k / 3) * 8.0)
 
 
-func _timeline_step(delta: float) -> void:
+## Items glide to their target in any layout that sets one.
+func _glide_step(delta: float) -> void:
 	var w := minf(1.0, delta * 6.0)
 	for i in _sim_ids.size():
 		var n: Dictionary = nodes[_sim_ids[i]]
@@ -714,8 +738,8 @@ func _process(delta: float) -> void:
 	_t += delta
 	if follow != "" and nodes.has(follow) and not (_zoom_tween != null and _zoom_tween.is_running()):
 		cam = cam.lerp((nodes[follow]["pos"] as Vector2) - screen_offset / zoom, minf(1.0, delta * 8.0))
-	if graph_layout == "timeline":
-		_timeline_step(delta)
+	if graph_layout != "zones":
+		_glide_step(delta)
 	else:
 		if _heat_goal > 0.0:  # wake up softly, then cool down as before
 			if heat < _heat_goal:

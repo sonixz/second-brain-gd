@@ -96,10 +96,10 @@ func _run() -> void:
 	await pause(0.5)
 
 	# 12. Timeline: three weeks, one lane per place.
-	(b.get("filters_bar") as GraphFilters).timeline_button.button_pressed = true
+	(b.get("filters_bar") as GraphFilters).set_view("timeline")
 	await pause(3.0)
 	await shot("12-timeline")
-	(b.get("filters_bar") as GraphFilters).timeline_button.button_pressed = false
+	(b.get("filters_bar") as GraphFilters).set_view("zones")
 	await pause(1.5)
 
 	# 13. Brain packs: one place exported as a file someone else can import as a layer.

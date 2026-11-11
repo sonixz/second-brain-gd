@@ -219,10 +219,10 @@ func guide_graph() -> void:
 	await pause(1.0)
 	await step("? : what the lines mean")
 	fb.legend_button.button_pressed = false
-	fb.timeline_button.button_pressed = true
+	fb.set_view("timeline")
 	await pause(3.0)
 	await step("Timeline: the same items along time")
-	fb.timeline_button.button_pressed = false
+	fb.set_view("zones")
 
 
 # ---------------------------------------------------------------- 10. Share a project as a pack (scripted)

@@ -2,6 +2,17 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## VIEW-A: the graph has a view picker (2026-11-10)
+
+First loop of the plan for richer graph views (docs/plans/plan-graph-views.md), from the owner's wish for views that
+are « plus avancées, plus étendues, plus mouvables ». The Timeline toggle in the filter bar becomes a view picker
+(Zones, Timeline). Inside, layouts are a list (`GraphView.LAYOUTS`): the zones are the living simulation, every other
+layout gives each item a target and the graph glides to it, so a new view is a small addition. Leaving the zones
+remembers every position and coming back restores it. The assistant (« show the timeline »), the saved state, the
+capture tools, the Docs and the How-to follow the picker; the How-to screenshot of that step still shows the old
+toggle until the guides are captured again.
+Tests: Python 350 (with the app's own environment), Godot end to end 282.
+
 ## Approving agents' proposals no longer freezes: instant approval, filing in the background (2026-11-08)
 
 Owner's report: with many MCP proposals, « Approve all » showed nothing for 30 to 60 seconds, then everything updated

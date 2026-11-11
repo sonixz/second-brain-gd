@@ -1024,7 +1024,7 @@ func run_ui_actions(actions: Array) -> void:
 				path_active = true
 			"layout":
 				await set_view("graph")
-				filters_bar.timeline_button.button_pressed = str(a.get("mode", "zones")) == "timeline"
+				filters_bar.set_view(str(a.get("mode", "zones")))
 			"filter":
 				await set_view("graph")
 				var f: Dictionary = a.get("filter", {})
@@ -1463,8 +1463,7 @@ func refresh_graph() -> Array[String]:
 			graph.fold(str(key), true)
 		if app.state.has("graph_filter") and not (app.state["graph_filter"] as Dictionary).is_empty():
 			filters_bar.apply(app.state["graph_filter"])
-		if str(app.state.get("graph_layout", "zones")) == "timeline":
-			filters_bar.timeline_button.button_pressed = true
+		filters_bar.set_view(str(app.state.get("graph_layout", "zones")))
 	graph.details.clear()  # cards fetch their place, themes and text again when they are on screen
 	graph._asked.clear()
 	_update_stats()
