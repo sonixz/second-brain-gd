@@ -2,6 +2,19 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## VIEW-E: the meaning map (2026-11-10)
+
+A fourth view in the picker: Meaning map. Items sit where their meaning puts them, whatever place they are filed in:
+close ideas are close, islands of themes appear. Each item wears its place's colour and each place's name is written
+where its items gather, so an item far from its place's name is one filed far from what it means. Places and themes
+step aside; links and related ideas stay drawn; the filters and the time cursor work here too. The engine computes
+the map from the vectors it already keeps (`GET /brain/meaning/map`, `meaning.meaning_map`): the two directions along
+which the items differ the most, with the standard library only — 2,000 items take about 4 seconds the first time
+and 0.2 after, and the result is kept until the vectors change. Without meaning memory the app says so and stays in
+the current view. Not done: pointing out misfiled and lone items by themselves, keeping old points still when new
+items arrive, naming the islands by theme.
+Tests: Python 352 (with the app's own environment), Godot end to end 286.
+
 ## VIEW-D: Timeline+, and a time cursor in every view (2026-11-10)
 
 The owner's favourite view goes further. « Time » in the graph's filter bar opens a second row: a slider that shows

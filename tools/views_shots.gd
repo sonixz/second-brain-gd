@@ -46,4 +46,8 @@ func _run() -> void:
 	g.zoom_to(0.5, Vector2(-60, 0), 0.3)
 	await pause(3.0)
 	await shot("07-zones-back-in-time")
+	fb.time_button.button_pressed = false
+	fb.set_view("meaning")
+	await pause(4.0)
+	await shot("08-meaning-map")
 	quit(0)

@@ -1123,6 +1123,35 @@ func _e2e() -> void:
 	check(vd_lanes and vd_named and vd_then and vd_bar and vd_fewer < vd_all and vd_plays and not fbar.playing
 		and graph.time_cursor < 0.0 and graph.shown_note_count() == vd_all and not fbar.time_bar.visible,
 		"the timeline has lanes by type; the time cursor shows the brain as it was (%d of %d items), plays, and comes back to now" % [vd_fewer, vd_all])
+	# Meaning map (VIEW-E): the engine places the items by what they mean; places step aside, names stay apart.
+	await create_timer(0.4).timeout
+	fbar.set_view("meaning")
+	var ve_on := await wait_until(func() -> bool: return graph.graph_layout == "meaning", 8.0)
+	var ve_zone: Dictionary = {}  # where the zones were when the engine's map arrived (the graph was still settling)
+	for nid in graph.nodes:
+		ve_zone[nid] = (graph.nodes[nid] as Dictionary).get("zone_pos", Vector2.INF)
+	await create_timer(1.4).timeout
+	var ve_shown: Array = []
+	var ve_only := true
+	for nid in graph.nodes:
+		var nd: Dictionary = graph.nodes[nid]
+		if graph.is_shown(str(nid)):
+			ve_shown.append(nid)
+			if str(nd["type"]) != "note" or not graph.meaning_points.has(nid) or (nd["pos"] as Vector2).distance_to(nd["tl"]) > 6.0:
+				ve_only = false
+	var ve_apart := true
+	for i in ve_shown.size():
+		for k in range(i + 1, ve_shown.size()):
+			if ((graph.nodes[ve_shown[i]] as Dictionary)["tl"] as Vector2).distance_to((graph.nodes[ve_shown[k]] as Dictionary)["tl"]) < GraphView.MEANING_GAP * 0.6:
+				ve_apart = false
+	var ve_map: Dictionary = (await app.backend.api.call_api("/brain/meaning/map"))["data"]
+	fbar.set_view("zones")
+	var ve_back: bool = graph.graph_layout == "zones"
+	for nid in graph.nodes:
+		if ((graph.nodes[nid] as Dictionary)["pos"] as Vector2).distance_to(ve_zone[nid]) > 0.5:
+			ve_back = false
+	check(ve_on and fbar.view() == "zones" and ve_only and ve_apart and ve_shown.size() >= 3 and ve_shown.size() == int(ve_map.get("count", -1)) and ve_back,
+		"the meaning map places the %d items the engine mapped, apart from each other, without the places, and the zones return" % ve_shown.size())
 	await ap.send("Vue d'ensemble", true)
 	var overview := await wait_until(func() -> bool: return graph.lod() == "far", 5.0)
 	check(overview, "« vue d'ensemble » zooms back out to the places")

@@ -208,6 +208,71 @@ def search(conn: sqlite3.Connection, client: Any, model: str, query: str, limit:
              "match": "meaning"} for s, nid in keep if nid in rows]
 
 
+# ------------------------------------------------------------ the meaning map (VIEW-E)
+MAP_DIMS = 48      # vectors are first folded down to this many numbers (random directions keep distances roughly)
+MAP_ROUNDS = 80    # power-iteration rounds for each of the two axes
+_MAP_FOLDS: dict[tuple[str, str, float, float, float], list[float]] = {}
+_MAP_DIRS: dict[int, list[array]] = {}
+_MAP_LAST: dict[str, Any] = {}
+
+
+def _fold(model: str, note_id: str, vec: array) -> list[float]:
+    """A note's vector in MAP_DIMS numbers; kept in memory, so a map after the first costs little."""
+    if len(vec) <= MAP_DIMS:
+        return list(vec)
+    key = (model, note_id, vec[0], vec[1], vec[2])
+    if key not in _MAP_FOLDS:
+        if len(vec) not in _MAP_DIRS:
+            import random
+            rng = random.Random(1729)  # always the same directions: the map does not change between two runs
+            _MAP_DIRS[len(vec)] = [array("f", (rng.gauss(0.0, 1.0) for _ in range(len(vec)))) for _ in range(MAP_DIMS)]
+        _MAP_FOLDS[key] = [dot(vec, d) for d in _MAP_DIRS[len(vec)]]
+    return _MAP_FOLDS[key]
+
+
+def _main_axis(cov: list[list[float]]) -> list[float]:
+    """The direction along which the points spread the most (power iteration, a fixed start)."""
+    n = len(cov)
+    v = [1.0 + 0.01 * i for i in range(n)]
+    for _ in range(MAP_ROUNDS):
+        w = [dot(row, v) for row in cov]
+        norm = math.sqrt(dot(w, w))
+        if norm < 1e-12:
+            break
+        v = [x / norm for x in w]
+    big = max(range(n), key=lambda i: abs(v[i]))  # a fixed sign: the map is not mirrored from one run to the next
+    return [-x for x in v] if v[big] < 0 else v
+
+
+def meaning_map(conn: sqlite3.Connection, model: str) -> dict[str, Any]:
+    """Every embedded note as a point on a plane, close points meaning close ideas: {points: {note_id: [x, y]}},
+    x and y between -1 and 1. The two axes are the two directions along which the notes differ the most (PCA).
+    Fewer than three embedded notes: no map."""
+    vecs = _vectors(conn, model)
+    total = conn.execute("SELECT COUNT(*) FROM notes WHERE status != 'archived'").fetchone()[0]
+    sig = hash((model, tuple((nid, v[0], v[1], v[2]) for nid, v in vecs)))
+    if _MAP_LAST.get("sig") == sig:
+        return {**_MAP_LAST["map"], "notes": total}
+    if len(vecs) < 3:
+        return {"points": {}, "count": len(vecs), "notes": total}
+    rows = [_fold(model, nid, v) for nid, v in vecs]
+    dims = len(rows[0])
+    mean = [sum(r[i] for r in rows) / len(rows) for i in range(dims)]
+    rows = [[r[i] - mean[i] for i in range(dims)] for r in rows]
+    cols = [[r[i] for r in rows] for i in range(dims)]
+    cov = [[dot(cols[i], cols[j]) / len(rows) for j in range(dims)] for i in range(dims)]
+    first = _main_axis(cov)
+    spread = dot(first, [dot(row, first) for row in cov])
+    cov2 = [[cov[i][j] - spread * first[i] * first[j] for j in range(dims)] for i in range(dims)]  # take the first axis out
+    second = _main_axis(cov2)
+    xy = [(dot(r, first), dot(r, second)) for r in rows]
+    reach = max(max(abs(x), abs(y)) for x, y in xy) or 1.0
+    out = {"points": {vecs[i][0]: [round(xy[i][0] / reach, 4), round(xy[i][1] / reach, 4)] for i in range(len(vecs))},
+           "count": len(vecs)}
+    _MAP_LAST.update(sig=sig, map=out)
+    return {**out, "notes": total}
+
+
 def status(conn: sqlite3.Connection, model: str) -> dict[str, Any]:
     total = conn.execute("SELECT COUNT(*) FROM notes WHERE status != 'archived'").fetchone()[0]
     done = conn.execute("SELECT COUNT(*) FROM note_embeddings e JOIN notes n ON n.id = e.note_id"

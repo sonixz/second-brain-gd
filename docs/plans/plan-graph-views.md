@@ -85,6 +85,12 @@ an engine change), a free from/to range, « replay my week » for the assistant,
 - Why: the Zones view shows how things are *filed*; this one shows what they *mean*.
 - Risk: a projection moves when items are added. Keep it stable by anchoring the old points.
 
+**Done (2026-11-10).** « Meaning map » in the picker; engine `meaning.meaning_map` and `GET /brain/meaning/map`
+(PCA after folding the vectors to 48 numbers, standard library only, cached); `GraphView.set_meaning_points`,
+`_meaning_targets`, `_draw_meaning`; `Brain.load_meaning_map`. Items wear their place's colour, places are named
+where their items gather. Left: flag misfiled and lone items, anchor old points when items are added (today the
+map is the same for the same items, but may turn when many are added), name the islands by theme, a How-to step.
+
 ### VIEW-F — Layers in 3D (M, optional step toward G)
 
 - The existing 2D graph drawn on planes stacked in space, one plane per period or per place, that you tilt and
@@ -110,6 +116,7 @@ an engine change), a free from/to range, « replay my week » for the assistant,
 ## Suggested order
 
 A → B → C → D → E, then decide on 3D with the meaning map in hand: F as a cheap trial, or straight to G.
+A to E were built in that order on 2026-11-10; F and G wait for the owner.
 The order changes with the answers below: if the 3D comes first, A → E → G, since G needs E's coordinates.
 
 ## Open questions for the owner

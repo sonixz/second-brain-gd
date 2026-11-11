@@ -182,5 +182,7 @@ show the agent as a visible actor moving between nodes, in line with the transpa
   the picks of a note whose closest neighbour it becomes. Thresholds come from `tools/meaning_bench.py`.
 - Served as `type: "related"` edges in `/brain/graph` (drawn as warm dashed lines), and by
   `/brain/notes/{id}/related` (the inspector's Related ideas section). `/brain/meaning/status` gives counts.
+  `/brain/meaning/map` places every embedded item on a plane for the graph's Meaning map view (the two directions
+  along which the items differ the most; standard library only, kept in memory until the vectors change).
 - Search (`/brain/search` and the assistant's `search_notes`): meaning first (floor 0.25), then keyword hits.
   Keywords skip common French and English words. If no note has every word, any word counts.

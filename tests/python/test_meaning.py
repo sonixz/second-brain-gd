@@ -43,6 +43,41 @@ class MeaningTests(unittest.TestCase):
         self.assertEqual(st["pending"], 0)
         self.assertEqual(st["embedded"], st["notes"])
 
+    def test_meaning_map_puts_close_ideas_close(self):
+        self.assertEqual(meaning.meaning_map(self.conn, "no-such-model")["points"], {})
+        sleep = [self.note("Sommeil %d" % i, "dormir tôt repos sommeil fatigue soir " + "nuit " * i) for i in range(4)]
+        cake = [self.note("Gâteau %d" % i, "chocolat ballons mauves anniversaire farine " + "sucre " * i) for i in range(4)]
+        meaning.embed_notes(self.conn, self.client, M)
+        m = meaning.meaning_map(self.conn, M)
+        pts = m["points"]
+        self.assertEqual(m["count"], len(pts))
+        self.assertTrue(all(-1.0 <= c <= 1.0 for p in pts.values() for c in p))
+        self.assertTrue(any(abs(c) == 1.0 for p in pts.values() for c in p))  # the map fills its frame
+
+        def dist(a, b):
+            return ((pts[a][0] - pts[b][0]) ** 2 + (pts[a][1] - pts[b][1]) ** 2) ** 0.5
+        inside = max(dist(a, b) for grp in (sleep, cake) for a in grp for b in grp)
+        across = min(dist(a, b) for a in sleep for b in cake)
+        self.assertLess(inside, across)
+        self.assertEqual(meaning.meaning_map(self.conn, M)["points"], pts)  # the same notes, the same map
+        meaning._MAP_LAST.clear()
+        self.assertEqual(meaning.meaning_map(self.conn, M)["points"], pts)  # ... even computed again
+
+    def test_meaning_map_folds_long_vectors(self):
+        import random
+        rng = random.Random(7)
+        ids = [self.note("N%d" % i, "x") for i in range(12)]
+        for i, nid in enumerate(ids):  # two groups of long vectors (longer than MAP_DIMS), far apart
+            base = [1.0 if (j % 2 == i % 2) else 0.0 for j in range(200)]
+            vec = [b + rng.uniform(-0.05, 0.05) for b in base]
+            self.conn.execute("INSERT OR REPLACE INTO note_embeddings (note_id, model, content_hash, embedding, updated_at)"
+                              " VALUES (?, 'long', 'h', ?, '2026-11-10T00:00:00Z')", (nid, meaning.pack(vec)))
+        pts = meaning.meaning_map(self.conn, "long")["points"]
+        self.assertEqual(set(pts), set(ids))
+        even = [pts[n] for i, n in enumerate(ids) if i % 2 == 0]
+        odd = [pts[n] for i, n in enumerate(ids) if i % 2 == 1]
+        self.assertGreater(abs(sum(p[0] for p in even) / 6 - sum(p[0] for p in odd) / 6), 1.0)
+
     def test_related_ideas_and_cascade(self):
         a = self.note("Sommeil", "dormir tôt repos sommeil fatigue")
         b = self.note("Repos", "dormir tôt repos sommeil soir")

@@ -87,7 +87,10 @@ var _mini_tr_at := -1.0
 ## Layouts (VIEW-A). "zones" is the living force layout. Every other layout gives each shown item a target
 ## position (the "tl" key, set by _layout_targets) and the graph glides to it: a new view is one more entry here,
 ## one more branch in _layout_targets, and one more line in GraphFilters.views().
-const LAYOUTS := ["zones", "timeline", "focus"]
+const LAYOUTS := ["zones", "timeline", "focus", "meaning"]
+const MEANING_GAP := 46.0         # two items of the meaning map closer than this are nudged apart
+var meaning_points: Dictionary = {}  # note id -> Vector2 in [-1, 1]: where the engine puts it by meaning (VIEW-E)
+var _meaning_reach := 600.0       # half the map's width in world units, as last laid out
 const FOCUS_HOPS := 3             # the focus view shows what is within this many links of its centre
 const FOCUS_RING := 190.0         # distance between two rings, in world units
 const FOCUS_TRAIL := 8            # how many centres the breadcrumb remembers
@@ -561,6 +564,11 @@ func _update_shown() -> void:
 		for id in nodes:
 			if str((nodes[id] as Dictionary)["type"]) == "space":
 				filtered_out[id] = true
+	if graph_layout == "meaning":  # only items the map knows; places and themes step aside
+		for id in nodes:
+			if str((nodes[id] as Dictionary)["type"]) != "note" or not meaning_points.has(id):
+				filtered_out[id] = true
+				_after_cursor.erase(id)
 	if graph_layout == "focus":
 		_focus_reach()
 		for id in nodes:
@@ -635,6 +643,8 @@ func _draw_path() -> void:
 func set_layout(mode: String) -> void:
 	if mode == graph_layout or not mode in LAYOUTS:
 		return
+	if mode == "meaning" and meaning_points.is_empty():  # no map yet (no meaning memory, or too few items)
+		return
 	if mode == "focus":  # around the selected item, else the last centre, else the most linked item
 		var start := selected if _is_note(selected) else (focus_id if _is_note(focus_id) else _most_linked())
 		if start == "":
@@ -644,7 +654,11 @@ func set_layout(mode: String) -> void:
 	if graph_layout == "zones":
 		for id in nodes:
 			(nodes[id] as Dictionary)["zone_pos"] = (nodes[id] as Dictionary)["pos"]
+	var recolour := mode == "meaning" or graph_layout == "meaning"  # items wear their place's colour on the meaning map
 	graph_layout = mode
+	if recolour:
+		for id in nodes:
+			(nodes[id] as Dictionary)["_col"] = _color(nodes[id])
 	_update_shown()
 	if mode != "zones":
 		_layout_targets()
@@ -672,6 +686,8 @@ func _layout_targets() -> void:
 			_timeline_targets()
 		"focus":
 			_focus_targets()
+		"meaning":
+			_meaning_targets()
 
 
 ## The camera move that shows the current layout whole.
@@ -683,6 +699,76 @@ func _frame_layout() -> void:
 		"focus":
 			var free := Vector2(maxf(400.0, size.x - screen_offset.x * 2.0 - 80.0), maxf(300.0, size.y - 220.0))
 			zoom_to(clampf(minf(free.x, free.y) / (_focus_radius * 2.0 + 220.0), ZOOM_MIN, 1.6), Vector2.ZERO, 0.7)
+
+
+		"meaning":
+			var room := Vector2(maxf(400.0, size.x - screen_offset.x * 2.0 - 80.0), maxf(300.0, size.y - 240.0))
+			zoom_to(clampf(minf(room.x, room.y) / (_meaning_reach * 2.0 + 160.0), ZOOM_MIN, 1.2), Vector2.ZERO, 0.7)
+
+
+# ------------------------------------------------------------ meaning map (VIEW-E)
+## The engine's map of the items by meaning (GET /brain/meaning/map): {note id: [x, y]}, each between -1 and 1.
+func set_meaning_points(points: Dictionary) -> void:
+	meaning_points.clear()
+	for id in points:
+		var p: Variant = points[id]
+		if p is Array and (p as Array).size() >= 2:
+			meaning_points[str(id)] = Vector2(float(p[0]), float(p[1]))
+	if graph_layout == "meaning":
+		_update_shown()
+		_layout_targets()
+	queue_redraw()
+
+
+## Each item where its meaning puts it; the map grows with the number of items, and items that would sit on top of
+## each other are nudged apart (small maps only: beyond 700 items the dots are small and the nudge would cost).
+func _meaning_targets() -> void:
+	var ids: Array = []
+	for id in _sim_ids:
+		ids.append(id)
+	ids.append_array(_after_cursor.keys())
+	ids.sort()  # the same order whatever the time cursor hides: the nudges, and so the map, stay the same
+	_meaning_reach = clampf(sqrt(float(ids.size())) * 85.0, 420.0, 4200.0)
+	var pos := PackedVector2Array()
+	for id in ids:
+		pos.append((meaning_points[id] as Vector2) * _meaning_reach)
+	if ids.size() <= 700:
+		for _round in 24:
+			var moved := false
+			for i in pos.size():
+				for j in range(i + 1, pos.size()):
+					var d := pos[j] - pos[i]
+					var len := d.length()
+					if len < MEANING_GAP:
+						var push := (d / len if len > 0.01 else Vector2.from_angle(float(i * 7 + j))) * (MEANING_GAP - len) * 0.5
+						pos[i] -= push
+						pos[j] += push
+						moved = true
+			if not moved:
+				break
+	for i in ids.size():
+		(nodes[ids[i]] as Dictionary)["tl"] = pos[i]
+
+
+## Each place's name where its items gather on the map: an item far from its place's name is filed far from
+## what it means.
+func _draw_meaning() -> void:
+	var sum: Dictionary = {}
+	var count: Dictionary = {}
+	for id in _sim_ids:
+		var n: Dictionary = nodes[id]
+		var hub := "space:" + str(n.get("space_id", ""))
+		sum[hub] = (sum.get(hub, Vector2.ZERO) as Vector2) + (n["pos"] as Vector2)
+		count[hub] = int(count.get(hub, 0)) + 1
+	for hub in sum:
+		if int(count[hub]) < 2 or not nodes.has(hub):
+			continue
+		var name := str((nodes[hub] as Dictionary)["label"])
+		var fs := SbTheme.fs(15)
+		var w := _font.get_string_size(name, HORIZONTAL_ALIGNMENT_LEFT, -1, fs).x
+		var at := world_to_screen((sum[hub] as Vector2) / float(count[hub])) + Vector2(-w * 0.5, -18.0)
+		draw_string(_font, at + Vector2(0, 1), name, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(SbTheme.BG, 0.7))
+		draw_string(_font, at, name, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(_color(nodes[hub]), 0.9))
 
 
 # ------------------------------------------------------------ focus view (VIEW-C)
@@ -1425,6 +1511,10 @@ func _color(n: Dictionary) -> Color:
 			return SbTheme.FOREST_LIGHT
 		"tag":
 			return SbTheme.MUTED
+	if graph_layout == "meaning":  # on the meaning map an item wears its place's colour: the misfiled ones stand out
+		var hub := "space:" + str(n.get("space_id", ""))
+		if nodes.has(hub):
+			return _color(nodes[hub])
 	return SbTheme.kind_color(str(n["kind"]))
 
 
@@ -1480,6 +1570,8 @@ func _draw_all() -> void:
 		_draw_focus()
 		if level == "far":
 			level = "mid"
+	elif graph_layout == "meaning" and level == "far":
+		level = "mid"
 	_dense = _count_on_screen() > DENSE
 	var fast := level == "far" or (_dense and level == "mid")
 	if level == "far" and graph_layout == "zones":
@@ -1604,6 +1696,8 @@ func _draw_all() -> void:
 			if _glow > 0.0:
 				_ring(p, r + 12.0 + 2.0 * breathe, 0, TAU, 48, Color(SbTheme.MINT_SOFT, clampf(0.35 * _glow, 0.0, 1.0)), 1.5)
 		_draw_label(n, p, r, dim)
+	if graph_layout == "meaning":
+		_draw_meaning()
 	if show_minimap and nodes.size() > 1:
 		_draw_minimap()
 	if show_legend:

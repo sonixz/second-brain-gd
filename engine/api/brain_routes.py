@@ -351,6 +351,11 @@ def make_router(layout: Layout, auth: Callable[..., None]) -> APIRouter:
         run(brain.get_note, note_id)  # 404 for an unknown note
         return {"related": run(meaning.related, note_id)}
 
+    @r.get("/meaning/map")
+    def get_meaning_map() -> dict[str, Any]:
+        from engine.sources.core import embeddings_model
+        return run(lambda conn: meaning.meaning_map(conn, embeddings_model(conn)))
+
     @r.get("/meaning/status")
     def get_meaning_status() -> dict[str, Any]:
         from engine.sources.core import embeddings_model
