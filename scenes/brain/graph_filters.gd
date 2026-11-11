@@ -23,7 +23,7 @@ static func origins() -> Array:
 
 ## The views of the graph, in the picker's order: [layout id, label]. The ids are GraphView.LAYOUTS.
 static func views() -> Array:
-	return [["zones", I18n.t("Zones")], ["timeline", I18n.t("Timeline")]]
+	return [["zones", I18n.t("Zones")], ["timeline", I18n.t("Timeline")], ["focus", I18n.t("Focus")]]
 
 
 static func days() -> Array:
@@ -64,7 +64,7 @@ func _ready() -> void:
 	add_child(clear_button)
 	view_pick = OptionButton.new()
 	view_pick.name = "ViewPick"
-	view_pick.tooltip_text = I18n.t("The view of the graph. Zones: items around their place. Timeline: items on a time axis, one lane per place")
+	view_pick.tooltip_text = I18n.t("The view of the graph. Zones: items around their place. Timeline: items on a time axis, one lane per place. Focus: one item and what is linked to it, ring by ring")
 	for v in views():
 		view_pick.add_item(str(v[1]))
 	view_pick.item_selected.connect(func(i: int) -> void: layout_changed.emit(str(views()[i][0])))
@@ -143,6 +143,14 @@ func set_view(mode: String) -> void:
 		if str(all[i][0]) == mode and view_pick.selected != i:
 			view_pick.select(i)
 			layout_changed.emit(mode)
+
+
+## Shows a view in the picker without asking for it again (the graph refused or changed it by itself).
+func show_view(mode: String) -> void:
+	var all := views()
+	for i in all.size():
+		if str(all[i][0]) == mode:
+			view_pick.select(i)
 
 
 # ------------------------------------------------------------ saved views (VIEW-B)

@@ -59,6 +59,10 @@ saved view by name (an engine tool and its words), and a How-to step.
 - Uses the neighbour map the graph already keeps. No engine change.
 - Why: follow one idea in depth without the noise of the rest.
 
+**Done (2026-11-10).** « Focus » in the picker; `GraphView.set_focus`, `focus_id`, `focus_trail`, `_focus_reach`
+(links and related ideas only), `_focus_targets`, `_draw_focus`, `trail_at`. Checked on real screenshots
+(`tools/views_shots.gd`). Left: « focus on X » for the assistant, a How-to step, a way in from an item's panel.
+
 ### VIEW-D — Timeline+ (S to M)
 
 - A **time cursor** under the timeline: drag it, or press play, and the brain builds itself day by day.

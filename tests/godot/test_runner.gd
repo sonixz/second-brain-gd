@@ -1042,6 +1042,50 @@ func _e2e() -> void:
 		"a saved view keeps its layout, filter and camera, opens again, replaces its namesake and can be forgotten")
 	fbar.apply({})
 	fbar.set_view("zones")
+	# Focus view (VIEW-C): one item in the middle, what is linked to it on rings, the rest out of sight.
+	await create_timer(0.3).timeout
+	graph.select("")
+	graph.focus_id = ""
+	var vc_zone: Dictionary = {}
+	for nid in graph.nodes:
+		vc_zone[nid] = (graph.nodes[nid] as Dictionary)["pos"]
+	fbar.set_view("focus")
+	await create_timer(1.6).timeout
+	var vc_centre: String = graph.focus_id
+	var vc_rings := 0
+	var vc_only := true
+	var vc_near := ""
+	for nid in graph.nodes:
+		var hop: int = int(graph._focus_hops.get(nid, -1))
+		if (hop >= 0) != graph.is_shown(str(nid)):
+			vc_only = false
+		if hop >= 1:
+			vc_rings += 1
+			var want: float = ((graph.nodes[nid] as Dictionary)["tl"] as Vector2).length()
+			if absf(((graph.nodes[nid] as Dictionary)["pos"] as Vector2).length() - want) > 6.0 or want < GraphView.FOCUS_RING - 1.0:
+				vc_only = false
+		if hop == 1 and vc_near == "":
+			vc_near = str(nid)
+	var vc_mid: bool = graph.graph_layout == "focus" and fbar.view() == "focus" and str((graph.nodes[vc_centre] as Dictionary)["type"]) == "note" \
+		and ((graph.nodes[vc_centre] as Dictionary)["pos"] as Vector2).length() < 6.0
+	var vc_walk := vc_near != ""
+	if vc_near != "":
+		graph.set_focus(vc_near)
+		await create_timer(0.2).timeout
+		var two: bool = graph.focus_id == vc_near and graph.focus_trail == [vc_centre, vc_near] and int(graph._focus_hops.get(vc_centre, -1)) == 1
+		graph.queue_redraw()
+		await create_timer(0.2).timeout
+		var crumb: Rect2 = graph._trail_rects[0][0]
+		two = two and graph.trail_at(crumb.get_center()) == vc_centre
+		graph.set_focus(vc_centre)
+		vc_walk = two and graph.focus_trail == [vc_centre]
+	fbar.set_view("zones")
+	var vc_back := true
+	for nid in graph.nodes:
+		if ((graph.nodes[nid] as Dictionary)["pos"] as Vector2).distance_to(vc_zone[nid]) > 0.5 :
+			vc_back = false
+	check(vc_mid and vc_only and vc_rings > 0 and vc_walk and vc_back and graph.shown_note_count() > vc_rings,
+		"the focus view puts the most linked item in the middle, its links on rings (%d), walks to a neighbour and back, and the zones return" % vc_rings)
 	await ap.send("Vue d'ensemble", true)
 	var overview := await wait_until(func() -> bool: return graph.lod() == "far", 5.0)
 	check(overview, "« vue d'ensemble » zooms back out to the places")

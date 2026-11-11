@@ -19,6 +19,7 @@ signal details_needed(id: String)
 signal page_needed(id: String, source_id: String, width: int)
 signal node_activated(id: String)
 signal item_dropped_on_place(id: String, space_id: String)  # an item dragged into another place's zone
+signal focus_changed(id: String)                             # the focus view has a new centre (VIEW-C)
 
 const REPULSION := 5200.0
 const SPRING := 0.035
@@ -86,7 +87,16 @@ var _mini_tr_at := -1.0
 ## Layouts (VIEW-A). "zones" is the living force layout. Every other layout gives each shown item a target
 ## position (the "tl" key, set by _layout_targets) and the graph glides to it: a new view is one more entry here,
 ## one more branch in _layout_targets, and one more line in GraphFilters.views().
-const LAYOUTS := ["zones", "timeline"]
+const LAYOUTS := ["zones", "timeline", "focus"]
+const FOCUS_HOPS := 3             # the focus view shows what is within this many links of its centre
+const FOCUS_RING := 190.0         # distance between two rings, in world units
+const FOCUS_TRAIL := 8            # how many centres the breadcrumb remembers
+var focus_id := ""                # the item at the centre of the focus view
+var focus_trail: Array = []       # the centres you walked through, oldest first
+var _focus_hops: Dictionary = {}  # id -> links away from the centre (0 = the centre)
+var _focus_parent: Dictionary = {}  # id -> the item one ring closer it hangs from
+var _focus_radius := FOCUS_RING   # the outer ring, as last laid out
+var _trail_rects: Array = []      # [Rect2, id] of the breadcrumb, as last drawn
 var graph_layout := "zones"
 var _tl_lanes: Dictionary = {}   # place id -> lane y
 var _tl_t0 := 0.0
@@ -536,6 +546,11 @@ func _update_shown() -> void:
 	for id in nodes:
 		if str((nodes[id] as Dictionary)["type"]) == "tag" and (not shown_tags.has(id) or graph_layout == "timeline"):
 			filtered_out[id] = true
+	if graph_layout == "focus":
+		_focus_reach()
+		for id in nodes:
+			if not _focus_hops.has(id):
+				filtered_out[id] = true
 	_rebuild_sim()
 
 
@@ -605,6 +620,12 @@ func _draw_path() -> void:
 func set_layout(mode: String) -> void:
 	if mode == graph_layout or not mode in LAYOUTS:
 		return
+	if mode == "focus":  # around the selected item, else the last centre, else the most linked item
+		var start := selected if _is_note(selected) else (focus_id if _is_note(focus_id) else _most_linked())
+		if start == "":
+			return
+		focus_id = start
+		focus_trail = [start]
 	if graph_layout == "zones":
 		for id in nodes:
 			(nodes[id] as Dictionary)["zone_pos"] = (nodes[id] as Dictionary)["pos"]
@@ -634,6 +655,8 @@ func _layout_targets() -> void:
 	match graph_layout:
 		"timeline":
 			_timeline_targets()
+		"focus":
+			_focus_targets()
 
 
 ## The camera move that shows the current layout whole.
@@ -642,6 +665,161 @@ func _frame_layout() -> void:
 		"timeline":
 			var free_w := maxf(400.0, size.x - screen_offset.x * 2.0 - 80.0)
 			zoom_to(clampf(free_w / (_tl_width + 420.0), ZOOM_MIN, 1.2), Vector2(-110.0, 0))
+		"focus":
+			var free := Vector2(maxf(400.0, size.x - screen_offset.x * 2.0 - 80.0), maxf(300.0, size.y - 220.0))
+			zoom_to(clampf(minf(free.x, free.y) / (_focus_radius * 2.0 + 220.0), ZOOM_MIN, 1.6), Vector2.ZERO, 0.7)
+
+
+# ------------------------------------------------------------ focus view (VIEW-C)
+func _is_note(id: String) -> bool:
+	return id != "" and nodes.has(id) and str((nodes[id] as Dictionary)["type"]) == "note"
+
+
+## The item with the most links and related ideas: where the focus view starts when nothing is selected.
+func _most_linked() -> String:
+	var count: Dictionary = {}
+	for e in edges:
+		if str(e["type"]) in ["link", "related"]:
+			count[e["from"]] = int(count.get(e["from"], 0)) + 1
+			count[e["to"]] = int(count.get(e["to"], 0)) + 1
+	var best := ""
+	for id in nodes:
+		if _is_note(str(id)) and (best == "" or int(count.get(id, 0)) > int(count.get(best, 0))):
+			best = str(id)
+	return best
+
+
+## Puts an item at the centre of the focus view; walking back to one already in the breadcrumb shortens it.
+func set_focus(id: String) -> void:
+	if not _is_note(id):
+		return
+	var at := focus_trail.find(id)
+	if at >= 0:
+		focus_trail.resize(at)
+	focus_trail.append(id)
+	if focus_trail.size() > FOCUS_TRAIL:
+		focus_trail = focus_trail.slice(focus_trail.size() - FOCUS_TRAIL)
+	focus_id = id
+	selected = id
+	if graph_layout == "focus":
+		_update_shown()
+		_layout_targets()
+		_frame_layout()
+	focus_changed.emit(id)
+	queue_redraw()
+
+
+## Who is within FOCUS_HOPS of the centre, following real links and related ideas (not places or themes, which
+## would bring in everything). Filters still apply, except to the centre itself.
+func _focus_reach() -> void:
+	_focus_hops.clear()
+	_focus_parent.clear()
+	if not _is_note(focus_id):
+		focus_id = _most_linked()
+		focus_trail = [focus_id] if focus_id != "" else []
+	if focus_id == "":
+		return
+	var next_to: Dictionary = {}
+	for e in edges:
+		if not str(e["type"]) in ["link", "related"]:
+			continue
+		var a := str(e["from"])
+		var b := str(e["to"])
+		if not _is_note(a) or not _is_note(b) or (filtered_out.has(a) and a != focus_id) or (filtered_out.has(b) and b != focus_id):
+			continue
+		if not next_to.has(a):
+			next_to[a] = []
+		if not next_to.has(b):
+			next_to[b] = []
+		(next_to[a] as Array).append(b)
+		(next_to[b] as Array).append(a)
+	filtered_out.erase(focus_id)
+	_focus_hops[focus_id] = 0
+	var ring: Array = [focus_id]
+	for hop in range(1, FOCUS_HOPS + 1):
+		var outer: Array = []
+		for id in ring:
+			for other in next_to.get(id, []):
+				if not _focus_hops.has(other):
+					_focus_hops[other] = hop
+					_focus_parent[other] = id
+					outer.append(other)
+		ring = outer
+
+
+## The centre in the middle, each ring further out; an item sits near the one it hangs from.
+func _focus_targets() -> void:
+	var rings: Array = []
+	for hop in FOCUS_HOPS + 1:
+		rings.append([])
+	for id in _focus_hops:
+		if nodes.has(id):
+			(rings[int(_focus_hops[id])] as Array).append(id)
+	var angle: Dictionary = {}
+	_focus_radius = FOCUS_RING
+	for hop in rings.size():
+		var ids: Array = rings[hop]
+		if ids.is_empty():
+			continue
+		if hop == 0:
+			(nodes[ids[0]] as Dictionary)["tl"] = Vector2.ZERO
+			angle[ids[0]] = 0.0
+			continue
+		ids.sort_custom(func(a: Variant, b: Variant) -> bool:
+			var pa := float(angle.get(_focus_parent.get(a, ""), 0.0))
+			var pb := float(angle.get(_focus_parent.get(b, ""), 0.0))
+			if not is_equal_approx(pa, pb):
+				return pa < pb
+			return str((nodes[a] as Dictionary)["label"]).naturalnocasecmp_to(str((nodes[b] as Dictionary)["label"])) < 0)
+		var radius := maxf(hop * FOCUS_RING, maxf(_focus_radius + FOCUS_RING * 0.8 if hop > 1 else 0.0, ids.size() * 84.0 / TAU))
+		_focus_radius = radius
+		for i in ids.size():
+			var a := -PI * 0.5 + TAU * (i + 0.18 * hop) / ids.size()  # a little turned: two names rarely share a row
+			angle[ids[i]] = a
+			(nodes[ids[i]] as Dictionary)["tl"] = Vector2.from_angle(a) * radius
+
+
+## The rings, faint, and the breadcrumb of the centres you came through (click one to walk back).
+func _draw_focus() -> void:
+	var c := world_to_screen(Vector2.ZERO)
+	var radii: Dictionary = {}
+	for id in _focus_hops:
+		if int(_focus_hops[id]) > 0 and nodes.has(id) and (nodes[id] as Dictionary).has("tl"):
+			radii[int(_focus_hops[id])] = ((nodes[id] as Dictionary)["tl"] as Vector2).length()
+	for hop in radii:
+		draw_arc(c, float(radii[hop]) * zoom, 0.0, TAU, 96, Color(SbTheme.BORDER, 0.5), 1.0, true)
+	if radii.is_empty() and _is_note(focus_id):
+		var none := I18n.t("Nothing is linked to this item yet")
+		draw_string(_font, c + Vector2(-_font.get_string_size(none, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x * 0.5, 70.0 * maxf(zoom, 0.6)),
+			none, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, SbTheme.MUTED)
+	_trail_rects.clear()
+	var x := legend_x
+	var y := 150.0
+	for i in focus_trail.size():
+		var id := str(focus_trail[i])
+		if not nodes.has(id):
+			continue
+		var label := str((nodes[id] as Dictionary)["label"])
+		if label.length() > 28:
+			label = label.left(27) + "…"
+		var last := i == focus_trail.size() - 1
+		var w := _font.get_string_size(label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13).x
+		draw_string(_font, Vector2(x, y), label, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, SbTheme.TEXT if last else SbTheme.MINT)
+		_trail_rects.append([Rect2(x - 4.0, y - 16.0, w + 8.0, 24.0), id])
+		x += w + 8.0
+		if not last:
+			draw_string(_font, Vector2(x, y), "›", HORIZONTAL_ALIGNMENT_LEFT, -1, 13, SbTheme.MUTED)
+			x += 16.0
+
+
+## The breadcrumb entry under a screen point, or "".
+func trail_at(screen_pos: Vector2) -> String:
+	if graph_layout != "focus":
+		return ""
+	for pair in _trail_rects:
+		if (pair[0] as Rect2).has_point(screen_pos):
+			return str(pair[1])
+	return ""
 
 
 static func _unix(iso: String) -> float:
@@ -1169,6 +1347,10 @@ func _draw_all() -> void:
 		_draw_timeline_axis()
 		if level == "far":
 			level = "mid"  # no place clusters on a time axis
+	elif graph_layout == "focus":
+		_draw_focus()
+		if level == "far":
+			level = "mid"
 	_dense = _count_on_screen() > DENSE
 	var fast := level == "far" or (_dense and level == "mid")
 	if level == "far" and graph_layout == "zones":
@@ -1464,7 +1646,9 @@ func _draw_label(n: Dictionary, p: Vector2, r: float, dim: bool) -> void:
 		return  # the cluster already carries the place's name
 	var important := type == "space" or id == hovered or id == selected or highlight.has(id)
 	var neighbor := hovered != "" and (_neighbors.get(hovered, {}) as Dictionary).has(id)
-	if not (important or neighbor or (zoom >= 0.85 and type == "note" and not _dense)):
+	# The focus view is about a few items: they all carry their name (only the first ring when there are many).
+	var focused := graph_layout == "focus" and type == "note" and (_focus_hops.size() <= 40 or int(_focus_hops.get(id, 9)) <= 1)
+	if not (important or neighbor or focused or (zoom >= 0.85 and type == "note" and not _dense)):
 		return
 	var fs := SbTheme.fs(15 if type == "space" else 13)
 	var text := str(n["label"])
@@ -1587,6 +1771,8 @@ func drop_item(id: String, world: Vector2) -> void:
 		return
 	var hub := zone_at(world)
 	n["pinned"] = false  # as before: the layout takes it back; nothing stays pinned
+	if graph_layout != "zones":  # only the zones view has zones to drop into
+		return
 	if hub != "" and hub != "space:" + str(n["space_id"]) and not folded.has(hub):
 		item_dropped_on_place.emit(id, hub.trim_prefix("space:"))
 
@@ -1644,10 +1830,15 @@ func _gui_input(event: InputEvent) -> void:
 				if _moved and _dragging_node != "":
 					drop_item(_dragging_node, screen_to_world(mb.position))
 				if not _moved:
-					var hit := node_at(mb.position)
-					if hit != "":
+					var crumb := trail_at(mb.position)
+					var hit := node_at(mb.position) if crumb == "" else ""
+					if crumb != "":
+						set_focus(crumb)
+					elif hit != "":
 						var n: Dictionary = nodes[hit]
 						selected = hit
+						if graph_layout == "focus" and hit != focus_id:
+							set_focus(hit)  # a click on a neighbour makes it the new centre
 						node_selected.emit(hit, str(n["type"]))
 					else:
 						background_clicked.emit()

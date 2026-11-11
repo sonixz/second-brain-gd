@@ -2,6 +2,17 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## VIEW-C: the focus view (2026-11-10)
+
+A third view in the picker: Focus. One item sits in the middle and what is linked to it sits on rings, one, two and
+three links away, each with its name; everything else is out of sight. It follows real links and related ideas, not
+places or themes (those would bring in everything), and the filters still apply. It opens around the selected item,
+or the most linked one. Click a neighbour and it becomes the centre; a breadcrumb at the top left remembers the
+centres you came through, and a click on one walks back. A saved view remembers its centre. Also: an item dragged
+and let go only asks to be refiled in the Zones view (the timeline could do it by accident).
+`tools/views_shots.gd` takes screenshots of the views (`SBGD_CAPTURE_SCRIPT=views_shots tools/showcase.sh views`).
+Tests: Godot end to end 284 (the engine is untouched).
+
 ## VIEW-B: saved views (2026-11-10)
 
 « ★ Views » in the graph's filter bar keeps what you see under a name: the view (Zones, Timeline), its filters and

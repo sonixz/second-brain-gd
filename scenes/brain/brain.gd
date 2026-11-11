@@ -115,7 +115,10 @@ func _ready() -> void:
 	filters_bar.legend_toggled.connect(func(on: bool) -> void: graph.show_legend = on)
 	filters_bar.layout_changed.connect(func(mode: String) -> void:
 		graph.set_layout(mode)
-		app.state["graph_layout"] = mode)
+		if graph.graph_layout != mode:  # the focus view with nothing to focus on: the picker says what is shown
+			filters_bar.show_view(graph.graph_layout)
+		app.state["graph_layout"] = graph.graph_layout)
+	graph.focus_changed.connect(func(id: String) -> void: app.state["graph_focus"] = id)
 	filters_bar.changed.connect(func(f: Dictionary) -> void:
 		graph.set_filter(f)
 		app.state["graph_filter"] = f
@@ -1465,6 +1468,7 @@ func refresh_graph() -> Array[String]:
 			graph.fold(str(key), true)
 		if app.state.has("graph_filter") and not (app.state["graph_filter"] as Dictionary).is_empty():
 			filters_bar.apply(app.state["graph_filter"])
+		graph.focus_id = str(app.state.get("graph_focus", ""))
 		filters_bar.set_view(str(app.state.get("graph_layout", "zones")))
 	graph.details.clear()  # cards fetch their place, themes and text again when they are on screen
 	graph._asked.clear()
@@ -2397,12 +2401,15 @@ class _MicRing:
 ## Saves what the graph shows now (its view, its filters, where you look) under a name.
 func save_graph_view(view_name: String) -> void:
 	GraphFilters.store_view({"name": view_name, "layout": graph.graph_layout, "filter": filters_bar.filter.duplicate(true),
-		"center": graph.view_center(), "zoom": graph.zoom})
+		"center": graph.view_center(), "zoom": graph.zoom, "focus": graph.focus_id if graph.graph_layout == "focus" else ""})
 
 
 ## Opens a saved view: its filters, its layout, then the camera glides to where it was.
 func open_graph_view(view: Dictionary) -> void:
 	filters_bar.apply((view.get("filter", {}) as Dictionary).duplicate(true))
+	if str(view.get("layout", "")) == "focus":  # the focus view opens around the item it was saved on
+		graph.select("")
+		graph.focus_id = str(view.get("focus", ""))
 	filters_bar.set_view(str(view.get("layout", "zones")))
 	graph.follow = ""
 	var center: Variant = view.get("center", null)
