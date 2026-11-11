@@ -1086,6 +1086,43 @@ func _e2e() -> void:
 			vc_back = false
 	check(vc_mid and vc_only and vc_rings > 0 and vc_walk and vc_back and graph.shown_note_count() > vc_rings,
 		"the focus view puts the most linked item in the middle, its links on rings (%d), walks to a neighbour and back, and the zones return" % vc_rings)
+	# Timeline+ (VIEW-D): lanes by type, and a time cursor that shows the brain as it was, in every view.
+	var vd_all: int = graph.shown_note_count()
+	fbar.set_view("timeline")
+	fbar.set_lanes("type")
+	await create_timer(0.8).timeout
+	var vd_lanes := fbar.lanes_pick.visible and not graph._tl_lanes.is_empty()
+	for nid in graph.nodes:
+		var nd: Dictionary = graph.nodes[nid]
+		if str(nd["type"]) == "space" and graph.is_shown(str(nid)):
+			vd_lanes = false
+		if str(nd["type"]) == "note" and graph.is_shown(str(nid)):
+			var lane: float = graph._tl_lanes.get(graph._lane_key(nd), -99999.0)
+			if absf((nd["tl"] as Vector2).y - lane) > 100.0:  # in its lane, give or take the stack of items of one moment
+				vd_lanes = false
+	var vd_named: bool = graph._tl_labels.size() == graph._tl_lanes.size() and graph._tl_density.size() == GraphView.TL_BINS
+	fbar.set_lanes("place")
+	fbar.set_view("zones")
+	fbar.time_button.button_pressed = true
+	fbar.time_slider.value = 0.5
+	var vd_span: Array = graph.time_span()
+	var vd_then := true
+	for nid in graph.nodes:
+		var nd: Dictionary = graph.nodes[nid]
+		if str(nd["type"]) == "note" and graph.is_shown(str(nid)) and GraphView._unix(str(nd.get("created_at", ""))) > graph.time_cursor:
+			vd_then = false
+	var vd_fewer: int = graph.shown_note_count()
+	var vd_bar: bool = fbar.time_bar.visible and fbar.time_label.text != "" and graph.time_cursor > float(vd_span[0]) and graph.time_cursor < float(vd_span[1])
+	fbar.set_playing(true)
+	var vd_from: float = fbar.time_slider.value
+	await create_timer(0.5).timeout
+	var vd_plays: bool = fbar.playing and fbar.time_slider.value > vd_from
+	fbar.time_button.button_pressed = false  # closing the bar comes back to now
+	if not (vd_lanes and vd_named and vd_then and vd_bar and vd_plays):
+		print("   (lanes %s, named %s, then %s, bar %s, plays %s)" % [vd_lanes, vd_named, vd_then, vd_bar, vd_plays])
+	check(vd_lanes and vd_named and vd_then and vd_bar and vd_fewer < vd_all and vd_plays and not fbar.playing
+		and graph.time_cursor < 0.0 and graph.shown_note_count() == vd_all and not fbar.time_bar.visible,
+		"the timeline has lanes by type; the time cursor shows the brain as it was (%d of %d items), plays, and comes back to now" % [vd_fewer, vd_all])
 	await ap.send("Vue d'ensemble", true)
 	var overview := await wait_until(func() -> bool: return graph.lod() == "far", 5.0)
 	check(overview, "« vue d'ensemble » zooms back out to the places")

@@ -91,6 +91,13 @@ const LAYOUTS := ["zones", "timeline", "focus"]
 const FOCUS_HOPS := 3             # the focus view shows what is within this many links of its centre
 const FOCUS_RING := 190.0         # distance between two rings, in world units
 const FOCUS_TRAIL := 8            # how many centres the breadcrumb remembers
+const LANES := ["place", "type", "origin"]   # what a lane of the timeline stands for (VIEW-D)
+const TL_BINS := 80               # the density strip over the time axis
+var timeline_lanes := "place"
+var time_cursor := -1.0           # « the brain as it was then » (unix time); below 0 = now, everything shows
+var _after_cursor: Dictionary = {}  # id -> true for items hidden only because they came after the cursor
+var _tl_labels: Dictionary = {}   # lane key -> its name, when lanes are not places (those carry their own)
+var _tl_density := PackedInt32Array()
 var focus_id := ""                # the item at the centre of the focus view
 var focus_trail: Array = []       # the centres you walked through, oldest first
 var _focus_hops: Dictionary = {}  # id -> links away from the centre (0 = the centre)
@@ -526,6 +533,7 @@ func _matches(n: Dictionary) -> bool:
 
 func _update_shown() -> void:
 	filtered_out.clear()
+	_after_cursor.clear()
 	_note_tags.clear()
 	for e in edges:
 		if str(e["type"]) == "tag":
@@ -540,12 +548,19 @@ func _update_shown() -> void:
 			continue
 		if folded.has("space:" + str(n["space_id"])) or not _matches(n):
 			filtered_out[id] = true
+		elif time_cursor >= 0.0 and _unix(str(n.get("created_at", ""))) > time_cursor:
+			filtered_out[id] = true
+			_after_cursor[id] = true
 		else:
 			for t in _note_tags.get(str(id), []):
 				shown_tags["tag:" + str(t)] = true
 	for id in nodes:
 		if str((nodes[id] as Dictionary)["type"]) == "tag" and (not shown_tags.has(id) or graph_layout == "timeline"):
 			filtered_out[id] = true
+	if graph_layout == "timeline" and timeline_lanes != "place":  # lanes by type or origin: places step aside
+		for id in nodes:
+			if str((nodes[id] as Dictionary)["type"]) == "space":
+				filtered_out[id] = true
 	if graph_layout == "focus":
 		_focus_reach()
 		for id in nodes:
@@ -794,7 +809,7 @@ func _draw_focus() -> void:
 			none, HORIZONTAL_ALIGNMENT_LEFT, -1, 13, SbTheme.MUTED)
 	_trail_rects.clear()
 	var x := legend_x
-	var y := 150.0
+	var y := 196.0  # under the filter bar and the time bar
 	for i in focus_trail.size():
 		var id := str(focus_trail[i])
 		if not nodes.has(id):
@@ -830,8 +845,13 @@ static func _unix(iso: String) -> float:
 
 func _timeline_targets() -> void:
 	_tl_lanes.clear()
+	_tl_labels.clear()
+	_tl_density = PackedInt32Array()
+	# Items the time cursor hides keep their seat: the axis does not stretch or shrink while time plays.
+	var ids: Array = _sim_ids.duplicate()
+	ids.append_array(_after_cursor.keys())
 	var times: Array = []
-	for id in _sim_ids:
+	for id in ids:
 		var n: Dictionary = nodes[id]
 		if str(n["type"]) == "note":
 			times.append(_unix(str(n.get("created_at", ""))))
@@ -843,28 +863,120 @@ func _timeline_targets() -> void:
 	_tl_t0 -= pad
 	_tl_t1 += pad
 	_tl_width = clampf(times.size() * 22.0, 1400.0, 9000.0)
-	var lanes: Array = []
-	for id in _sim_ids:
-		if str((nodes[id] as Dictionary)["type"]) == "space":
-			lanes.append(id)
-	lanes.sort_custom(func(a: Variant, b: Variant) -> bool:
-		return str((nodes[a] as Dictionary)["label"]).naturalnocasecmp_to(str((nodes[b] as Dictionary)["label"])) < 0)
+	_tl_density.resize(TL_BINS)
+	for t in times:
+		_tl_density[clampi(int((float(t) - _tl_t0) / (_tl_t1 - _tl_t0) * TL_BINS), 0, TL_BINS - 1)] += 1
+	var lanes: Array = []  # lane keys, in order
+	if timeline_lanes == "place":
+		for id in _sim_ids:
+			if str((nodes[id] as Dictionary)["type"]) == "space":
+				lanes.append(id)
+		lanes.sort_custom(func(a: Variant, b: Variant) -> bool:
+			return str((nodes[a] as Dictionary)["label"]).naturalnocasecmp_to(str((nodes[b] as Dictionary)["label"])) < 0)
+	else:
+		var names := {}
+		for pair in (GraphFilters.types() if timeline_lanes == "type" else GraphFilters.origins()):
+			names[str(pair[0])] = str(pair[1])
+		for id in ids:
+			var n: Dictionary = nodes[id]
+			if str(n["type"]) == "note" and not _tl_labels.has(_lane_key(n)):
+				_tl_labels[_lane_key(n)] = str(names.get(_lane_key(n), _lane_key(n).capitalize()))
+		lanes = _tl_labels.keys()
+		lanes.sort_custom(func(a: Variant, b: Variant) -> bool:
+			return str(_tl_labels[a]).naturalnocasecmp_to(str(_tl_labels[b])) < 0)
 	var lane_h := 110.0
 	var top := -lane_h * lanes.size() * 0.5
 	for i in lanes.size():
 		_tl_lanes[str(lanes[i]).trim_prefix("space:")] = top + i * lane_h
-		(nodes[lanes[i]] as Dictionary)["tl"] = Vector2(-_tl_width * 0.5 - 170.0, top + i * lane_h)
+		if timeline_lanes == "place":
+			(nodes[lanes[i]] as Dictionary)["tl"] = Vector2(-_tl_width * 0.5 - 170.0, top + i * lane_h)
 	var jitter: Dictionary = {}
-	for id in _sim_ids:
+	for id in ids:
 		var n: Dictionary = nodes[id]
 		if str(n["type"]) != "note":
 			continue
-		var x := -_tl_width * 0.5 + (_unix(str(n.get("created_at", ""))) - _tl_t0) / (_tl_t1 - _tl_t0) * _tl_width
-		var y: float = _tl_lanes.get(str(n["space_id"]), 0.0)
+		var x := _tl_x(_unix(str(n.get("created_at", ""))))
+		var y: float = _tl_lanes.get(_lane_key(n), 0.0)
 		var slot := "%d:%d" % [int(x / 18.0), int(y)]
 		var k: int = jitter.get(slot, 0)  # items added at the same moment stack in their lane
 		jitter[slot] = k + 1
 		n["tl"] = Vector2(x, y + (k % 3 - 1) * 26.0 + (k / 3) * 8.0)
+
+
+## Where a moment sits on the time axis (world x).
+func _tl_x(t: float) -> float:
+	return -_tl_width * 0.5 + (t - _tl_t0) / (_tl_t1 - _tl_t0) * _tl_width
+
+
+## The lane an item belongs to: its place, its type or where it came from.
+func _lane_key(n: Dictionary) -> String:
+	match timeline_lanes:
+		"type":
+			var t := str(n.get("item_type", ""))
+			return t if t != "" else "note"
+		"origin":
+			if n.get("layer") != null and str(n.get("layer")) != "":
+				return "pack"
+			var o := str(n.get("origin", ""))
+			return o if o != "" else "typed"
+	return str(n.get("space_id", ""))
+
+
+## Lanes of the timeline: one of LANES.
+func set_timeline_lanes(mode: String) -> void:
+	if mode == timeline_lanes or not mode in LANES:
+		return
+	timeline_lanes = mode
+	if graph_layout == "timeline":
+		_update_shown()
+		_layout_targets()
+		_frame_layout()
+	queue_redraw()
+
+
+# ------------------------------------------------------------ time cursor (VIEW-D)
+## The first and the last moment an item came in (unix), over the whole brain: [first, last], or [] when empty.
+## (An Array, not a Vector2: a Vector2's 32-bit floats would round today's unix time to the nearest two minutes.)
+func time_span() -> Array:
+	var first := INF
+	var last := -INF
+	for id in nodes:
+		var n: Dictionary = nodes[id]
+		if str(n["type"]) == "note" and str(n.get("created_at", "")).length() >= 10:
+			var t := _unix(str(n["created_at"]))
+			first = minf(first, t)
+			last = maxf(last, t)
+	return [first, last] if first <= last else []
+
+
+## « The brain as it was at this moment »: items that came later step out, in every view; below 0 brings back now.
+## Items coming in as the cursor moves forward bloom like new ones.
+func set_time_cursor(t: float) -> void:
+	if is_equal_approx(t, time_cursor) or (t < 0.0 and time_cursor < 0.0):
+		return
+	var back: Array = []
+	for id in _after_cursor:
+		if t < 0.0 or _unix(str((nodes[id] as Dictionary).get("created_at", ""))) <= t:
+			(nodes[id] as Dictionary)["born"] = _t
+			back.append(id)
+	time_cursor = t if t >= 0.0 else -1.0
+	_update_shown()
+	if graph_layout != "zones":
+		_layout_targets()
+		for id in back:  # straight to its seat: it blooms there instead of flying in
+			var n: Dictionary = nodes[id]
+			if n.has("tl") and _sim_index.has(id):
+				n["pos"] = n["tl"]
+				_sim_pos[int(_sim_index[id])] = n["pos"]
+	else:
+		reheat(0.25)
+	queue_redraw()
+
+
+## The cursor as a share of the brain's life (0 = its first item, 1 = now).
+func set_time_fraction(f: float) -> void:
+	var span := time_span()
+	set_time_cursor(-1.0 if f >= 1.0 or span.is_empty() else lerpf(float(span[0]), float(span[1]), clampf(f, 0.0, 1.0)))
 
 
 ## Items glide to their target in any layout that sets one.
@@ -901,7 +1013,7 @@ func _draw_timeline_axis() -> void:
 	var t := ceilf(_tl_t0 / step) * step
 	var font := _font
 	while t <= _tl_t1 + 1.0:
-		var x := -_tl_width * 0.5 + (t - _tl_t0) / span * _tl_width
+		var x := _tl_x(t)
 		var a := world_to_screen(Vector2(x, y0))
 		var b := world_to_screen(Vector2(x, y1))
 		draw_line(a, b, Color(SbTheme.BORDER, 0.55), 1.0)
@@ -914,6 +1026,23 @@ func _draw_timeline_axis() -> void:
 		var y: float = _tl_lanes[sid]
 		draw_line(world_to_screen(Vector2(-_tl_width * 0.5 - 60.0, y)), world_to_screen(Vector2(_tl_width * 0.5 + 40.0, y)),
 			Color(SbTheme.BORDER, 0.35), 1.0)
+		if _tl_labels.has(sid):  # lanes by type or origin carry their name; places are their own label
+			var name_w := font.get_string_size(str(_tl_labels[sid]), HORIZONTAL_ALIGNMENT_LEFT, -1, 14).x
+			draw_string(font, world_to_screen(Vector2(-_tl_width * 0.5 - 76.0, y)) + Vector2(-name_w, 5), str(_tl_labels[sid]),
+				HORIZONTAL_ALIGNMENT_LEFT, -1, 14, SbTheme.TEXT)
+	# Density: how much came in along time, so the busy weeks stand out.
+	var most := 1
+	for c in _tl_density:
+		most = maxi(most, c)
+	var bin_w := _tl_width / TL_BINS
+	for i in _tl_density.size():
+		if _tl_density[i] > 0:
+			var h := 6.0 + 34.0 * float(_tl_density[i]) / most
+			var base := world_to_screen(Vector2(-_tl_width * 0.5 + i * bin_w, y0 - 14.0))
+			draw_rect(Rect2(base + Vector2(1, -h), Vector2(maxf(2.0, bin_w * zoom - 2.0), h)), Color(SbTheme.MINT, 0.28))
+	if time_cursor >= 0.0:  # the moment shown
+		var cx := _tl_x(clampf(time_cursor, _tl_t0, _tl_t1))
+		draw_line(world_to_screen(Vector2(cx, y0 - 60.0)), world_to_screen(Vector2(cx, y1)), Color(SbTheme.WARM, 0.85), 2.0)
 
 
 # --------------------------------------------------------------- simulation

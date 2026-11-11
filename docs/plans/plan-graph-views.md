@@ -71,6 +71,11 @@ saved view by name (an engine tool and its words), and a How-to step.
 - The time cursor also works in the Zones view (« the brain as it was on that day »).
 - Why: see how an idea was born and grew; the owner's favourite view, pushed further.
 
+**Done (2026-11-10).** « Time » bar (slider, ▶, date and count): `GraphView.set_time_cursor / set_time_fraction /
+time_span`, in every view. Lanes by place, type or origin (`GraphView.LANES`, `set_timeline_lanes`), density strip,
+cursor line. Date filter: 90 days, a year. Left: lanes by theme and by author (needs the author in the graph's data,
+an engine change), a free from/to range, « replay my week » for the assistant, a How-to step.
+
 ### VIEW-E — Meaning map (M)
 
 - Items placed by their meaning vector, projected to 2D, whatever place they are filed in. Islands of themes

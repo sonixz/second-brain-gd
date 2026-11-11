@@ -6,6 +6,8 @@ extends HBoxContainer
 signal changed(filter: Dictionary)
 signal layout_changed(mode: String)
 signal legend_toggled(on: bool)
+signal lanes_changed(mode: String)              # the timeline's lanes: place, type, origin (VIEW-D)
+signal time_changed(fraction: float)            # the time cursor: 0 = the first item, 1 = now (everything)
 signal save_view_asked(view_name: String)       # « save what I see under this name » (VIEW-B)
 signal saved_view_opened(view: Dictionary)      # {name, layout, filter, center, zoom}
 
@@ -27,7 +29,13 @@ static func views() -> Array:
 
 
 static func days() -> Array:
-	return [[0, I18n.t("Any time")], [1, I18n.t("Today")], [7, I18n.t("Last 7 days")], [30, I18n.t("Last 30 days")]]
+	return [[0, I18n.t("Any time")], [1, I18n.t("Today")], [7, I18n.t("Last 7 days")], [30, I18n.t("Last 30 days")],
+		[90, I18n.t("Last 90 days")], [365, I18n.t("Last year")]]
+
+
+## What a lane of the timeline can stand for: [GraphView.LANES id, label].
+static func lanes() -> Array:
+	return [["place", I18n.t("Lanes: places")], ["type", I18n.t("Lanes: types")], ["origin", I18n.t("Lanes: origins")]]
 
 var filter: Dictionary = {}
 var summary: Label
@@ -35,6 +43,15 @@ var clear_button: Button
 var view_pick: OptionButton
 var legend_button: Button
 var saved_button: Button
+var lanes_pick: OptionButton
+var time_button: Button
+var time_bar: HBoxContainer      # a second row, placed under this bar by the brain screen
+var time_slider: HSlider
+var time_label: Label
+var play_button: Button
+var playing := false
+var _play_at := 1.0
+const PLAY_SECONDS := 18.0       # the whole life of the brain replayed in about this long
 var saved_popup: PopupPanel
 var _saved_rows: VBoxContainer
 var _saved_name: LineEdit
@@ -67,8 +84,48 @@ func _ready() -> void:
 	view_pick.tooltip_text = I18n.t("The view of the graph. Zones: items around their place. Timeline: items on a time axis, one lane per place. Focus: one item and what is linked to it, ring by ring")
 	for v in views():
 		view_pick.add_item(str(v[1]))
-	view_pick.item_selected.connect(func(i: int) -> void: layout_changed.emit(str(views()[i][0])))
+	view_pick.item_selected.connect(func(i: int) -> void:
+		lanes_pick.visible = str(views()[i][0]) == "timeline"
+		layout_changed.emit(str(views()[i][0])))
 	add_child(view_pick)
+	lanes_pick = OptionButton.new()
+	lanes_pick.name = "LanesPick"
+	lanes_pick.visible = false
+	lanes_pick.tooltip_text = I18n.t("One lane per place, per type of item, or per origin (typed, spoken, web, files)")
+	for l in lanes():
+		lanes_pick.add_item(str(l[1]))
+	lanes_pick.item_selected.connect(func(i: int) -> void: lanes_changed.emit(str(lanes()[i][0])))
+	add_child(lanes_pick)
+	time_button = Button.new()
+	time_button.name = "TimeButton"
+	time_button.text = I18n.t("Time")
+	time_button.toggle_mode = true
+	time_button.tooltip_text = I18n.t("Go back in time: see the brain as it was, or play it growing")
+	time_button.toggled.connect(_toggle_time)
+	add_child(time_button)
+	time_bar = HBoxContainer.new()
+	time_bar.name = "TimeBar"
+	time_bar.visible = false
+	time_bar.add_theme_constant_override("separation", 8)
+	play_button = Button.new()
+	play_button.text = "▶"
+	play_button.tooltip_text = I18n.t("Play: the brain grows from its first item to now")
+	play_button.pressed.connect(func() -> void: set_playing(not playing))
+	time_bar.add_child(play_button)
+	time_slider = HSlider.new()
+	time_slider.min_value = 0.0
+	time_slider.max_value = 1.0
+	time_slider.step = 0.001
+	time_slider.value = 1.0
+	time_slider.custom_minimum_size = Vector2(360, 0)
+	time_slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	time_slider.value_changed.connect(func(v: float) -> void: time_changed.emit(v))
+	time_bar.add_child(time_slider)
+	time_label = Label.new()
+	time_label.theme_type_variation = "Muted"
+	time_label.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	time_bar.add_child(time_label)
+	set_process(false)
 	saved_button = Button.new()
 	saved_button.name = "SavedViews"
 	saved_button.text = I18n.t("★ Views")
@@ -131,6 +188,39 @@ func _ready() -> void:
 	_render()
 
 
+func _toggle_time(on: bool) -> void:
+	time_bar.visible = on
+	if not on:  # closing the bar comes back to now
+		set_playing(false)
+		time_slider.value = 1.0
+
+
+## Plays the brain growing: from the cursor (or from the start when it is at the end) to now.
+func set_playing(on: bool) -> void:
+	playing = on
+	play_button.text = "⏸" if on else "▶"
+	if on and time_slider.value >= 1.0:
+		time_slider.value = 0.0
+	_play_at = time_slider.value
+	set_process(on)
+
+
+func _process(delta: float) -> void:
+	_play_at = minf(1.0, _play_at + delta / PLAY_SECONDS)  # kept apart: one frame is less than a step of the slider
+	time_slider.value = _play_at
+	if _play_at >= 1.0:
+		set_playing(false)
+
+
+## Sets the timeline's lanes from outside (saved views).
+func set_lanes(mode: String) -> void:
+	var all := lanes()
+	for i in all.size():
+		if str(all[i][0]) == mode and lanes_pick.selected != i:
+			lanes_pick.select(i)
+			lanes_changed.emit(mode)
+
+
 ## The view shown in the picker ("zones", "timeline"…).
 func view() -> String:
 	return str(views()[maxi(0, view_pick.selected)][0])
@@ -142,6 +232,7 @@ func set_view(mode: String) -> void:
 	for i in all.size():
 		if str(all[i][0]) == mode and view_pick.selected != i:
 			view_pick.select(i)
+			lanes_pick.visible = mode == "timeline"
 			layout_changed.emit(mode)
 
 
@@ -151,6 +242,7 @@ func show_view(mode: String) -> void:
 	for i in all.size():
 		if str(all[i][0]) == mode:
 			view_pick.select(i)
+			lanes_pick.visible = mode == "timeline"
 
 
 # ------------------------------------------------------------ saved views (VIEW-B)

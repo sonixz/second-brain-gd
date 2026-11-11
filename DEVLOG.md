@@ -2,6 +2,18 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## VIEW-D: Timeline+, and a time cursor in every view (2026-11-10)
+
+The owner's favourite view goes further. « Time » in the graph's filter bar opens a second row: a slider that shows
+the brain as it was at a moment (items that came later step out, the date and the count are written beside it), and
+▶ that plays it growing from its first item to now in about 18 seconds, each item blooming as it comes in. It works
+in every view: zones, timeline, focus. The timeline gets a lane picker (places, types, origins: typed, spoken, web,
+files, packs), a density strip over the axis so busy weeks stand out, and a warm line at the cursor; its axis keeps
+its scale while time plays. The date filter gains « Last 90 days » and « Last year ». A saved view remembers its
+lanes. Not done: lanes by theme (an item has several) and by author (the graph does not carry who added an item
+yet), and a free from/to date range.
+Tests: Godot end to end 285 (the engine is untouched).
+
 ## VIEW-C: the focus view (2026-11-10)
 
 A third view in the picker: Focus. One item sits in the middle and what is linked to it sits on rings, one, two and

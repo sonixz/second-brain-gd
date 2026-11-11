@@ -123,6 +123,18 @@ func _ready() -> void:
 		graph.set_filter(f)
 		app.state["graph_filter"] = f
 		_update_stats())
+	filters_bar.time_bar.set_anchors_preset(Control.PRESET_TOP_WIDE)
+	filters_bar.time_bar.offset_left = 388
+	filters_bar.time_bar.offset_right = -24
+	filters_bar.time_bar.offset_top = 138
+	add_child(filters_bar.time_bar)
+	filters_bar.lanes_changed.connect(func(mode: String) -> void: graph.set_timeline_lanes(mode))
+	filters_bar.time_changed.connect(func(fraction: float) -> void:
+		graph.set_time_fraction(fraction)
+		filters_bar.time_label.text = I18n.t("Now") if graph.time_cursor < 0.0 else I18n.t("%s · %d items") % [
+			Time.get_datetime_string_from_unix_time(int(graph.time_cursor) + int(Time.get_time_zone_from_system().get("bias", 0)) * 60, true).left(16),
+			graph.shown_note_count()]
+		_update_stats())
 	filters_bar.save_view_asked.connect(save_graph_view)
 	filters_bar.saved_view_opened.connect(open_graph_view)
 	graph.page_needed.connect(_fetch_card_page)
@@ -146,6 +158,7 @@ func _ready() -> void:
 	_build_toast()
 	_build_listening_overlay()
 	move_child(filters_bar, graph.get_index() + 1)  # above the graph (which paints its own background), below the panels
+	move_child(filters_bar.time_bar, filters_bar.get_index() + 1)
 	get_window().files_dropped.connect(_on_files_dropped)
 	voice_capture = VoiceCapture.new()
 	add_child(voice_capture)
@@ -407,6 +420,7 @@ var last_agent_info := ""
 ## Docked panels take room on the left and right: the graph's toolbar and centre move into the free area.
 func _on_panel_edges(left: float, right: float) -> void:
 	filters_bar.offset_left = panel_layer.margin_side + left
+	filters_bar.time_bar.offset_left = panel_layer.margin_side + left
 	graph.screen_offset = Vector2((left - right) * 0.5, 0)
 	graph.legend_x = panel_layer.margin_side + left
 	graph.right_inset = right
@@ -603,6 +617,7 @@ func set_view(name: String) -> void:
 	captures_view.visible = name == "captures"
 	if filters_bar != null:
 		filters_bar.visible = name == "graph"
+		filters_bar.time_bar.visible = name == "graph" and filters_bar.time_button.button_pressed
 	if results_box != null:
 		(results_box.get_parent() as Control).visible = name == "graph" and search_edit.text.strip_edges() != ""
 	today_view.visible = name == "today"
@@ -2401,7 +2416,8 @@ class _MicRing:
 ## Saves what the graph shows now (its view, its filters, where you look) under a name.
 func save_graph_view(view_name: String) -> void:
 	GraphFilters.store_view({"name": view_name, "layout": graph.graph_layout, "filter": filters_bar.filter.duplicate(true),
-		"center": graph.view_center(), "zoom": graph.zoom, "focus": graph.focus_id if graph.graph_layout == "focus" else ""})
+		"center": graph.view_center(), "zoom": graph.zoom, "focus": graph.focus_id if graph.graph_layout == "focus" else "",
+		"lanes": graph.timeline_lanes})
 
 
 ## Opens a saved view: its filters, its layout, then the camera glides to where it was.
@@ -2410,6 +2426,7 @@ func open_graph_view(view: Dictionary) -> void:
 	if str(view.get("layout", "")) == "focus":  # the focus view opens around the item it was saved on
 		graph.select("")
 		graph.focus_id = str(view.get("focus", ""))
+	filters_bar.set_lanes(str(view.get("lanes", "place")))
 	filters_bar.set_view(str(view.get("layout", "zones")))
 	graph.follow = ""
 	var center: Variant = view.get("center", null)

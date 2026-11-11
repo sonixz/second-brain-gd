@@ -32,4 +32,18 @@ func _run() -> void:
 	fb.saved_button.pressed.emit()
 	await pause(0.8)
 	await shot("05-saved-views")
+	fb.saved_popup.hide()
+	calm()
+	fb.set_view("timeline")
+	fb.set_lanes("type")
+	fb.time_button.button_pressed = true
+	fb.time_slider.value = 0.6
+	await pause(3.0)
+	await shot("06-timeline-types-cursor")
+	fb.set_lanes("place")
+	fb.set_view("zones")
+	fb.time_slider.value = 0.35
+	g.zoom_to(0.5, Vector2(-60, 0), 0.3)
+	await pause(3.0)
+	await shot("07-zones-back-in-time")
 	quit(0)
