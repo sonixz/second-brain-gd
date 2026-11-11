@@ -120,6 +120,8 @@ func _ready() -> void:
 		graph.set_filter(f)
 		app.state["graph_filter"] = f
 		_update_stats())
+	filters_bar.save_view_asked.connect(save_graph_view)
+	filters_bar.saved_view_opened.connect(open_graph_view)
 	graph.page_needed.connect(_fetch_card_page)
 	graph.node_activated.connect(func(id: String) -> void:
 		var it := await app.backend.api.call_api("/brain/items/" + id)
@@ -2389,3 +2391,19 @@ class _MicRing:
 			draw_arc(c, r + 3.0, 0, TAU, 48, SbTheme.MINT, 2.0, true)
 		else:
 			draw_arc(c, r + 3.0, _t * 4.0, _t * 4.0 + PI * 1.2, 32, SbTheme.INFO, 2.5, true)
+
+
+# ------------------------------------------------------------ saved views (VIEW-B)
+## Saves what the graph shows now (its view, its filters, where you look) under a name.
+func save_graph_view(view_name: String) -> void:
+	GraphFilters.store_view({"name": view_name, "layout": graph.graph_layout, "filter": filters_bar.filter.duplicate(true),
+		"center": graph.view_center(), "zoom": graph.zoom})
+
+
+## Opens a saved view: its filters, its layout, then the camera glides to where it was.
+func open_graph_view(view: Dictionary) -> void:
+	filters_bar.apply((view.get("filter", {}) as Dictionary).duplicate(true))
+	filters_bar.set_view(str(view.get("layout", "zones")))
+	graph.follow = ""
+	var center: Variant = view.get("center", null)
+	graph.zoom_to(float(view.get("zoom", 1.0)), center if center is Vector2 else null, 0.9)

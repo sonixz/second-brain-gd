@@ -6,6 +6,8 @@ extends HBoxContainer
 signal changed(filter: Dictionary)
 signal layout_changed(mode: String)
 signal legend_toggled(on: bool)
+signal save_view_asked(view_name: String)       # « save what I see under this name » (VIEW-B)
+signal saved_view_opened(view: Dictionary)      # {name, layout, filter, center, zoom}
 
 ## [id, label] pairs; the labels follow the interface language.
 static func types() -> Array:
@@ -32,6 +34,10 @@ var summary: Label
 var clear_button: Button
 var view_pick: OptionButton
 var legend_button: Button
+var saved_button: Button
+var saved_popup: PopupPanel
+var _saved_rows: VBoxContainer
+var _saved_name: LineEdit
 var popup: PopupPanel
 var _checks: Dictionary = {}
 var _days: OptionButton
@@ -63,6 +69,31 @@ func _ready() -> void:
 		view_pick.add_item(str(v[1]))
 	view_pick.item_selected.connect(func(i: int) -> void: layout_changed.emit(str(views()[i][0])))
 	add_child(view_pick)
+	saved_button = Button.new()
+	saved_button.name = "SavedViews"
+	saved_button.text = I18n.t("★ Views")
+	saved_button.tooltip_text = I18n.t("Your saved views: the view, its filters and where you were looking, under a name")
+	saved_button.pressed.connect(_open_saved)
+	add_child(saved_button)
+	saved_popup = PopupPanel.new()
+	add_child(saved_popup)
+	var saved_col := VBoxContainer.new()
+	saved_col.custom_minimum_size = Vector2(320, 0)
+	saved_col.add_theme_constant_override("separation", 6)
+	saved_popup.add_child(saved_col)
+	_saved_rows = VBoxContainer.new()
+	saved_col.add_child(_saved_rows)
+	var save_line := HBoxContainer.new()
+	saved_col.add_child(save_line)
+	_saved_name = LineEdit.new()
+	_saved_name.placeholder_text = I18n.t("A name for what you see now")
+	_saved_name.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_saved_name.text_submitted.connect(func(_t: String) -> void: _ask_save())
+	save_line.add_child(_saved_name)
+	var save := Button.new()
+	save.text = I18n.t("Save")
+	save.pressed.connect(_ask_save)
+	save_line.add_child(save)
 	legend_button = Button.new()
 	legend_button.text = "?"
 	legend_button.toggle_mode = true
@@ -112,6 +143,94 @@ func set_view(mode: String) -> void:
 		if str(all[i][0]) == mode and view_pick.selected != i:
 			view_pick.select(i)
 			layout_changed.emit(mode)
+
+
+# ------------------------------------------------------------ saved views (VIEW-B)
+## Saved views live with the app's preferences: [{name, layout, filter, center, zoom}], in the order they were saved.
+static func saved_views() -> Array:
+	var all: Variant = SbSettings.get_value("graph", "saved_views", [])
+	return all if all is Array else []
+
+
+## The saved view with this name (case does not matter), or {}.
+static func find_view(view_name: String) -> Dictionary:
+	for v in saved_views():
+		if str((v as Dictionary).get("name", "")).to_lower() == view_name.strip_edges().to_lower():
+			return v
+	return {}
+
+
+## Saves a view; one with the same name is replaced, in its place.
+static func store_view(view: Dictionary) -> void:
+	var all := saved_views()
+	for i in all.size():
+		if str((all[i] as Dictionary).get("name", "")).to_lower() == str(view.get("name", "")).to_lower():
+			all[i] = view
+			SbSettings.set_value("graph", "saved_views", all)
+			return
+	all.append(view)
+	SbSettings.set_value("graph", "saved_views", all)
+
+
+static func forget_view(view_name: String) -> void:
+	SbSettings.set_value("graph", "saved_views", saved_views().filter(func(v: Variant) -> bool:
+		return str((v as Dictionary).get("name", "")).to_lower() != view_name.to_lower()))
+
+
+func _open_saved() -> void:
+	_render_saved()
+	var r := saved_button.get_global_rect()
+	saved_popup.popup(Rect2i(Vector2i(int(r.position.x), int(r.end.y + 6)), Vector2i(340, 0)))
+
+
+func _ask_save() -> void:
+	var view_name := _saved_name.text.strip_edges()
+	if view_name == "":
+		return
+	_saved_name.text = ""
+	save_view_asked.emit(view_name)  # the brain screen adds the camera and stores it
+	_render_saved()
+
+
+func _render_saved() -> void:
+	for c in _saved_rows.get_children():
+		_saved_rows.remove_child(c)
+		c.queue_free()
+	var all := saved_views()
+	if all.is_empty():
+		var none := Label.new()
+		none.text = I18n.t("No saved view yet")
+		none.theme_type_variation = "Muted"
+		_saved_rows.add_child(none)
+	for v in all:
+		var view: Dictionary = v
+		var row := HBoxContainer.new()
+		_saved_rows.add_child(row)
+		var open := Button.new()
+		open.text = str(view.get("name", ""))
+		open.alignment = HORIZONTAL_ALIGNMENT_LEFT
+		open.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		open.tooltip_text = "%s%s" % [_view_label(str(view.get("layout", "zones"))),
+			(" · " + describe(view.get("filter", {}))) if not (view.get("filter", {}) as Dictionary).is_empty() else ""]
+		open.pressed.connect(func() -> void:
+			saved_popup.hide()
+			saved_view_opened.emit(view))
+		row.add_child(open)
+		var forget := Button.new()
+		forget.text = "✕"
+		forget.theme_type_variation = "GhostButton"
+		forget.tooltip_text = I18n.t("Forget this view")
+		forget.pressed.connect(func() -> void:
+			forget_view(str(view.get("name", "")))
+			_render_saved())
+		row.add_child(forget)
+
+
+static func _view_label(mode: String) -> String:
+	for v in views():
+		if str(v[0]) == mode:
+			return str(v[1])
+	return mode
 
 
 func _open() -> void:

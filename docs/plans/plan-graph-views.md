@@ -48,6 +48,10 @@ graph guide again (step 7 still shows the old toggle).
 - Stored locally with the app's settings. The assistant's existing graph actions can open a saved view by name.
 - Why: this is what makes views « mouvables »: your own angles on the brain, one click away.
 
+**Done (2026-11-10).** « ★ Views » in the filter bar; `GraphFilters.saved_views / store_view / find_view /
+forget_view`, `Brain.save_graph_view / open_graph_view`, `GraphView.view_center`. Left: the assistant opening a
+saved view by name (an engine tool and its words), and a How-to step.
+
 ### VIEW-C — Focus view (S)
 
 - One item at the centre, its neighbours on rings at 1, 2 and 3 hops; everything else fades out. Click a

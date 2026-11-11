@@ -357,6 +357,11 @@ func zoom_to(level: float, world_center: Variant = null, seconds: float = 0.45) 
 		_zoom_tween.tween_property(self, "cam", (world_center as Vector2) - screen_offset / target, seconds)
 
 
+## The world point shown at the centre of the free area: with `zoom`, what a saved view remembers of the camera.
+func view_center() -> Vector2:
+	return cam + screen_offset / zoom
+
+
 ## Voice and buttons: "overview", "out", "closer", "read" (optionally on one node).
 func zoom_level(level: String, id: String = "") -> void:
 	var center: Variant = (nodes[id]["pos"] as Vector2) if id != "" and nodes.has(id) else null

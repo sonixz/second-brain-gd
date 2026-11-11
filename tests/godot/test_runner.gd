@@ -1018,6 +1018,30 @@ func _e2e() -> void:
 	var va_back: bool = graph.graph_layout == "zones" and fbar.view_pick.selected == 0 and (graph.nodes[va_id]["pos"] as Vector2).distance_to(va_before) < 0.5
 	check(va_on and va_moved and va_ignored and va_back and GraphFilters.views().size() == GraphView.LAYOUTS.size(),
 		"the view picker switches views, ignores an unknown one, and the zones come back where they were")
+	# Saved views (VIEW-B): a view, its filter and the camera under a name; opened again from anywhere.
+	fbar.apply({"types": ["note"]})
+	fbar.set_view("timeline")
+	graph.zoom_to(0.9, Vector2(120, -40), 0.0)
+	await create_timer(0.3).timeout
+	fbar.saved_button.pressed.emit()
+	fbar._saved_name.text = "Notes in time"
+	fbar._ask_save()
+	var vb_saved: Dictionary = GraphFilters.find_view("notes in TIME")
+	fbar.apply({})
+	fbar.set_view("zones")
+	await create_timer(0.8).timeout
+	var vb_row: Button = fbar._saved_rows.find_children("*", "Button", true, false)[0]
+	vb_row.pressed.emit()
+	await create_timer(1.3).timeout
+	var vb_open: bool = graph.graph_layout == "timeline" and fbar.view() == "timeline" and (fbar.filter.get("types", []) as Array) == ["note"] \
+		and absf(graph.zoom - 0.9) < 0.01 and graph.view_center().distance_to(Vector2(120, -40)) < 2.0
+	brain.call("save_graph_view", "Notes in time")  # the same name replaces, it does not pile up
+	var vb_one: bool = GraphFilters.saved_views().size() == 1
+	GraphFilters.forget_view("Notes in time")
+	check(str(vb_saved.get("layout", "")) == "timeline" and vb_row.text == "Notes in time" and vb_open and vb_one and GraphFilters.saved_views().is_empty(),
+		"a saved view keeps its layout, filter and camera, opens again, replaces its namesake and can be forgotten")
+	fbar.apply({})
+	fbar.set_view("zones")
 	await ap.send("Vue d'ensemble", true)
 	var overview := await wait_until(func() -> bool: return graph.lod() == "far", 5.0)
 	check(overview, "« vue d'ensemble » zooms back out to the places")

@@ -2,6 +2,14 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## VIEW-B: saved views (2026-11-10)
+
+« ★ Views » in the graph's filter bar keeps what you see under a name: the view (Zones, Timeline), its filters and
+where the camera was. Click a name and the filters come back, the layout changes and the camera glides there; a view
+saved under an existing name replaces it; ✕ forgets one. They live with the app's preferences (`graph/saved_views`).
+Not done yet: asking the assistant to open a saved view by name.
+Tests: Godot end to end 283 (the engine is untouched).
+
 ## VIEW-A: the graph has a view picker (2026-11-10)
 
 First loop of the plan for richer graph views (docs/plans/plan-graph-views.md), from the owner's wish for views that
