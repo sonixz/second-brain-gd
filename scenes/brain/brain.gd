@@ -139,6 +139,9 @@ func _ready() -> void:
 	filters_bar.time_bar.offset_top = 138
 	add_child(filters_bar.time_bar)
 	filters_bar.lanes_changed.connect(func(mode: String) -> void: graph.set_timeline_lanes(mode))
+	filters_bar.play_changed.connect(func(on: bool) -> void:
+		graph.set_playing(on)
+		layers_view.set_playing(on))
 	filters_bar.time_changed.connect(func(fraction: float) -> void:
 		graph.set_time_fraction(fraction)
 		_refresh_layers()
@@ -444,9 +447,10 @@ func _on_panel_edges(left: float, right: float) -> void:
 	filters_bar.offset_left = panel_layer.margin_side + left
 	filters_bar.time_bar.offset_left = panel_layer.margin_side + left
 	graph.screen_offset = Vector2((left - right) * 0.5, 0)
-	layers_view.screen_offset = graph.screen_offset
-	_refresh_layers()
 	graph.legend_x = panel_layer.margin_side + left
+	layers_view.screen_offset = graph.screen_offset
+	layers_view.legend_x = graph.legend_x
+	_refresh_layers()
 	graph.right_inset = right
 	graph.queue_redraw()
 	for v in [captures_view, today_view, projects_view, agents_view, table_view]:  # the lists stay clear of docked panels

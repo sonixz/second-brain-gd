@@ -1116,11 +1116,24 @@ func _e2e() -> void:
 	fbar.set_playing(true)
 	var vd_from: float = fbar.time_slider.value
 	await create_timer(0.5).timeout
-	var vd_plays: bool = fbar.playing and fbar.time_slider.value > vd_from
+	var vd_plays: bool = fbar.playing and fbar.time_slider.value > vd_from and graph.playing
+	# The cinema play: arrivals are lit while their ring fades, the speed cycles, the camera has a home to return to.
+	fbar.speed_button.pressed.emit()
+	var vd_fast: bool = is_equal_approx(fbar.speed, 2.0) and fbar.speed_button.text == "2×"
+	var vd_home: bool = not graph._play_home.is_empty()
+	fbar.time_slider.value = 0.999  # dragged to the very end while it plays: the play finishes from there
+	await create_timer(0.3).timeout
+	var vd_lit: bool = vd_home and not graph._arrived.is_empty() and not fbar.playing and not graph.playing and graph._play_home.is_empty()
+	fbar.speed_button.pressed.emit()
+	fbar.speed_button.pressed.emit()
+	fbar.speed_button.pressed.emit()
+	if not (vd_plays and vd_fast and vd_lit):
+		print("   (plays %s, graph playing %s, fast %s [%s], lit %s: arrived %d, home %d)" % [vd_plays, graph.playing, vd_fast, fbar.speed_button.text, vd_lit, graph._arrived.size(), graph._play_home.size()])
+	vd_plays = vd_plays and vd_fast and vd_lit and is_equal_approx(fbar.speed, 1.0)
 	fbar.time_button.button_pressed = false  # closing the bar comes back to now
 	if not (vd_lanes and vd_named and vd_then and vd_bar and vd_plays):
 		print("   (lanes %s, named %s, then %s, bar %s, plays %s)" % [vd_lanes, vd_named, vd_then, vd_bar, vd_plays])
-	check(vd_lanes and vd_named and vd_then and vd_bar and vd_fewer < vd_all and vd_plays and not fbar.playing
+	check(vd_lanes and vd_named and vd_then and vd_bar and vd_fewer < vd_all and vd_plays and not fbar.playing and not graph.playing
 		and graph.time_cursor < 0.0 and graph.shown_note_count() == vd_all and not fbar.time_bar.visible,
 		"the timeline has lanes by type; the time cursor shows the brain as it was (%d of %d items), plays, and comes back to now" % [vd_fewer, vd_all])
 	# Meaning map (VIEW-E): the engine places the items by what they mean; places step aside, names stay apart.

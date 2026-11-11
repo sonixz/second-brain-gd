@@ -7,6 +7,7 @@ signal changed(filter: Dictionary)
 signal layout_changed(mode: String)
 signal legend_toggled(on: bool)
 signal lanes_changed(mode: String)              # the timeline's lanes: place, type, origin (VIEW-D)
+signal play_changed(on: bool)                   # ▶ pressed or the play reached now
 signal time_changed(fraction: float)            # the time cursor: 0 = the first item, 1 = now (everything)
 signal save_view_asked(view_name: String)       # « save what I see under this name » (VIEW-B)
 signal saved_view_opened(view: Dictionary)      # {name, layout, filter, center, zoom}
@@ -53,6 +54,9 @@ var time_label: Label
 var play_button: Button
 var playing := false
 var _play_at := 1.0
+var speed_button: Button
+var speed := 1.0
+const SPEEDS := [0.5, 1.0, 2.0, 4.0]
 const PLAY_SECONDS := 18.0       # the whole life of the brain replayed in about this long
 var saved_popup: PopupPanel
 var _saved_rows: VBoxContainer
@@ -114,6 +118,14 @@ func _ready() -> void:
 	play_button.tooltip_text = I18n.t("Play: the brain grows from its first item to now")
 	play_button.pressed.connect(func() -> void: set_playing(not playing))
 	time_bar.add_child(play_button)
+	speed_button = Button.new()
+	speed_button.text = "1×"
+	speed_button.theme_type_variation = "GhostButton"
+	speed_button.tooltip_text = I18n.t("Speed of the play")
+	speed_button.pressed.connect(func() -> void:
+		speed = float(SPEEDS[(SPEEDS.find(speed) + 1) % SPEEDS.size()])
+		speed_button.text = ("%s×" % speed).replace(".0×", "×"))
+	time_bar.add_child(speed_button)
 	time_slider = HSlider.new()
 	time_slider.min_value = 0.0
 	time_slider.max_value = 1.0
@@ -121,7 +133,10 @@ func _ready() -> void:
 	time_slider.value = 1.0
 	time_slider.custom_minimum_size = Vector2(360, 0)
 	time_slider.size_flags_vertical = Control.SIZE_SHRINK_CENTER
-	time_slider.value_changed.connect(func(v: float) -> void: time_changed.emit(v))
+	time_slider.value_changed.connect(func(v: float) -> void:
+		if playing and absf(v - _play_at) > 0.002:  # dragged while it plays: the play goes on from there
+			_play_at = v
+		time_changed.emit(v))
 	time_bar.add_child(time_slider)
 	time_label = Label.new()
 	time_label.theme_type_variation = "Muted"
@@ -199,8 +214,10 @@ func _toggle_time(on: bool) -> void:
 
 ## Plays the brain growing: from the cursor (or from the start when it is at the end) to now.
 func set_playing(on: bool) -> void:
-	playing = on
-	play_button.text = "⏸" if on else "▶"
+	if on != playing:
+		playing = on
+		play_changed.emit(on)
+	play_button.text = "II" if on else "▶"  # (the interface font has no pause sign)
 	if on and time_slider.value >= 1.0:
 		time_slider.value = 0.0
 	_play_at = time_slider.value
@@ -208,7 +225,7 @@ func set_playing(on: bool) -> void:
 
 
 func _process(delta: float) -> void:
-	_play_at = minf(1.0, _play_at + delta / PLAY_SECONDS)  # kept apart: one frame is less than a step of the slider
+	_play_at = minf(1.0, _play_at + delta * speed / PLAY_SECONDS)  # kept apart: one frame is less than a step of the slider
 	time_slider.value = _play_at
 	if _play_at >= 1.0:
 		set_playing(false)

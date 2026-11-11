@@ -25,6 +25,13 @@ var yaw := 0.6
 var pitch := 0.42
 var distance := 30.0
 var spinning := true
+var playing := false             # the time cursor plays: arrivals pop, the camera rises with the brain
+const POP_S := 0.9               # an arriving ball grows in with a little bounce
+var _clock := 0.0
+var _born: Dictionary = {}       # id -> _clock when it appeared (while a scene was already up)
+var _known: Dictionary = {}      # ids of the scene before this one
+var _home := Vector3.ZERO        # where the camera looks at rest
+var _rise := 0.0                 # the height the play looks at: the plane of the latest arrival
 var screen_offset := Vector2.ZERO   # centre of the free area, as for the 2D graph (docked panels cover the sides)
 
 var _viewport: SubViewport
@@ -37,6 +44,8 @@ var _centre := Vector3.ZERO
 var _press := Vector2.ZERO
 var _moved := false
 var _tip: Label
+var _date: Label                 # the large date of the time cursor, as in the 2D graph
+var legend_x := 388.0            # left edge of the free area
 
 
 func _ready() -> void:
@@ -69,6 +78,11 @@ func _ready() -> void:
 	_tip.add_theme_stylebox_override("normal", SbTheme.box(SbTheme.PANEL, 8, SbTheme.BORDER, 1, 8))
 	_tip.visible = false
 	add_child(_tip)
+	_date = Label.new()
+	_date.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_date.add_theme_font_size_override("font_size", SbTheme.fs(46))
+	_date.position = Vector2(legend_x + 6.0, 196.0)
+	add_child(_date)
 	_place_camera()
 
 
@@ -80,15 +94,23 @@ func show_graph(graph: GraphView) -> void:
 		c.queue_free()
 	layers.clear()
 	items.clear()
+	_date.position.x = legend_x + 6.0
+	_date.text = ""
+	if graph.time_cursor >= 0.0:
+		var d := Time.get_datetime_dict_from_unix_time(int(graph.time_cursor) + int(Time.get_time_zone_from_system().get("bias", 0)) * 60)
+		_date.text = "%02d · %02d · %04d" % [d["day"], d["month"], d["year"]]
+	_date.modulate = Color(SbTheme.TEXT, 0.34 if playing else 0.2)
 	var notes: Array = []
 	for id in graph.nodes:
 		var n: Dictionary = graph.nodes[id]
 		if str(n["type"]) == "note" and graph.is_shown(str(id)):
 			notes.append([str(id), GraphView._unix(str(n.get("created_at", "")))])
 	var span := graph.time_span()  # the whole brain's life: the planes stay put while filters or the time cursor hide items
-	if notes.is_empty() or span.is_empty():
+	if span.is_empty():
 		_place_camera()
 		return
+	if _known.is_empty() and playing:
+		_known = {"": true}  # the play starts from nothing: the very first items pop too
 	var first: float = span[0]
 	var last: float = span[1]
 	# Planes: equal slices of the brain's life (one plane when everything came in the same day).
@@ -100,25 +122,37 @@ func show_graph(graph: GraphView) -> void:
 		layers.append({"t0": t0, "t1": t0 + slice, "y": i * GAP, "count": 0,
 			"label": _day(t0) if count == 1 or _day(t0) == _day(t0 + slice) else "%s – %s" % [_day(t0), _day(t0 + slice)]})
 	var bounds := Rect2()
+	var any_bound := false
+	for id in graph.nodes:  # the frame holds every item and place, shown or not: it does not move while time plays
+		var n: Dictionary = graph.nodes[id]
+		if str(n["type"]) in ["note", "space"]:
+			var at: Vector2 = (n["pos"] as Vector2) * SCALE
+			bounds = bounds.expand(at) if any_bound else Rect2(at, Vector2.ZERO)
+			any_bound = true
 	var index: Dictionary = {}
+	var seen: Dictionary = {}
 	for pair in notes:
 		var n: Dictionary = graph.nodes[pair[0]]
 		var flat: Vector2 = (n["pos"] as Vector2) * SCALE
 		var layer := clampi(int((float(pair[1]) - first) / slice), 0, count - 1)
 		(layers[layer] as Dictionary)["count"] = int(layers[layer]["count"]) + 1
 		index[pair[0]] = items.size()
+		seen[pair[0]] = true
+		if not _known.is_empty() and not _known.has(pair[0]):  # it just came in: it pops, and the play looks at its plane
+			_born[pair[0]] = _clock
+			_rise = layer * GAP
 		items.append({"id": pair[0], "label": str(n["label"]), "layer": layer, "col": graph._color(n),
 			"pos": Vector3(flat.x, layer * GAP, flat.y)})
-		bounds = Rect2(flat, Vector2.ZERO) if items.size() == 1 else bounds.expand(flat)
 	var places: Array = []
 	for id in graph.nodes:
 		var n: Dictionary = graph.nodes[id]
 		if str(n["type"]) == "space" and graph.is_shown(str(id)):
 			var flat: Vector2 = (n["pos"] as Vector2) * SCALE
 			places.append([str(n["label"]), flat, graph._color(n)])
-			bounds = bounds.expand(flat)
 	bounds = bounds.grow(2.5)
-	_centre = Vector3(bounds.get_center().x, (count - 1) * GAP * 0.5, bounds.get_center().y)
+	_known = seen
+	_home = Vector3(bounds.get_center().x, (count - 1) * GAP * 0.5, bounds.get_center().y)
+	_centre = Vector3(_home.x, _centre.y if playing else _home.y, _home.z)
 	var free_w := maxf(400.0, size.x - absf(screen_offset.x) * 2.0 - 80.0)  # the scene fits the room the panels leave
 	distance = clampf((maxf(bounds.size.x, bounds.size.y) * 0.95 + count * GAP) * clampf(size.x / free_w, 1.0, 2.2), 12.0, 260.0)
 	_build_planes(bounds)
@@ -228,7 +262,8 @@ func _build_dots() -> void:
 	mm.mesh = ball
 	mm.instance_count = items.size()
 	for i in items.size():
-		mm.set_instance_transform(i, Transform3D(Basis.IDENTITY, items[i]["pos"]))
+		var grown := 0.01 if _born.has(items[i]["id"]) else 1.0  # an arrival starts small; _process grows it
+		mm.set_instance_transform(i, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * grown), items[i]["pos"]))
 		mm.set_instance_color(i, items[i]["col"])
 	_dots = MultiMeshInstance3D.new()
 	_dots.multimesh = mm
@@ -270,12 +305,34 @@ func _place_camera() -> void:
 	_camera.v_offset = 36.0 * per_px
 
 
+## The play starts or stops: while it plays the scene turns and the camera rises with the latest arrivals.
+func set_playing(on: bool) -> void:
+	playing = on
+	if on:
+		spinning = true
+		_rise = 0.0
+
+
 func _process(delta: float) -> void:
 	if not is_visible_in_tree():
 		return
+	_clock += delta
+	var goal := _rise if playing else _home.y
+	var moving := absf(_centre.y - goal) > 0.01
+	if moving:
+		_centre.y = lerpf(_centre.y, goal, minf(1.0, delta * 1.6))
 	if spinning:
 		yaw += delta * SPIN
+	if spinning or moving:
 		_place_camera()
+	if not _born.is_empty() and _dots != null:  # arrivals grow in
+		for i in items.size():
+			var id: String = items[i]["id"]
+			if _born.has(id):
+				var k := clampf((_clock - float(_born[id])) / POP_S, 0.0, 1.0)
+				_dots.multimesh.set_instance_transform(i, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * GraphView._ease_out_back(k) * (1.0 + 0.9 * (1.0 - k))), items[i]["pos"]))
+				if k >= 1.0:
+					_born.erase(id)
 
 
 func select(id: String) -> void:

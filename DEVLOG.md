@@ -2,6 +2,18 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## VIEW-H: the play becomes a moment to watch (2026-11-10)
+
+The owner tried the views: « quand on met le temps puis qu'on peut faire le play, c'est vraiment nice », then asked
+for more on the graphic side. First step, the play itself. While ▶ runs, each item that comes in is lit: a ring
+opens around it and fades, and it says its name for a moment; its links draw themselves; a large date shows the
+moment over the graph; and the camera drifts to where the brain is growing (in the timeline it follows the cursor),
+then comes back to where it was when the play ends. A speed button cycles 0.5×, 1×, 2×, 4×, and dragging the slider
+while it plays goes on from there. In the 3D layers an arriving ball pops in with a small bounce, the camera rises
+plane by plane with the arrivals, the scene keeps its frame while time plays, and the same large date shows.
+Tests: Python 352, Godot end to end 287 (one unrelated check, the Captures list order, failed once and passed on
+the next two runs).
+
 ## VIEW-F: layers in 3D, a first and sober one (2026-11-10)
 
 The owner decided the same day: 3D is « comme une vitrine, exploration », not a daily working view; « la version

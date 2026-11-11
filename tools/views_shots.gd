@@ -53,6 +53,24 @@ func _run() -> void:
 	fb.set_view("layers")
 	await pause(2.5)
 	await shot("09-layers-3d")
+	fb.time_button.button_pressed = true
+	fb.speed_button.pressed.emit()
+	fb.set_playing(true)
+	await pause(4.6)
+	await shot("11-layers-3d-playing")
+	fb.time_button.button_pressed = false
+	fb.set_view("zones")
+	await pause(1.0)
+	fb.time_button.button_pressed = true
+	fb.set_playing(true)
+	await pause(5.2)
+	await shot("12-zones-playing")
+	fb.time_button.button_pressed = false
+	fb.speed_button.pressed.emit()
+	fb.speed_button.pressed.emit()
+	fb.speed_button.pressed.emit()
+	fb.set_view("layers")
+	await pause(1.5)
 	await pause(4.0)
 	await shot("10-layers-3d-turned")
 	quit(0)

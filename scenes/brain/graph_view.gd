@@ -98,6 +98,10 @@ const LANES := ["place", "type", "origin"]   # what a lane of the timeline stand
 const TL_BINS := 80               # the density strip over the time axis
 var timeline_lanes := "place"
 var time_cursor := -1.0           # « the brain as it was then » (unix time); below 0 = now, everything shows
+var playing := false              # the time cursor is playing: arrivals light up, the camera follows (cinema play)
+const ARRIVAL_S := 2.6            # how long an arrival stays lit (its ring, its name)
+var _arrived: Dictionary = {}     # id -> the moment (_t) it came in under the time cursor
+var _play_home: Array = []        # [view centre, zoom] before the play, to come back to
 var _after_cursor: Dictionary = {}  # id -> true for items hidden only because they came after the cursor
 var _tl_labels: Dictionary = {}   # lane key -> its name, when lanes are not places (those carry their own)
 var _tl_density := PackedInt32Array()
@@ -1045,6 +1049,8 @@ func set_time_cursor(t: float) -> void:
 		if t < 0.0 or _unix(str((nodes[id] as Dictionary).get("created_at", ""))) <= t:
 			(nodes[id] as Dictionary)["born"] = _t
 			back.append(id)
+			if playing or t >= 0.0:
+				_arrived[id] = _t
 	time_cursor = t if t >= 0.0 else -1.0
 	_update_shown()
 	if graph_layout != "zones":
@@ -1057,6 +1063,72 @@ func set_time_cursor(t: float) -> void:
 	else:
 		reheat(0.25)
 	queue_redraw()
+
+
+## The play starts or stops (the ▶ of the time bar). While it plays, each arrival lights up with its name, its links
+## draw themselves, a large date shows the moment, and the camera drifts to where the brain is growing; at the end
+## the camera comes back to where it was.
+func set_playing(on: bool) -> void:
+	if on == playing:
+		return
+	playing = on
+	if on:
+		_play_home = [view_center(), zoom]
+		_arrived.clear()
+		follow = ""
+		if graph_layout == "zones" and zoom < 0.75:
+			zoom_to(0.8, view_center(), 1.2)
+	elif not _play_home.is_empty():
+		zoom_to(float(_play_home[1]), _play_home[0], 1.4)
+		_play_home = []
+	queue_redraw()
+
+
+## Where the brain is growing right now: the middle of the latest arrivals (the freshest count the most).
+func _growing_at() -> Variant:
+	var sum := Vector2.ZERO
+	var weight := 0.0
+	for id in _arrived:
+		var age := _t - float(_arrived[id])
+		if age < ARRIVAL_S and nodes.has(id) and not filtered_out.has(id):
+			var w := 1.0 - age / ARRIVAL_S
+			sum += ((nodes[id] as Dictionary)["pos"] as Vector2) * w
+			weight += w
+	return sum / weight if weight > 0.0 else null
+
+
+## The camera's part in the play: it drifts, it never jumps.
+func _play_camera(delta: float) -> void:
+	if _zoom_tween != null and _zoom_tween.is_running():
+		return
+	var aim: Variant = null
+	if graph_layout == "timeline" and time_cursor >= 0.0:
+		aim = Vector2(_tl_x(clampf(time_cursor, _tl_t0, _tl_t1)), view_center().y)
+	elif graph_layout == "zones":
+		aim = _growing_at()
+	if aim is Vector2:
+		cam = cam.lerp((aim as Vector2) - screen_offset / zoom, minf(1.0, delta * 1.1))
+
+
+## The rings and the large date of the play.
+func _draw_play() -> void:
+	for id in _arrived:
+		var age := _t - float(_arrived[id])
+		if age >= ARRIVAL_S or not nodes.has(id) or filtered_out.has(id):
+			continue
+		var n: Dictionary = nodes[id]
+		var p := world_to_screen(n["pos"] as Vector2)
+		var k := age / ARRIVAL_S
+		var r := maxf(_radius(n) * zoom, 5.0)
+		var col := _color(n).lerp(SbTheme.MINT_SOFT, 0.5)
+		draw_arc(p, r + 6.0 + 46.0 * ease(k, 0.35), 0.0, TAU, 40, Color(col, 0.75 * (1.0 - k)), 2.0, true)
+		if k < 0.5 and _glow > 0.0:
+			draw_circle(p, r + 14.0 * (1.0 - k * 2.0), Color(col, 0.22 * (1.0 - k * 2.0) * _glow))
+	if time_cursor >= 0.0 and (playing or not _arrived.is_empty()):
+		var d := Time.get_datetime_dict_from_unix_time(int(time_cursor) + int(Time.get_time_zone_from_system().get("bias", 0)) * 60)
+		var text := "%02d · %02d · %04d" % [d["day"], d["month"], d["year"]]
+		var fs := SbTheme.fs(46)
+		draw_string(_font, Vector2(legend_x + 6.0, 262.0), text, HORIZONTAL_ALIGNMENT_LEFT, -1, fs, Color(SbTheme.TEXT, 0.34 if playing else 0.2))
 
 
 ## The cursor as a share of the brain's life (0 = its first item, 1 = now).
@@ -1136,6 +1208,17 @@ func _process(delta: float) -> void:
 	_t += delta
 	if follow != "" and nodes.has(follow) and not (_zoom_tween != null and _zoom_tween.is_running()):
 		cam = cam.lerp((nodes[follow]["pos"] as Vector2) - screen_offset / zoom, minf(1.0, delta * 8.0))
+	if playing:
+		_play_camera(delta)
+		queue_redraw()
+	elif not _arrived.is_empty():  # the last rings fade, then nothing is left to animate
+		var live := false
+		for id in _arrived:
+			if _t - float(_arrived[id]) < ARRIVAL_S:
+				live = true
+		if not live:
+			_arrived.clear()
+		queue_redraw()
 	if graph_layout != "zones":
 		_glide_step(delta)
 	else:
@@ -1698,6 +1781,8 @@ func _draw_all() -> void:
 		_draw_label(n, p, r, dim)
 	if graph_layout == "meaning":
 		_draw_meaning()
+	if not _arrived.is_empty() or playing:
+		_draw_play()
 	if show_minimap and nodes.size() > 1:
 		_draw_minimap()
 	if show_legend:
@@ -1868,6 +1953,8 @@ func _draw_label(n: Dictionary, p: Vector2, r: float, dim: bool) -> void:
 	if type == "space" and zoom < FAR and graph_layout == "zones":
 		return  # the cluster already carries the place's name
 	var important := type == "space" or id == hovered or id == selected or highlight.has(id)
+	if _arrived.has(id) and _t - float(_arrived[id]) < ARRIVAL_S:  # an arrival says its name while its ring fades
+		important = true
 	var neighbor := hovered != "" and (_neighbors.get(hovered, {}) as Dictionary).has(id)
 	# The focus view is about a few items: they all carry their name (only the first ring when there are many).
 	var focused := graph_layout == "focus" and type == "note" and (_focus_hops.size() <= 40 or int(_focus_hops.get(id, 9)) <= 1)

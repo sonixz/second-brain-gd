@@ -104,6 +104,24 @@ MultiMesh), links as lines, orbit and zoom, click selects, double-click lands in
 2D views rendered to textures (sharper, lighter, and the base VIEW-G needs). Left: place names crowd from some
 angles; planes per place as an alternative to planes per period; the camera angle in saved views.
 
+### VIEW-H — The play as a moment to watch (M) — added 2026-11-10
+
+The owner, after trying A to F: « quand on met le temps puis qu'on peut faire le play, c'est vraiment nice […]
+Peux-tu genre vraiment augmenter le côté graphique ? », then « oui pars sur 1 puis 2 et enchaine » (1 = this loop,
+2 = VIEW-I).
+
+- Arrivals light up (a ring, their name), links draw themselves, a large date, the camera follows the growth and
+  comes home at the end, a speed button; in 3D arrivals pop and the camera rises with them.
+
+**Done (2026-11-10).** `GraphView.set_playing`, `_arrived`, `_play_camera`, `_draw_play`; `GraphFilters.speed`,
+`play_changed`; `GraphLayers3D.set_playing`, `_born`. Left: skip the quiet stretches of time (a brain with long
+gaps plays mostly emptiness), sound on arrivals.
+
+### VIEW-I — Light in the 3D (M) — added 2026-11-10
+
+- Balls with a halo, luminous links with signals travelling on them, depth fog, a starry background, a smooth
+  flight to the item you click. Still GL Compatibility.
+
 ### VIEW-G — Constellation 3D (L)
 
 - A true 3D scene beside the 2D graph: places as bodies, items as stars (MultiMesh), links as light filaments,
