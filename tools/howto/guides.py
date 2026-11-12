@@ -161,6 +161,65 @@ guide(
     "The Brain")
 
 guide(
+    "views", "See your Brain from another angle", "scripted", 4,
+    "Lay the same items out by time, around one idea or by what they mean, and keep the angle you like under a name.",
+    [],
+    [("Open the view picker in the graph's bar (it says <b>Zones</b>) and choose <b>Timeline</b>. Then, in the "
+      "second picker, choose <b>Lanes: types</b>.",
+      "The same items along time, one lane per type of item instead of one per place; <b>Lanes: origins</b> sorts "
+      "them by how they came in (typed, spoken, web, files). The strip over the axis shows the busy weeks."),
+     ("Click an item, then choose <b>Focus</b> in the view picker.",
+      "That item sits in the middle and what is linked to it sits on rings, one, two and three links away, each "
+      "with its name. Everything else is out of sight."),
+     ("Click a neighbour.",
+      "It becomes the centre. The breadcrumb at the top left remembers the items you came through: click one to "
+      "walk back."),
+     ("Choose <b>Meaning map</b>.",
+      "Items sit where their meaning puts them, whatever place they are filed in: close ideas are close. Each "
+      "item wears its place's colour and each place's name is written where its items gather, so an item far "
+      "from its place's name is one filed far from what it means."),
+     ("Click <b>★ Views</b>, type a name and press <b>Save</b>.",
+      "The view, its filters and where you were looking are kept under that name. Click the name later and the "
+      "graph glides back to it; <b>✕</b> forgets it."),
+     ],
+    [("Focus opens around an item you did not choose.",
+      "With nothing selected it opens around the most linked item: click an item first."),
+     ("The Meaning map does not open.",
+      "It places items with the meaning memory, which needs your OpenAI key: without it the app says so and stays "
+      "in the current view.")],
+    [("The graph", "docs.html#graph")],
+    "The Brain")
+
+guide(
+    "time", "Watch your Brain grow", "scripted", 3,
+    "Go back to the Brain as it was on a given day, play it growing from its first item to now, and look at it in "
+    "3D.",
+    [],
+    [("Click <b>Time</b> in the graph's bar and drag the slider to the left.",
+      "The Brain as it was at that moment: the items that came later step out, and the date and the count are "
+      "written beside the slider. It works in every view."),
+     ("Press <b>▶</b>.",
+      "The Brain grows from its first item to now. Each arrival lights up with a ring and says its name, its "
+      "links draw themselves, a large date shows the moment and the camera follows the growth, then comes home. "
+      "The button beside ▶ sets the speed: 0.5×, 1×, 2×, 4×."),
+     ("Choose <b>Layers (3D)</b> in the view picker.",
+      "The zones stacked through time: one plane per period, the oldest at the bottom. A place is a column "
+      "through the planes, an item a ball of light on the plane of the moment it came in. It turns slowly until "
+      "you touch it: drag to turn, the wheel to zoom."),
+     ("Press <b>▶</b> again, in 3D.",
+      "The planes fill up from the bottom, each arrival pops in, and the camera rises with them."),
+     ("Click an item.",
+      "The camera flies to it and a ring marks it (its name follows your pointer); a click on nothing flies "
+      "back. Double-click an item to land on it in the flat graph, where reading happens."),
+     ],
+    [("The play shows mostly nothing.",
+      "A Brain with long quiet stretches plays a lot of empty time: raise the speed to 4×."),
+     ("In 3D, place names sit on top of each other.", "Turn the scene: they separate from another angle."),
+     ("The light is faint.", "On the light Paper theme the glow shows little: try another theme (the ♪ button).")],
+    [("The graph", "docs.html#graph")],
+    "The Brain")
+
+guide(
     "packs", "Share a project as a pack", "scripted", 4,
     "Export part of your Brain as one <code>.brain</code> file, and bring in a pack someone shared, as a layer you "
     "can switch off.",

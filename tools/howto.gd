@@ -225,6 +225,76 @@ func guide_graph() -> void:
 	fb.set_view("zones")
 
 
+# ---------------------------------------------------------------- 9b. See your Brain from another angle (scripted)
+func guide_views() -> void:
+	var fb: GraphFilters = b.get("filters_bar")
+	fb.set_view("timeline")
+	fb.set_lanes("type")
+	await pause(3.0)
+	calm()
+	await step("Timeline, one lane per type of item")
+	fb.set_lanes("place")
+	fb.set_view("zones")
+	await pause(1.0)
+	g.selected = g.find_node("Talk outline")
+	fb.set_view("focus")
+	await pause(3.0)
+	await step("Focus: one item, what is linked to it on rings")
+	for id in g.nodes:
+		if int(g._focus_hops.get(id, -1)) == 1:
+			g.set_focus(str(id))
+			break
+	await pause(3.0)
+	await step("a neighbour becomes the centre, the breadcrumb walks back")
+	g.selected = ""
+	fb.set_view("meaning")
+	await pause(4.0)
+	calm()
+	await step("Meaning map: items placed by what they mean")
+	b.call("save_graph_view", "Ideas by meaning")
+	fb.saved_button.pressed.emit()
+	await pause(0.8)
+	await step("★ Views: the view kept under a name")
+	fb.saved_popup.hide()
+	fb.set_view("zones")
+
+
+# ---------------------------------------------------------------- 9c. Watch your Brain grow (scripted)
+func guide_time() -> void:
+	var fb: GraphFilters = b.get("filters_bar")
+	g.zoom_to(0.5, Vector2(-60, 0), 0.3)
+	await pause(2.0)
+	calm()
+	fb.time_button.button_pressed = true
+	fb.time_slider.value = 0.35
+	await pause(3.0)
+	await step("Time: the Brain as it was at that moment")
+	fb.set_playing(true)
+	await pause(4.5)
+	await step("the play: arrivals light up, a large date")
+	fb.time_button.button_pressed = false  # closing the bar stops the play and comes back to now
+	fb.set_view("layers")
+	await pause(4.0)
+	await step("Layers (3D): the zones stacked through time")
+	fb.time_button.button_pressed = true
+	fb.speed_button.pressed.emit()  # 2×
+	fb.set_playing(true)
+	await pause(4.6)
+	await step("the play in 3D: the planes fill up from the bottom")
+	fb.time_button.button_pressed = false
+	for i in 3:  # back to 1×
+		fb.speed_button.pressed.emit()
+	await pause(1.5)
+	var layers: GraphLayers3D = b.get("layers_view")
+	var mid := str((layers.items[layers.items.size() / 2] as Dictionary)["id"])
+	layers.fly_to(mid)
+	layers.select(mid)
+	await pause(2.5)
+	await step("a click flies the camera to the item")
+	layers.fly_home()
+	fb.set_view("zones")
+
+
 # ---------------------------------------------------------------- 10. Share a project as a pack (scripted)
 ## The engine room's Your data card (Loop 30), scrolled into view.
 func open_your_data() -> DataPanel:
