@@ -8,7 +8,7 @@ unless the user connects it (an MCP server, a sign-in, the browser extension).
 
 | Layer | Where | What |
 |---|---|---|
-| Interface | `scenes/brain/` | the graph (`graph_view.gd`), table (`table_view.gd`), captures, projects, agent panels, document viewer, import and voice-memo dialogs, the MCP lights and window (`mcp_lights.gd`), the timeline (`timeline_dialog.gd`) |
+| Interface | `scenes/brain/` | the graph (`graph_view.gd`) and its views (`graph_filters.gd`, `graph_layers.gd`), table (`table_view.gd`), captures, projects, agent panels, document viewer, import and voice-memo dialogs, the MCP lights and window (`mcp_lights.gd`), the timeline (`timeline_dialog.gd`) |
 | Startup | `scenes/startup/`, `engine/bootstrap.py`, `engine/installer/` | Python located (or the bundled one), venv, pinned dependencies, migrations, the engine started and checked |
 | Engine API | `engine/api/` | FastAPI routers: brain, sources, assistant, agents, voice, missions, packs, backups, billing, capture, MCP |
 | Knowledge | `engine/brain/` | notes, places (PARA), links, themes; the archivist (`archivist.py`), meaning (`meaning.py`), paths (`connect.py`), @ mentions, packs, typed items (`types.py`), the table and grocery lists (`table.py`), Letter export (`export_doc.py`), the timeline and restore points (`timeline.py`) |
@@ -25,6 +25,26 @@ the standard library (the MCP protocol, OAuth, PDF printing through Edge, audio 
 More: [intake.md](intake.md) (with voice memos), [knowledge-model.md](knowledge-model.md),
 [typed-items.md](typed-items.md) (recipes, table, export), [missions.md](missions.md), [mcp.md](mcp.md),
 [backups.md](backups.md), [packs.md](packs.md), [live-conversation.md](live-conversation.md).
+
+### The graph's views (2026-11-10)
+
+A view is a layout (where items sit), a filter (which items show) and a camera (where you look).
+
+- **Layouts** live in `scenes/brain/graph_view.gd` (`GraphView.LAYOUTS`). The zones are the living simulation, on a
+  worker thread; every other layout (timeline, focus, meaning map) gives each item a target and the graph glides to
+  it, so a new view is a small addition. Leaving the zones remembers every position; coming back restores it.
+- **The picker, saved views and time** live in `scenes/brain/graph_filters.gd` (`GraphFilters`): the view picker,
+  « ★ Views » (the view, its filters and the camera under a name, kept with the app's preferences as
+  `graph/saved_views`), and the Time bar. The time cursor (`GraphView.set_time_cursor`) hides what came later, in
+  every view; the play moves it from the first item to now.
+- **The meaning map** asks the engine: `GET /brain/meaning/map` (`engine/brain/meaning.py`, `meaning_map`) projects
+  the vectors it already keeps onto a plane, with the standard library only, and keeps the result until the vectors
+  change.
+- **Layers (3D)** is a second scene shown over the graph, `scenes/brain/graph_layers.gd` (`GraphLayers3D`): one
+  plane per period, places as columns, items drawn with MultiMesh. It stays in GL Compatibility (flat colours and
+  additive sprites, no lights), is made to look and explore, and a double-click lands on the item in the 2D graph.
+
+The plan and what is left: [../plans/plan-graph-views.md](../plans/plan-graph-views.md).
 
 ## Startup and engine lifecycle (Loop 0)
 

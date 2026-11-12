@@ -101,7 +101,7 @@
         <p class="overline">Documentation</p>
         <h1>Second Brain GD docs</h1>
         <p class="muted">Install it, feed it, talk to it, and plug your own tools into it. Everything here describes
-          the current development build; the repository is private for now.</p>
+          the current development build; the repository is public on GitHub, under the MIT licence.</p>
         <div class="doc-cards">
           <a href="#install"><b>Install in 5 minutes</b><span>Godot, Python, one Setup button.</span></a>
           <a href="#mcp-in"><b>Connect your AI tools</b><span>Claude Code, Codex, Copilot… read it; your agents use MCP servers.</span></a>
@@ -394,13 +394,59 @@ python3 engine/bootstrap.py stop     # stop the engine</code></pre>
           <li><b>Fold</b> a place (double-click it, or “fold Recipes”) into a <code>+N</code> badge.</li>
           <li><b>Filter</b> by type, origin, date, word, theme or pack (“show only the articles about AI”,
             “clear the filters”).</li>
-          <li><b>Timeline</b>: the view picker (Zones, Timeline), or “show the timeline”, lays items along time, one lane per place.</li>
+          <li><b>Views</b>: the picker next to Filter lays the same items out another way: along time, around one
+            idea, by what they mean, or in 3D. See <a href="#graph-views">Views</a> below.</li>
           <li><b>Paths</b>: “how is X connected to Y?” draws the shortest meaningful path.</li>
           <li><b>Related ideas</b>: dashed lines suggested by meaning. Keep one as a real link (✓) or dismiss it (✕).</li>
           <li><b>Move items between places</b>: drag an item into another place's zone to file it there. Dropped
             anywhere else, the graph takes it back: the layout stays alive.</li>
           <li><b>Remove a place</b>: ✕ next to it in <i>Spaces &amp; briefing</i>, or “delete the place X”. Its items go back to the Inbox; Undo restores it.</li>
         </ul>
+        <h3 id="graph-views">Views</h3>
+        <p>A view is a way to lay out the same items. The picker in the graph's bar (it says <b>Zones</b>) changes it;
+          the items glide to their new spot, and the filters and the selection stay as they were.</p>
+        <table>
+          <thead><tr><th>View</th><th>You see</th><th>Good for</th></tr></thead>
+          <tbody>
+            <tr><td>Zones</td><td>Items around their place, the Inbox in the middle. Leaving it remembers every position</td><td>Every day: filing, reading, moving items</td></tr>
+            <tr><td>Timeline</td><td>Items along time, in lanes: one per place, per type of item or per origin (typed, spoken, web, files, packs). A strip over the axis shows the busy weeks</td><td>When did this come in? What did I add this month?</td></tr>
+            <tr><td>Focus</td><td>One item in the middle; what is linked to it on rings, one, two and three links away. Click a neighbour and it becomes the centre; the breadcrumb at the top left walks back</td><td>Following one idea without the rest</td></tr>
+            <tr><td>Meaning map</td><td>Items placed by what they mean, whatever place they are filed in. Each wears its place's colour; a place's name is written where its items gather</td><td>Seeing islands of themes, and items filed far from what they mean</td></tr>
+            <tr><td>Layers (3D)</td><td>The zones stacked through time: one plane per period, the oldest at the bottom; a place is a column, an item a ball of light</td><td>Looking and exploring: a showcase, not a place to work</td></tr>
+          </tbody>
+        </table>
+        <figure class="shot doc-shot"><img src="assets/showcase/views-focus.webp" alt="The Focus view: Talk outline in the middle, the items linked to it on two rings" loading="lazy" width="1280" height="800"><figcaption>Focus: one idea and what is linked to it, ring by ring.</figcaption></figure>
+        <ul>
+          <li><b>Focus</b> opens around the selected item, or around the most linked one when nothing is selected. It
+            follows real links and related ideas, not places or themes.</li>
+          <li><b>The Meaning map</b> uses the meaning memory, so it needs your OpenAI key; without it the app says so
+            and stays where it was. The map is the same for the same items, and may turn when many are added.</li>
+          <li><b>Layers (3D)</b> turns slowly until you touch it. Drag to turn, wheel to zoom; a click flies to an
+            item, a click on nothing flies back, a double-click lands on the item in the flat graph, where reading
+            happens.</li>
+          <li><b>By voice</b>: “show the timeline” and “back to the zones”. The other views are picked by hand for now.</li>
+        </ul>
+        <figure class="shot doc-shot"><img src="assets/showcase/views-meaning.webp" alt="The Meaning map: items scattered by meaning, each in its place's colour, place names where their items gather" loading="lazy" width="1280" height="800"><figcaption>The Meaning map: close ideas are close, whatever their place.</figcaption></figure>
+        <figure class="shot doc-shot"><img src="assets/showcase/views-layers.webp" alt="Layers in 3D: five planes stacked through time, places as columns, items as balls of light" loading="lazy" width="1280" height="800"><figcaption>Layers (3D): each plane is a period of the Brain's life.</figcaption></figure>
+        <h3 id="graph-saved-views">Saved views</h3>
+        <p><b>★ Views</b> keeps what you see under a name: the view, its lanes or its centre, the filters and where
+          you were looking. Click a name and the graph glides back to it; saving under an existing name replaces it;
+          <b>✕</b> forgets it. Saved views stay on this computer, with the app's preferences.</p>
+        <h3 id="graph-time">Time: the Brain as it was, and the play</h3>
+        <p><b>Time</b> opens a second row under the bar: a slider, <b>▶</b>, a date and a count. It works in every view.</p>
+        <ul>
+          <li><b>The slider</b> shows the Brain as it was at that moment: the items that came later step out.</li>
+          <li><b>▶</b> plays it growing, from the cursor (or from the first item) to now, in about 18 seconds. Each
+            arrival lights up with a ring and says its name, its links draw themselves, a large date shows the
+            moment, and the camera follows the growth, then comes home.</li>
+          <li><b>The speed</b>, beside ▶: 0.5×, 1×, 2×, 4×. Drag the slider while it plays and it goes on from there.</li>
+          <li>In <b>Layers (3D)</b> the planes fill up from the bottom and the camera rises with the arrivals.</li>
+          <li>Closing <b>Time</b> comes back to now.</li>
+        </ul>
+        <figure class="shot doc-shot"><img src="assets/showcase/views-timeline.webp" alt="The Timeline with one lane per type of item, the Time bar open and its cursor on November 3" loading="lazy" width="1280" height="800"><figcaption>The Timeline, one lane per type, with the time cursor: 23 items on that day.</figcaption></figure>
+        <figure class="shot doc-shot"><img src="assets/showcase/views-play.webp" alt="The play in the Zones view: a large date over the graph, rings opening around the items that just came in, their names beside them" loading="lazy" width="1280" height="800"><figcaption>The play: each arrival lights up and says its name.</figcaption></figure>
+        <p>Step by step: <a href="howto.html#views">See your Brain from another angle</a> ·
+          <a href="howto.html#time">Watch your Brain grow</a>.</p>
         <h3>What the lines mean</h3>
         <p>The <b>?</b> button shows the legend, and hovering a line says what it is.</p>
         <table>

@@ -19,6 +19,10 @@ your agents can use the MCP servers you connect.
 |---|---|---|
 | ![Cards](docs/screenshots/showcase/04-graph-cards.png) | ![Document viewer](docs/screenshots/showcase/07-document-viewer.png) | ![Path](docs/screenshots/showcase/10-path.png) |
 
+| Focus: one idea and its links | Meaning map: close ideas are close | Layers (3D): the Brain through time |
+|---|---|---|
+| ![Focus view](docs/screenshots/views/03-focus.png) | ![Meaning map](docs/screenshots/views/08-meaning-map.png) | ![Layers in 3D](docs/screenshots/views/09-layers-3d.png) |
+
 ## Get it
 
 **The package (Windows, Linux):** unzip `SecondBrainGD-windows.zip` (or `-linux`) anywhere, run `SecondBrainGD.exe`
@@ -65,6 +69,11 @@ and what goes to the MCP servers you choose to connect. Backups, restore, start 
 - **Explore:** use the wheel to zoom, drag to pan. Drag an item into another place's zone to move it there;
   dropped elsewhere it stays put. Click a note to edit it, a space to filter, a tag to search. Press `/` to
   search and Esc to close.
+- **Views:** the picker in the graph's bar changes how the Brain is laid out: **Zones** (items around their place),
+  **Timeline** (along time, in lanes), **Focus** (one item and what is linked to it, ring by ring), **Meaning map**
+  (items placed by what they mean, whatever their place) and **Layers (3D)** (the zones stacked through time, to
+  turn and explore). « ★ Views » keeps a view under a name; « Time » shows the Brain as it was on a day, and ▶ plays
+  it growing. Guide: [`public/docs.html#graph`](public/docs.html#graph).
 - **Two agents:** the *Archivist* keeps the graph (files, moves, links, finds); *Sparring* is a thinking partner for long
   spoken sessions (F9): it questions, challenges or reassures, never changes the Brain, and saves a synthesis only when
   you approve it. Each has its own floating panel; F8/F9 talk to the one you last used.
@@ -79,8 +88,8 @@ and what goes to the MCP servers you choose to connect. Backups, restore, start 
   that are pictures) is read by the **local OCR**: built into Windows, Tesseract on Linux
   (`sudo apt install tesseract-ocr tesseract-ocr-fra`). Nothing leaves your machine; *Re-read with AI* in the
   viewer is optional. Details and dependencies: [`public/docs.html#files`](public/docs.html#files).
-- **Ambiance:** the ♪ button at the bottom right sets the theme (Auto, Morning, Focus, Evening, Forest), music,
-  effects and ambience.
+- **Ambiance:** the ♪ button at the bottom right sets the theme (Auto, Morning, Focus, Evening, Forest, Terminal,
+  Paper, Neon), music, effects and ambience.
 - **Voice:** click the microphone (Ctrl+M), speak, click again. It needs your own OpenAI API key, asked once
   after setup or on first use. The key is stored in your system's credential store.
 - **Assistant:** the left panel. She briefs you at the first opening of the day, answers from your notes
