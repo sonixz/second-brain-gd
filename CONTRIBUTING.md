@@ -31,7 +31,10 @@ Every change keeps both green and adds tests for what it adds.
   (`SBGD_UI_LANG=fr tools/showcase.sh <name>`, `SBGD_CAPTURE_SCRIPT=screens tools/showcase.sh <name>`), on a private
   virtual display: no window opens.
 - **Documented.** `public/docs.html` for users, `docs/architecture/` for developers, a How-to guide when a feature
-  is a task (`tools/howto/guides.py` + `tools/howto.gd`, regenerated with `tools/howto.sh`).
+  is a task (`tools/howto/guides.py` + `tools/howto.gd`, regenerated with `tools/howto.sh`). A change is not done
+  before its documentation is: the list to go through before merging into `main` is in `AGENTS.md`, and
+  `python3 tools/check_docs.py` fails on a dead link, a missing picture or a guide left off the page (the tests
+  run it).
 
 ## Packages
 `python3 tools/package/build.py app --target windows|linux` builds the app with its own Python

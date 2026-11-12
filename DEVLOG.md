@@ -2,6 +2,51 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## Documentation is part of the work: a rule, and a check (2026-11-11)
+
+The day after the repository became public the owner asked: « Est-ce que la documentation et how-to sont tout à
+jour ? Il faudrait consigner ça quelque part pour le rendre systématique. » They were not: the nine VIEW loops had
+their tests and their devlog entries, and no Docs, no guide, no card on the home page, which still said the
+repository was private. CONTRIBUTING.md already asked for documentation, but AGENTS.md, the file every agent reads
+when it opens the repository, did not, and nothing asked before a merge. Now AGENTS.md has the list a loop goes
+through before it is called done (DEVLOG and plan, STATUS and BACKLOG, Docs, How-to with words and pictures
+together, the home page, README and architecture): each line up to date in the same branch, or written in
+BACKLOG.md as left with the reason. `tools/check_docs.py`, run by the tests (`tests/python/test_docs.py`), fails on
+a link or a picture that points nowhere on the website, an anchor that no longer exists, a relative link of the
+documents that leads nowhere, a guide written in `guides.py` that never reached the How-to page, and a « Show all N
+loops » button that no longer counts right. Its first runs found two: the MCP card of the home page pointed to a
+guide renamed since, and the button said 48 loops for 50 cards. It cannot tell whether a sentence is still true. The catch-up is the plan [docs/plans/plan-docs-catchup.md](docs/plans/plan-docs-catchup.md), below.
+
+## SITE-G: the home page up to the graph views (2026-11-11)
+
+« Built in loops » gains two cards and their dots on the line: the three themes of 2026-11-07 (Terminal, Paper,
+Neon) and the graph views of 2026-11-10; the instant approvals of 2026-11-08 join the MCP card. « What works » names
+the views and counts twenty-one guides. « Open source » says what is true today: the repository is public, under the
+MIT licence, with a link to the AI notice. `tools/theme_shots.gd` takes the pictures of the three themes
+(`SBGD_CAPTURE_SCRIPT=theme_shots tools/showcase.sh themes`).
+
+## DOC-F: two guides for the views, every guide replayed (2026-11-11)
+
+Two new How-to guides, captured from the real app like the others: « See your Brain from another angle » (the
+timeline with lanes by type, the focus view and a walk to a neighbour, the meaning map, a view saved under a name)
+and « Watch your Brain grow » (the Time bar, the Brain as it was on a day, the play, the layers in 3D and their own
+play, the flight to an item), five steps each, in `tools/howto/guides.py` and `tools/howto.gd`. Then every guide was
+replayed on today's app (`tools/howto.sh`): 19 of 21 ran and each step was captured, so their pictures show
+today's graph bar (the view picker, Time, ★ Views), and the graph guide's step 7 has the picture of its words. The
+two guides that drive a real Microsoft Edge (`browser`, `images`) were not replayed: they take the owner's screen,
+and keep their pictures of 2026-11-05. Seen on the new pictures and written in BACKLOG.md: the timeline's density
+strip slides under the graph's bar when there are eleven lanes, and the automatic restore point is named in French
+in the English interface.
+
+## DOC-E: the views in the Docs, the README and the architecture (2026-11-11)
+
+`public/docs.html`, « The graph »: a « Views » part (what each of the five views shows and what it is good for),
+« Saved views », and « Time: the Brain as it was, and the play », with five pictures of today's app taken by
+`tools/views_shots.gd`; what works by voice is said as it is (the timeline and the zones; the other views are picked
+by hand for now). README: the views in « Using it », three pictures, the seven themes. `docs/architecture/overview.md`:
+where the views live (the layouts of `graph_view.gd`, the picker, saved views and time in `graph_filters.gd`, the 3D
+scene `graph_layers.gd`, the engine's `/brain/meaning/map`). The new section was checked rendered in a browser.
+
 ## VIEW-I: light in the 3D layers (2026-11-10)
 
 Second step on the graphic side (owner: « oui pars sur 1 puis 2 et enchaine »). In « Layers (3D) » every item now

@@ -11,16 +11,30 @@ To come back to (owner, 2026-11-11):
 - **The public repository's page** (owner's note, 2026-11-10): description, topics, website link, tags and a first
   release (the last package was built on 2026-11-05), then tidy its presentation.
 
+Documentation: caught up on 2026-11-11 ([plan](docs/plans/plan-docs-catchup.md), DOC-E to SITE-G); the rule in
+[AGENTS](AGENTS.md) and `tools/check_docs.py` keep it current. What is left of it:
+- The pictures of the README's first rows and of the older Docs sections (`docs/screenshots/showcase/`,
+  `public/assets/showcase/`) date from 2026-11-07: their graph bar still shows the Timeline toggle. A full
+  `tools/showcase.sh` run and the copy to the site would refresh them.
+- No card on the home page for the repository going public (2026-11-10): the owner's to word, if wanted.
+- Two How-to guides drive a real Microsoft Edge on the owner's desktop (`browser`, `images`) and were not replayed
+  on 2026-11-11: their pictures date from 2026-11-05 (`tools/howto.sh --edge browser images`, a few minutes of the
+  owner's screen).
+
 Graph views ([plan](docs/plans/plan-graph-views.md)): A to F, H and I are on `main` since 2026-11-11. What is left:
 - **VIEW-G, the constellation in 3D** (meaning on the ground, time as height): waits for the owner's go.
-- How-to and Docs for the new views; the graph guide's step 7 still shows the old Timeline toggle.
 - The assistant's words for them: open a saved view by name, « focus on X », « replay my week ».
 - The play: skip the quiet stretches of time; a sound on arrivals.
 - Layers (3D): place names that avoid each other; the Paper theme, where additive light shows little; the camera's
   angle in a saved view; planes per place.
-- Timeline: lanes by theme and by author (needs the author in the graph's data), a free from/to date range.
+- Timeline: lanes by theme and by author (needs the author in the graph's data), a free from/to date range. With
+  eleven lanes (one per place) the density strip slides under the graph's bar (seen on the How-to picture of the
+  graph guide, step 7, 2026-11-11).
 - Meaning map: point out misfiled and lone items, keep old points still when items arrive, name the islands by theme.
 - A Godot check that fails now and then (« the Captures view lists what came in, newest first »): cause not found.
+- The automatic restore point before a tool's changes is named in French whatever the interface's language
+  (« Avant les changements de Codex », `engine/brain/timeline.py`): seen in English on the How-to picture of the
+  « Connect an AI tool » guide, step 4.
 
 Agreed and waiting for the owner's go, in docs/plans/:
 - **Routines (Loops 41–42):** a mission on a schedule, output template, catch-up, Routines card, remembered answers.

@@ -22,16 +22,18 @@ A snapshot of what works today. The history of each loop is in [DEVLOG](DEVLOG.m
 | **MCP out** | Agents use any MCP server you connect: a hand-checked starter list, the official registry, keys, account sign-in (OAuth), local programs with approval; writes outside confirmed each time; budget; ⇠● ⇢● lights |
 | **Your data** | Backups, restore, export, packs, repair, start fresh, uninstall; English or French (FR / EN) |
 | **Themes** | Seven built in (Morning, Focus, Evening, Forest, Terminal, Paper, Neon), each with its own style; contrast checked for every theme |
+| **Docs and How-to** | The Docs page for every feature, 21 step-by-step guides captured from the real app (19 replayed on 2026-11-11; the two that drive a real Edge date from 2026-11-05), the home page's loops up to the graph views; a check that links, pictures, guides and counts hold together (`tools/check_docs.py`, run by the tests); the rule that keeps them current is in [AGENTS](AGENTS.md) |
 
-## Tests (2026-11-11, on `main` after the views were merged)
+## Tests (2026-11-11, on `main` with the views merged and the documentation caught up)
 
 | Suite | Platform | Result |
 |---|---|---|
-| Python (352, 1 skipped), with the app's own environment | Windows venv run from WSL | OK |
+| Python (353, 1 skipped), with the app's own environment | Windows venv run from WSL | OK |
 | Godot end-to-end (287 checks) | Linux, headless | 287 passed |
+| How-to guides replayed on the real app (19 of 21; two need a real Edge) | Linux, virtual display | every step captured |
 
 One Godot check, « the Captures view lists what came in, newest first », failed in two runs out of five on
-2026-11-10 and passed in this one; its cause is not found.
+2026-11-10 and passed in today's two runs; its cause is not found.
 
 The system python3 in WSL has no fastapi: run the Python suite with the app's environment,
 `PYTHON=/mnt/c/Users/<you>/AppData/Local/SecondBrainGD/.venv/Scripts/python.exe tools/test.sh`.
@@ -63,3 +65,5 @@ The owner, 2026-11-11: « on va y revenir ».
 - From the [audit](docs/audit-before-public.md), not confirmed done: rotate the OpenAI, OpenAI admin and ElevenLabs
   keys; GitHub's « Keep my email addresses private ».
 - A first account sign-in (Notion or GitHub) for an MCP server.
+- A few minutes of the screen for the two How-to guides that drive a real Edge
+  (`tools/howto.sh --edge browser images`): their pictures date from 2026-11-05.
