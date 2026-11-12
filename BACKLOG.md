@@ -2,12 +2,29 @@
 
 Ordered by priority. ✅ = done.
 
-## Next (2026-11-07)
+## Next (2026-11-11)
+
+To come back to (owner, 2026-11-11):
+- **GitHub CI is failing:** the last twelve runs on `main`, all five jobs (Python on Ubuntu and Windows, Godot
+  headless), while the suites pass on the owner's computer. Read the run logs (they need a GitHub sign-in), find the
+  cause, fix it. Details in [STATUS](STATUS.md).
+- **The public repository's page** (owner's note, 2026-11-10): description, topics, website link, tags and a first
+  release (the last package was built on 2026-11-05), then tidy its presentation.
+
+Graph views ([plan](docs/plans/plan-graph-views.md)): A to F, H and I are on `main` since 2026-11-11. What is left:
+- **VIEW-G, the constellation in 3D** (meaning on the ground, time as height): waits for the owner's go.
+- How-to and Docs for the new views; the graph guide's step 7 still shows the old Timeline toggle.
+- The assistant's words for them: open a saved view by name, « focus on X », « replay my week ».
+- The play: skip the quiet stretches of time; a sound on arrivals.
+- Layers (3D): place names that avoid each other; the Paper theme, where additive light shows little; the camera's
+  angle in a saved view; planes per place.
+- Timeline: lanes by theme and by author (needs the author in the graph's data), a free from/to date range.
+- Meaning map: point out misfiled and lone items, keep old points still when items arrive, name the islands by theme.
+- A Godot check that fails now and then (« the Captures view lists what came in, newest first »): cause not found.
 
 Agreed and waiting for the owner's go, in docs/plans/:
 - **Routines (Loops 41–42):** a mission on a schedule, output template, catch-up, Routines card, remembered answers.
 - **Fill by identifier:** DOI (Crossref), ISBN (Open Library), BibTeX / Zotero import, a bibliography in the export.
-- **Docs and website refresh (DOC-A → SITE-D):** under way.
 
 Follow-ups noted while building (not planned yet):
 - MCP: tools switched off per agent (today per server); `listChanged` through a standing stream; MCP resources and
@@ -17,9 +34,11 @@ Follow-ups noted while building (not planned yet):
 - Graph beyond ~5,000 items: MultiMesh drawing (the layout already runs on a worker thread since 2026-11-07).
 - Archivist: detect the language from the original text, not the French summary note.
 
-Done since the last update of this file (2026-11-03): see [DEVLOG](DEVLOG.md) — Loops 8–40, the graph's glide and
-big-graph work, zip import, voice memos, typed items and recipes, the table and grocery lists, Letter export, and
-MCP-A → MCP-F (the Brain as an MCP server and client).
+Done since 2026-11-03: see [DEVLOG](DEVLOG.md) — Loops 8–40, the graph's glide and big-graph work, zip import, voice
+memos, typed items and recipes, the table and grocery lists, Letter export, MCP-A → MCP-F (the Brain as an MCP
+server and client); then the docs and website refresh (DOC-A → SITE-D), the themes (Terminal, Paper, Neon), the
+site's living hero and « How it thinks » page, the AI notice, the repository made public (2026-11-10), and the graph
+views VIEW-A → VIEW-I without G (2026-11-10, merged 2026-11-11).
 
 ### Older notes (2026-11-03)
 
@@ -63,29 +82,36 @@ Small follow-ups from 5b:
 
 ## Quality
 
-- Run CI on the next push and fix anything platform-specific it finds.
+- CI runs on every push to `main` and fails today: see « Next ».
 - Godot UI tests for error states (no Python, failing pip) with fake interpreters.
 - Accessibility pass on the Godot UI (keyboard focus order, font scaling).
 
 ## Decisions taken
 
+- 2026-11-11: the graph views are merged into `main` after the owner tried them (« c'était très bon »); the failing
+  CI comes after (« on va y revenir »).
+- 2026-11-10: the repository is public.
+- 2026-11-10: 3D in the graph is a showcase, a way to explore, not a daily working view; the light version first
+  (layers), a sober rendering that stays in GL Compatibility.
+- 2026-11-09: the `.env` is no longer versioned, and commits carry the GitHub `noreply` address (the history was
+  rewritten before going public).
+- 2026-11-08: the licence is MIT.
+- English is the product's language and French the other choice (FR / EN), every interface text in both.
 - 2026-11-02: assistant voice = OpenAI `gpt-4o-mini-tts`, voice **marin** with the Québec-accent instruction (chosen by ear from 16 samples of a
   morning briefing). Tone set by instructions per theme. ElevenLabs stays a possible premium option.
 - 2026-11-02: voice-to-text = `gpt-realtime-whisper`, each user brings their own OpenAI key.
 
 ## Decisions for the owner
 
-- Licence (MIT, Apache-2.0, AGPL-3.0…) before any public release.
-- When to make the repository and the site public.
-- Language of the UI (English now) and whether to add French.
+- VIEW-G, the constellation in 3D: build it, polish what is there first, or leave it.
 - Voice model default after the benchmark (`gpt-realtime-whisper` vs `gpt-live-transcribe`).
 - Whether a local Whisper fallback is ever needed (offline use, businesses that refuse cloud audio).
 - Music licensing for business distribution.
 
-## Out of scope until later loops
+## Out of scope at Loop 0 (older list)
 
-Voice transcription, language models, embeddings, vector search, agents, Microsoft 365 / GitHub connectors,
-cloud sync.
+Voice transcription, language models, embeddings, vector search and agents were all built since. Still out:
+Microsoft 365 / GitHub connectors built into the app (agents reach outside tools through MCP servers), cloud sync.
 
 ## Done
 
