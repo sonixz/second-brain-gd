@@ -426,8 +426,8 @@
           </article>
           <article class="card">
             <h3>Alive</h3>
-            <p>Built with a game engine: thoughts bloom when you capture them, places glow, and each theme
-              (Morning, Focus, Evening, Forest) has its own music and sounds.</p>
+            <p>Built with a game engine: thoughts bloom when you capture them, places glow, and seven themes,
+              from Morning to Neon, change the look, the music and the sounds.</p>
           </article>
         </div>
         <ul class="principles" aria-label="Principles">
@@ -495,13 +495,14 @@
             </ul>
             <h4>Learn</h4>
             <ul>
-              <li>Nineteen how-to guides captured from the real app, real answers and the real Edge included</li>
+              <li>Twenty-one how-to guides captured from the real app, real answers and the real Edge included</li>
               <li>English or French: one FR / EN switch for the interface, the agents and the voice</li>
             </ul>
             <h4>Graph</h4>
             <ul>
               <li>Semantic zoom down to the full text, with a minimap</li>
-              <li>Stable zones, folding, filters, timeline</li>
+              <li>Stable zones, folding, filters</li>
+              <li>Views: timeline, focus, meaning map, layers in 3D; saved views; time that plays</li>
               <li>Search with reasons, paths between ideas</li>
               <li>Fluid at thousands of items</li>
             </ul>
@@ -596,6 +597,8 @@
           <button type="button" class="phase-brain" data-target="loop-37" title="Loop 37: Voice memos, zips, and a calmer graph"><span class="dot"></span>37</button>
           <button type="button" class="phase-brain" data-target="loop-37b" title="Loop 37b: Recipes, from the page to the fridge"><span class="dot"></span>37b</button>
           <button type="button" class="phase-agents" data-target="loop-mcp" title="MCP: Your Brain opens to your AI tools"><span class="dot"></span>MCP</button>
+          <button type="button" class="phase-foundation" data-target="loop-themes" title="Themes: Three new looks: Terminal, Paper, Neon"><span class="dot"></span>Themes</button>
+          <button type="button" class="phase-graph" data-target="loop-views" title="Views: The graph gets views, and time plays"><span class="dot"></span>Views</button>
         </div>
         <div class="phases" role="group" aria-label="Filter loops by phase">
           <button type="button" data-phase="all" aria-pressed="true">All</button>
@@ -607,6 +610,26 @@
           <button type="button" class="phase-foundation" data-phase="foundation" aria-pressed="false">Foundations</button>
         </div>
         <div class="loops collapsed">
+          <article class="loop-card phase-graph" id="loop-views" data-phase="graph" data-loop="Views" data-date="Nov 10, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-views.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Views</span> · Graph · <time datetime="2026-11-10">Nov 10, 2026</time></p>
+              <h3><button type="button" class="loop-open">The graph gets views, and time plays</button></h3>
+              <p class="excerpt">The same Brain, laid out five ways. A picker in the graph&#x27;s bar switches between the zones, a timeline with lanes by place, type or origin, a focus view that puts one idea in the middle and what is linked to it on rings around it, a meaning map where items sit by what they mean, whatever place they are filed in, and layers in 3D: the zones stacked through time, to turn and explore. Any view can be kept under a name and found again in one click. And a Time bar takes the Brain back to any day, then plays it growing: each arrival lights up and says its name, a large date shows the moment, and the camera follows.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>The same Brain, laid out five ways. A picker in the graph&#x27;s bar switches between the zones, a timeline with lanes by place, type or origin, a focus view that puts one idea in the middle and what is linked to it on rings around it, a meaning map where items sit by what they mean, whatever place they are filed in, and layers in 3D: the zones stacked through time, to turn and explore. Any view can be kept under a name and found again in one click. And a Time bar takes the Brain back to any day, then plays it growing: each arrival lights up and says its name, a large date shows the moment, and the camera follows. <a href="howto.html#views">See your Brain from another angle →</a> · <a href="howto.html#time">Watch your Brain grow →</a> · <a href="docs.html#graph-views">The views in the Docs →</a></p></div>
+            </div>
+          </article>
+          <article class="loop-card phase-foundation" id="loop-themes" data-phase="foundation" data-loop="Themes" data-date="Nov 7, 2026">
+            <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-themes.webp" alt="" loading="lazy" width="720" height="450"></div>
+            <div class="loop-body">
+              <p class="loop-meta"><span class="loop-tag">Themes</span> · Foundations · <time datetime="2026-11-07">Nov 7, 2026</time></p>
+              <h3><button type="button" class="loop-open">Three new looks: Terminal, Paper, Neon</button></h3>
+              <p class="excerpt">A theme now changes more than colours. Terminal is green phosphor on black, with a monospace font, square corners and dashed links on a grid. Paper is the first light theme: warm paper and ink blue. Neon is deep violet with pink and cyan, rounder, with more glow. Each brings its own fonts, corners, borders and graph style, and a test checks that every theme stays readable. Pick one with the ♪ button at the bottom right.</p>
+              <span class="loop-more" aria-hidden="true">Read the loop →</span>
+              <div class="loop-full" hidden><p>A theme now changes more than colours. Terminal is green phosphor on black, with a monospace font, square corners and dashed links on a grid. Paper is the first light theme: warm paper and ink blue. Neon is deep violet with pink and cyan, rounder, with more glow. Each brings its own fonts, corners, borders and graph style, and a test checks that every theme stays readable. Pick one with the ♪ button at the bottom right.</p></div>
+            </div>
+          </article>
           <article class="loop-card phase-agents" id="loop-mcp" data-phase="agents" data-loop="MCP" data-date="Nov 7, 2026">
             <div class="loop-thumb" aria-hidden="true"><img src="assets/journal/loop-mcp.webp" alt="" loading="lazy" width="720" height="450"></div>
             <div class="loop-body">
@@ -614,7 +637,7 @@
               <h3><button type="button" class="loop-open">Your Brain opens to your AI tools</button></h3>
               <p class="excerpt">The Brain now speaks the Model Context Protocol both ways. Claude Code can read and search it, on this computer only, but never writes: it proposes, the archivist decides with your rules, and a timeline with restore points undoes any tool&#x27;s changes. Your agents, in turn, can use the MCP servers you connect: from a catalogue or the official registry, with a key, an account sign-in, or a local program you approve. A tool that could write outside waits for your yes, each time. Two small lights at the top show when anything is talking to your Brain.</p>
               <span class="loop-more" aria-hidden="true">Read the loop →</span>
-              <div class="loop-full" hidden><p>The Brain now speaks the Model Context Protocol both ways. Claude Code can read and search it, on this computer only, but never writes: it proposes, the archivist decides with your rules, and a timeline with restore points undoes any tool&#x27;s changes. Your agents, in turn, can use the MCP servers you connect: from a catalogue or the official registry, with a key, an account sign-in, or a local program you approve. A tool that could write outside waits for your yes, each time. Two small lights at the top show when anything is talking to your Brain. <a href="howto.html#claude-code">Connect Claude Code →</a> · <a href="docs.html#mcp-out">MCP servers for your agents →</a></p></div>
+              <div class="loop-full" hidden><p>The Brain now speaks the Model Context Protocol both ways. Claude Code can read and search it, on this computer only, but never writes: it proposes, the archivist decides with your rules, and a timeline with restore points undoes any tool&#x27;s changes. Your agents, in turn, can use the MCP servers you connect: from a catalogue or the official registry, with a key, an account sign-in, or a local program you approve. A tool that could write outside waits for your yes, each time. Two small lights at the top show when anything is talking to your Brain. Approving many proposals at once is instant: the archivist files them in the background and shows how far it is. <a href="howto.html#ai-tool">Connect an AI tool →</a> · <a href="docs.html#mcp-out">MCP servers for your agents →</a></p></div>
             </div>
           </article>
           <article class="loop-card phase-brain" id="loop-37b" data-phase="brain" data-loop="37b" data-date="Nov 7, 2026">
@@ -1088,7 +1111,7 @@
             </div>
           </article>
         </div>
-        <p class="center"><button type="button" class="btn loops-more">Show all 48 loops</button></p>
+        <p class="center"><button type="button" class="btn loops-more">Show all 50 loops</button></p>
         <dialog class="reader" id="reader" aria-labelledby="reader-title">
           <button class="reader-close" type="button" aria-label="Close">✕</button>
           <div class="reader-img"></div>
@@ -1115,8 +1138,9 @@
           <article class="card"><h3>Brain packs</h3><p>A zip, a manifest and SQLite. Build packs, share them, import them.</p><a href="docs.html#packs">Pack format →</a></article>
           <article class="card"><h3>Contribute</h3><p>How loops work, how to run the tests, where things live.</p><a href="docs.html#contributing">Contributing →</a></article>
         </div>
-        <p class="note">The repository is private while the foundations settle. The licence will be chosen before
-          the first public release.</p>
+        <p class="note">The repository is public on <a href="https://github.com/sonixz/second-brain-gd" rel="noopener">GitHub</a>,
+          under the MIT licence. It is a lab, built in the open: read the
+          <a href="https://github.com/sonixz/second-brain-gd/blob/main/AI-NOTICE.md" rel="noopener">AI notice</a> before you run it.</p>
       </div>
     </section>
   </main>
