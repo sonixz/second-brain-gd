@@ -194,6 +194,11 @@ def make_router(layout: Layout, auth: Callable[..., None], token: str) -> APIRou
                     reason = up.close_reason() if hasattr(up, "close_reason") else ""
                     await send_json({"type": "error",
                                      "message": live.friendly_error(t.exception(), reason, s["live_model"])})
+            # The engine ended it (a goodbye, a quiet stretch, a limit): « ended » was just sent. Godot closes its
+            # side when it reads it; closing here at once could bring the close in the same read as the message,
+            # and Godot would only see a closed socket, not why. Two seconds at most.
+            if sess.ended and not reader.done():
+                await asyncio.wait({reader}, timeout=2.0)
         except (WebSocketDisconnect, RuntimeError):
             pass
         finally:

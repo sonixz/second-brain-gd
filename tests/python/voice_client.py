@@ -94,6 +94,15 @@ async def live(port: int, token: str, seconds: int) -> dict:
             await asyncio.wait_for(task, 15)
         except asyncio.TimeoutError:
             out["timeout"] = True
+        if out["ended"]:
+            # the engine lets the client read « ended » and close first: the socket is still open a moment later
+            try:
+                await asyncio.wait_for(ws.recv(), 0.5)
+                out["open_after_ended"] = True
+            except asyncio.TimeoutError:
+                out["open_after_ended"] = True
+            except websockets.ConnectionClosed:
+                out["open_after_ended"] = False
     return out
 
 

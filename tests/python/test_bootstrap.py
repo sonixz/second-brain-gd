@@ -385,6 +385,8 @@ class BootstrapIntegration(unittest.TestCase):
         self.assertEqual(res["user_text"][0], "Montre-moi mes projets.")
         self.assertGreater(res["audio_bytes"], 10000)
         self.assertEqual(res["ended"], "goodbye")
+        # the engine does not close on the heels of « ended »: Godot reads why, then closes its side
+        self.assertTrue(res["open_after_ended"], "the socket closed right behind « ended »")
         self.assertGreater(res["cost"], 0)
         bad = subprocess.run([venv_py, client, "live", str(port), "wrong-token", "1"], capture_output=True, text=True,
                              timeout=60, **NO_WINDOW)
