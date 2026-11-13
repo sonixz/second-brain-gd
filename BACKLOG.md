@@ -2,14 +2,16 @@
 
 Ordered by priority. ✅ = done.
 
-## Next (2026-11-11)
+## Next (2026-11-13)
 
-To come back to (owner, 2026-11-11):
-- **GitHub CI is failing:** the last twelve runs on `main`, all five jobs (Python on Ubuntu and Windows, Godot
-  headless), while the suites pass on the owner's computer. Read the run logs (they need a GitHub sign-in), find the
-  cause, fix it. Details in [STATUS](STATUS.md).
-- **The public repository's page** (owner's note, 2026-11-10): description, topics, website link, tags and a first
-  release (the last package was built on 2026-11-05), then tidy its presentation.
+**The website in Agent Manager's new format, and a film with voice and music** (owner, 2026-11-13):
+[plan](docs/plans/plan-site-film.md), CI-H to REL-P, agreed on 2026-11-13 and in progress (its « Where it stands »
+table says how far). The Archivist as the keeper of the door is its thread. It carries the two points the owner
+wanted to come back to:
+- **GitHub CI is failing** (loop CI-H): the cause is found, the workflow installs no package and the runner has no
+  `fastapi`. Details in [STATUS](STATUS.md).
+- **The public repository's page** (owner's note, 2026-11-10): description, website link and topics set on
+  2026-11-13; a tag and a first release are loop REL-P (the last package was built on 2026-11-05).
 
 Documentation: caught up on 2026-11-11 ([plan](docs/plans/plan-docs-catchup.md), DOC-E to SITE-G); the rule in
 [AGENTS](AGENTS.md) and `tools/check_docs.py` keep it current. What is left of it:

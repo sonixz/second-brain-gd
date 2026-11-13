@@ -1,4 +1,4 @@
-# Status (2026-11-11)
+# Status (2026-11-13)
 
 A snapshot of what works today. The history of each loop is in [DEVLOG](DEVLOG.md); the plans in
 [docs/plans/](docs/plans/README.md); what is next in [BACKLOG](BACKLOG.md).
@@ -41,27 +41,30 @@ The system python3 in WSL has no fastapi: run the Python suite with the app's en
 The suites were run natively on Windows at earlier loops (see DEVLOG); the app itself runs daily on the owner's
 Windows PC. Real calls made while building (with the owner's key or free public servers) are noted in each loop.
 
-## GitHub CI (2026-11-11): failing
+## GitHub CI (2026-11-13): failing, cause found
 
-The CI workflow (`.github/workflows/ci.yml`) has failed on each of its last twelve runs on `main` (2026-11-07 to
-2026-11-11), in all five jobs: Python 3.12 and 3.13 on Ubuntu and on Windows, and the Godot headless end-to-end. The
-same suites pass on the owner's computer (table above). The cause is not found: the run logs need a GitHub sign-in.
-The owner, 2026-11-11: « on va y revenir ».
+The CI workflow (`.github/workflows/ci.yml`) has failed on each of its runs on `main` since 2026-11-07, in all five
+jobs: Python 3.12 and 3.13 on Ubuntu and on Windows, and the Godot headless end-to-end. The same suites pass on the
+owner's computer (table above). The cause, read in the logs on 2026-11-13 (run 43134631800): the workflow installs
+no package, so the runner's Python has no `fastapi`; four tests that load the engine's routes end in error (353
+tests run, 4 errors, 8 skipped), and the Godot job stops at the same place, before Godot starts. Not fixed yet: it
+is loop CI-H of [the plan](docs/plans/plan-site-film.md). The owner, 2026-11-11: « on va y revenir ».
 
 ## Repository and branches (2026-11-11)
 
-- Public on GitHub since 2026-11-10, under the MIT licence. Its page still has no description, no topics, no
-  website link and no release.
+- Public on GitHub since 2026-11-10, under the MIT licence. Its page has a description, the website's link and
+  twenty topics since 2026-11-13; still no tag and no release.
 - One branch, `main`, in one folder (`C:\git-2026\second-brain-gd`), the same as GitHub; the owner's launcher starts
   the app from here. The graph views were built on a branch (`am/second-brain-gd`, in its own folder, with a « beta »
   shortcut), tried by the owner, then merged on 2026-11-11; the branch, its folder and the shortcut were removed.
 
 ## Waiting on the owner
 
-- Restart the app to get the graph views (close it, then the usual shortcut).
+- [The website and film plan](docs/plans/plan-site-film.md) (CI-H to REL-P, agreed 2026-11-13) runs on a branch,
+  `site-film`. At its end: the film to check by ear, then the go to merge and publish, and the first pre-release.
 - VIEW-G, the constellation in 3D: go or not ([plan](docs/plans/plan-graph-views.md)).
-- The public repository's page: description, topics, website link, a first release (owner's note, 2026-11-10). It
-  needs a GitHub sign-in: the agents' key only pushes code.
+- The rights on the ElevenLabs audio (the plan of the account): not confirmed since the audit, needed before a film
+  is published.
 - From the [audit](docs/audit-before-public.md), not confirmed done: rotate the OpenAI, OpenAI admin and ElevenLabs
   keys; GitHub's « Keep my email addresses private ».
 - A first account sign-in (Notion or GitHub) for an MCP server.

@@ -5,6 +5,7 @@ sections with a « Done » note). Newest first.
 
 | Plan | Loops | Agreed |
 |---|---|---|
+| [plan-site-film.md](plan-site-film.md) | CI-H to REL-P: the website in Agent Manager's new format, a film with voice and music, the first pre-release (in progress) | 2026-11-13 |
 | [plan-docs-catchup.md](plan-docs-catchup.md) | DOC-E to SITE-G: Docs, How-to and the home page caught up after the graph views | 2026-11-11 |
 | [plan-graph-views.md](plan-graph-views.md) | VIEW-A to VIEW-G: richer views in the graph, up to 3D (in progress) | 2026-11-10 (A to F, H and I built; G open) |
 | [plan-docs-site.md](plan-docs-site.md) | DOC-A to SITE-D: documents, Docs, How-to, website | 2026-11-07 |
