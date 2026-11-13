@@ -53,8 +53,10 @@ the engine). Both are told in [DEVLOG](DEVLOG.md), CI-H.
 
 - Public on GitHub since 2026-11-10, under the MIT licence. Its page has a description, the website's link and
   twenty topics since 2026-11-13; still no tag and no release.
-- One branch, `main`, in one folder (`C:\git-2026\second-brain-gd`), the same as GitHub; the owner's launcher starts
-  the app from here. The graph views were built on a branch (`am/second-brain-gd`, in its own folder, with a « beta »
+- `main`, in one folder (`C:\git-2026\second-brain-gd`), the same as GitHub; the owner's launcher starts the app
+  from here. Since 2026-11-13 a second branch, `site-film`, in its own folder beside it
+  (`second-brain-gd-worktrees\site-film`): the website and the film of [the plan](docs/plans/plan-site-film.md),
+  not merged and not online until the owner's go. The graph views were built on a branch (`am/second-brain-gd`, in its own folder, with a « beta »
   shortcut), tried by the owner, then merged on 2026-11-11; the branch, its folder and the shortcut were removed.
 
 ## Waiting on the owner
