@@ -8,8 +8,7 @@ Ordered by priority. ✅ = done.
 [plan](docs/plans/plan-site-film.md), CI-H to REL-P, agreed on 2026-11-13 and in progress (its « Where it stands »
 table says how far). The Archivist as the keeper of the door is its thread. It carries the two points the owner
 wanted to come back to:
-- **GitHub CI is failing** (loop CI-H): the cause is found, the workflow installs no package and the runner has no
-  `fastapi`. Details in [STATUS](STATUS.md).
+- ✅ **GitHub CI** (loop CI-H, 2026-11-13): green again in its five jobs. Details in [STATUS](STATUS.md).
 - **The public repository's page** (owner's note, 2026-11-10): description, website link and topics set on
   2026-11-13; a tag and a first release are loop REL-P (the last package was built on 2026-11-05).
 
@@ -98,7 +97,7 @@ Small follow-ups from 5b:
 
 ## Quality
 
-- CI runs on every push to `main` and fails today: see « Next ».
+- ✅ CI runs on every push to `main` and passes (2026-11-13).
 - Godot UI tests for error states (no Python, failing pip) with fake interpreters.
 - Accessibility pass on the Godot UI (keyboard focus order, font scaling).
 

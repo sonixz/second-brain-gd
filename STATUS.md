@@ -24,7 +24,7 @@ A snapshot of what works today. The history of each loop is in [DEVLOG](DEVLOG.m
 | **Themes** | Seven built in (Morning, Focus, Evening, Forest, Terminal, Paper, Neon), each with its own style; contrast checked for every theme |
 | **Docs and How-to** | The Docs page for every feature, 21 step-by-step guides captured from the real app (19 replayed on 2026-11-11; the two that drive a real Edge date from 2026-11-05), the home page's loops up to the graph views; a check that links, pictures, guides and counts hold together (`tools/check_docs.py`, run by the tests); the rule that keeps them current is in [AGENTS](AGENTS.md) |
 
-## Tests (2026-11-11, on `main` with the views merged and the documentation caught up)
+## Tests (2026-11-13, on `main`)
 
 | Suite | Platform | Result |
 |---|---|---|
@@ -33,7 +33,7 @@ A snapshot of what works today. The history of each loop is in [DEVLOG](DEVLOG.m
 | How-to guides replayed on the real app (19 of 21; two need a real Edge) | Linux, virtual display | every step captured |
 
 One Godot check, « the Captures view lists what came in, newest first », failed in two runs out of five on
-2026-11-10 and passed in today's two runs; its cause is not found.
+2026-11-10 and has passed in every run since (2026-11-11 and 2026-11-13, here and on the CI); its cause is not found.
 
 The system python3 in WSL has no fastapi: run the Python suite with the app's environment,
 `PYTHON=/mnt/c/Users/<you>/AppData/Local/SecondBrainGD/.venv/Scripts/python.exe tools/test.sh`.
@@ -41,14 +41,13 @@ The system python3 in WSL has no fastapi: run the Python suite with the app's en
 The suites were run natively on Windows at earlier loops (see DEVLOG); the app itself runs daily on the owner's
 Windows PC. Real calls made while building (with the owner's key or free public servers) are noted in each loop.
 
-## GitHub CI (2026-11-13): failing, cause found
+## GitHub CI (2026-11-13): passing
 
-The CI workflow (`.github/workflows/ci.yml`) has failed on each of its runs on `main` since 2026-11-07, in all five
-jobs: Python 3.12 and 3.13 on Ubuntu and on Windows, and the Godot headless end-to-end. The same suites pass on the
-owner's computer (table above). The cause, read in the logs on 2026-11-13 (run 43134631800): the workflow installs
-no package, so the runner's Python has no `fastapi`; four tests that load the engine's routes end in error (353
-tests run, 4 errors, 8 skipped), and the Godot job stops at the same place, before Godot starts. Not fixed yet: it
-is loop CI-H of [the plan](docs/plans/plan-site-film.md). The owner, 2026-11-11: « on va y revenir ».
+The CI workflow (`.github/workflows/ci.yml`) passes in its five jobs since 2026-11-13 (run 43522978578, b33cbfe):
+Python 3.12 and 3.13 on Ubuntu and on Windows, and the Godot headless end-to-end (287 checks). It had failed on
+every run on `main` from 2026-11-07: the workflow installed no package (no `fastapi` on the runner), and behind
+that one Godot check failed on the runner, a live conversation ended as « closed » instead of « goodbye » (fixed in
+the engine). Both are told in [DEVLOG](DEVLOG.md), CI-H.
 
 ## Repository and branches (2026-11-11)
 

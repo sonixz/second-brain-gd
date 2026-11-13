@@ -14,7 +14,7 @@ the other while he is away (`/loop`); each firing reads « Where it stands » be
 
 | Loop | State | Commit | Note |
 |---|---|---|---|
-| CI-H | to do | | |
+| CI-H | **done** 2026-11-13 | 19e8173, b33cbfe | the five jobs pass (run 43522978578) |
 | FILM-I | to do | | |
 | SITE-J | to do | | |
 | FILM-K | to do | | |
@@ -90,6 +90,14 @@ About 7¼ loops.
 - The eight tests skipped on the runner (one here): say which and why.
 - A second failure may hide behind the first: the Godot job never reached Godot, and Windows was never seen past
   the same error. The loop ends on a green run or on the next cause written down.
+
+**CI-H done 2026-11-13.** Both jobs install `engine/requirements.lock` (hash-checked wheels, pip's cache): the four
+Python jobs passed at once, on Ubuntu and on Windows (353 tests; skipped: on Ubuntu the two real OCR tests,
+Tesseract not installed and Windows' OCR being Windows only; on Windows the Tesseract one). A second failure did hide behind the first: one Godot check of 287, « "merci,
+c'est tout" ends the conversation », ended as « closed ». A real fault of the app: the engine closed the socket
+right behind « ended », and Godot could receive both in one read. Fixed in `engine/voice/routes.py` (the engine
+lets Godot close first, two seconds at most), with a check in the integration test that fails without the fix.
+Run 43522978578 (b33cbfe): five jobs green. Tests here: Python OK, Godot 287 passed.
 
 ## FILM-I — film tools
 

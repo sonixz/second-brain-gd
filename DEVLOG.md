@@ -2,6 +2,23 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## CI-H: GitHub CI green again, and what it found (2026-11-13)
+
+First loop of [the website and film plan](docs/plans/plan-site-film.md). The CI had failed on every run on `main`
+since 2026-11-07; the logs became readable on 2026-11-13 (a GitHub sign-in). Two causes, one behind the other:
+
+- **The workflow installed nothing.** The runner's Python had no `fastapi`, so four tests that load the engine's
+  routes ended in error and the Godot job stopped at the same place, before Godot started. Both jobs now install
+  `engine/requirements.lock` the way the app does (pinned, hash-checked wheels), with pip's cache.
+- **Behind it, one Godot check of 287:** « "merci, c'est tout" ends the conversation » ended as « closed », not
+  « goodbye ». A real fault of the app, which a fast computer hides: the engine sent « ended » and closed the socket
+  in the same breath, and Godot, receiving both in one read, saw only the closed socket. The engine now lets Godot
+  read the reason and close its side first, two seconds at most (`engine/voice/routes.py`). The integration test
+  checks the socket is still open a moment after « ended »; it fails without the fix.
+
+Run 43522978578 (b33cbfe): the five jobs pass, Python 3.12 and 3.13 on Ubuntu and Windows, Godot end to end.
+The same day the repository's page got its description, its website link and twenty topics.
+
 ## Documentation is part of the work: a rule, and a check (2026-11-11)
 
 The day after the repository became public the owner asked: « Est-ce que la documentation et how-to sont tout à
