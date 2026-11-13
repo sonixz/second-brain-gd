@@ -15,7 +15,7 @@ the other while he is away (`/loop`); each firing reads « Where it stands » be
 | Loop | State | Commit | Note |
 |---|---|---|---|
 | CI-H | **done** 2026-11-13 | 19e8173, b33cbfe | the five jobs pass (run 43522978578) |
-| FILM-I | to do | | |
+| FILM-I | **done** 2026-11-13 | on `site-film` | a 15-second clip of the opening scene, with the app's sound |
 | SITE-J | to do | | |
 | FILM-K | to do | | |
 | SITE-L | to do | | |
@@ -109,6 +109,30 @@ Run 43522978578 (b33cbfe): five jobs green. Tests here: Python OK, Godot 287 pas
 - **To prove in this loop (a hypothesis today):** Godot's film mode writes the app's own sound beside the frames, so
   the capture sounds and the themes' music come from the app itself, in time with the picture.
 
+**FILM-I done 2026-11-13.** `tools/film.sh <step>` films a step of `tools/film.gd` (the `film_*` functions) on a
+private virtual display: frames at 1920×1080, thirty a second, the marks in `marks.txt`, and **the app's own sound
+in `frame.wav`: proven** (the first scene's file is not silent: the theme's music and the capture's effects, in
+time with the picture). What was learnt and built on the way:
+
+- The app is installed once, without filming, in a base home; each step films a copy. A scene of 25 seconds takes
+  about four minutes and a half to film (software rendering, a PNG per frame) and 220 MB, kept outside the
+  repository (`~/.cache/sbgd-film`).
+- The interface is drawn one and a half times larger (`FILM_SCALE`): at 1920×1080 its text was too small for a
+  film watched at a third of that size on the page. The window is then laid out as at 1280×720, so each scene sets
+  its own framing.
+- `FILM_STILLS=1`: no film, one picture per mark, in real time (a minute and a half): the way to set a framing
+  before filming.
+- `video-production/`: README, `scripts/clip.sh` (a piece of a step as an MP4 with its sound), `scripts/render.sh`
+  (the web file and the poster) and `scripts/elevenlabs.py` (voice, music, effects), after agent-manager-gd's. The
+  cut itself (`compose.py`) is written with the storyboard, in FILM-N.
+- First scene filmed, `open`: the whole Brain beside the Archivist's panel with a slow push, a thought typed, its
+  receipt (« A note on electrical work, filed in Projects › Kitchen renovation, linked to 1 item »). The clip:
+  `video-production/output/film-i-open.mp4` (15.5 s, 2 MB, not in git).
+- Scripted archivist, no key, no cost. Nothing a user sees changed: Docs, How-to, home page and README are
+  untouched by this loop.
+- For FILM-K: after a filing the graph moves to the new item, partly under the Archivist's panel (the scene will
+  move or fold the panel); three themes borrow another's music (see scene 8).
+
 ## SITE-J — the skeleton
 
 - **Menu:** four entries (Features, How-to, Docs, Loops) and GitHub, the same on the four pages (`index`, `docs`,
@@ -133,7 +157,7 @@ The list of features, to settle in this loop (working titles):
 | 07 | Several minds: Sparring, your own agents, missions | Agents |
 | 08 | Every AI tool, your rules: MCP in and out, approvals, Go back | MCP |
 | 09 | Recipes, tables, paper: typed items, the table, the grocery list, printing | Product |
-| 10 | Alive: seven themes, their music | Product, Principles |
+| 10 | Alive: seven themes, four sound worlds | Product, Principles |
 | 11 | Yours: on your disk, backups, packs, export, open source | Principles, Open source |
 
 ## The Archivist, keeper of the door (owner, 2026-11-13)
@@ -183,7 +207,8 @@ About sixty seconds. A first cut of the story, to settle with the owner before a
 6. A question, its answer with sources; the path between two ideas.
 7. The same door, for an AI tool: it proposes over MCP, « 1 proposal waits », Approve, filed. The scene of Agent
    Manager's film, seen from the Brain's side.
-8. The seven themes on the beat, each with its own music.
+8. The seven themes on the beat, with the app's music changing under them (four sound worlds for seven themes:
+   Terminal plays Focus's music, Paper plays Morning's, Neon plays Evening's).
 9. The closing card: the logo, « Your second brain. Every AI agent. Your rules. », open source, MIT, the site.
 
 The loop gives the storyboard second by second, the narration's text, every scene filmed and a silent rough cut.

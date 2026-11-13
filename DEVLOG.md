@@ -2,6 +2,20 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## FILM-I: the app can be filmed, with its own sound (2026-11-13)
+
+Second loop of [the website and film plan](docs/plans/plan-site-film.md), on the branch `site-film`. `tools/film.sh`
+films a step of `tools/film.gd` with Godot's movie mode on a private virtual display: 1920×1080, thirty frames a
+second, « mark <name> <frame> » lines the cut will be made from, and the app's own sound beside the frames (its
+music, its effects), which was the hypothesis to prove. The app is installed once in a base home and each step
+films a copy; the interface is drawn one and a half times larger so its text stays readable in a film watched
+small; `FILM_STILLS=1` gives one picture per mark in a minute and a half, to set a framing before the four minutes
+a filmed scene takes. `video-production/` holds the README and the scripts ported from agent-manager-gd (a clip of
+a step, the web encode, the voice and music calls). First scene: the Brain with a slow push, a thought typed and
+its receipt. The archivist of the film is the scripted one by default (no key, no cost); `FILM_REAL=1` runs the
+real one. Noticed: three themes borrow another's music (Terminal, Paper, Neon), so the plan's scene 8 now says four
+sound worlds for seven themes.
+
 ## CI-H: GitHub CI green again, and what it found (2026-11-13)
 
 First loop of [the website and film plan](docs/plans/plan-site-film.md). The CI had failed on every run on `main`
