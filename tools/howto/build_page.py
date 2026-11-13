@@ -136,12 +136,10 @@ def page(ready: list[dict]) -> str:
         <span class="sr-only">Menu</span><span aria-hidden="true">☰</span>
       </button>
       <ul id="nav-links" class="nav-links">
-        <li><a href="index.html#product">Product</a></li>
-        <li><a href="index.html#agents">Agents</a></li>
-        <li><a href="index.html#journal">Journal</a></li>
-        <li><a href="semantic.html">How it thinks</a></li>
+        <li><a href="index.html#features">Features</a></li>
         <li><a href="howto.html" aria-current="page">How-to</a></li>
         <li><a href="docs.html">Docs</a></li>
+        <li><a href="index.html#loops">Loops</a></li>
         <li><a href="https://github.com/sonixz/second-brain-gd" class="nav-cta" rel="noopener">GitHub</a></li>
       </ul>
     </nav>

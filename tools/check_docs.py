@@ -7,6 +7,9 @@ AGENTS.md, owner 2026-11-11).
     docs/plans/plan-*.md, are left as they were written);
   - every How-to guide of tools/howto/guides.py is on public/howto.html (a guide left out was never captured);
   - the home page's « Show all N loops » button says how many loop cards there are.
+  - every page of the website has the home page's main menu;
+  - the home page's index of features has a tile per numbered section, in order, and so has the bar that follows
+    the reader; the index's title says how many there are.
 
 It cannot tell whether a sentence is still true: that part stays with whoever makes the change.
 
@@ -102,9 +105,50 @@ def check_home() -> list[str]:
     return []
 
 
+def menu(page: str) -> list[str]:
+    """The entries of a page's main menu, by their words."""
+    block = re.search(r'<ul id="nav-links"[^>]*>(.*?)</ul>', page, re.S)
+    return [re.sub(r"<[^>]+>", "", a).strip() for a in re.findall(r"<a\b[^>]*>.*?</a>", block.group(1), re.S)] if block else []
+
+
+def check_menu() -> list[str]:
+    """The same main menu on every page of the website (plan-site-film, SITE-J)."""
+    menus = {p.name: menu(p.read_text(encoding="utf-8")) for p in sorted(PUBLIC.glob("*.html"))}
+    home = menus.get("index.html", [])
+    bad = [f"public/{name}: its menu ({', '.join(m) or 'none'}) is not the home page's ({', '.join(home)})"
+           for name, m in menus.items() if m != home]
+    return bad if home else ["public/index.html: no main menu found"]
+
+
+def check_features() -> list[str]:
+    """The home page's index of features: a tile per numbered section, in the same order, and the same in the bar
+    that follows the reader (plan-site-film, SITE-J)."""
+    page = (PUBLIC / "index.html").read_text(encoding="utf-8")
+    sections = re.findall(r'<section id="([\w-]+)" class="[^"]*\bfeat-sec\b', page)
+    grid = re.search(r'<ol class="fx-grid">(.*?)</ol>', page, re.S)
+    bar = re.search(r'<nav class="featnav"[^>]*>(.*?)</nav>', page, re.S)
+    if not sections or grid is None or bar is None:
+        return ["public/index.html: the feature sections, their index or their bar were not found"]
+    tiles = re.findall(r'<a href="#([\w-]+)">', grid.group(1))
+    links = re.findall(r'<a href="#([\w-]+)">', bar.group(1))[:len(sections)]
+    bad = []
+    if tiles != sections:
+        bad.append(f"public/index.html: the index has {len(tiles)} tiles ({', '.join(tiles)}) for {len(sections)} feature sections ({', '.join(sections)})")
+    if links != sections:
+        bad.append(f"public/index.html: the features bar ({', '.join(links)}) does not follow the sections ({', '.join(sections)})")
+    numbers = re.findall(r'<p class="feat-num">(\d+) ·', page)
+    if numbers != [f"{i:02d}" for i in range(1, len(sections) + 1)]:
+        bad.append(f"public/index.html: the sections' numbers are {', '.join(numbers)}")
+    words = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six", 7: "Seven", 8: "Eight", 9: "Nine", 10: "Ten", 11: "Eleven", 12: "Twelve"}
+    said = re.search(r"<h2>(\w+) things it does for you</h2>", page)
+    if said is None or said.group(1) != words.get(len(sections), str(len(sections))):
+        bad.append(f"public/index.html: the index's title does not say {words.get(len(sections), len(sections))} things for {len(sections)} sections")
+    return bad
+
+
 def main() -> int:
     known = repository_files()
-    bad = check_site(known) + check_markdown(known) + check_guides() + check_home()
+    bad = check_site(known) + check_markdown(known) + check_guides() + check_home() + check_menu() + check_features()
     for line in bad:
         print(line)
     print(f"{len(bad)} problem(s)" if bad else "links, pictures, guides and counts hold together")

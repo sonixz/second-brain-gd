@@ -10,7 +10,8 @@
   <meta property="og:description" content="Your second brain. Every AI agent. Your rules. An AI-native, voice-first second brain that runs on your computer.">
   <meta property="og:image" content="assets/showcase/graph-zones.webp">
   <link rel="icon" href="assets/logo.svg" type="image/svg+xml">
-  <link rel="stylesheet" href="css/style.css?v=2026-11-11d">
+  <link rel="stylesheet" href="css/style.css?v=2026-11-13a">
+  <link rel="stylesheet" href="css/features.css?v=2026-11-13a">
 </head>
 <body>
   <a class="skip" href="#main">Skip to content</a>
@@ -25,15 +26,10 @@
         <span class="sr-only">Menu</span><span aria-hidden="true">☰</span>
       </button>
       <ul id="nav-links" class="nav-links">
-        <li><a href="#voice">Voice</a></li>
-        <li><a href="#product">Product</a></li>
-        <li><a href="#mcp">MCP</a></li>
-        <li><a href="#agents">Agents</a></li>
-        <li><a href="#roadmap">Roadmap</a></li>
-        <li><a href="#journal">Journal</a></li>
-        <li><a href="semantic.html">How it thinks</a></li>
+        <li><a href="#features">Features</a></li>
         <li><a href="howto.html">How-to</a></li>
         <li><a href="docs.html">Docs</a></li>
+        <li><a href="#loops">Loops</a></li>
         <li><a href="https://github.com/sonixz/second-brain-gd" class="nav-cta" rel="noopener">GitHub</a></li>
       </ul>
     </nav>
@@ -48,10 +44,12 @@
           <h1>SECOND BRAIN <span class="accent">GD</span></h1>
           <p class="tagline">Your second brain. Every AI agent. Your rules.</p>
           <p class="lead">A second brain that lives on your computer and runs on AI. Speak, drop a file or send a web
-            page: the Archivist agent files it for you, and every AI agent you use shares what you know.</p>
+            page. One agent keeps the door: the Archivist files whatever comes in, from you or from any AI tool,
+            under your rules.</p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="docs.html#install">Get started</a>
             <a class="btn" href="howto.html">How-to guides</a>
+            <a class="btn btn-ghost" href="#features">Explore features ↓</a>
           </div>
         </div>
         <div class="hero-capture">
@@ -77,92 +75,153 @@
       </div>
     </section>
 
-    <section id="voice" class="section section-alt">
+        <section id="features" class="section features-index">
       <div class="container">
-        <div class="section-head">
-          <p class="overline">Voice first</p>
-          <h2>Everything you can click, you can say</h2>
-          <p>Hold <kbd>F8</kbd> and speak, or press <kbd>F9</kbd> for a live conversation. In your own language.</p>
+        <div class="section-head center">
+          <p class="overline">What it does</p>
+          <h2>Eleven things it does for you</h2>
+          <p>From the moment something comes in to the day you share it. Every picture below is the real app, captured
+            on a private virtual display with a demonstration Brain.</p>
         </div>
-        <div class="voice-grid">
-          <article class="card"><h3>Capture</h3><p>Thoughts, the clipboard, a working context.</p>
-            <div class="says"><span class="say">add this to the Brain</span><span class="say">note that…</span><span class="say">we are working on the X project</span></div></article>
-          <article class="card"><h3>Explore the graph</h3><p>Zoom, fold, filter, switch to the timeline.</p>
-            <div class="says"><span class="say">zoom into X</span><span class="say">fold X</span><span class="say">show the timeline</span></div></article>
-          <article class="card"><h3>Find and connect</h3><p>Meaning search, paths, related ideas.</p>
-            <div class="says"><span class="say">find…</span><span class="say">how is X connected to Y?</span><span class="say">open the captures</span></div></article>
-          <article class="card"><h3>Read documents</h3><p>Open a PDF, turn pages, show the original.</p>
-            <div class="says"><span class="say">open the document</span><span class="say">next page</span><span class="say">close the document</span></div></article>
-          <article class="card"><h3>Share</h3><p>Export, import and manage packs.</p>
-            <div class="says"><span class="say">export everything</span><span class="say">import a pack</span><span class="say">merge the pack X</span></div></article>
-          <article class="card"><h3>Organise</h3><p>Move, link, unlink, delete, by name.</p>
-            <div class="says"><span class="say">put my CVs in Job search</span><span class="say">link X to Y</span><span class="say">delete the place X</span></div></article>
-          <article class="card"><h3>The web</h3><p>Search, open, add, close tabs.</p>
-            <div class="says"><span class="say">search the web for…</span><span class="say">open the first one</span><span class="say">add this page</span></div></article>
-          <article class="card"><h3>Think it through</h3><p>With Sparring, or an agent of your own.</p>
-            <div class="says"><span class="say">play devil's advocate</span><span class="say">reassure me</span><span class="say">sum it up and save it</span></div></article>
-          <article class="card"><h3>Control the voice</h3><p>Repeat, speed up, undo, stop.</p>
-            <div class="says"><span class="say">read that again</span><span class="say">speak faster</span><span class="say">undo that</span></div></article>
-        </div>
-      </div>
-    </section>
-
-    <section id="method" class="section">
-      <div class="container">
-        <div class="section-head">
-          <p class="overline">The method</p>
-          <h2>Capture, Organise, Distil, Express</h2>
-          <p>Second Brain GD follows the CODE method and files everything in PARA. You do the capturing; the
-            Archivist agent does the filing; the graph does the remembering.</p>
-        </div>
-        <ol class="code-flow">
-          <li><span class="code-letter">C</span><h3>Capture anything</h3>
-            <p>Type, paste, speak, drop a file, send the page you are reading from Edge or Chrome, or grab the clipboard. One intake,
-              whatever the input.</p></li>
-          <li><span class="code-letter">O</span><h3>Organise, for you</h3>
-            <p>The archivist files each input in a project, area or resource, and creates the place when none
-              fits. You get a one-line receipt, and Undo.</p></li>
-          <li><span class="code-letter">D</span><h3>Distil the essence</h3>
-            <p>Long documents get a summary, key points, people and concepts. Related ideas are linked by meaning,
-              across languages.</p></li>
-          <li><span class="code-letter">E</span><h3>Express and share</h3>
-            <p>Search by meaning, ask how two ideas connect, think an idea through with Sparring and keep its
-              synthesis, and export part of your brain as a pack someone else can import.</p></li>
+        <ol class="fx-grid">
+          <li><a href="#capture"><span class="fx-n">01</span><b>Capture anything</b><small>Typed, spoken, a file, a page, a folder of notes</small></a></li>
+          <li class="fx-key"><a href="#archivist"><span class="fx-n">02</span><b>The Archivist keeps the door</b><small>It files what comes in; a receipt, Undo</small></a></li>
+          <li><a href="#graph"><span class="fx-n">03</span><b>A graph with no bottom</b><small>From your places down to the text</small></a></li>
+          <li><a href="#views"><span class="fx-n">04</span><b>Five views, and time</b><small>Timeline, Focus, Meaning map, Layers; play it growing</small></a></li>
+          <li><a href="#find"><span class="fx-n">05</span><b>Find, ask, connect</b><small>By meaning, with sources; the path between two ideas</small></a></li>
+          <li><a href="#voice"><span class="fx-n">06</span><b>Say it</b><small>Everything you can click, you can say</small></a></li>
+          <li><a href="#agents"><span class="fx-n">07</span><b>Several minds</b><small>Sparring, agents of your own, missions</small></a></li>
+          <li><a href="#mcp"><span class="fx-n">08</span><b>Every AI tool, your rules</b><small>MCP in and out, through the same door</small></a></li>
+          <li><a href="#items"><span class="fx-n">09</span><b>Recipes, tables, paper</b><small>Typed items, a table, a grocery list, printing</small></a></li>
+          <li><a href="#alive"><span class="fx-n">10</span><b>Alive</b><small>Seven themes, four sound worlds</small></a></li>
+          <li><a href="#yours"><span class="fx-n">11</span><b>Yours</b><small>On your disk; backups, packs, export; open source</small></a></li>
         </ol>
-        <div class="para" aria-label="PARA">
-          <div><b>Projects</b><span>an outcome with a deadline</span></div>
-          <div><b>Areas</b><span>an ongoing responsibility</span></div>
-          <div><b>Resources</b><span>a topic you care about</span></div>
-          <div><b>Archives</b><span>what is no longer active</span></div>
-        </div>
       </div>
     </section>
 
-    <section id="product" class="section section-alt">
+    <nav class="featnav" aria-label="Features">
+      <div class="featnav-in">
+        <a href="#capture">01 Capture</a><a href="#archivist">02 Archivist</a><a href="#graph">03 Graph</a><a href="#views">04 Views</a><a href="#find">05 Find</a><a href="#voice">06 Voice</a><a href="#agents">07 Agents</a><a href="#mcp">08 MCP</a><a href="#items">09 Items</a><a href="#alive">10 Alive</a><a href="#yours">11 Yours</a><a href="#roadmap">Roadmap</a><a href="#loops">Loops</a>
+      </div>
+      <span class="featnav-progress" aria-hidden="true"></span>
+    </nav>
+
+    <section id="capture" class="section feat-sec">
       <div class="container">
-        <div class="section-head">
-          <p class="overline">A live interface</p>
-          <h2>Built with a game engine, alive in real time</h2>
-          <p>Every screen below is the real application.</p>
+        <div class="section-head center">
+          <p class="feat-num">01 · Capture</p>
+          <h2>Type it, say it, drop it, send it</h2>
+          <p>One capture bar, and one window to drop things on. A thought, a recording, a PDF, the page you are reading, a whole folder of notes: it all comes in the same way, and every original is kept.</p>
         </div>
-
-        <div class="feature">
-          <div class="feature-text">
-            <p class="overline">One intake · the Archivist agent</p>
-            <h3>Drop it in. It is filed before you look up.</h3>
-            <p>The Archivist is an AI agent with one job, keeping your Brain in order. It has no opinions and asks a question only when it cannot file an
-              item without the answer. It reads what you gave it, picks a title and type, writes a summary for long
-              inputs, finds the people and concepts, chooses a place and links it.</p>
-            <ul>
-              <li>Text, voice, web pages, PDF, Word, Markdown, HTML, images</li>
-              <li>Scanned PDFs read on your computer by local OCR</li>
-              <li>Every filing journaled: one click, or “undo that”, undoes it</li>
-            </ul>
-            <div class="says"><span class="say">add this to the Brain</span><span class="say">I want to structure the Kitchen project</span></div>
-          </div>
-          <figure class="shot"><img src="assets/showcase/intake-receipt.webp" alt="A typed note about electrical work filed straight into Projects › Kitchen renovation: the receipt says where it went and what it links to, with an Undo button" loading="lazy" width="1280" height="800"><figcaption>The receipt: where it went, and why</figcaption></figure>
+      </div>
+      <div class="container wide">
+        <div class="anno" data-anno>
+          <svg class="anno-lines" aria-hidden="true"></svg>
+          <ol class="anno-col" aria-label="Ways in, part one">
+            <li class="anno-card" data-for="1" tabindex="0"><span class="anno-n">1</span><b>Typed</b>
+              <span>A thought in the capture bar, a pasted link, or the clipboard with <kbd>Ctrl</kbd> <kbd>Shift</kbd> <kbd>V</kbd>.</span><em>Capture bar</em></li>
+            <li class="anno-card" data-for="2" tabindex="0"><span class="anno-n">2</span><b>Spoken</b>
+              <span>Hold <kbd>F8</kbd> and say it. Or drop a recording: it is written down, then cut into ideas, tasks and notes.</span><em>Voice · voice memos</em></li>
+            <li class="anno-card" data-for="3" tabindex="0"><span class="anno-n">3</span><b>A file</b>
+              <span>PDF, Word, HTML, text, pictures, dropped on the window. A scanned PDF is read on your computer.</span><em>Files · local OCR</em></li>
+          </ol>
+          <figure class="anno-fig">
+            <div class="hot-wrap">
+              <img src="assets/showcase/feat-captures.webp" width="1920" height="1080" loading="lazy" alt="The Captures view of the demonstration Brain: everything that came in, newest first, each line with how it came (typed, spoken) and the place where the Archivist filed it; two lines wait with the Archivist's question. Above the list, « Send from browser »; under it, the capture bar.">
+              <span class="hot" data-n="1" style="--x:22.0%;--y:90.3%" aria-hidden="true">1</span>
+              <span class="hot" data-n="2" style="--x:43.6%;--y:27.0%" aria-hidden="true">2</span>
+              <span class="hot" data-n="3" style="--x:72.7%;--y:96.2%" aria-hidden="true">3</span>
+              <span class="hot" data-n="4" style="--x:97.5%;--y:17.2%" aria-hidden="true">4</span>
+              <span class="hot" data-n="5" style="--x:97.4%;--y:50.6%" aria-hidden="true">5</span>
+              <span class="hot" data-n="6" style="--x:97.4%;--y:29.8%" aria-hidden="true">6</span>
+            </div>
+            <figcaption>The Captures view: everything that came in, how, and where it went.</figcaption>
+          </figure>
+          <ol class="anno-col" start="4" aria-label="Ways in, part two">
+            <li class="anno-card" data-for="4" tabindex="0"><span class="anno-n">4</span><b>A web page</b>
+              <span>The page you are reading, or a passage of it, sent from Edge or Chrome by a small extension, as you see it.</span><em>Send from browser</em></li>
+            <li class="anno-card" data-for="5" tabindex="0"><span class="anno-n">5</span><b>Where it went</b>
+              <span>Each line keeps how it came and says where it was filed. That part is not yours to do.</span><em>Filed in</em></li>
+            <li class="anno-card" data-for="6" tabindex="0"><span class="anno-n">6</span><b>What waits for you</b>
+              <span>When it cannot be filed without you, the line waits with one question. That is <a href="#archivist">the Archivist</a>.</span><em>Waiting</em></li>
+          </ol>
         </div>
+      </div>
+      <div class="container">
+        <p class="feat-note">A whole folder of notes comes in too, or a zip of it: Obsidian, Logseq, a Notion export,
+          plain Markdown. It arrives as a layer you can switch off, after a preview of what it will add.</p>
+        <div class="says" style="justify-content:center;margin-top:22px"><span class="say">add this to the Brain</span><span class="say">note that…</span><span class="say">we are working on the X project</span></div>
+      </div>
+    </section>
 
+    <section id="archivist" class="section section-alt feat-sec">
+      <div class="container">
+        <div class="section-head center">
+          <p class="feat-num">02 · The Archivist</p>
+          <h2>One door into your Brain.<br>The Archivist keeps it.</h2>
+          <p>Whatever comes in, typed, spoken, dropped, or proposed by one of your AI tools, stops at the same door. The Archivist is an agent with directives: understand it, file it, link it, and ask when it is not sure.</p>
+        </div>
+        <div class="door" role="img" aria-label="Three ways in: you (type, speak, drop, send a page), your agents (Sparring's synthesis once you approve it) and your AI tools over MCP (Claude Code, Codex, Cursor). All three lead to the Archivist, who understands, files, links and asks; behind it, your Brain, in projects, areas and resources.">
+          <ul class="door-in">
+            <li><b>You</b><span>type, speak, drop a file, send a page</span></li>
+            <li><b>Your agents</b><span>Sparring's synthesis, once you approve it</span></li>
+            <li><b>Your AI tools</b><span>Claude Code, Codex, Cursor… over MCP: they propose</span></li>
+          </ul>
+          <div class="door-arrow" aria-hidden="true">→<small>one door</small></div>
+          <div class="door-gate"><span class="door-badge" aria-hidden="true">A</span><b>The Archivist</b><small>understands · files · links · asks</small></div>
+          <div class="door-arrow" aria-hidden="true">→</div>
+          <div class="door-brain"><b>Your Brain</b><small>projects · areas · resources</small></div>
+        </div>
+      </div>
+      <div class="container wide">
+        <div class="anno" data-anno>
+          <svg class="anno-lines" aria-hidden="true"></svg>
+          <ol class="anno-col" aria-label="What a filing shows, part one">
+            <li class="anno-card" data-for="1" tabindex="0"><span class="anno-n">1</span><b>What it understood</b>
+              <span>Its own words for what you gave it: a title, a type, a summary when the text is long.</span><em>The receipt</em></li>
+            <li class="anno-card" data-for="2" tabindex="0"><span class="anno-n">2</span><b>Where it filed it</b>
+              <span>A project, an area or a resource, here Kitchen renovation. It uses a place that fits, and creates one when none does.</span><em>Filed in</em></li>
+          </ol>
+          <figure class="anno-fig">
+            <div class="hot-wrap">
+              <img src="assets/showcase/feat-receipt.webp" width="1920" height="1080" loading="lazy" alt="A thought typed in the capture bar, « Ask Marc if the induction cooktop needs its own 40 A circuit », just filed: the Archivist's panel shows « Filed: a note on electrical work, filed in Projects › Kitchen renovation, linked to 1 item, #electrical », and a line at the bottom repeats it with an Undo button.">
+              <span class="hot" data-n="1" style="--x:5.2%;--y:58.0%" aria-hidden="true">1</span>
+              <span class="hot" data-n="2" style="--x:54.6%;--y:24.6%" aria-hidden="true">2</span>
+              <span class="hot" data-n="3" style="--x:63.3%;--y:78.2%" aria-hidden="true">3</span>
+              <span class="hot" data-n="4" style="--x:76.4%;--y:82.4%" aria-hidden="true">4</span>
+            </div>
+            <figcaption>A thought, filed: the receipt says what, where and why.</figcaption>
+          </figure>
+          <ol class="anno-col" start="3" aria-label="What a filing shows, part two">
+            <li class="anno-card" data-for="3" tabindex="0"><span class="anno-n">3</span><b>What it linked</b>
+              <span>The items it relates to, found by meaning, and its tags.</span><em>Linked to</em></li>
+            <li class="anno-card" data-for="4" tabindex="0"><span class="anno-n">4</span><b>Undo</b>
+              <span>Every filing is journaled: one click, or « undo that », takes it back.</span><em>Undo</em></li>
+          </ol>
+        </div>
+      </div>
+      <div class="container">
+        <ul class="rules" aria-label="The Archivist's directives">
+          <li><b>A place for everything</b><span>Projects, areas, resources. A brand-new Brain builds its own structure.</span></li>
+          <li><b>No opinions</b><span>It collects and organises. It does not judge what you wrote.</span></li>
+          <li><b>It asks before it guesses</b><span>When it is not sure enough, one short question instead of a filing.</span></li>
+          <li><b>Tools propose, it checks</b><span>A reason, no duplicate, existing places only, nothing erased; then your OK, unless you trust the tool.</span></li>
+          <li><b>A receipt, every time</b><span>What, where and why, with its author. Undo, and Go back in time.</span></li>
+        </ul>
+        <p class="limit-note">The door is for what comes in. You can still change anything by hand, and an agent of your own
+          moves and links things only if you gave it « Organise the graph »; that too is journaled and can be undone.</p>
+        <div class="says" style="justify-content:center;margin-top:24px"><span class="say">I want to structure the Kitchen project</span><span class="say">put my CVs in Job search</span><span class="say">undo that</span></div>
+      </div>
+    </section>
+
+    <section id="graph" class="section feat-sec">
+      <div class="container">
+        <div class="section-head center">
+          <p class="feat-num">03 · The graph</p>
+          <h2>A graph with no bottom</h2>
+          <p>Your places from afar, their items closer, the full text closer still: one continuous zoom, in an interface drawn by a game engine.</p>
+        </div>
+        <div class="feat-more">
         <div class="feature flip">
           <div class="feature-text">
             <p class="overline">Semantic zoom</p>
@@ -200,7 +259,36 @@
             </div>
           </div>
         </div>
+        </div>
+      </div>
+    </section>
 
+    <section id="views" class="section section-alt feat-sec">
+      <div class="container">
+        <div class="section-head center">
+          <p class="feat-num">04 · Views and time</p>
+          <h2>Five ways to look, and time you can play</h2>
+          <p>The same Brain as zones, on a timeline, around one item, placed by meaning, or stacked in 3D. A cursor takes any view back to a day, and ▶ plays the Brain growing.</p>
+        </div>
+        <div class="gallery" aria-label="The graph's views">
+          <figure class="shot"><img src="assets/showcase/views-timeline.webp" alt="The Timeline with one lane per type of item and the Time bar open" loading="lazy" width="1280" height="800"><figcaption>Timeline, with the Time bar</figcaption></figure>
+          <figure class="shot"><img src="assets/showcase/views-focus.webp" alt="The Focus view: one item in the centre and what is linked to it, on rings" loading="lazy" width="1280" height="800"><figcaption>Focus: one item and what it is linked to</figcaption></figure>
+          <figure class="shot"><img src="assets/showcase/views-meaning.webp" alt="The Meaning map: items placed by what they mean" loading="lazy" width="1280" height="800"><figcaption>Meaning map: items placed by what they mean</figcaption></figure>
+          <figure class="shot"><img src="assets/showcase/views-layers.webp" alt="Layers in 3D: the zones stacked through time" loading="lazy" width="1280" height="800"><figcaption>Layers (3D): the zones stacked through time</figcaption></figure>
+          <figure class="shot"><img src="assets/showcase/views-play.webp" alt="The Brain growing as time plays, arrivals lit one by one" loading="lazy" width="1280" height="800"><figcaption>▶ plays the Brain growing</figcaption></figure>
+        </div>
+        <p class="limit-note">More in the <a href="docs.html#graph-views">Docs</a>, and two guides: <a href="howto.html#views">See your Brain from another angle</a>, <a href="howto.html#time">Watch your Brain grow</a>.</p>
+      </div>
+    </section>
+
+    <section id="find" class="section feat-sec">
+      <div class="container">
+        <div class="section-head center">
+          <p class="feat-num">05 · Find, ask, connect</p>
+          <h2>Ask your Brain, and see why it answers</h2>
+          <p>Search by meaning as well as by words, ask how two ideas are connected, and send the Archivist to the web when your Brain does not know.</p>
+        </div>
+        <div class="feat-more">
         <div class="feature flip">
           <div class="feature-text">
             <p class="overline">Find · connect · look back</p>
@@ -245,29 +333,6 @@
             </div>
           </div>
         </div>
-        <div class="feature flip">
-          <div class="feature-text">
-            <p class="overline">Brain packs</p>
-            <h3>Share a part of your brain as one file</h3>
-            <p>Export a project, a theme or a search as a <code>.brain</code> pack: a zip with a manifest and a
-              plain SQLite database, optionally with the originals. Imported, a pack becomes a layer you can switch
-              off, merge into your own brain, or remove without touching your data.</p>
-            <ul>
-              <li>Checksummed, opened read-only, never executed</li>
-              <li>Imported text is treated as data, never as instructions</li>
-              <li>Settings, keys and conversations never leave</li>
-            </ul>
-            <div class="says"><span class="say">export the Renovation project</span><span class="say">switch the pack off</span></div>
-          </div>
-          <figure class="shot"><img src="assets/showcase/packs.webp" alt="The Brain packs dialog exporting the Local-first software place, 7 items, with a preview of what leaves" loading="lazy" width="1280" height="800"><figcaption>Export with a preview of exactly what leaves</figcaption></figure>
-        </div>
-
-        <div class="gallery" aria-label="More screens">
-          <figure class="shot shot-lead"><img src="assets/showcase/graph-overview.webp" alt="The whole brain from afar in the Evening theme" loading="lazy" width="1280" height="800"><figcaption>The same brain, Evening theme</figcaption></figure>
-          <figure class="shot"><img src="assets/showcase/panels.webp" alt="Panels being arranged: Sparring dragged across the graph while the right edge lights up where it will dock" loading="lazy" width="1280" height="800"><figcaption>Panels: drag one, the place it will land lights up</figcaption></figure>
-          <figure class="shot"><img src="assets/showcase/live.webp" alt="Live conversation: a spoken question about how two ideas connect, the answer in the panel and the path drawn in the graph" loading="lazy" width="1280" height="800"><figcaption>Talk live (F9), the graph follows</figcaption></figure>
-          <figure class="shot"><img src="assets/showcase/engine-room.webp" alt="The engine room with real measurements of the local engine" loading="lazy" width="1280" height="800"><figcaption>The engine room, real numbers only</figcaption></figure>
-          <figure class="shot"><img src="assets/showcase/costs.webp" alt="Real OpenAI costs and tokens read from OpenAI" loading="lazy" width="1280" height="800"><figcaption>Your real AI costs</figcaption></figure>
         </div>
       </div>
     </section>
@@ -290,13 +355,97 @@
       </div>
     </section>
 
-    <section id="mcp" class="section">
+    <section id="voice" class="section section-alt feat-sec">
       <div class="container">
-        <div class="section-head">
-          <p class="overline">MCP</p>
+        <div class="section-head center">
+          <p class="feat-num">06 · Voice</p>
+          <h2>Everything you can click, you can say</h2>
+          <p>Hold <kbd>F8</kbd> and speak, or press <kbd>F9</kbd> for a live conversation. In your own language.</p>
+        </div>
+        <div class="voice-grid">
+          <article class="card"><h3>Capture</h3><p>Thoughts, the clipboard, a working context.</p>
+            <div class="says"><span class="say">add this to the Brain</span><span class="say">note that…</span><span class="say">we are working on the X project</span></div></article>
+          <article class="card"><h3>Explore the graph</h3><p>Zoom, fold, filter, switch to the timeline.</p>
+            <div class="says"><span class="say">zoom into X</span><span class="say">fold X</span><span class="say">show the timeline</span></div></article>
+          <article class="card"><h3>Find and connect</h3><p>Meaning search, paths, related ideas.</p>
+            <div class="says"><span class="say">find…</span><span class="say">how is X connected to Y?</span><span class="say">open the captures</span></div></article>
+          <article class="card"><h3>Read documents</h3><p>Open a PDF, turn pages, show the original.</p>
+            <div class="says"><span class="say">open the document</span><span class="say">next page</span><span class="say">close the document</span></div></article>
+          <article class="card"><h3>Share</h3><p>Export, import and manage packs.</p>
+            <div class="says"><span class="say">export everything</span><span class="say">import a pack</span><span class="say">merge the pack X</span></div></article>
+          <article class="card"><h3>Organise</h3><p>Move, link, unlink, delete, by name.</p>
+            <div class="says"><span class="say">put my CVs in Job search</span><span class="say">link X to Y</span><span class="say">delete the place X</span></div></article>
+          <article class="card"><h3>The web</h3><p>Search, open, add, close tabs.</p>
+            <div class="says"><span class="say">search the web for…</span><span class="say">open the first one</span><span class="say">add this page</span></div></article>
+          <article class="card"><h3>Think it through</h3><p>With Sparring, or an agent of your own.</p>
+            <div class="says"><span class="say">play devil's advocate</span><span class="say">reassure me</span><span class="say">sum it up and save it</span></div></article>
+          <article class="card"><h3>Control the voice</h3><p>Repeat, speed up, undo, stop.</p>
+            <div class="says"><span class="say">read that again</span><span class="say">speak faster</span><span class="say">undo that</span></div></article>
+        </div>
+      
+      </div>
+    </section>
+
+    <section id="agents" class="section feat-sec">
+      <div class="container">
+        <div class="section-head center">
+          <p class="feat-num">07 · Agents</p>
+          <h2>One Brain, several minds to think with</h2>
+          <p>An agent is a set of instructions, a list of what it may do, and a model, with its own conversation and its own panel. Two come built in; describe any other out loud and the Agent Builder writes it.</p>
+        </div>
+        <div class="cards cards-3">
+          <article class="card agent-card" style="--ag:#a9d4ff"><span class="agent-letter">A</span><h3>The Archivist</h3>
+            <p>The agent that keeps your Brain: files, moves, links, finds and cleans up, on the web too. Every change it makes
+              is real, reported exactly, and can be undone.</p></article>
+          <article class="card agent-card" style="--ag:#ffd27a"><span class="agent-letter">S</span><h3>Sparring</h3>
+            <p>A thinking partner for long conversations, in the car or on a walk. It challenges or reassures,
+              brings in what your Brain holds, and never changes anything, except a synthesis you approved.</p></article>
+          <article class="card agent-card" style="--ag:#a9f0c7"><span class="agent-letter">B</span><h3>The Agent Builder</h3>
+            <p>Interviews you, one short question at a time, then writes a complete agent: role, tone, method,
+              what to avoid, examples. It creates it only when you say yes.</p></article>
+        </div>
+        <div class="feature">
+          <div class="feature-text">
+            <p class="overline">Sparring</p>
+            <h3>Talk an idea through, keep what you decided</h3>
+            <p>Press <kbd>F9</kbd> and think out loud for twenty minutes. Sparring answers in two or three spoken
+              sentences, asks one question that moves things forward, and cites your own notes when they matter.
+              When the idea is ripe, ask for a synthesis: what was decided, the objections and their answers, the
+              open questions, the next steps. It shows in full, and the Archivist files it only after your yes.</p>
+            <div class="says"><span class="say">challenge me honestly</span><span class="say">what do I already have on this?</span><span class="say">sum it up</span><span class="say">yes, save it</span></div>
+          </div>
+          <figure class="shot"><img src="assets/showcase/sparring.webp" alt="Sparring docked on the right: it challenged the idea of opening a talk without slides, then drafted a synthesis shown in full with Save to the Brain and Change it buttons" loading="lazy" width="1280" height="800"><figcaption>Sparring drafted a synthesis: nothing is saved until you approve it</figcaption></figure>
+        </div>
+        <div class="feature flip">
+          <div class="feature-text">
+            <p class="overline">Your own agents</p>
+            <h3>Describe it, never write a prompt</h3>
+            <p>Click <b>+</b> on the rail, or ask for a new agent. The Builder asks what it is for, its tone, how
+              it should behave and what it may do, then shows the whole agent before creating it. Change it later
+              the same way, out loud.</p>
+            <p>Every agent has a settings tile, <b>ⓘ</b> in its title bar: rename it, pick its model, switch each
+              capability on or off, edit its instructions. A new agent only reads; organising your graph is given
+              only when you say so.</p>
+            <div class="says"><span class="say">create an agent for me</span><span class="say">make Sparring less repetitive</span><span class="say">yes, create it</span></div>
+          </div>
+          <div>
+            <figure class="shot"><img src="assets/showcase/agent-builder.webp" alt="The Agent Builder showing a new agent, Talk Coach, in full: capabilities, first words and structured instructions, with Create it and Change it buttons" loading="lazy" width="1280" height="800"><figcaption>A new agent, written for you, created on your yes</figcaption></figure>
+            <div class="mini-shots">
+              <figure class="shot"><img src="assets/showcase/agent-settings.webp" alt="Sparring's settings tile: name, model, three presets (Read only, Assistant, Everything), then an on/off switch for each capability" loading="lazy" width="1280" height="800"><figcaption>Settings: a preset in one click, or a switch per capability</figcaption></figure>
+              <figure class="shot"><img src="assets/showcase/panels.webp" alt="Panels being arranged over the graph" loading="lazy" width="1280" height="800"><figcaption>Panels you move, dock and shrink</figcaption></figure>
+            </div>
+          </div>
+        </div>
+      
+      </div>
+    </section>
+
+    <section id="mcp" class="section section-alt feat-sec">
+      <div class="container">
+        <div class="section-head center">
+          <p class="feat-num">08 · MCP</p>
           <h2>Every AI agent, your rules</h2>
-          <p>MCP is the open standard AI tools use to share context. Your Brain speaks it both ways, on your
-            computer only.</p>
+          <p>MCP is the open standard AI tools use to share context. Your Brain speaks it both ways, on your computer only, and what a tool proposes goes through <a href="#archivist">the same door</a>.</p>
         </div>
         <div class="mcp-flow" role="img" aria-label="Your AI tools (Claude Code, Codex, GitHub Copilot, Cursor, any MCP client) read your Brain and propose; the Archivist agent decides; your agents use MCP servers (docs, code, web search, your apps).">
           <div class="mcp-side">
@@ -347,69 +496,49 @@
           </div>
           <figure class="shot"><img src="assets/showcase/mcp-catalogue.webp" alt="Second tab « Tools for your agents »: a connected server with its tools, key and monthly limit, then « Add a tool »" loading="lazy" width="1280" height="800"><figcaption>Each server: its tools, its key, its limit</figcaption></figure>
         </div>
+      
       </div>
     </section>
 
-    <section id="agents" class="section section-alt">
+    <section id="items" class="section feat-sec">
       <div class="container">
-        <div class="section-head">
-          <p class="overline">Agents</p>
-          <h2>One Brain, several minds to think with</h2>
-          <p>An agent is a set of instructions, a list of what it may do, and a model, with its own conversation
-            and its own panel. Two come built in; describe any other out loud and the Agent Builder writes it.</p>
+        <div class="section-head center">
+          <p class="feat-num">09 · Recipes, tables, paper</p>
+          <h2>From the page to the fridge door</h2>
+          <p>Some items are more than a note. A recipe is read from its page with its servings, its ingredients and its steps; items line up in a table you can sort and edit; a grocery list adds itself up by aisle and prints.</p>
         </div>
-        <div class="cards cards-3">
-          <article class="card agent-card" style="--ag:#a9d4ff"><span class="agent-letter">A</span><h3>The Archivist</h3>
-            <p>The agent that keeps your Brain: files, moves, links, finds and cleans up, on the web too. Every change it makes
-              is real, reported exactly, and can be undone.</p></article>
-          <article class="card agent-card" style="--ag:#ffd27a"><span class="agent-letter">S</span><h3>Sparring</h3>
-            <p>A thinking partner for long conversations, in the car or on a walk. It challenges or reassures,
-              brings in what your Brain holds, and never changes anything, except a synthesis you approved.</p></article>
-          <article class="card agent-card" style="--ag:#a9f0c7"><span class="agent-letter">B</span><h3>The Agent Builder</h3>
-            <p>Interviews you, one short question at a time, then writes a complete agent: role, tone, method,
-              what to avoid, examples. It creates it only when you say yes.</p></article>
+        <div class="gallery" aria-label="Typed items, the table and printing">
+          <figure class="shot"><img src="assets/showcase/table.webp" alt="The table: items in rows and columns, sorted, with a saved view" loading="lazy" width="1280" height="800"><figcaption>The table: sort, search, edit in place</figcaption></figure>
+          <figure class="shot"><img src="assets/showcase/grocery.webp" alt="A grocery list added up by aisle from several recipes" loading="lazy" width="1280" height="800"><figcaption>A grocery list, added up by aisle</figcaption></figure>
+          <figure class="shot"><img src="assets/showcase/print-recipe.webp" alt="A recipe laid out for printing on Letter paper" loading="lazy" width="1280" height="800"><figcaption>A recipe, ready for paper</figcaption></figure>
         </div>
-        <div class="feature">
-          <div class="feature-text">
-            <p class="overline">Sparring</p>
-            <h3>Talk an idea through, keep what you decided</h3>
-            <p>Press <kbd>F9</kbd> and think out loud for twenty minutes. Sparring answers in two or three spoken
-              sentences, asks one question that moves things forward, and cites your own notes when they matter.
-              When the idea is ripe, ask for a synthesis: what was decided, the objections and their answers, the
-              open questions, the next steps. It shows in full, and the Archivist files it only after your yes.</p>
-            <div class="says"><span class="say">challenge me honestly</span><span class="say">what do I already have on this?</span><span class="say">sum it up</span><span class="say">yes, save it</span></div>
-          </div>
-          <figure class="shot"><img src="assets/showcase/sparring.webp" alt="Sparring docked on the right: it challenged the idea of opening a talk without slides, then drafted a synthesis shown in full with Save to the Brain and Change it buttons" loading="lazy" width="1280" height="800"><figcaption>Sparring drafted a synthesis: nothing is saved until you approve it</figcaption></figure>
+        <p class="limit-note">More in the <a href="docs.html">Docs</a>, and a guide: <a href="howto.html#recipe-grocery">From a recipe to the grocery list</a>.</p>
+      </div>
+    </section>
+
+    <section id="alive" class="section section-alt feat-sec"><span id="product"></span>
+      <div class="container">
+        <div class="section-head center">
+          <p class="feat-num">10 · Alive</p>
+          <h2>Built with a game engine, alive in real time</h2>
+          <p>Thoughts bloom when you capture them, places glow, and seven themes change the look, the music and the sounds: four sound worlds for seven looks.</p>
         </div>
-        <div class="feature flip">
-          <div class="feature-text">
-            <p class="overline">Your own agents</p>
-            <h3>Describe it, never write a prompt</h3>
-            <p>Click <b>+</b> on the rail, or ask for a new agent. The Builder asks what it is for, its tone, how
-              it should behave and what it may do, then shows the whole agent before creating it. Change it later
-              the same way, out loud.</p>
-            <p>Every agent has a settings tile, <b>ⓘ</b> in its title bar: rename it, pick its model, switch each
-              capability on or off, edit its instructions. A new agent only reads; organising your graph is given
-              only when you say so.</p>
-            <div class="says"><span class="say">create an agent for me</span><span class="say">make Sparring less repetitive</span><span class="say">yes, create it</span></div>
-          </div>
-          <div>
-            <figure class="shot"><img src="assets/showcase/agent-builder.webp" alt="The Agent Builder showing a new agent, Talk Coach, in full: capabilities, first words and structured instructions, with Create it and Change it buttons" loading="lazy" width="1280" height="800"><figcaption>A new agent, written for you, created on your yes</figcaption></figure>
-            <div class="mini-shots">
-              <figure class="shot"><img src="assets/showcase/agent-settings.webp" alt="Sparring's settings tile: name, model, three presets (Read only, Assistant, Everything), then an on/off switch for each capability" loading="lazy" width="1280" height="800"><figcaption>Settings: a preset in one click, or a switch per capability</figcaption></figure>
-              <figure class="shot"><img src="assets/showcase/panels.webp" alt="Panels being arranged over the graph" loading="lazy" width="1280" height="800"><figcaption>Panels you move, dock and shrink</figcaption></figure>
-            </div>
-          </div>
+<div class="gallery" aria-label="More screens">
+          <figure class="shot shot-lead"><img src="assets/showcase/graph-overview.webp" alt="The whole brain from afar in the Evening theme" loading="lazy" width="1280" height="800"><figcaption>The same brain, Evening theme</figcaption></figure>
+          <figure class="shot"><img src="assets/showcase/panels.webp" alt="Panels being arranged: Sparring dragged across the graph while the right edge lights up where it will dock" loading="lazy" width="1280" height="800"><figcaption>Panels: drag one, the place it will land lights up</figcaption></figure>
+          <figure class="shot"><img src="assets/showcase/live.webp" alt="Live conversation: a spoken question about how two ideas connect, the answer in the panel and the path drawn in the graph" loading="lazy" width="1280" height="800"><figcaption>Talk live (F9), the graph follows</figcaption></figure>
+          <figure class="shot"><img src="assets/showcase/engine-room.webp" alt="The engine room with real measurements of the local engine" loading="lazy" width="1280" height="800"><figcaption>The engine room, real numbers only</figcaption></figure>
+          <figure class="shot"><img src="assets/showcase/costs.webp" alt="Real OpenAI costs and tokens read from OpenAI" loading="lazy" width="1280" height="800"><figcaption>Your real AI costs</figcaption></figure>
         </div>
       </div>
     </section>
 
-
-    <section id="principles" class="section">
+    <section id="yours" class="section feat-sec"><span id="principles"></span>
       <div class="container">
-        <div class="section-head">
-          <p class="overline">Principles</p>
+        <div class="section-head center">
+          <p class="feat-num">11 · Yours</p>
           <h2>A second brain you own, end to end</h2>
+          <p>A file and a folder on your disk, your own key, plain formats, and the source under the MIT licence.</p>
         </div>
         <div class="cards cards-3">
           <article class="card">
@@ -430,10 +559,55 @@
               from Morning to Neon, change the look, the music and the sounds.</p>
           </article>
         </div>
-        <ul class="principles" aria-label="Principles">
-          <li>Data ownership</li><li>Plain, documented formats</li><li>Voice first</li>
-          <li>Real or nothing</li><li>Open source</li><li>AI-native development</li>
-        </ul>
+        <div class="feat-more">
+        <div class="feature flip">
+          <div class="feature-text">
+            <p class="overline">Brain packs</p>
+            <h3>Share a part of your brain as one file</h3>
+            <p>Export a project, a theme or a search as a <code>.brain</code> pack: a zip with a manifest and a
+              plain SQLite database, optionally with the originals. Imported, a pack becomes a layer you can switch
+              off, merge into your own brain, or remove without touching your data.</p>
+            <ul>
+              <li>Checksummed, opened read-only, never executed</li>
+              <li>Imported text is treated as data, never as instructions</li>
+              <li>Settings, keys and conversations never leave</li>
+            </ul>
+            <div class="says"><span class="say">export the Renovation project</span><span class="say">switch the pack off</span></div>
+          </div>
+          <figure class="shot"><img src="assets/showcase/packs.webp" alt="The Brain packs dialog exporting the Local-first software place, 7 items, with a preview of what leaves" loading="lazy" width="1280" height="800"><figcaption>Export with a preview of exactly what leaves</figcaption></figure>
+        </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="method" class="section">
+      <div class="container">
+        <div class="section-head">
+          <p class="overline">The method</p>
+          <h2>Capture, Organise, Distil, Express</h2>
+          <p>Second Brain GD follows the CODE method and files everything in PARA. You do the capturing; the
+            Archivist agent does the filing; the graph does the remembering.</p>
+        </div>
+        <ol class="code-flow">
+          <li><span class="code-letter">C</span><h3>Capture anything</h3>
+            <p>Type, paste, speak, drop a file, send the page you are reading from Edge or Chrome, or grab the clipboard. One intake,
+              whatever the input.</p></li>
+          <li><span class="code-letter">O</span><h3>Organise, for you</h3>
+            <p>The archivist files each input in a project, area or resource, and creates the place when none
+              fits. You get a one-line receipt, and Undo.</p></li>
+          <li><span class="code-letter">D</span><h3>Distil the essence</h3>
+            <p>Long documents get a summary, key points, people and concepts. Related ideas are linked by meaning,
+              across languages.</p></li>
+          <li><span class="code-letter">E</span><h3>Express and share</h3>
+            <p>Search by meaning, ask how two ideas connect, think an idea through with Sparring and keep its
+              synthesis, and export part of your brain as a pack someone else can import.</p></li>
+        </ol>
+        <div class="para" aria-label="PARA">
+          <div><b>Projects</b><span>an outcome with a deadline</span></div>
+          <div><b>Areas</b><span>an ongoing responsibility</span></div>
+          <div><b>Resources</b><span>a topic you care about</span></div>
+          <div><b>Archives</b><span>what is no longer active</span></div>
+        </div>
       </div>
     </section>
 
@@ -541,7 +715,7 @@
       </div>
     </section>
 
-    <section id="journal" class="section section-alt">
+    <section id="loops" class="section section-alt"><span id="journal"></span>
       <div class="container">
         <div class="section-head">
           <p class="overline">Development journal</p>
@@ -1153,10 +1327,11 @@
   <footer class="footer">
     <div class="container footer-inner">
       <span><img src="assets/logo.svg" alt="" width="20" height="20"> Second Brain GD</span>
-      <span class="muted"><a href="howto.html">How-to</a> · <a href="docs.html">Docs</a> · <a href="#journal">Journal</a> · <a href="https://github.com/sonixz/second-brain-gd" rel="noopener">GitHub</a> · Local-first knowledge system · Godot + Python</span>
+      <span class="muted"><a href="howto.html">How-to</a> · <a href="docs.html">Docs</a> · <a href="semantic.html">How it thinks</a> · <a href="#loops">Loops</a> · <a href="https://github.com/sonixz/second-brain-gd" rel="noopener">GitHub</a> · Local-first knowledge system · Godot + Python</span>
     </div>
   </footer>
-  <script src="js/main.js?v=2026-11-11d"></script>
+  <script src="js/main.js?v=2026-11-13a"></script>
+  <script src="js/features.js?v=2026-11-13a"></script>
   <script src="js/brain-demo.js?v=2026-11-11d"></script>
 </body>
 </html>

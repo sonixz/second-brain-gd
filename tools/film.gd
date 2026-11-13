@@ -73,4 +73,16 @@ func film_open() -> void:
 	while int(b.get("classified")) == 0 and Time.get_ticks_msec() < end:
 		await pause(0.2)
 	mark("receipt")
-	await pause(4.0)
+	await pause(1.6)
+	mark("receipt-shown")
+	await pause(2.4)
+
+
+## The Captures view: everything that came in, how (typed, spoken, a page, a file) and where it went.
+func film_captures() -> void:
+	(b.get("toast") as Control).visible = false
+	await b.call("set_view", "captures")
+	await pause(1.5)
+	stage()
+	mark("captures")
+	await pause(3.0)

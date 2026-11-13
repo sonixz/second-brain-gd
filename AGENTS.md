@@ -21,7 +21,8 @@ whole branch and not only its last commit, and say in your report what was updat
 - **README.md and `docs/architecture/`:** when the feature list or the way the pieces talk changed.
 
 `python3 tools/check_docs.py` (the tests run it) fails on a dead link, a missing picture, an anchor that no longer
-exists, a guide that never reached the How-to page or a loop count gone stale on the home page. It cannot tell
+exists, a guide that never reached the How-to page, a loop count gone stale on the home page, a page whose menu
+is not the home page's, or an index of features that no longer matches the numbered sections. It cannot tell
 whether a sentence is still true: that part is yours. The catch-up of 2026-11-11 shows the work one loop's
 documentation takes: [docs/plans/plan-docs-catchup.md](docs/plans/plan-docs-catchup.md).
 

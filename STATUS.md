@@ -22,7 +22,7 @@ A snapshot of what works today. The history of each loop is in [DEVLOG](DEVLOG.m
 | **MCP out** | Agents use any MCP server you connect: a hand-checked starter list, the official registry, keys, account sign-in (OAuth), local programs with approval; writes outside confirmed each time; budget; ⇠● ⇢● lights |
 | **Your data** | Backups, restore, export, packs, repair, start fresh, uninstall; English or French (FR / EN) |
 | **Themes** | Seven built in (Morning, Focus, Evening, Forest, Terminal, Paper, Neon), each with its own style; contrast checked for every theme |
-| **Docs and How-to** | The Docs page for every feature, 21 step-by-step guides captured from the real app (19 replayed on 2026-11-11; the two that drive a real Edge date from 2026-11-05), the home page's loops up to the graph views; a check that links, pictures, guides and counts hold together (`tools/check_docs.py`, run by the tests); the rule that keeps them current is in [AGENTS](AGENTS.md) |
+| **Docs and How-to** | The Docs page for every feature, 21 step-by-step guides captured from the real app (19 replayed on 2026-11-11; the two that drive a real Edge date from 2026-11-05), the home page's loops up to the graph views; on the branch `site-film`, the home page in the feature format (a common menu, an index of eleven features, sections 01 and 02 written, the others to rewrite); a check that links, pictures, guides, counts, the menu and the index of features hold together (`tools/check_docs.py`, run by the tests); the rule that keeps them current is in [AGENTS](AGENTS.md) |
 
 ## Tests (2026-11-13, on `main`)
 

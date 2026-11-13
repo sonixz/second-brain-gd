@@ -247,3 +247,10 @@
   .hits li, .tl { animation: none; }
   .pipe-track::after, .ctx-bar i { transition: none; }
 }
+
+/* the page's own sections, under the hero (the main menu is the same on every page) */
+.onpage { border-bottom: 1px solid var(--border); background: var(--bg-2); }
+.onpage .container { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding-top: 10px; padding-bottom: 10px; }
+.onpage span { color: var(--faint); font-size: .74rem; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; margin-right: 8px; }
+.onpage a { color: var(--muted); text-decoration: none; padding: 5px 12px; border-radius: 999px; font-size: .9rem; }
+.onpage a:hover { color: var(--mint-soft); background: rgba(255, 255, 255, .05); }

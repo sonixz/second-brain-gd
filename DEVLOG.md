@@ -2,6 +2,19 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## SITE-J: the home page's skeleton in the feature format (2026-11-13)
+
+Third loop of [the website and film plan](docs/plans/plan-site-film.md), on `site-film`. The home page takes the
+format of Agent Manager's new site in its own colours: a menu of four entries, the same on every page; an index,
+« Eleven things it does for you »; a bar that follows the reader; and numbered sections on one template, a
+headline that says what the user gets and a picture with numbered points, a card per point. Two sections are
+written in full, as the model for the nine others: 01 Capture (« Type it, say it, drop it, send it ») on the
+Captures view, and 02, the page's thread asked by the owner the same day: « One door into your Brain. The
+Archivist keeps it. », with the three ways in, a filing explained, the Archivist's five directives and the limit
+said as it is (the door is for what comes in). The other sections keep today's content under their new heads until
+SITE-L and SITE-M. The two pictures come from the film tool (`FILM_STILLS=1`). `tools/check_docs.py` learns the
+common menu and the index of features.
+
 ## FILM-I: the app can be filmed, with its own sound (2026-11-13)
 
 Second loop of [the website and film plan](docs/plans/plan-site-film.md), on the branch `site-film`. `tools/film.sh`

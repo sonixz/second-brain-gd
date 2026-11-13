@@ -16,7 +16,7 @@ the other while he is away (`/loop`); each firing reads « Where it stands » be
 |---|---|---|---|
 | CI-H | **done** 2026-11-13 | 19e8173, b33cbfe | the five jobs pass (run 43522978578) |
 | FILM-I | **done** 2026-11-13 | on `site-film` | a 15-second clip of the opening scene, with the app's sound |
-| SITE-J | to do | | |
+| SITE-J | **done** 2026-11-13 | on `site-film` | the page in the new format: menu, index, bar, sections 01 and 02 in full |
 | FILM-K | to do | | |
 | SITE-L | to do | | |
 | SITE-M | to do | | |
@@ -159,6 +159,40 @@ The list of features, to settle in this loop (working titles):
 | 09 | Recipes, tables, paper: typed items, the table, the grocery list, printing | Product |
 | 10 | Alive: seven themes, four sound worlds | Product, Principles |
 | 11 | Yours: on your disk, backups, packs, export, open source | Principles, Open source |
+
+**SITE-J done 2026-11-13.** The home page is rebuilt on the branch:
+
+- **Menu:** Features, How-to, Docs, Loops and GitHub, the same on the four pages (the How-to generator too). The
+  « How it thinks » page, which had a menu of its own sections, lists them under its hero instead; the home page
+  links to it from section 05's band and from its footer.
+- **Index** « Eleven things it does for you »: eleven tiles, the Archivist's set apart; **the bar** that follows the
+  reader (the eleven, Roadmap, Loops) with its progress line.
+- **The template** (`public/css/features.css`, `public/js/features.js`): number and family, headline, two lines,
+  a picture with numbered points and a card per point (lines drawn from card to point; under 960 px the cards go
+  under the picture), « Whole picture », the « say it » phrases.
+- **01 Capture** « Type it, say it, drop it, send it », written in full on a picture of the Captures view: typed,
+  spoken, a file, a web page, where it went, what waits for you; the folder of notes in a sentence.
+- **02 The Archivist** « One door into your Brain. The Archivist keeps it. », written in full: the door (three ways
+  in, one door, the Brain), a filing with its four points, the five directives, and the limit said as it is.
+  The earlier block « Drop it in. It is filed before you look up. » is replaced by it.
+- **03 to 11** carry today's content under their new numbered heads (Graph, Views and time, Find, Voice, Agents,
+  MCP, Recipes-tables-paper, Alive, Yours); 04 and 09, which had no section, show the Docs' pictures for now.
+  SITE-L and SITE-M rewrite them on the template. The method (CODE, PARA) and the architecture follow section 11
+  until SITE-M places them.
+- **Pictures:** `feat-captures.webp` and `feat-receipt.webp`, taken with `FILM_STILLS=1 tools/film.sh open captures`
+  at 1920×1080 (the film's own framing and scale).
+- **Anchors kept:** `#loops` is the loops' section, `#journal`, `#product` and `#principles` still land.
+- **`tools/check_docs.py`** now fails when a page's menu is not the home page's, when the index does not have a
+  tile per numbered section in order, when the bar does not follow them, or when the title's count is wrong; both
+  were tried on a broken copy. AGENTS.md says so.
+- Every new sentence checked against the code or STATUS. Looked at rendered at 1440 px and 480 px.
+- The hero is unchanged but for its sentence (« One agent keeps the door… ») and a third button; the film takes the
+  demonstration's place at SITE-O.
+
+Old section → new section, so far: Voice → 06; Method → after 11 (to place); Product: intake → 01 and 02, zoom and
+originals → 03, paths and web → 05, packs → 11, the gallery → 10; « How it thinks » band → after 05; MCP → 08;
+Agents → 07; Principles → 11 (its « Alive » card says what 10 says); Architecture → after 11 (to the Docs at
+SITE-M); Roadmap, Loops, Open source: as they were.
 
 ## The Archivist, keeper of the door (owner, 2026-11-13)
 
