@@ -24,6 +24,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: engine/requirements.lock
+      # The tests load the engine's routes in the runner's own Python: it needs the engine's packages, the same
+      # pinned, hash-checked wheels the app installs for itself (engine/installer/steps.py).
+      - name: The engine's packages (pinned, hash-checked)
+        run: >-
+          python -m pip install --require-hashes --only-binary=:all: --no-input
+          --disable-pip-version-check -r engine/requirements.lock
       - name: Unit and integration tests (real venv, real API)
         run: python -m unittest discover -s tests/python -t . -v
 
@@ -37,6 +45,14 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+          cache: pip
+          cache-dependency-path: engine/requirements.lock
+      # The tests load the engine's routes in the runner's own Python: it needs the engine's packages, the same
+      # pinned, hash-checked wheels the app installs for itself (engine/installer/steps.py).
+      - name: The engine's packages (pinned, hash-checked)
+        run: >-
+          python -m pip install --require-hashes --only-binary=:all: --no-input
+          --disable-pip-version-check -r engine/requirements.lock
       - name: Download Godot
         run: |
           curl -fsSL -o godot.zip "https://github.com/godotengine/godot/releases/download/${GODOT_VERSION}-stable/Godot_v${GODOT_VERSION}-stable_linux.x86_64.zip"
