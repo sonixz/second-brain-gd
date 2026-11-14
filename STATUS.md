@@ -22,9 +22,9 @@ A snapshot of what works today. The history of each loop is in [DEVLOG](DEVLOG.m
 | **MCP out** | Agents use any MCP server you connect: a hand-checked starter list, the official registry, keys, account sign-in (OAuth), local programs with approval; writes outside confirmed each time; budget; ⇠● ⇢● lights |
 | **Your data** | Backups, restore, export, packs, repair, start fresh, uninstall; English or French (FR / EN) |
 | **Themes** | Seven built in (Morning, Focus, Evening, Forest, Terminal, Paper, Neon), each with its own style; contrast checked for every theme |
-| **Docs and How-to** | The Docs page for every feature, 21 step-by-step guides captured from the real app (19 replayed on 2026-11-11; the two that drive a real Edge date from 2026-11-05), the home page's loops up to the graph views; on the branch `site-film`, the home page in the feature format (a common menu, an index of ten features, sections 01 and 02 written, the others on hold) with a one-minute film in its hero (voice, music; to be heard by the owner); a check that links, pictures, guides, counts, the menu and the index of features hold together (`tools/check_docs.py`, run by the tests); the rule that keeps them current is in [AGENTS](AGENTS.md) |
+| **Docs and How-to** | The Docs page for every feature, 21 step-by-step guides captured from the real app (19 replayed on 2026-11-11; the two that drive a real Edge date from 2026-11-05), the home page: a one-minute film of the real app in its hero (voice, music), the Archivist's section, ten tiles to the Docs, the loops up to the film; a check that links, pictures, guides, counts, the menu and the index of features hold together (`tools/check_docs.py`, run by the tests); the rule that keeps them current is in [AGENTS](AGENTS.md) |
 
-## Tests (2026-11-13, on `site-film`)
+## Tests (2026-11-13, on `main` with the website and the film merged)
 
 | Suite | Platform | Result |
 |---|---|---|
@@ -53,19 +53,17 @@ the engine). Both are told in [DEVLOG](DEVLOG.md), CI-H.
 
 - Public on GitHub since 2026-11-10, under the MIT licence. Its page has a description, the website's link and
   twenty topics since 2026-11-13; still no tag and no release.
-- `main`, in one folder (`C:\git-2026\second-brain-gd`), the same as GitHub; the owner's launcher starts the app
-  from here. Since 2026-11-13 a second branch, `site-film`, in its own folder beside it
-  (`second-brain-gd-worktrees\site-film`): the website and the film of [the plan](docs/plans/plan-site-film.md),
-  not merged and not online until the owner's go. The graph views were built on a branch (`am/second-brain-gd`, in its own folder, with a « beta »
-  shortcut), tried by the owner, then merged on 2026-11-11; the branch, its folder and the shortcut were removed.
+- One branch, `main`, in one folder (`C:\git-2026\second-brain-gd`), the same as GitHub; the owner's launcher starts
+  the app from here. The website and the film were built on a branch, `site-film`, merged on 2026-11-13 at the
+  owner's go; the branch and its folder were removed.
+- The website goes online through gd-project's publication, which takes `public/` from `main` at its next run.
 
 ## Waiting on the owner
 
-- [The website and film plan](docs/plans/plan-site-film.md) (CI-H to REL-P, agreed 2026-11-13) runs on a branch,
-  `site-film`. At its end: the film to check by ear, then the go to merge and publish, and the first pre-release.
+- The film: to listen to (the agent cannot: the pronunciation of « G.D. », the music, the mix), and the rights on
+  its ElevenLabs audio to confirm. It is on `main`: it goes online at gd-project's next publication.
+- The first pre-release ([plan](docs/plans/plan-site-film.md), REL-P): the version's name, the package rebuilt.
 - VIEW-G, the constellation in 3D: go or not ([plan](docs/plans/plan-graph-views.md)).
-- The rights on the ElevenLabs audio (the plan of the account): not confirmed since the audit, needed before a film
-  is published.
 - From the [audit](docs/audit-before-public.md), not confirmed done: rotate the OpenAI, OpenAI admin and ElevenLabs
   keys; GitHub's « Keep my email addresses private ».
 - A first account sign-in (Notion or GitHub) for an MCP server.

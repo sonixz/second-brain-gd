@@ -1,50 +1,7 @@
-// The home page's feature format (SITE-J): the bar that follows the reader, and the pictures with numbered points.
+// The home page: the film in the hero, and the picture with numbered points (docs/plans/plan-site-film.md).
 // No dependency, no network call.
 (function () {
   "use strict";
-  var header = document.querySelector(".site-header");
-  var nav = document.querySelector(".featnav");
-  var sections = Array.prototype.slice.call(document.querySelectorAll(".feat-sec"));
-
-  // ---------------------------------------------------------------- the bar that follows the reader
-  if (nav && sections.length) {
-    var links = Array.prototype.slice.call(nav.querySelectorAll("a"));
-    var progress = nav.querySelector(".featnav-progress");
-    var index = document.querySelector(".features-index");
-    var last = document.getElementById(links[links.length - 1].getAttribute("href").slice(1)) || sections[sections.length - 1];
-    var current = "";
-    var onScroll = function () {
-      var h = header ? header.offsetHeight : 57;
-      document.documentElement.style.setProperty("--header-h", h + "px");
-      var top = index ? index.getBoundingClientRect().bottom : 0;
-      var end = last.getBoundingClientRect().bottom;
-      nav.classList.toggle("show", top < h && end > h + 80);
-      var first = sections[0].getBoundingClientRect().top + window.scrollY;
-      var total = last.getBoundingClientRect().bottom + window.scrollY - first;
-      var done = Math.max(0, Math.min(1, (window.scrollY + h - first) / Math.max(1, total)));
-      if (progress) progress.style.transform = "scaleX(" + done.toFixed(4) + ")";
-      var now = "";
-      links.forEach(function (a) {
-        var t = document.getElementById(a.getAttribute("href").slice(1));
-        if (t && t.getBoundingClientRect().top - h - 60 <= 0) now = a.getAttribute("href");
-      });
-      if (now !== current) {
-        current = now;
-        links.forEach(function (a) {
-          var on = a.getAttribute("href") === now;
-          a.classList.toggle("on", on);
-          if (on && nav.classList.contains("show")) {
-            var box = nav.querySelector(".featnav-in");
-            box.scrollLeft = a.offsetLeft - box.clientWidth / 2 + a.clientWidth / 2;
-          }
-        });
-      }
-    };
-    window.addEventListener("scroll", onScroll, { passive: true });
-    window.addEventListener("resize", onScroll);
-    onScroll();
-  }
-
   // ---------------------------------------------------------------- the film in the hero
   // Muted and looping while it is in view; « Sound » plays it once from the start with its narration, then it goes
   // back to the silent loop. With reduced motion or data saving it does not start by itself: the poster, and a click.

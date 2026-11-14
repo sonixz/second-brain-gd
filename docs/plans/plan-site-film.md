@@ -18,11 +18,11 @@ the other while he is away (`/loop`); each firing reads « Where it stands » be
 | FILM-I | **done** 2026-11-13 | on `site-film` | a 15-second clip of the opening scene, with the app's sound |
 | SITE-J | **done** 2026-11-13 | on `site-film` | the page in the new format: menu, index, bar, sections 01 and 02 in full |
 | FILM-K | **done** 2026-11-13 | on `site-film` | seven scenes filmed, three with the real archivist; the storyboard and the words agreed |
-| SITE-L | on hold | | the owner, 2026-11-13: the film first, and the site « super complexe »: to simplify before more is written |
-| SITE-M | on hold | | as SITE-L |
+| SITE-L | not built | | replaced by the short page (owner's go, 2026-11-13) |
+| SITE-M | not built | | replaced by the short page |
 | FILM-N | **done** 2026-11-13, to be heard by the owner | on `site-film` | the film: 62.5 s, voice, music, titles, the closing card |
-| SITE-O | the hero prepared | on `site-film` | the film in the Archivist's tile, the living graph behind; the rest, the merge and the publication wait for the owner |
-| REL-P | to do | | after SITE-O, with the owner |
+| SITE-O | **done** 2026-11-13 | merged into `main` | the short page: the film in the hero, the Archivist, ten tiles; online at gd-project's next publication |
+| REL-P | to do | | with the owner: the version's name, the package rebuilt |
 
 **The order changed on 2026-11-13.** The owner, seeing the skeleton: « t'as pas framé le vidéo encore […] Ça me
 semble super complexe. Je sais pas si on pourrait simplifier ça. Mais travaille-moi le vidéo, là. C'est le vidéo qui
@@ -30,6 +30,12 @@ va débloquer tout », then, on the hero: « on laisse le background, j'aime le 
 l'espèce de tuile de l'archiviste […] j'aime le fait que c'est intégré dans les heroes ». So FILM-N came right
 after FILM-K, the film went into the Archivist's tile of the hero, and SITE-L and SITE-M wait: the page is to be
 simplified with him before more sections are written.
+
+**The short page (owner, 2026-11-13).** The agent proposed it once the film existed, since the film goes round the
+features: the hero with the film, the Archivist's section, the features as tiles that lead to the Docs, then the
+roadmap, the loops and « get started ». The owner first took « Recipes, tables, paper » off (« la section 09 a pas
+vraiment rapport »), then: « go pour la page courte. tu peux commit et push sur main ». So SITE-L and SITE-M are
+not built, and the branch is merged.
 
 **What waits for the owner's return, whatever the loops finish:** the film by ear (the agent cannot listen), the
 rights on the ElevenLabs audio, the go to merge `site-film` into `main` and to publish, the first pre-release.
@@ -319,6 +325,21 @@ with its narration, pause, full screen, a poster and no autoplay with reduced mo
 description. The scripted demonstration's elements stay in the page, out of sight, because its script draws the
 graph behind; where the demonstration goes is part of the site's simplification. Left of SITE-O: README, the
 phone check with the film, the merge and the publication, all after the owner's go.
+
+**SITE-O done 2026-11-13: the short page, merged into `main`.** The home page is: the hero (the living graph, the
+film in the Archivist's tile); « One door into your Brain. The Archivist keeps it. » with the door, a filing
+explained on a frame of the film (the real Archivist's receipt), its five directives and the limit; « Ten things
+it does for you », ten tiles that each open the page that explains one (the Docs, « How it thinks », the themes'
+loop); the roadmap; the loops, with a card for this one (51); « get started ». Gone from the home page: the nine
+long sections (their content is in the Docs), the bar that followed the reader, the « How it thinks » band (the
+tile and the footer link to the page), the method and the architecture (in the Docs). The old anchors still land.
+`tools/check_docs.py` checks the tiles' numbers and count instead of the sections. README: the film's poster and a
+link. The « Connect an AI tool » guide was captured again (its step 4 shows the restore point's name, now in the
+interface's language). Tests on the merged tree: see STATUS.
+
+Old section → where it is now: Voice, Agents, MCP, Product's blocks, Principles, Method, Architecture → the Docs
+(tiles 01 to 10 lead there); « How it thinks » band → tile 05 and the footer; Roadmap, Loops, Open source → as
+they were.
 
 ## REL-P — the first pre-release
 

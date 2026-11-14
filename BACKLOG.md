@@ -4,15 +4,16 @@ Ordered by priority. ✅ = done.
 
 ## Next (2026-11-13)
 
-**The website in Agent Manager's new format, and a film with voice and music** (owner, 2026-11-13):
-[plan](docs/plans/plan-site-film.md), CI-H to REL-P, agreed on 2026-11-13 and in progress (its « Where it stands »
-table says how far). The Archivist as the keeper of the door is its thread. The film is made (to be heard by the
-owner); the site's sections wait: the owner finds the page too complex and wants it simplified first. The picture
-of section 02 shows a scripted receipt: to retake from the film's real one with the site's rework. It carries the
-two points the owner wanted to come back to:
-- ✅ **GitHub CI** (loop CI-H, 2026-11-13): green again in its five jobs. Details in [STATUS](STATUS.md).
-- **The public repository's page** (owner's note, 2026-11-10): description, website link and topics set on
-  2026-11-13; a tag and a first release are loop REL-P (the last package was built on 2026-11-05).
+**The website and its film** ([plan](docs/plans/plan-site-film.md), owner, 2026-11-13): done and on `main`. The
+front page is short: a film of the real app in the hero, the Archivist as the keeper of the door, ten tiles to the
+Docs. What is left of it:
+- The film has not been listened to by anyone yet (the agent cannot): the pronunciation of « G.D. », the music, the
+  mix. The rights on its ElevenLabs audio depend on the account's plan: to confirm.
+- **A first release** (loop REL-P): a tag, the package rebuilt (the last one dates from 2026-11-05), its name.
+- ✅ GitHub CI (loop CI-H, 2026-11-13): green again in its five jobs. ✅ The repository's page: description,
+  website link and topics (2026-11-13).
+- The scripted demonstration that stood in the hero is no longer shown (its script still draws the hero's graph):
+  to bring back somewhere, or to take out of the script.
 
 Documentation: caught up on 2026-11-11 ([plan](docs/plans/plan-docs-catchup.md), DOC-E to SITE-G); the rule in
 [AGENTS](AGENTS.md) and `tools/check_docs.py` keep it current. What is left of it:
@@ -36,8 +37,7 @@ Graph views ([plan](docs/plans/plan-graph-views.md)): A to F, H and I are on `ma
 - Meaning map: point out misfiled and lone items, keep old points still when items arrive, name the islands by theme.
 - A Godot check that fails now and then (« the Captures view lists what came in, newest first »): cause not found.
 - ✅ The automatic restore point before a tool's changes, and the two lines a tool's proposal leaves in an item,
-  follow the interface's language (2026-11-13, on `site-film`). Left: the How-to picture of the « Connect an AI
-  tool » guide, step 4, still shows the French name (`tools/howto.sh ai-tool` after the merge).
+  follow the interface's language (2026-11-13); the « Connect an AI tool » guide was captured again.
 - A theme switch writes about two hundred font errors in the log (`_font_get_ascent: Parameter "fd" is null`,
   from `set_theme_choice`); nothing shows on screen. Seen while filming, 2026-11-13; cause not looked for.
 
@@ -107,6 +107,9 @@ Small follow-ups from 5b:
 
 ## Decisions taken
 
+- 2026-11-13: the film comes first (« c'est le vidéo qui va débloquer tout »); the front page is short: the film in
+  the hero, the Archivist as the keeper of the door (« gardien des portes »), ten tiles to the Docs; the recipes'
+  section is off it. The film's narration is the nine lines the owner agreed to, in the voice of Agent Manager's film.
 - 2026-11-11: the graph views are merged into `main` after the owner tried them (« c'était très bon »); the failing
   CI comes after (« on va y revenir »).
 - 2026-11-10: the repository is public.

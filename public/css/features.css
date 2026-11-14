@@ -1,6 +1,6 @@
-/* The home page's feature format (docs/plans/plan-site-film.md, SITE-J): an index of numbered features, a bar
-   that follows the reader, and sections built on one template with an annotated picture. After the format of
-   agent-manager-gd's website, in this site's own colours. Loaded by index.html only. */
+/* The home page (docs/plans/plan-site-film.md): the film in the hero, the Archivist's section with its annotated
+   picture, and the index of features as tiles. After the format of agent-manager-gd's website, in this site's own
+   colours. Loaded by index.html only. */
 
 .section-head.center { margin-left: auto; margin-right: auto; text-align: center; }
 .container.wide { max-width: 1380px; }
@@ -23,30 +23,10 @@
 .fx-grid .fx-key a { border-color: rgba(169, 212, 255, .6); background: linear-gradient(160deg, var(--panel-2), var(--panel)); }
 .fx-grid .fx-key .fx-n { color: var(--mint); }
 
-/* ---------------------------------------------------------------- the bar that follows the reader */
-.featnav { position: fixed; left: 0; right: 0; top: var(--header-h, 57px); z-index: 45; background: rgba(43, 60, 84, .93);
-  backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); transform: translateY(-110%); opacity: 0;
-  transition: transform .35s ease, opacity .35s ease; pointer-events: none; }
-.featnav.show { transform: none; opacity: 1; pointer-events: auto; }
-.featnav-in { max-width: var(--max); margin: 0 auto; padding: 7px 16px; display: flex; gap: 4px; overflow-x: auto; scrollbar-width: none; }
-.featnav-in::-webkit-scrollbar { display: none; }
-.featnav a { flex: none; font-size: .8rem; color: var(--muted); text-decoration: none; padding: 4px 11px; border-radius: 999px; white-space: nowrap;
-  transition: color .2s ease, background .2s ease; }
-.featnav a:hover { color: var(--text); }
-.featnav a.on { color: #13233a; background: var(--mint); font-weight: 600; }
-.featnav-progress { position: absolute; left: 0; right: 0; bottom: -1px; height: 2px; background: linear-gradient(90deg, var(--mint), var(--warm));
-  transform-origin: left; transform: scaleX(0); }
-
-/* ---------------------------------------------------------------- a feature section */
-.feat-sec { scroll-margin-top: 104px; }
+/* ---------------------------------------------------------------- a section's small heading */
 .feat-num { color: var(--mint); font-size: .76rem; font-weight: 700; letter-spacing: .16em; text-transform: uppercase; margin-bottom: .8em; }
-.feat-sec .section-head.center { max-width: 820px; }
-.feat-more { margin-top: clamp(40px, 6vw, 72px); }
-.feat-more > .feature:first-child { margin-top: 0; }
-.feat-note { max-width: 820px; margin: 26px auto 0; text-align: center; color: var(--muted); }
-.planned { margin: 26px 0 0; color: var(--muted); font-size: .92rem; }
-.badge-soon { display: inline-block; font-size: .68rem; font-weight: 700; text-transform: uppercase; letter-spacing: .1em; color: var(--warn);
-  border: 1px solid rgba(255, 210, 122, .5); border-radius: 999px; padding: 1px 9px; margin-right: 8px; }
+#archivist { scroll-margin-top: 70px; }
+#archivist .section-head.center { max-width: 820px; }
 
 /* ---------------------------------------------------------------- a picture with numbered points
    A card per point beside the picture, a line from each card to its point (js/features.js). Under 960 px the
@@ -116,7 +96,7 @@
   .door-arrow small { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .fx-grid a, .anno-card, .hot, .featnav { transition: none; }
+  .fx-grid a, .anno-card, .hot { transition: none; }
 }
 
 /* ---------------------------------------------------------------- the film in the hero

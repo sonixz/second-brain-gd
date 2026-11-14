@@ -13,7 +13,10 @@ you. Godot is the interface, a local Python engine does the work, and your Brain
 It also opens to your other AI tools, on your terms: Claude Code can read it and propose (the archivist decides), and
 your agents can use the MCP servers you connect.
 
-![The graph: one zone per place, the Inbox in the middle, the Archivist on the left](docs/screenshots/showcase/01-graph-overview.png)
+[![The film: the real app in a minute. A thought typed, a PDF dropped, each filed by the Archivist; the graph, its views, a question, an AI tool that proposes](public/assets/video/showcase-poster.webp)](https://sonixz.github.io/gd-project/second-brain/)
+
+**▶ [Watch the film](https://sonixz.github.io/gd-project/second-brain/)** (one minute, with sound, on the website's front
+page), or [get the file](public/assets/video/showcase.mp4). How it was made: [video-production/](video-production/README.md).
 
 | Zoom in: items become cards | Your PDFs, page by page | How is X connected to Y? |
 |---|---|---|

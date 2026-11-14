@@ -2,6 +2,16 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## SITE-O: the short front page, merged (2026-11-13)
+
+With the film made, the owner chose a short page over the eleven long sections (« go pour la page courte. tu peux
+commit et push sur main »), after taking the recipes' section off (« la section 09 a pas vraiment rapport »). The
+front page is now four things: the hero, where the film plays in the Archivist's tile over the living graph;
+« One door into your Brain. The Archivist keeps it. », explained on a frame of the film; « Ten things it does for
+you », tiles that lead to the Docs; and the roadmap, the loops and « get started ». The long sections' content is
+in the Docs. The menu has four entries on every page. `site-film` is merged into `main`
+([plan](docs/plans/plan-site-film.md)).
+
 ## FILM-K and FILM-N: the film (2026-11-13)
 
 The owner, seeing the site's skeleton: « travaille-moi le vidéo, c'est le vidéo qui va débloquer tout ». So the
