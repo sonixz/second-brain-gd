@@ -80,6 +80,7 @@ play at once. The effects are placed where the app plays them.
   owner's ear. The music follows a prompt with timed sections; whether its last hit lands on the card was checked
   on its loudness curve only.
 - **The rights on the ElevenLabs audio are not verified**: they depend on the plan of the owner's account. To
-  confirm before anything is published.
+  confirm: they were not when the film went online on 2026-11-13, with the site (gd-project's publication, on the
+  owner's word).
 - The cost of the real calls was not measured (the key cannot read the account's usage): about ten runs of scenes
   with the real archivist, nine voice takes, one piece of music.

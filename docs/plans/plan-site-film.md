@@ -21,7 +21,7 @@ the other while he is away (`/loop`); each firing reads « Where it stands » be
 | SITE-L | not built | | replaced by the short page (owner's go, 2026-11-13) |
 | SITE-M | not built | | replaced by the short page |
 | FILM-N | **done** 2026-11-13, to be heard by the owner | on `site-film` | the film: 62.5 s, voice, music, titles, the closing card |
-| SITE-O | **done** 2026-11-13 | merged into `main` | the short page: the film in the hero, the Archivist, ten tiles; online at gd-project's next publication |
+| SITE-O | **done** 2026-11-13 | merged into `main` | the short page: the film in the hero, the Archivist, ten tiles; online since 2026-11-13 (gd-project f10ec93, on the owner's word to that session) |
 | REL-P | to do | | with the owner: the version's name, the package rebuilt |
 
 **The order changed on 2026-11-13.** The owner, seeing the skeleton: « t'as pas framé le vidéo encore […] Ça me
@@ -40,6 +40,9 @@ not built, and the branch is merged.
 **What waits for the owner's return, whatever the loops finish:** the film by ear (the agent cannot listen), the
 rights on the ElevenLabs audio, the go to merge `site-film` into `main` and to publish, the first pre-release.
 Nothing goes online before that go.
+
+**2026-11-14:** the go to merge came on 2026-11-13 and the site went online the same evening, published by
+gd-project's session on the owner's word. The film by ear, the rights on the audio and the pre-release still wait.
 
 This plan changes one line of [plan-docs-site.md](plan-docs-site.md) (2026-11-07): « the website keeps its concept
 and its look […] no feature list rolled out on the home page ». The owner now asks for Agent Manager's feature
@@ -361,7 +364,7 @@ The real app only, on a private virtual display, with the film Brain. What is no
 | FILM-K | The story of the film | the nine scenes above (« parfait, montre-moi ça »): the storyboard is shown to him |
 | FILM-N | The narrator's voice | the same as Agent Manager's film (« Eric ») |
 | FILM-N | The narration's words | the nine lines of `video-production/narration.txt`, agreed the same day (« Oui go! Pour les voix tu as tout ce qui faut pour generate avec elevenlabs ») |
-| FILM-N | The rights on the ElevenLabs audio (the plan of the account), not confirmed since the audit | **open**: to confirm before anything is published |
+| FILM-N | The rights on the ElevenLabs audio (the plan of the account), not confirmed since the audit | **open**: not confirmed, and the film is online since 2026-11-13 |
 | SITE-O | The hero: the film in place of the demonstration, or under an unchanged hero | the film replaces the demonstration (« on remplace le démo exactement ») |
 | REL-P | The version's name | an alpha, named by Agent Manager's rule: the number of loops (`v0.50.0-alpha` today) |
 

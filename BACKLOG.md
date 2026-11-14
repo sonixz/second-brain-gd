@@ -4,11 +4,11 @@ Ordered by priority. ✅ = done.
 
 ## Next (2026-11-13)
 
-**The website and its film** ([plan](docs/plans/plan-site-film.md), owner, 2026-11-13): done and on `main`. The
+**The website and its film** ([plan](docs/plans/plan-site-film.md), owner, 2026-11-13): done, on `main` and online since that evening. The
 front page is short: a film of the real app in the hero, the Archivist as the keeper of the door, ten tiles to the
 Docs. What is left of it:
 - The film has not been listened to by anyone yet (the agent cannot): the pronunciation of « G.D. », the music, the
-  mix. The rights on its ElevenLabs audio depend on the account's plan: to confirm.
+  mix. The rights on its ElevenLabs audio depend on the account's plan: to confirm, the film being public now.
 - **A first release** (loop REL-P): a tag, the package rebuilt (the last one dates from 2026-11-05), its name.
 - ✅ GitHub CI (loop CI-H, 2026-11-13): green again in its five jobs. ✅ The repository's page: description,
   website link and topics (2026-11-13).

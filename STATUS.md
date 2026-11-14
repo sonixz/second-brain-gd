@@ -43,25 +43,29 @@ Windows PC. Real calls made while building (with the owner's key or free public 
 
 ## GitHub CI (2026-11-13): passing
 
-The CI workflow (`.github/workflows/ci.yml`) passes in its five jobs since 2026-11-13 (run 43522978578, b33cbfe):
+The CI workflow (`.github/workflows/ci.yml`) passes in its five jobs since 2026-11-13 (run 43522978578, b33cbfe;
+last run on `main`: 43538232742, 5bc3131, the short page):
 Python 3.12 and 3.13 on Ubuntu and on Windows, and the Godot headless end-to-end (287 checks). It had failed on
 every run on `main` from 2026-11-07: the workflow installed no package (no `fastapi` on the runner), and behind
 that one Godot check failed on the runner, a live conversation ended as « closed » instead of « goodbye » (fixed in
 the engine). Both are told in [DEVLOG](DEVLOG.md), CI-H.
 
-## Repository and branches (2026-11-11)
+## Repository and branches (2026-11-14)
 
 - Public on GitHub since 2026-11-10, under the MIT licence. Its page has a description, the website's link and
   twenty topics since 2026-11-13; still no tag and no release.
 - One branch, `main`, in one folder (`C:\git-2026\second-brain-gd`), the same as GitHub; the owner's launcher starts
   the app from here. The website and the film were built on a branch, `site-film`, merged on 2026-11-13 at the
   owner's go; the branch and its folder were removed.
-- The website goes online through gd-project's publication, which takes `public/` from `main` at its next run.
+- The website is online since 2026-11-13 with the short page and the film
+  (<https://sonixz.github.io/gd-project/second-brain/>, read again on 2026-11-14). It goes online through
+  gd-project's publication, which takes `public/` from `main` each time it runs: that repository's commit f10ec93
+  published 5bc3131, on the owner's word to its session. A later change on `main` is online only after the next one.
 
 ## Waiting on the owner
 
 - The film: to listen to (the agent cannot: the pronunciation of « G.D. », the music, the mix), and the rights on
-  its ElevenLabs audio to confirm. It is on `main`: it goes online at gd-project's next publication.
+  its ElevenLabs audio to confirm. It is online since 2026-11-13: both now concern a public film.
 - The first pre-release ([plan](docs/plans/plan-site-film.md), REL-P): the version's name, the package rebuilt.
 - VIEW-G, the constellation in 3D: go or not ([plan](docs/plans/plan-graph-views.md)).
 - From the [audit](docs/audit-before-public.md), not confirmed done: rotate the OpenAI, OpenAI admin and ElevenLabs
