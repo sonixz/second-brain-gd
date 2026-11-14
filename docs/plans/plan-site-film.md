@@ -163,9 +163,9 @@ The list of features, to settle in this loop (working titles):
 | 06 | Everything you can click, you can say | Voice |
 | 07 | Several minds: Sparring, your own agents, missions | Agents |
 | 08 | Every AI tool, your rules: MCP in and out, approvals, Go back | MCP |
-| 09 | Recipes, tables, paper: typed items, the table, the grocery list, printing | Product |
-| 10 | Alive: seven themes, four sound worlds | Product, Principles |
-| 11 | Yours: on your disk, backups, packs, export, open source | Principles, Open source |
+| — | ~~Recipes, tables, paper: typed items, the table, the grocery list, printing~~ (taken off the home page, see below) | Product |
+| 09 | Alive: seven themes, four sound worlds | Product, Principles |
+| 10 | Yours: on your disk, backups, packs, export, open source | Principles, Open source |
 
 **SITE-J done 2026-11-13.** The home page is rebuilt on the branch:
 
@@ -195,6 +195,11 @@ The list of features, to settle in this loop (working titles):
 - Every new sentence checked against the code or STATUS. Looked at rendered at 1440 px and 480 px.
 - The hero is unchanged but for its sentence (« One agent keeps the door… ») and a third button; the film takes the
   demonstration's place at SITE-O.
+
+**Ten features, not eleven (owner, 2026-11-13):** « je dois avouer que la section 09 a pas vraiment rapport ».
+« Recipes, tables, paper » is off the home page: its tile, its entry in the bar and its section. The index says
+« Ten things it does for you »; Alive is 09 and Yours is 10. The feature itself stays in the app, in the Docs and
+in its guide.
 
 Old section → new section, so far: Voice → 06; Method → after 11 (to place); Product: intake → 01 and 02, zoom and
 originals → 03, paths and web → 05, packs → 11, the gallery → 10; « How it thinks » band → after 05; MCP → 08;
