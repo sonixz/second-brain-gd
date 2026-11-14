@@ -38,10 +38,27 @@ class TimelineTests(unittest.TestCase):
         self.propose("change", action="move", item=self.a["id"], target="Cuisine", reason="recette")
         points = self.conn.execute("SELECT * FROM restore_points").fetchall()
         self.assertEqual(len(points), 1)
-        self.assertEqual((points[0]["name"], points[0]["auto"]), ("Avant les changements de Claude Code", 1))
+        self.assertEqual((points[0]["name"], points[0]["auto"]), ("Before Claude Code's changes", 1))
         self.assertEqual(timeline.take_pending_backups(), ["mcp:Claude Code"])
         self.propose("change", action="move", item=self.b["id"], target="Atelier", reason="auto")
         self.assertEqual(len(self.conn.execute("SELECT * FROM restore_points").fetchall()), 1, "one point per session")
+
+    def test_what_a_tool_leaves_in_the_app_is_in_the_apps_language(self):
+        def body_of(title: str, **args) -> str:
+            out = self.propose("item", title=title, **args)
+            if out["status"] == "pending":
+                proposals.apply(self.conn, out["proposal"], None, file_now=False)
+            return self.conn.execute("SELECT body FROM notes WHERE title = ?", (title,)).fetchone()[0]
+
+        database.set_setting(self.conn, "ui_language", "fr")
+        body = body_of("Idée de dessert", content="Tarte au sucre.", reason="vu en cuisinant", suggested_place="Cuisine")
+        self.assertIn("(Proposé par Claude Code : vu en cuisinant)", body)
+        self.assertIn("(Lieu suggéré : Cuisine)", body)
+        self.assertEqual(self.conn.execute("SELECT name FROM restore_points").fetchone()[0], "Avant les changements de Claude Code")
+        database.set_setting(self.conn, "ui_language", "en")
+        body = body_of("A dessert idea", content="Sugar pie.", reason="seen while cooking", suggested_place="Cuisine")
+        self.assertIn("(Proposed by Claude Code: seen while cooking)", body)
+        self.assertIn("(Suggested place: Cuisine)", body)
 
     def test_approvals_arriving_together_make_one_restore_point(self):
         """Approve all: each approval has its own transaction; the first one's point is not committed yet."""

@@ -243,7 +243,7 @@ class ProposalTests(unittest.TestCase):
         self.assertEqual(done["status"], "applied")
         note = brain.get_note(self.conn, done["item"])
         self.assertIn("Source: https://example.com/chili", note["body"])
-        self.assertIn("Proposé par Claude Code", note["body"])
+        self.assertIn("Proposed by Claude Code", note["body"])  # the app's language: English unless set to French
         self.assertEqual(note["source"], "agent")
         author = self.conn.execute("SELECT author FROM assistant_actions WHERE note_id = ? ORDER BY id LIMIT 1", (note["id"],)).fetchone()[0]
         self.assertEqual(author, "mcp:Claude Code", "the journal knows who did it")

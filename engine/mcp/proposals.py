@@ -175,9 +175,13 @@ def apply(conn: sqlite3.Connection, pid: str, llm: Any = None, file_now: bool = 
             body = p["content"]
             if p.get("source"):
                 body += f"\n\nSource: {p['source']}"
-            body += f"\n\n(Proposé par {r['client_name']} : {p['reason']})"
+            from engine.assistant.core import ui_language
+            en = ui_language(conn) == "en"  # these two lines are read in the item: in the app's language
+            body += (f"\n\n(Proposed by {r['client_name']}: {p['reason']})" if en
+                     else f"\n\n(Proposé par {r['client_name']} : {p['reason']})")
             if p.get("suggested_place"):
-                body += f"\n(Lieu suggéré : {p['suggested_place']})"
+                body += (f"\n(Suggested place: {p['suggested_place']})" if en
+                         else f"\n(Lieu suggéré : {p['suggested_place']})")
             note = brain.create_note(conn, p["title"], body, None, kind="note", source="agent")
             note_id = note["id"]
             journal(conn, "create_note", note_id, None, {"title": note["title"]}, f"proposée par {r['client_name']}")

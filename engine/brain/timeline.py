@@ -101,7 +101,9 @@ def _ensure_session_point(conn: sqlite3.Connection, author: str) -> bool:
         except ValueError:
             pass
     who = author.split(":", 1)[-1]
-    create_point(conn, f"Avant les changements de {who}", auto=True, author=author)
+    from engine.assistant.core import ui_language
+    name = f"Before {who}'s changes" if ui_language(conn) == "en" else f"Avant les changements de {who}"
+    create_point(conn, name, auto=True, author=author)  # shown in the timeline: in the app's language
     _pending_backups.append(author)
     return True
 
