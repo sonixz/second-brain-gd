@@ -2,6 +2,24 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## FILM-K and FILM-N: the film (2026-11-13)
+
+The owner, seeing the site's skeleton: « travaille-moi le vidéo, c'est le vidéo qui va débloquer tout ». So the
+film came before the rest of the site ([plan](docs/plans/plan-site-film.md)). Seven scenes of the real app are
+filmed by `tools/film.sh` (`open`, `capture`, `zoom`, `views`, `ask`, `tool`, `themes`), three of them with the
+real archivist: a thought typed and a PDF dropped, each filed with a receipt in the model's own words; a question
+answered from the contractor's quote; a note proposed by an AI tool over MCP, approved, filed. `compose.py` cuts
+them into 62.5 seconds on the music's beats, with a title per scene, a camera that comes closer to the receipts,
+and a closing card; the sound is a narration of nine lines agreed by the owner (ElevenLabs, the voice of Agent
+Manager's film), a bed composed for the cut, and the app's own effects. The film sits in the hero, in the
+Archivist's tile, over the living graph the owner wanted kept. `video-production/REPORT.md` says what is real, what
+is a stand-in (the tool's calls are made by the film script, under the name « Claude Code »), what was left out
+(the browser, the voice) and the limits: nobody has listened to it yet, and the rights on the audio are to confirm.
+
+Filming it found a fault, fixed with a test: the two lines a tool's proposal leaves in an item (« Proposé par… »,
+« Lieu suggéré… ») and the automatic restore point's name (« Avant les changements de… ») were in French whatever
+the interface's language; they now follow it.
+
 ## SITE-J: the home page's skeleton in the feature format (2026-11-13)
 
 Third loop of [the website and film plan](docs/plans/plan-site-film.md), on `site-film`. The home page takes the

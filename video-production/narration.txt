@@ -1,0 +1,11 @@
+# The film's narration (English, ElevenLabs voice « Eric »), one line per scene: id | text
+# Agreed by the owner on 2026-11-13 (« Oui go! »). The takes are in assets/audio/vo-<id>.mp3.
+v01 | Meet Second Brain G.D. A second brain that lives on your computer.
+v02 | Type it, say it, drop it.
+v03 | One agent keeps the door: the Archivist files it, links it, and tells you where.
+v04 | A graph with no bottom: from your places, down to the page.
+v05 | Five ways to look. And time you can play.
+v06 | Ask your Brain. It answers with its sources.
+v07 | Your AI tools go through the same door: they propose, you approve, the Archivist files.
+v08 | Seven themes. It is alive.
+v09 | Second Brain G.D. Your second brain. Every AI agent. Your rules.

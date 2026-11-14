@@ -5,9 +5,9 @@
 # Two passes at VBR (default 560k) for the picture and ABR (default 64k) for the sound: about 4 MB a minute.
 # After agent-manager-gd's video-production/scripts/render.sh.
 set -euo pipefail
+MASTER="$(realpath "$1")"; POSTER="$(realpath "$2")"   # before the cd: they may be given from anywhere
 cd "$(dirname "$0")/.."
 FF="${FFMPEG:-$HOME/.local/opt/ffmpeg-n8.1.3-35/bin/ffmpeg}"
-MASTER="$(realpath "$1")"; POSTER="$(realpath "$2")"
 VBR="${VBR:-560k}"; ABR="${ABR:-64k}"
 mkdir -p work output ../public/assets/video
 (cd work && "$FF" -hide_banner -loglevel error -y -i "$MASTER" -c:v libx264 -preset veryslow -b:v "$VBR" -tune stillimage \

@@ -45,6 +45,45 @@
     onScroll();
   }
 
+  // ---------------------------------------------------------------- the film in the hero
+  // Muted and looping while it is in view; « Sound » plays it once from the start with its narration, then it goes
+  // back to the silent loop. With reduced motion or data saving it does not start by itself: the poster, and a click.
+  var film = document.querySelector("video.film");
+  if (film) {
+    var sound = document.querySelector(".film-sound"), pause = document.querySelector(".film-pause"), full = document.querySelector(".film-full");
+    var reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    var saveData = !!(navigator.connection && navigator.connection.saveData);
+    var auto = !reduce && !saveData, held = false;
+    film.muted = true;
+    var show = function () {
+      sound.textContent = film.muted ? "🔊 Sound" : "🔇 Mute";
+      sound.setAttribute("aria-pressed", String(!film.muted));
+      pause.textContent = film.paused ? "▶" : "❚❚";
+      pause.setAttribute("aria-label", film.paused ? "Play the film" : "Pause the film");
+    };
+    var play = function () { var p = film.play(); if (p && p.catch) p.catch(function () {}); };
+    // the film opens on a fade from black: the silent loop starts just after it (with the sound, from the start)
+    film.addEventListener("loadedmetadata", function () { if (film.muted && film.currentTime < 1) film.currentTime = 1.0; }, { once: true });
+    if (auto && "IntersectionObserver" in window) {
+      new IntersectionObserver(function (es) {
+        es.forEach(function (e) {
+          if (e.isIntersecting) { if (!held) play(); } else if (film.muted) film.pause();
+        });
+      }, { threshold: 0.25 }).observe(film);
+    }
+    sound.addEventListener("click", function () {
+      if (film.muted) { film.muted = false; film.loop = false; film.currentTime = 0; held = false; play(); }
+      else { film.muted = true; film.loop = true; }
+      show();
+    });
+    pause.addEventListener("click", function () { if (film.paused) { held = false; play(); } else { held = true; film.pause(); } });
+    film.addEventListener("click", function () { if (film.paused) { held = false; play(); } else { held = true; film.pause(); } });
+    if (full) full.addEventListener("click", function () { if (film.requestFullscreen) film.requestFullscreen(); else if (film.webkitEnterFullscreen) film.webkitEnterFullscreen(); });
+    film.addEventListener("ended", function () { film.muted = true; film.loop = true; show(); if (auto) play(); });
+    ["play", "pause", "volumechange"].forEach(function (ev) { film.addEventListener(ev, show); });
+    show();
+  }
+
   // ---------------------------------------------------------------- pictures with numbered points
   var SVG = "http://www.w3.org/2000/svg";
   document.querySelectorAll("[data-anno]").forEach(function (anno) {

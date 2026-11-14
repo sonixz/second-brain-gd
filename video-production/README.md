@@ -30,6 +30,19 @@ video-production/scripts/clip.sh open graph 10 video-production/output/open.mp4 
   removes it. It runs slower than real time, so what happens outside Godot (the engine's answers) looks faster in
   the film than it is.
 
+## Make the film again
+
+```bash
+tools/film.sh open zoom views themes                                   # four scenes, no key (about 25 min)
+cd <the folder that holds your .env> && FILM_REAL=1 dotenvx run -q -f .env -- <repo>/tools/film.sh capture ask tool   # the real archivist
+python3 video-production/scripts/compose.py                            # the cut: output/second-brain-showcase.mp4 (about 2 min)
+video-production/scripts/render.sh video-production/output/second-brain-showcase.mp4 <a frame.png>   # the website's file and its poster
+```
+
+`FILM_STILLS=1 tools/film.sh <step>` first, to see a scene's framing without filming it. The film as cut is in
+`storyboard.md`; what is real and what is not, the sources and the limits, in `REPORT.md`. The shots, the titles
+and the mix are at the top of `scripts/compose.py`.
+
 ## Voice, music, effects
 
 `scripts/elevenlabs.py` (the key from the environment, through dotenvx, never printed):
@@ -48,6 +61,10 @@ The takes used by the film are kept in `assets/audio/`, so a new cut does not pa
 |---|---|
 | `../tools/film.sh`, `../tools/film.gd` | filming: one step per scene, with its marks |
 | `scripts/clip.sh` | a piece of a step as an MP4 with the app's sound |
+| `scripts/compose.py` | the cut: shots, camera moves, titles, the closing card, the mix |
+| `scripts/render.sh` | the website's file and its poster |
+| `scripts/logo_png.gd` | the logo as a picture for the closing card |
 | `scripts/elevenlabs.py` | voice, music, effects |
-| `assets/audio/` | the exact takes used (from FILM-N) |
+| `storyboard.md`, `narration.txt`, `REPORT.md` | the film as cut, its words, how it was made |
+| `assets/audio/` | the exact takes used: `vo-v01` to `vo-v09`, `music.mp3` and its prompt |
 | `work/`, `output/` | made by the scripts, not in git |

@@ -22,13 +22,13 @@ A snapshot of what works today. The history of each loop is in [DEVLOG](DEVLOG.m
 | **MCP out** | Agents use any MCP server you connect: a hand-checked starter list, the official registry, keys, account sign-in (OAuth), local programs with approval; writes outside confirmed each time; budget; ⇠● ⇢● lights |
 | **Your data** | Backups, restore, export, packs, repair, start fresh, uninstall; English or French (FR / EN) |
 | **Themes** | Seven built in (Morning, Focus, Evening, Forest, Terminal, Paper, Neon), each with its own style; contrast checked for every theme |
-| **Docs and How-to** | The Docs page for every feature, 21 step-by-step guides captured from the real app (19 replayed on 2026-11-11; the two that drive a real Edge date from 2026-11-05), the home page's loops up to the graph views; on the branch `site-film`, the home page in the feature format (a common menu, an index of eleven features, sections 01 and 02 written, the others to rewrite); a check that links, pictures, guides, counts, the menu and the index of features hold together (`tools/check_docs.py`, run by the tests); the rule that keeps them current is in [AGENTS](AGENTS.md) |
+| **Docs and How-to** | The Docs page for every feature, 21 step-by-step guides captured from the real app (19 replayed on 2026-11-11; the two that drive a real Edge date from 2026-11-05), the home page's loops up to the graph views; on the branch `site-film`, the home page in the feature format (a common menu, an index of eleven features, sections 01 and 02 written, the others on hold) with a one-minute film in its hero (voice, music; to be heard by the owner); a check that links, pictures, guides, counts, the menu and the index of features hold together (`tools/check_docs.py`, run by the tests); the rule that keeps them current is in [AGENTS](AGENTS.md) |
 
-## Tests (2026-11-13, on `main`)
+## Tests (2026-11-13, on `site-film`)
 
 | Suite | Platform | Result |
 |---|---|---|
-| Python (353, 1 skipped), with the app's own environment | Windows venv run from WSL | OK |
+| Python (354, 1 skipped), with the app's own environment | Windows venv run from WSL | OK |
 | Godot end-to-end (287 checks) | Linux, headless | 287 passed |
 | How-to guides replayed on the real app (19 of 21; two need a real Edge) | Linux, virtual display | every step captured |
 

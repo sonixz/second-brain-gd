@@ -118,3 +118,21 @@
 @media (prefers-reduced-motion: reduce) {
   .fx-grid a, .anno-card, .hot, .featnav { transition: none; }
 }
+
+/* ---------------------------------------------------------------- the film in the hero
+   In the Archivist's own tile, over the living graph (owner, 2026-11-13): muted and looping, with Sound, pause and
+   full screen (js/features.js). The scripted demonstration's elements stay in the page, out of sight: its script
+   draws the graph behind. */
+.hero-live .hero-grid > .hero-capture.has-film { max-width: 640px; }
+.film-card { margin: 0 0 10px; width: 100%; padding: 12px; gap: 10px; text-align: left; box-sizing: border-box; }
+.film-card .a-head b { font-weight: 700; }
+.film-right { margin-left: auto; display: flex; gap: 6px; }
+.film-card button { font: inherit; font-size: .78rem; line-height: 1.5; color: var(--text); background: rgba(169, 212, 255, .1);
+  border: 1px solid var(--border); border-radius: 999px; padding: 2px 11px; cursor: pointer; }
+.film-card button:hover, .film-card button:focus-visible { border-color: var(--mint); }
+.film-card .film-sound { background: var(--mint); color: #13233a; border-color: var(--mint); font-weight: 700; }
+.film-card .film-sound[aria-pressed="true"] { background: transparent; color: var(--mint); }
+.film-card video { display: block; width: 100%; height: auto; aspect-ratio: 16 / 9; border-radius: 10px; background: #1b283c; cursor: pointer; }
+.demo-parked { display: none; }
+@media (min-width: 961px) { .hero-live .hero-grid { grid-template-columns: minmax(0, 1fr) minmax(0, 1.04fr); } }
+@media (min-width: 1280px) { .hero-live .hero-grid { max-width: 1250px; } }   /* a little more room for the film */

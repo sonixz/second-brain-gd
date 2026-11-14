@@ -38,7 +38,7 @@ printf '[display]\nwindow/size/viewport_width=%s\nwindow/size/viewport_height=%s
 # run <home> <step> <log> [movie options…]
 run() {
   local home="$1" step="$2" log="$3"; shift 3
-  local keys=(-u OPENAI_ADMIN_KEY)
+  local keys=(-u OPENAI_ADMIN_KEY -u ELEVENLABS_API_KEY)   # the app is given the one key it needs, or none
   [[ "${FILM_REAL:-}" == "1" ]] || keys+=(-u OPENAI_API_KEY)
   DISPLAY="$VDISPLAY" WAYLAND_DISPLAY="" SBGD_UI_LANG=en SBGD_HOME="$home" SBGD_PORT="$PORT" SBGD_SHOT_SIZE="$SIZE" \
     SBGD_CAPTURE_DIR="$OUT/$step/shots" SBGD_FILM_STEP="$step" SBGD_MARKS="$OUT/$step/marks.txt" \

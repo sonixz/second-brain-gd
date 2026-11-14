@@ -17,12 +17,19 @@ the other while he is away (`/loop`); each firing reads « Where it stands » be
 | CI-H | **done** 2026-11-13 | 19e8173, b33cbfe | the five jobs pass (run 43522978578) |
 | FILM-I | **done** 2026-11-13 | on `site-film` | a 15-second clip of the opening scene, with the app's sound |
 | SITE-J | **done** 2026-11-13 | on `site-film` | the page in the new format: menu, index, bar, sections 01 and 02 in full |
-| FILM-K | to do | | |
-| SITE-L | to do | | |
-| SITE-M | to do | | |
-| FILM-N | to do | | |
-| SITE-O | to do | | prepared on the branch; the merge and the publication wait for the owner |
+| FILM-K | **done** 2026-11-13 | on `site-film` | seven scenes filmed, three with the real archivist; the storyboard and the words agreed |
+| SITE-L | on hold | | the owner, 2026-11-13: the film first, and the site « super complexe »: to simplify before more is written |
+| SITE-M | on hold | | as SITE-L |
+| FILM-N | **done** 2026-11-13, to be heard by the owner | on `site-film` | the film: 62.5 s, voice, music, titles, the closing card |
+| SITE-O | the hero prepared | on `site-film` | the film in the Archivist's tile, the living graph behind; the rest, the merge and the publication wait for the owner |
 | REL-P | to do | | after SITE-O, with the owner |
+
+**The order changed on 2026-11-13.** The owner, seeing the skeleton: « t'as pas framé le vidéo encore […] Ça me
+semble super complexe. Je sais pas si on pourrait simplifier ça. Mais travaille-moi le vidéo, là. C'est le vidéo qui
+va débloquer tout », then, on the hero: « on laisse le background, j'aime le background. On viendrait juste changer
+l'espèce de tuile de l'archiviste […] j'aime le fait que c'est intégré dans les heroes ». So FILM-N came right
+after FILM-K, the film went into the Archivist's tile of the hero, and SITE-L and SITE-M wait: the page is to be
+simplified with him before more sections are written.
 
 **What waits for the owner's return, whatever the loops finish:** the film by ear (the agent cannot listen), the
 rights on the ElevenLabs audio, the go to merge `site-film` into `main` and to publish, the first pre-release.
@@ -248,6 +255,21 @@ About sixty seconds. A first cut of the story, to settle with the owner before a
 The loop gives the storyboard second by second, the narration's text, every scene filmed and a silent rough cut.
 The words are agreed before any voice is generated.
 
+**FILM-K done 2026-11-13.** Seven steps in `tools/film.gd`, each with its marks: `open`, `capture`, `zoom`, `views`,
+`ask`, `tool`, `themes`. The framing of the whole Brain is computed from the graph's rectangle; the interface is
+drawn 1.4 times larger (at 1.5 the top bar lost its last button). `open`, `zoom`, `views` and `themes` run without a
+key; `capture`, `ask` and `tool` with the real archivist (`FILM_REAL=1`, the owner's key through dotenvx, never
+printed): its receipts, its summary of the dropped PDF and its answer are the model's own. Changed on the way: a
+page sent from the browser and the voice are not filmed (a virtual display has no browser of the owner's and no
+microphone); the timeline is shown by type (eleven lanes do not fit); the play runs at the app's 4×; the question
+of scene 6 became « What did the contractor quote for the kitchen? » after the first one got an honest « I don't
+see a recorded decision ». The storyboard and the nine lines of narration were agreed by the owner (« Oui go! »).
+The film found a fault in the app, fixed here with a test: two lines a tool's proposal leaves in an item and the
+automatic restore point's name were in French whatever the interface's language (`engine/mcp/proposals.py`,
+`engine/brain/timeline.py`). It also found about two hundred font errors in the log at each theme switch, without
+any effect on the picture (BACKLOG). Tests on the branch after the engine's change: Python 354 OK (1 skipped),
+Godot 287 passed.
+
 ## SITE-L and SITE-M — the sections
 
 - Each section on the template of SITE-J; its picture is a frame of the films (1920×1080) with its numbered points.
@@ -266,6 +288,17 @@ The words are agreed before any voice is generated.
   what is illustration, sources and licences, loudness.
 - The agent cannot listen: pronunciation (« G.D. ») and the mix are checked by the owner's ear.
 
+**FILM-N done 2026-11-13, to be heard by the owner.** `video-production/scripts/compose.py` cuts the film from the
+marks: 29 shots and the closing card, 62.5 s, cuts on the beats, a camera move towards the two receipts and the
+answer, a title per scene, the card (logo, « Your second brain. Every AI agent. Your rules. », open source, MIT,
+the site). Sound: the nine takes of the narration (ElevenLabs, « Eric »), a bed of 64 s composed for the cut
+(ElevenLabs Music) that steps back under the voice, and the app's own effects where the app plays them. −13.4 LUFS.
+Not as planned: the app's recorded sound is not in the mix (its own music would play over the bed), and scene 8
+keeps the bed instead of a beat of each theme's track. `render.sh` makes the website's file
+(`public/assets/video/showcase.mp4`) and its poster. `storyboard.md` is the film as cut, `REPORT.md` says what is
+real, what is a stand-in, the sources and the limits. **The agent cannot listen:** the pronunciation of « G.D. »,
+the music and the mix are for the owner's ear; the rights on the ElevenLabs audio are still to confirm.
+
 ## SITE-O — the film on the page, and publication
 
 - The hero: the living graph stays behind; the film takes the place of the scripted demonstration, muted, looping,
@@ -274,6 +307,13 @@ The words are agreed before any voice is generated.
 - README: the film's poster and the new list of features. Docs and How-to: the menu, links to the new anchors.
 - Phone width (480 px), the pages' weight, `tools/check_docs.py`, the tests, the list of AGENTS.md.
 - Merge into `main`, push, then gd-project's publication (its workflow, started by hand or by a dispatch).
+
+**SITE-O, the hero prepared 2026-11-13.** As the owner asked: the living graph stays, and the film takes the place
+of the Archivist's tile, in the same frame: muted and looping while in view, « Sound » plays it once from the start
+with its narration, pause, full screen, a poster and no autoplay with reduced motion or data saving, a text
+description. The scripted demonstration's elements stay in the page, out of sight, because its script draws the
+graph behind; where the demonstration goes is part of the site's simplification. Left of SITE-O: README, the
+phone check with the film, the merge and the publication, all after the owner's go.
 
 ## REL-P — the first pre-release
 
@@ -294,6 +334,7 @@ The real app only, on a private virtual display, with the film Brain. What is no
 | SITE-J | The page's thread | the Archivist as the keeper of the door (section above) |
 | FILM-K | The story of the film | the nine scenes above (« parfait, montre-moi ça »): the storyboard is shown to him |
 | FILM-N | The narrator's voice | the same as Agent Manager's film (« Eric ») |
+| FILM-N | The narration's words | the nine lines of `video-production/narration.txt`, agreed the same day (« Oui go! Pour les voix tu as tout ce qui faut pour generate avec elevenlabs ») |
 | FILM-N | The rights on the ElevenLabs audio (the plan of the account), not confirmed since the audit | **open**: to confirm before anything is published |
 | SITE-O | The hero: the film in place of the demonstration, or under an unchanged hero | the film replaces the demonstration (« on remplace le démo exactement ») |
 | REL-P | The version's name | an alpha, named by Agent Manager's rule: the number of loops (`v0.50.0-alpha` today) |
