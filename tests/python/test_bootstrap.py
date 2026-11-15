@@ -231,8 +231,13 @@ class BootstrapIntegration(unittest.TestCase):
                 break
             time.sleep(0.2)
         self.assertFalse(alive, "API must exit when its parent process exits")
-        time.sleep(0.5)
-        self.assertFalse((self.home / "runtime" / "server.json").exists())
+        # The port closes first; the server file goes once the shutdown has finished (up to 3 s of graceful
+        # shutdown, then the cleanup). A fixed half second was too short on a slow runner (CI, 2026-11-15).
+        server_file = self.home / "runtime" / "server.json"
+        deadline = time.time() + 10
+        while server_file.exists() and time.time() < deadline:
+            time.sleep(0.2)
+        self.assertFalse(server_file.exists(), "the server file must be removed on the way out")
 
     def test_99_offline_agent_room_does_not_block_setup(self):
         manifest = json.loads((ROOT / "tests" / "fixtures" / "agents" / "manifest.json").read_text())

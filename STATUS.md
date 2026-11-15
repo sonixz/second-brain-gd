@@ -42,7 +42,7 @@ The system python3 in WSL has no fastapi: run the Python suite with the app's en
 The suites were run natively on Windows at earlier loops (see DEVLOG); the app itself runs daily on the owner's
 Windows PC. Real calls made while building (with the owner's key or free public servers) are noted in each loop.
 
-## GitHub CI (2026-11-13): passing
+## GitHub CI (2026-11-15): passing since 2026-11-13, one timing failure corrected
 
 The CI workflow (`.github/workflows/ci.yml`) passes in its five jobs since 2026-11-13 (run 43522978578, b33cbfe;
 last run on `main`: 43538232742, 5bc3131, the short page):
@@ -50,6 +50,11 @@ Python 3.12 and 3.13 on Ubuntu and on Windows, and the Godot headless end-to-end
 every run on `main` from 2026-11-07: the workflow installed no package (no `fastapi` on the runner), and behind
 that one Godot check failed on the runner, a live conversation ended as « closed » instead of « goodbye » (fixed in
 the engine). Both are told in [DEVLOG](DEVLOG.md), CI-H.
+
+On 2026-11-15 one job of the five failed on 9280d96 (run 43677314405, Python 3.13 on Windows; the four others
+passed). A test, « the API exits when its parent exits », gave the engine a fixed half second to remove its server
+file once its port had closed, and the runner took longer. That commit changes nothing in the engine (a How-to
+guide and its page). The test now waits for the file, up to ten seconds (`tests/python/test_bootstrap.py`).
 
 ## Repository and branches (2026-11-14)
 
