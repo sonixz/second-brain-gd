@@ -20,10 +20,11 @@ COST_CAP_USD = 0.25
 TOKEN_CAP = 300_000  # per guide, whatever the model
 
 # Each step: (what you do, what you see). "say" marks words you speak or type to an agent.
+# A step done outside the app may carry a third part: the lines to paste (a terminal), shown as a block to copy.
 GUIDES: list[dict] = []
 
 
-def guide(id: str, title: str, kind: str, minutes: int, goal: str, needs: list[str], steps: list[tuple[str, str]],
+def guide(id: str, title: str, kind: str, minutes: int, goal: str, needs: list[str], steps: list[tuple],
           trouble: list[tuple[str, str]], docs: list[tuple[str, str]], group: str, edge: bool = False,
           cost_cap: float = COST_CAP_USD, token_cap: int = TOKEN_CAP) -> None:
     GUIDES.append({"id": id, "title": title, "kind": kind, "minutes": minutes, "goal": goal, "needs": needs,
@@ -607,6 +608,70 @@ guide(
      ("It cannot add anything.", "It may <i>read only</i>: on its card, choose <i>read, suggest new notes</i> or "
       "<i>read, suggest changes</i>.")],
     [("Connect an AI tool (MCP)", "docs.html#mcp-in")],
+    "MCP: your AI tools")
+guide(
+    "chatgpt", "Let ChatGPT read your Brain", "scripted", 10,
+    "ChatGPT cannot reach a program on your computer: its calls leave from OpenAI's servers. OpenAI's own tunnel "
+    "program (<i>Secure MCP Tunnel</i>) runs on your computer, calls out to OpenAI and hands each question to your "
+    "Brain. No port is opened, and ChatGPT only reads. What it reads goes to OpenAI and into your ChatGPT "
+    "conversation, under your ChatGPT account's data settings. Tried on Windows in November 2026 with "
+    "<code>tunnel-client</code> 0.0.21: a young program, and OpenAI's screens change.",
+    ["The app open",
+     "A ChatGPT account that offers <b>Add custom MCP server</b> (<a href=\"https://chatgpt.com/plugins\">"
+     "chatgpt.com/plugins</a>, the plus button)",
+     "An <a href=\"https://platform.openai.com/settings/organization/tunnels\">OpenAI Platform</a> organisation where "
+     "you may create a tunnel, and an API key of that organisation (OpenAI advises a restricted key with Tunnels: "
+     "Read and Use)",
+     "Windows PowerShell"],
+    [("Click the <b>⇠● ⇢●</b> lights at the top (or <b>⚙ → AI tools</b>). In the first tab, <b>Who may read your "
+      "Brain</b>, pick <b>Another MCP client</b>, name it <i>ChatGPT</i> and press <b>Connect (read only)</b>.",
+      "Three lines. Copy the third one, <b>Or a command it starts</b>: it starts a small relay with the app's own "
+      "Python, and holds no key. The key of the second line (hidden under dots) is not needed here: the relay reads "
+      "it on your computer, and it never goes to ChatGPT."),
+     ("On <a href=\"https://platform.openai.com/settings/organization/tunnels\">platform.openai.com › Tunnels</a>, "
+      "create a tunnel: a name, a description, your organisation and your ChatGPT workspace; leave <b>Restrict "
+      "client network access</b> off. Copy its id (<code>tunnel_…</code>). Download <code>tunnel-client</code> for "
+      "Windows from <a href=\"https://github.com/openai/tunnel-client/releases/latest\">OpenAI's releases</a> "
+      "(<code>tunnel-client-…-windows-amd64.zip</code>; its SHA-256 is in <code>SHA256SUMS.txt</code>), unzip it, "
+      "open PowerShell in that folder and paste these lines, with your tunnel's id and the line copied from "
+      "Second Brain:",
+      "PowerShell asks for your OpenAI key, which stays in that window. <code>doctor</code> ends with <b>RESULT "
+      "ok</b>, then <code>run</code> keeps running: leave the window open. It calls out to OpenAI "
+      "(api.openai.com) and waits; nothing listens on the internet. In Second Brain, ChatGPT is in the list, read "
+      "only, <i>never used</i> so far.",
+      "$env:CONTROL_PLANE_API_KEY = Read-Host \"Your OpenAI API key\"\n"
+      "$env:CONTROL_PLANE_TUNNEL_ID = \"tunnel_PASTE_YOUR_ID\"\n"
+      "$env:MCP_COMMAND = ('PASTE THE LINE FROM SECOND BRAIN').Replace('\\', '/')\n"
+      ".\\tunnel-client.exe doctor\n"
+      ".\\tunnel-client.exe run"),
+     ("In ChatGPT, open <a href=\"https://chatgpt.com/plugins\">Plugins</a>, press the plus button, then <b>Add "
+      "custom MCP server</b>. Under <b>Connection</b> choose <b>Tunnel</b> and pick your tunnel (or paste its id); "
+      "choose <b>No authentication</b>, accept the warning, <b>Create as a plugin</b> and install it. Then, in a "
+      "conversation, type <b>@</b>, pick your plugin and ask: <span class=\"say\">What is in my Brain about the "
+      "renovation?</span>",
+      "ChatGPT starts with an overview, searches, reads an item and answers from your notes. In Second Brain the "
+      "<b>⇠</b> light turns green when ChatGPT is connected and red during a call; hover it for the last call. "
+      "<i>No authentication</i> is right here: the door is your tunnel, which only your OpenAI organisation can "
+      "use, and the relay on your computer holds the Brain's key."),
+     ("Open the AI tools window again.",
+      "ChatGPT's card counts its calls, and <b>Recent calls</b> lists them. It stays <i>read only</i>: it cannot "
+      "add or change anything. <b>Disconnect</b> cuts it at once, whatever runs on OpenAI's side; closing the "
+      "PowerShell window, or the app, stops the link too. To use it again later, start <code>run</code> again."),
+     ],
+    [("<code>doctor</code> says the executable « C:Users… » was not found.", "The backslashes of the pasted line "
+      "were lost: keep <code>.Replace('\\', '/')</code> at the end of the <code>MCP_COMMAND</code> line, and the "
+      "single quotes around the pasted line."),
+     ("ChatGPT says the tool does not answer.", "The PowerShell window where <code>tunnel-client run</code> runs "
+      "must stay open, and Second Brain too: ChatGPT reaches your Brain only while both run."),
+     ("The tunnel is not in ChatGPT's list.", "Paste its id instead. On the Platform page, check that your ChatGPT "
+      "workspace is attached to the tunnel; OpenAI says a new tunnel takes about half a minute to be ready."),
+     ("The Platform page says « Tunnels access required ».", "Tunnel rights belong to the organisation: its owner "
+      "grants Tunnels Read, Manage and Use (see OpenAI's guide below)."),
+     ("<code>run</code> says an address is already in use.", "Its local status page wants port 8080. Before "
+      "<code>run</code>, add the line <code>$env:HEALTH_LISTEN_ADDR = \"127.0.0.1:0\"</code>.")],
+    [("Connect an AI tool (MCP)", "docs.html#mcp-in"),
+     ("OpenAI: Secure MCP Tunnel", "https://developers.openai.com/api/docs/guides/secure-mcp-tunnels"),
+     ("OpenAI: Add custom MCP server", "https://developers.openai.com/api/docs/guides/custom-mcp-server")],
     "MCP: your AI tools")
 guide(
     "mcp-servers", "Give your agents tools (MCP servers)", "scripted", 3,

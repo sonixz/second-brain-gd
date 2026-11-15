@@ -11,6 +11,13 @@ both directions, with the standard library only (JSON-RPC 2.0).
   SHA-256 is kept (`mcp_clients`). Unknown or revoked tokens get 401.
 - **WSL relay.** Claude Code in WSL starts `engine/mcp/relay.py` with the app's Windows Python: stdio on one side,
   `http://127.0.0.1:<port>/mcp` on the other (port from `runtime/server.json`, token from `<data>/mcp/<id>.token`).
+- **ChatGPT, through OpenAI's tunnel (2026-11-14).** ChatGPT calls MCP servers from OpenAI's servers and offers
+  OAuth or no authentication only: it cannot use `http://127.0.0.1:<port>/mcp` with a client's token. OpenAI's
+  `tunnel-client` (Secure MCP Tunnel) runs on the user's computer, long-polls `api.openai.com` for queued requests
+  and forwards them to a stdio child: the same `relay.py --client <id>`. Nothing changes in the engine, which still
+  listens on 127.0.0.1 only; the client's token stays in the user's folder. `tunnel-client` splits its command the
+  POSIX way, so a Windows path keeps its meaning only with forward slashes. The steps are a How-to guide
+  (`chatgpt`); the app does not start the tunnel itself (BACKLOG).
 - **Read tools** (short and paged): overview, search, get_item (4,000 characters at a time), list_places,
   list_items, neighbours, path, recent, inbox, item_types, table. Item text is returned marked as the user's data,
   never as instructions.

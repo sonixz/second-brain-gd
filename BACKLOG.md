@@ -2,7 +2,21 @@
 
 Ordered by priority. ✅ = done.
 
-## Next (2026-11-13)
+## Next (2026-11-14)
+
+**ChatGPT through OpenAI's tunnel** (owner, 2026-11-14): it works, read only, and it is a
+[How-to guide](public/howto.html#chatgpt). What is left of it:
+- **The link is as stable as a window left open.** `tunnel-client` runs in a PowerShell window the user starts by
+  hand; closing it, or the app, cuts ChatGPT off. For a link that is simply there, the app would start and stop
+  the tunnel itself (the key in the OS credential store, a switch in « Who may read your Brain »), or the program
+  would start with Windows. The owner's to decide.
+- The app could offer « ChatGPT » in its list of tools and show the lines to paste ready-made (forward slashes),
+  instead of « Another MCP client » and `.Replace('\', '/')`.
+- Not tried: a ChatGPT client that may propose (read only was), a Mac or a Linux computer, and the signed
+  provenance of `tunnel-client`'s download (only its SHA-256 was checked).
+- The guide has no picture of OpenAI's pages (they show the owner's accounts) and the home page has no loop card
+  for it (nothing changed in the app): to add if wanted.
+- `tunnel-client` is at 0.0.21: the guide's lines are to be tried again when it changes.
 
 **The website and its film** ([plan](docs/plans/plan-site-film.md), owner, 2026-11-13): done, on `main` and online since that evening. The
 front page is short: a film of the real app in the hero, the Archivist as the keeper of the door, ten tiles to the

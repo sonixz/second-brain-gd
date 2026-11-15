@@ -104,7 +104,9 @@ and what goes to the MCP servers you choose to connect. Backups, restore, start 
   up by aisle; « PDF » prints them on Letter paper.
 - **MCP:** the ⇠● ⇢● lights at the top: connect Claude Code to read your Brain (it proposes, the archivist
   decides, the timeline can undo), and give your agents MCP servers (any server from a catalogue or the official registry, keys,
-  sign-ins, local programs with your approval). Guide: [docs/guide-mcp.md](docs/guide-mcp.md).
+  sign-ins, local programs with your approval). Guide: [docs/guide-mcp.md](docs/guide-mcp.md). ChatGPT can read
+  your Brain too, through OpenAI's own tunnel program and with no port opened: the How-to guide
+  « [Let ChatGPT read your Brain](public/howto.html#chatgpt) ».
 - **Engine room:** click "All systems operational" at the top right.
 
 ## Audio assets

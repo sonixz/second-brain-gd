@@ -2,6 +2,31 @@
 
 Entries from Loop 15 onwards up to 2026-11-07 are written from the commit messages, newest first. The plans behind them are in docs/plans/.
 
+## ChatGPT reads the Brain through OpenAI's tunnel: a How-to guide (2026-11-14)
+
+The owner asked: « est-ce que nous pourrions brancher chatGPT desktop sur ton MCP second brain? ». Not directly:
+ChatGPT calls MCP servers from OpenAI's servers and offers OAuth or no authentication, and neither fits
+`127.0.0.1` with a client's key. OpenAI's own Secure MCP Tunnel does: `tunnel-client` runs on the computer, calls
+out to OpenAI, and starts the Brain's stdio relay as its command. No port is opened, and nothing changed in the
+engine. It was tried the same evening on the owner's computer, with his accounts: a client « ChatGPT », read only
+(twelve reading tools, none that proposes), a tunnel made on platform.openai.com, and in ChatGPT « Add custom MCP
+server » with Connection: Tunnel and No authentication. His words: « ok ca passe. Ca marche. Incroyable! », then
+« Peux tu bien documenter ca dans how to? ». The link ran first with the Linux build under WSL (36 calls), then
+with the Windows build started from PowerShell with the guide's own lines (19 calls, no failure, no timeout).
+
+- **The guide** `chatgpt`, « Let ChatGPT read your Brain » ([How-to](public/howto.html#chatgpt)): four steps, each
+  with the app's real screen at that step (`tools/howto.sh chatgpt`). What happens on OpenAI's pages has no picture.
+- **Lines to paste in a guide.** A step may carry a third part, the lines for a terminal: `build_page.py` shows
+  them as a block with the site's Copy button (`.guide-paste`). Test: `tests/python/test_howto_page.py`.
+- **A pitfall the guide carries.** `tunnel-client` splits its command the POSIX way: the line the app shows, pasted
+  as it is, loses its backslashes on Windows (« C:Users… was not found »). The guide's line ends with
+  `.Replace('\', '/')`, and the test holds it there. Under WSL its check wants a Linux path: a three-line launcher.
+- Docs (« Connect an AI tool »), [architecture](docs/architecture/mcp.md), README and the home page say it; the
+  home page counts twenty-two guides.
+
+Limits, in [BACKLOG](BACKLOG.md): the tunnel lives in a PowerShell window the user starts; only a read-only client
+was tried; `tunnel-client` is at 0.0.21 and OpenAI's screens change.
+
 ## SITE-O: the short front page, merged (2026-11-13)
 
 With the film made, the owner chose a short page over the eleven long sections (« go pour la page courte. tu peux

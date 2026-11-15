@@ -1038,6 +1038,54 @@ func guide_ai_tool() -> void:
 	tl.hide()
 
 
+# ---------------------------------------------------------------- Let ChatGPT read your Brain (scripted)
+## What happens on OpenAI's side (the tunnel, ChatGPT) is not the app: each picture is what the app shows at that
+## step. ChatGPT's calls are made here with the same client and key, over the same /mcp address the relay uses.
+func guide_chatgpt() -> void:
+	await overview()
+	var lights: Button = b.get("mcp_lights")
+	var dlg: AcceptDialog = lights.call("open_dialog")
+	await pause(1.0)
+	var pick: OptionButton = dlg.find_child("ClientKind", true, false)
+	for i in pick.item_count:
+		if str(pick.get_item_metadata(i)) == "other":
+			pick.select(i)
+			pick.item_selected.emit(i)
+	(dlg.find_child("ClientName", true, false) as LineEdit).text = "ChatGPT"
+	(dlg.find_child("ConnectButton", true, false) as Button).pressed.emit()
+	await pause(2.0)
+	var client: Dictionary = (dlg.find_child("Commands", true, false) as Control).get_meta("client", {})
+	await step("Another MCP client, named ChatGPT: the third line is the command the tunnel starts")
+	dlg.hide()
+	var dlg1: AcceptDialog = lights.call("open_dialog")
+	await pause(2.5)
+	await step("while the tunnel is set up on OpenAI's side: ChatGPT in the list, read only, never used")
+	dlg1.hide()
+	var token := str(client.get("token", ""))
+	for msg in [{"name": "overview", "arguments": {}}, {"name": "search", "arguments": {"query": "renovation"}},
+			{"name": "search", "arguments": {"query": "kitchen quote"}}]:
+		var req := HTTPRequest.new()
+		root.add_child(req)
+		req.request("http://127.0.0.1:%d/mcp" % app.backend.api.port, PackedStringArray(["Content-Type: application/json", "Authorization: Bearer " + token]),
+			HTTPClient.METHOD_POST, JSON.stringify({"jsonrpc": "2.0", "id": 1, "method": "tools/call", "params": msg}))
+		await req.request_completed
+		req.queue_free()
+	await lights.call("poll")
+	await pause(0.5)
+	g.zoom_to(0.5, Vector2(-60, 0), 0.2)
+	await pause(1.0)
+	calm()
+	await step("ChatGPT reads your Brain: the ⇠ light", true)
+	var dlg2: AcceptDialog = lights.call("open_dialog")
+	await pause(2.5)
+	var recent_b: Button = dlg2.find_child("RecentToggle", true, false)
+	if recent_b != null and recent_b.visible:
+		recent_b.pressed.emit()
+	await pause(1.0)
+	await step("its card counts its calls; recent calls; Disconnect")
+	dlg2.hide()
+
+
 # ---------------------------------------------------------------- Give your agents MCP servers (no model call)
 func guide_mcp_servers() -> void:
 	await overview()

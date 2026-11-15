@@ -1,4 +1,4 @@
-# Status (2026-11-13)
+# Status (2026-11-14)
 
 A snapshot of what works today. The history of each loop is in [DEVLOG](DEVLOG.md); the plans in
 [docs/plans/](docs/plans/README.md); what is next in [BACKLOG](BACKLOG.md).
@@ -18,19 +18,20 @@ A snapshot of what works today. The history of each loop is in [DEVLOG](DEVLOG.m
 | **Printing** | Recipes, grocery lists and notes on Letter paper; the PDF made by Edge in the background |
 | **Agents** | The Archivist, Sparring, your own agents (Agent Builder); missions in the background with a plan, a question, a draft to approve; @ mentions |
 | **Voice** | Push-to-talk with the interface driven by voice; the live conversation |
-| **MCP in** | Claude Code (or any MCP tool) reads the Brain over MCP, on this computer only; it proposes, the archivist decides; a timeline with restore points undoes by author |
+| **MCP in** | Claude Code (or any MCP tool) reads the Brain over MCP, on this computer only; it proposes, the archivist decides; a timeline with restore points undoes by author. ChatGPT reads it too, through OpenAI's tunnel program started by hand, with no port opened (a How-to guide; tried read only on 2026-11-14) |
 | **MCP out** | Agents use any MCP server you connect: a hand-checked starter list, the official registry, keys, account sign-in (OAuth), local programs with approval; writes outside confirmed each time; budget; ⇠● ⇢● lights |
 | **Your data** | Backups, restore, export, packs, repair, start fresh, uninstall; English or French (FR / EN) |
 | **Themes** | Seven built in (Morning, Focus, Evening, Forest, Terminal, Paper, Neon), each with its own style; contrast checked for every theme |
-| **Docs and How-to** | The Docs page for every feature, 21 step-by-step guides captured from the real app (19 replayed on 2026-11-11; the two that drive a real Edge date from 2026-11-05), the home page: a one-minute film of the real app in its hero (voice, music), the Archivist's section, ten tiles to the Docs, the loops up to the film; a check that links, pictures, guides, counts, the menu and the index of features hold together (`tools/check_docs.py`, run by the tests); the rule that keeps them current is in [AGENTS](AGENTS.md) |
+| **Docs and How-to** | The Docs page for every feature, 22 step-by-step guides captured from the real app (19 replayed on 2026-11-11; « Let ChatGPT read your Brain » captured on 2026-11-14; the two that drive a real Edge date from 2026-11-05), the home page: a one-minute film of the real app in its hero (voice, music), the Archivist's section, ten tiles to the Docs, the loops up to the film; a check that links, pictures, guides, counts, the menu and the index of features hold together (`tools/check_docs.py`, run by the tests); the rule that keeps them current is in [AGENTS](AGENTS.md) |
 
-## Tests (2026-11-13, on `main` with the website and the film merged)
+## Tests (2026-11-14, on `main` with the ChatGPT guide)
 
 | Suite | Platform | Result |
 |---|---|---|
-| Python (354, 1 skipped), with the app's own environment | Windows venv run from WSL | OK |
+| Python (356, 1 skipped), with the app's own environment | Windows venv run from WSL | OK |
 | Godot end-to-end (287 checks) | Linux, headless | 287 passed |
-| How-to guides replayed on the real app (19 of 21; two need a real Edge) | Linux, virtual display | every step captured |
+| How-to guides replayed on the real app (19 of 22 on 2026-11-11, `chatgpt` on 2026-11-14; two need a real Edge) | Linux, virtual display | every step captured |
+| ChatGPT through OpenAI's tunnel (`tunnel-client` 0.0.21), read only | the owner's Windows PC and accounts, by hand | 36 calls under WSL, then 19 with the guide's PowerShell lines: no timeout |
 
 One Godot check, « the Captures view lists what came in, newest first », failed in two runs out of five on
 2026-11-10 and has passed in every run since (2026-11-11 and 2026-11-13, here and on the CI); its cause is not found.
@@ -67,6 +68,8 @@ the engine). Both are told in [DEVLOG](DEVLOG.md), CI-H.
 - The film: to listen to (the agent cannot: the pronunciation of « G.D. », the music, the mix), and the rights on
   its ElevenLabs audio to confirm. It is online since 2026-11-13: both now concern a public film.
 - The first pre-release ([plan](docs/plans/plan-site-film.md), REL-P): the version's name, the package rebuilt.
+- ChatGPT on the Brain: whether the app should start OpenAI's tunnel itself, so the link is there without a
+  window left open ([BACKLOG](BACKLOG.md)).
 - VIEW-G, the constellation in 3D: go or not ([plan](docs/plans/plan-graph-views.md)).
 - From the [audit](docs/audit-before-public.md), not confirmed done: rotate the OpenAI, OpenAI admin and ElevenLabs
   keys; GitHub's « Keep my email addresses private ».
